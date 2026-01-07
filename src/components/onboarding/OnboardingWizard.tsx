@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { z } from "zod";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const BANKS = [
   "BANCA TRANSILVANIA S.A.",
@@ -91,6 +92,7 @@ export function OnboardingWizard({
   onFileChange,
 }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const isMobile = useIsMobile();
 
   const goNext = () => {
     if (currentStep < STEPS.length - 1) {
@@ -142,6 +144,112 @@ export function OnboardingWizard({
     }
   };
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col">
+        {/* Mobile Header */}
+        <header className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3 safe-area-top">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <TreePine className="w-6 h-6 text-primary" />
+              <span className="font-semibold text-primary text-sm">LJUNGAN FORESTRY</span>
+            </div>
+            {isPreview && (
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                Preview
+              </span>
+            )}
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-foreground">{STEPS[currentStep].label}</span>
+              <span className="text-muted-foreground">Step {currentStep + 1}/{STEPS.length}</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+                style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        </header>
+
+        {/* Mobile Step Dots */}
+        <div className="flex justify-center gap-2 py-3 bg-background border-b border-border">
+          {STEPS.map((step, index) => {
+            const isActive = index === currentStep;
+            const isCompleted = index < currentStep;
+            
+            return (
+              <button
+                key={step.id}
+                onClick={() => goToStep(index)}
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95",
+                  isActive && "bg-primary text-primary-foreground shadow-lg shadow-primary/30",
+                  isCompleted && "bg-primary/20 text-primary",
+                  !isActive && !isCompleted && "bg-muted text-muted-foreground"
+                )}
+                aria-label={`Go to ${step.label}`}
+              >
+                {isCompleted ? <Check className="w-4 h-4" /> : index + 1}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile Form Content */}
+        <main className="flex-1 overflow-auto px-4 py-6 pb-32">
+          <form onSubmit={onSubmit} id="onboarding-form">
+            <div className="bg-background rounded-xl border border-border p-5 shadow-sm">
+              {renderStepContent()}
+            </div>
+          </form>
+        </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-4 safe-area-bottom">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goBack}
+              disabled={currentStep === 0}
+              className="flex-1 h-12 text-base font-medium"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </Button>
+
+            {currentStep < STEPS.length - 1 ? (
+              <Button 
+                type="button" 
+                onClick={goNext} 
+                className="flex-1 h-12 text-base font-medium"
+              >
+                Continue
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+            ) : (
+              <Button 
+                type="submit"
+                form="onboarding-form"
+                disabled={isSubmitting || isPreview} 
+                className="flex-1 h-12 text-base font-medium"
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            )}
+          </div>
+        </nav>
+      </div>
+    );
+  }
+
+  // Desktop Layout
   return (
     <div className="min-h-screen bg-slate-100 flex">
       {/* Sidebar */}
@@ -237,114 +345,123 @@ export function OnboardingWizard({
   );
 }
 
-// Step Components
+// Step Components with Mobile-Optimized Styles
 function NameAddressStep({ formData, updateField, isPreview }: { 
   formData: Partial<PersonalInfo>; 
   updateField: (field: keyof PersonalInfo, value: string) => void;
   isPreview: boolean;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="space-y-5">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">First Name *</Label>
+          <Label className="text-foreground font-medium text-sm">First Name *</Label>
           <Input
             value={formData.firstName || ""}
             onChange={(e) => updateField("firstName", e.target.value)}
             placeholder="Enter first name"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Middle Name</Label>
+          <Label className="text-foreground font-medium text-sm">Middle Name</Label>
           <Input
             value={formData.middleName || ""}
             onChange={(e) => updateField("middleName", e.target.value)}
             placeholder="Enter middle name"
+            className="h-12 text-base"
           />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Last Name *</Label>
+          <Label className="text-foreground font-medium text-sm">Last Name *</Label>
           <Input
             value={formData.lastName || ""}
             onChange={(e) => updateField("lastName", e.target.value)}
             placeholder="Enter last name"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Preferred Name *</Label>
+          <Label className="text-foreground font-medium text-sm">Preferred Name *</Label>
           <Input
             value={formData.preferredName || ""}
             onChange={(e) => updateField("preferredName", e.target.value)}
             placeholder="Enter preferred name"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Address 1 *</Label>
+          <Label className="text-foreground font-medium text-sm">Address 1 *</Label>
           <Input
             value={formData.address1 || ""}
             onChange={(e) => updateField("address1", e.target.value)}
             placeholder="Street address"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Address 2</Label>
+          <Label className="text-foreground font-medium text-sm">Address 2</Label>
           <Input
             value={formData.address2 || ""}
             onChange={(e) => updateField("address2", e.target.value)}
             placeholder="Apartment, suite, etc."
+            className="h-12 text-base"
           />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">ZIP / Postal Code *</Label>
+          <Label className="text-foreground font-medium text-sm">ZIP / Postal Code *</Label>
           <Input
             value={formData.zipCode || ""}
             onChange={(e) => updateField("zipCode", e.target.value)}
             placeholder="Enter postal code"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">City *</Label>
+          <Label className="text-foreground font-medium text-sm">City *</Label>
           <Input
             value={formData.city || ""}
             onChange={(e) => updateField("city", e.target.value)}
             placeholder="Enter city"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">State / Province *</Label>
+          <Label className="text-foreground font-medium text-sm">State / Province *</Label>
           <Input
             value={formData.stateProvince || ""}
             onChange={(e) => updateField("stateProvince", e.target.value)}
             placeholder="Enter state/province"
             required={!isPreview}
+            className="h-12 text-base"
           />
         </div>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Country *</Label>
+          <Label className="text-foreground font-medium text-sm">Country *</Label>
           <Select
             value={formData.country}
             onValueChange={(value) => updateField("country", value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="h-12 text-base">
               <SelectValue placeholder="Select country" />
             </SelectTrigger>
             <SelectContent>
               {COUNTRIES.map((country) => (
-                <SelectItem key={country} value={country}>
+                <SelectItem key={country} value={country} className="text-base py-3">
                   {country}
                 </SelectItem>
               ))}
@@ -362,28 +479,29 @@ function BirthContactStep({ formData, updateField, isPreview }: {
   isPreview: boolean;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Birthday *</Label>
+        <Label className="text-foreground font-medium text-sm">Birthday *</Label>
         <Input
           type="date"
           value={formData.birthday || ""}
           onChange={(e) => updateField("birthday", e.target.value)}
           required={!isPreview}
+          className="h-12 text-base"
         />
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Country of Birth *</Label>
+        <Label className="text-foreground font-medium text-sm">Country of Birth *</Label>
         <Select
           value={formData.countryOfBirth}
           onValueChange={(value) => updateField("countryOfBirth", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-12 text-base">
             <SelectValue placeholder="Select country" />
           </SelectTrigger>
           <SelectContent>
             {COUNTRIES.map((country) => (
-              <SelectItem key={country} value={country}>
+              <SelectItem key={country} value={country} className="text-base py-3">
                 {country}
               </SelectItem>
             ))}
@@ -391,17 +509,17 @@ function BirthContactStep({ formData, updateField, isPreview }: {
         </Select>
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Citizenship *</Label>
+        <Label className="text-foreground font-medium text-sm">Citizenship *</Label>
         <Select
           value={formData.citizenship}
           onValueChange={(value) => updateField("citizenship", value)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-12 text-base">
             <SelectValue placeholder="Select citizenship" />
           </SelectTrigger>
           <SelectContent>
             {COUNTRIES.map((country) => (
-              <SelectItem key={country} value={country}>
+              <SelectItem key={country} value={country} className="text-base py-3">
                 {country}
               </SelectItem>
             ))}
@@ -409,17 +527,17 @@ function BirthContactStep({ formData, updateField, isPreview }: {
         </Select>
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Mobile Phone Number *</Label>
+        <Label className="text-foreground font-medium text-sm">Mobile Phone Number *</Label>
         <div className="flex gap-2">
           <Select defaultValue="RO">
-            <SelectTrigger className="w-24">
+            <SelectTrigger className="w-20 h-12 text-base">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="RO">🇷🇴</SelectItem>
-              <SelectItem value="US">🇺🇸</SelectItem>
-              <SelectItem value="DE">🇩🇪</SelectItem>
-              <SelectItem value="UK">🇬🇧</SelectItem>
+              <SelectItem value="RO" className="text-base py-3">🇷🇴</SelectItem>
+              <SelectItem value="US" className="text-base py-3">🇺🇸</SelectItem>
+              <SelectItem value="DE" className="text-base py-3">🇩🇪</SelectItem>
+              <SelectItem value="UK" className="text-base py-3">🇬🇧</SelectItem>
             </SelectContent>
           </Select>
           <Input
@@ -427,19 +545,20 @@ function BirthContactStep({ formData, updateField, isPreview }: {
             value={formData.mobilePhone || ""}
             onChange={(e) => updateField("mobilePhone", e.target.value)}
             placeholder="Enter phone number"
-            className="flex-1"
+            className="flex-1 h-12 text-base"
             required={!isPreview}
           />
         </div>
       </div>
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Email *</Label>
+        <Label className="text-foreground font-medium text-sm">Email *</Label>
         <Input
           type="email"
           value={formData.email || ""}
           onChange={(e) => updateField("email", e.target.value)}
           placeholder="Enter email address"
           required={!isPreview}
+          className="h-12 text-base"
         />
       </div>
     </div>
@@ -462,26 +581,26 @@ function BankStep({
   onBankSelect: (bank: string) => void;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="space-y-3">
-        <Label className="text-foreground font-medium">Select your Bank *</Label>
+        <Label className="text-foreground font-medium text-sm">Select your Bank *</Label>
         <RadioGroup
           value={isOtherBank ? "other" : selectedBank}
           onValueChange={onBankSelect}
           className="space-y-2"
         >
           {BANKS.map((bank) => (
-            <div key={bank} className="flex items-center space-x-2">
-              <RadioGroupItem value={bank} id={bank} />
-              <Label htmlFor={bank} className="font-normal cursor-pointer">
+            <div key={bank} className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+              <RadioGroupItem value={bank} id={bank} className="w-5 h-5" />
+              <Label htmlFor={bank} className="font-normal cursor-pointer flex-1 text-base">
                 {bank}
               </Label>
             </div>
           ))}
           <div className="pt-2 border-t border-border">
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="other" id="other-bank" />
-              <Label htmlFor="other-bank" className="font-normal cursor-pointer">
+            <div className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+              <RadioGroupItem value="other" id="other-bank" className="w-5 h-5" />
+              <Label htmlFor="other-bank" className="font-normal cursor-pointer flex-1 text-base">
                 Other Bank
               </Label>
             </div>
@@ -491,32 +610,35 @@ function BankStep({
 
       {isOtherBank && (
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">Bank Name *</Label>
+          <Label className="text-foreground font-medium text-sm">Bank Name *</Label>
           <Input
             value={formData.otherBankName || ""}
             onChange={(e) => updateField("otherBankName", e.target.value)}
             placeholder="Enter bank name"
+            className="h-12 text-base"
           />
         </div>
       )}
 
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">BIC Code *</Label>
+        <Label className="text-foreground font-medium text-sm">BIC Code *</Label>
         <Input
           value={formData.bicCode || ""}
           onChange={(e) => updateField("bicCode", e.target.value)}
           placeholder="Enter BIC code"
           required={!isPreview}
+          className="h-12 text-base"
         />
       </div>
 
       <div className="space-y-2">
-        <Label className="text-foreground font-medium">Bank Account Number *</Label>
+        <Label className="text-foreground font-medium text-sm">Bank Account Number *</Label>
         <Input
           value={formData.bankAccountNumber || ""}
           onChange={(e) => updateField("bankAccountNumber", e.target.value)}
           placeholder="Enter account number"
           required={!isPreview}
+          className="h-12 text-base"
         />
       </div>
     </div>
@@ -540,39 +662,41 @@ function EmergencyIdStep({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium mb-4">Emergency Contact</h3>
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-5">
+          <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">First Name *</Label>
+              <Label className="text-foreground font-medium text-sm">First Name *</Label>
               <Input
                 value={formData.emergencyFirstName || ""}
                 onChange={(e) => updateField("emergencyFirstName", e.target.value)}
                 placeholder="Enter first name"
                 required={!isPreview}
+                className="h-12 text-base"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-foreground font-medium">Last Name *</Label>
+              <Label className="text-foreground font-medium text-sm">Last Name *</Label>
               <Input
                 value={formData.emergencyLastName || ""}
                 onChange={(e) => updateField("emergencyLastName", e.target.value)}
                 placeholder="Enter last name"
                 required={!isPreview}
+                className="h-12 text-base"
               />
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="text-foreground font-medium">Phone Number *</Label>
+            <Label className="text-foreground font-medium text-sm">Phone Number *</Label>
             <div className="flex gap-2">
               <Select defaultValue="RO">
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="w-20 h-12 text-base">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="RO">🇷🇴</SelectItem>
-                  <SelectItem value="US">🇺🇸</SelectItem>
-                  <SelectItem value="DE">🇩🇪</SelectItem>
-                  <SelectItem value="UK">🇬🇧</SelectItem>
+                  <SelectItem value="RO" className="text-base py-3">🇷🇴</SelectItem>
+                  <SelectItem value="US" className="text-base py-3">🇺🇸</SelectItem>
+                  <SelectItem value="DE" className="text-base py-3">🇩🇪</SelectItem>
+                  <SelectItem value="UK" className="text-base py-3">🇬🇧</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -580,7 +704,7 @@ function EmergencyIdStep({
                 value={formData.emergencyPhone || ""}
                 onChange={(e) => updateField("emergencyPhone", e.target.value)}
                 placeholder="Enter phone number"
-                className="flex-1"
+                className="flex-1 h-12 text-base"
                 required={!isPreview}
               />
             </div>
@@ -591,10 +715,10 @@ function EmergencyIdStep({
       <div className="border-t border-border pt-6">
         <h3 className="text-lg font-medium mb-4">ID / Passport</h3>
         <div className="space-y-2">
-          <Label className="text-foreground font-medium">
+          <Label className="text-foreground font-medium text-sm">
             Upload valid EU ID or Passport *
           </Label>
-          <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+          <div className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-8 text-center hover:border-primary/50 transition-colors active:bg-muted/50">
             <input
               type="file"
               id="id-upload"
@@ -602,14 +726,14 @@ function EmergencyIdStep({
               onChange={onFileChange}
               className="hidden"
             />
-            <label htmlFor="id-upload" className="cursor-pointer">
-              <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Drag & drop or{" "}
-                <span className="text-primary underline">browse</span>
+            <label htmlFor="id-upload" className="cursor-pointer block">
+              <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-base text-muted-foreground">
+                Tap to upload or{" "}
+                <span className="text-primary font-medium">browse</span>
               </p>
               {uploadedFile && (
-                <p className="mt-2 text-sm text-primary font-medium">
+                <p className="mt-3 text-sm text-primary font-medium bg-primary/10 rounded-full px-4 py-2 inline-block">
                   {uploadedFile.name}
                 </p>
               )}
@@ -633,55 +757,77 @@ function ReviewStep({
   const bankName = isOtherBank ? formData.otherBankName : selectedBank;
   
   return (
-    <div className="space-y-6">
-      <p className="text-muted-foreground">
+    <div className="space-y-5">
+      <p className="text-muted-foreground text-base">
         Please review your information before submitting.
       </p>
       
       <div className="space-y-4">
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h4 className="font-medium mb-2">Personal Information</h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Name:</span>
-            <span>{formData.firstName} {formData.middleName} {formData.lastName}</span>
-            <span className="text-muted-foreground">Email:</span>
-            <span>{formData.email}</span>
-            <span className="text-muted-foreground">Phone:</span>
-            <span>{formData.mobilePhone}</span>
+        <div className="bg-muted/50 rounded-xl p-4">
+          <h4 className="font-medium mb-3 text-base">Personal Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Name</span>
+              <span className="font-medium text-right">{formData.firstName} {formData.middleName} {formData.lastName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Email</span>
+              <span className="font-medium text-right break-all">{formData.email}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Phone</span>
+              <span className="font-medium">{formData.mobilePhone}</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h4 className="font-medium mb-2">Address</h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Address:</span>
-            <span>{formData.address1} {formData.address2}</span>
-            <span className="text-muted-foreground">City:</span>
-            <span>{formData.city}, {formData.stateProvince}</span>
-            <span className="text-muted-foreground">Country:</span>
-            <span>{formData.country}</span>
+        <div className="bg-muted/50 rounded-xl p-4">
+          <h4 className="font-medium mb-3 text-base">Address</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Address</span>
+              <span className="font-medium text-right">{formData.address1} {formData.address2}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">City</span>
+              <span className="font-medium">{formData.city}, {formData.stateProvince}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Country</span>
+              <span className="font-medium">{formData.country}</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h4 className="font-medium mb-2">Bank Information</h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Bank:</span>
-            <span>{bankName}</span>
-            <span className="text-muted-foreground">BIC:</span>
-            <span>{formData.bicCode}</span>
-            <span className="text-muted-foreground">Account:</span>
-            <span>{formData.bankAccountNumber}</span>
+        <div className="bg-muted/50 rounded-xl p-4">
+          <h4 className="font-medium mb-3 text-base">Bank Information</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Bank</span>
+              <span className="font-medium text-right">{bankName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">BIC</span>
+              <span className="font-medium">{formData.bicCode}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Account</span>
+              <span className="font-medium break-all text-right">{formData.bankAccountNumber}</span>
+            </div>
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4">
-          <h4 className="font-medium mb-2">Emergency Contact</h4>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Name:</span>
-            <span>{formData.emergencyFirstName} {formData.emergencyLastName}</span>
-            <span className="text-muted-foreground">Phone:</span>
-            <span>{formData.emergencyPhone}</span>
+        <div className="bg-muted/50 rounded-xl p-4">
+          <h4 className="font-medium mb-3 text-base">Emergency Contact</h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Name</span>
+              <span className="font-medium">{formData.emergencyFirstName} {formData.emergencyLastName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Phone</span>
+              <span className="font-medium">{formData.emergencyPhone}</span>
+            </div>
           </div>
         </div>
       </div>
