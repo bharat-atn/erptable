@@ -5,11 +5,13 @@ import { EmployeesView } from "./EmployeesView";
 import { InvitationsView } from "./InvitationsView";
 import { ContractsView } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
+import { OnboardingPreview } from "./OnboardingPreview";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid } from "lucide-react";
+import { Eye } from "lucide-react";
 
 export function Dashboard() {
   const [activeView, setActiveView] = useState("dashboard");
+  const [showPreview, setShowPreview] = useState(false);
 
   const renderView = () => {
     switch (activeView) {
@@ -28,6 +30,10 @@ export function Dashboard() {
     }
   };
 
+  if (showPreview) {
+    return <OnboardingPreview onClose={() => setShowPreview(false)} />;
+  }
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar activeView={activeView} onViewChange={setActiveView} />
@@ -39,11 +45,11 @@ export function Dashboard() {
       
       {/* Floating button - Switch to Candidate View */}
       <Button
-        variant="outline"
-        className="fixed bottom-4 right-4 shadow-lg"
-        onClick={() => window.open("/onboard/demo", "_blank")}
+        variant="default"
+        className="fixed bottom-6 right-6 shadow-lg gap-2"
+        onClick={() => setShowPreview(true)}
       >
-        <LayoutGrid className="w-4 h-4 mr-2" />
+        <Eye className="w-4 h-4" />
         Switch to Candidate View
       </Button>
     </div>
