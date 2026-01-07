@@ -1,15 +1,12 @@
-import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Users,
   Mail,
+  Users,
   FileText,
   Settings,
   LogOut,
-  ChevronLeft,
-  Zap,
+  Layers,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,81 +17,54 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "employees", label: "Employees", icon: Users },
   { id: "invitations", label: "Invitations", icon: Mail },
+  { id: "employees", label: "Employees", icon: Users },
   { id: "contracts", label: "Contracts", icon: FileText },
+  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <aside
-      className={cn(
-        "h-screen bg-card border-r border-border flex flex-col transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
+    <aside className="w-56 min-h-screen bg-card border-r border-border flex flex-col">
       {/* Logo */}
-      <div className="p-4 border-b border-border flex items-center gap-3">
-        <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center flex-shrink-0">
-          <Zap className="w-5 h-5 text-primary-foreground" />
+      <div className="p-4 flex items-center gap-2">
+        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <Layers className="w-4 h-4 text-primary-foreground" />
         </div>
-        {!collapsed && (
-          <div className="animate-fade-in">
-            <h1 className="font-display font-bold text-lg">OnboardFlow</h1>
-            <p className="text-xs text-muted-foreground">HR Platform</p>
-          </div>
-        )}
+        <span className="font-semibold text-foreground">OnboardFlow</span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1">
         {menuItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               activeView === item.id
-                ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
             )}
           >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && (
-              <span className="font-medium text-sm animate-fade-in">
-                {item.label}
-              </span>
-            )}
+            <item.icon className="w-4 h-4" />
+            <span>{item.label}</span>
           </button>
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-border space-y-1">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-        >
-          <ChevronLeft
-            className={cn(
-              "w-5 h-5 flex-shrink-0 transition-transform",
-              collapsed && "rotate-180"
-            )}
-          />
-          {!collapsed && <span className="text-sm">Collapse</span>}
-        </button>
+      {/* Sign Out */}
+      <div className="p-3 border-t border-border">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          {!collapsed && <span className="text-sm">Sign Out</span>}
+          <LogOut className="w-4 h-4" />
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>

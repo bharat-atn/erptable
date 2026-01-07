@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, User, CheckCircle, AlertCircle, Zap } from "lucide-react";
+import { Loader2, User, CheckCircle, AlertCircle, Layers } from "lucide-react";
 import { z } from "zod";
 
 const personalInfoSchema = z.object({
@@ -24,7 +24,6 @@ type PersonalInfo = z.infer<typeof personalInfoSchema>;
 
 export default function OnboardingPortal() {
   const { token } = useParams<{ token: string }>();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState<Partial<PersonalInfo>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -48,15 +47,13 @@ export default function OnboardingPortal() {
       
       return data;
     },
-    enabled: !!token,
+    enabled: !!token && token !== "demo",
   });
 
   const submitOnboarding = useMutation({
     mutationFn: async (data: PersonalInfo) => {
-      // Validate data
       const validated = personalInfoSchema.parse(data);
 
-      // Update employee with personal info
       const { error: empError } = await supabase
         .from("employees")
         .update({
@@ -66,7 +63,6 @@ export default function OnboardingPortal() {
             phone: validated.phone,
             address: validated.address,
             emergencyContact: validated.emergencyContact,
-            // In production, these would be encrypted
             bankAccount: validated.bankAccount,
             taxNumber: validated.taxNumber,
           },
@@ -76,7 +72,6 @@ export default function OnboardingPortal() {
 
       if (empError) throw empError;
 
-      // Update invitation status
       const { error: invError } = await supabase
         .from("invitations")
         .update({ status: "ACCEPTED" })
@@ -84,7 +79,6 @@ export default function OnboardingPortal() {
 
       if (invError) throw invError;
 
-      // Create a contract record
       const { error: contractError } = await supabase
         .from("contracts")
         .insert({
@@ -98,7 +92,7 @@ export default function OnboardingPortal() {
       setIsSubmitted(true);
       toast.success("Onboarding submitted successfully!");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message);
     },
   });
@@ -108,7 +102,7 @@ export default function OnboardingPortal() {
     try {
       const validated = personalInfoSchema.parse(formData);
       submitOnboarding.mutate(validated);
-    } catch (err: any) {
+    } catch (err) {
       if (err instanceof z.ZodError) {
         toast.error(err.errors[0].message);
       }
@@ -119,22 +113,97 @@ export default function OnboardingPortal() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Demo mode
+  if (token === "demo") {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="bg-primary py-6 px-4">
+          <div className="max-w-3xl mx-auto text-center text-primary-foreground">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
+                <Layers className="w-4 h-4" />
+              </div>
+              <span className="font-semibold">OnboardFlow</span>
+            </div>
+            <h1 className="text-2xl font-semibold">Welcome to the Team!</h1>
+            <p className="text-sm opacity-90 mt-1">This is a demo of the candidate onboarding form</p>
+          </div>
+        </header>
+
+        <main className="max-w-3xl mx-auto px-4 py-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                Personal Information
+              </CardTitle>
+              <CardDescription>Demo: candidate@example.com</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>First Name *</Label>
+                    <Input placeholder="John" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name *</Label>
+                    <Input placeholder="Doe" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone Number *</Label>
+                  <Input type="tel" placeholder="+1 (555) 123-4567" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Address *</Label>
+                  <Input placeholder="123 Main St, City, State, ZIP" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Emergency Contact</Label>
+                  <Input placeholder="Name - Relationship - Phone" />
+                </div>
+                <div className="border-t pt-6">
+                  <h3 className="font-medium mb-4">Financial Information</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Bank Account Number</Label>
+                      <Input placeholder="••••••••••" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tax ID / SSN</Label>
+                      <Input placeholder="••••••••••" />
+                    </div>
+                  </div>
+                </div>
+                <Button type="button" className="w-full" onClick={() => toast.success("Demo: Form would be submitted")}>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Complete Onboarding
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-foreground" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error || !invitation) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-large">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
-            <h2 className="font-display text-xl font-bold mb-2">Invalid Invitation</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-lg font-semibold mb-2">Invalid Invitation</h2>
+            <p className="text-muted-foreground text-sm">
               {(error as Error)?.message || "This invitation link is not valid."}
             </p>
           </CardContent>
@@ -145,14 +214,14 @@ export default function OnboardingPortal() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-large animate-fade-up">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
           <CardContent className="pt-6 text-center">
-            <div className="w-16 h-16 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-success" />
             </div>
-            <h2 className="font-display text-xl font-bold mb-2">Onboarding Complete!</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-lg font-semibold mb-2">Onboarding Complete!</h2>
+            <p className="text-muted-foreground text-sm">
               Thank you for completing your onboarding. Our HR team will be in touch shortly.
             </p>
           </CardContent>
@@ -163,39 +232,30 @@ export default function OnboardingPortal() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="gradient-hero py-8 px-4">
+      <header className="bg-primary py-6 px-4">
         <div className="max-w-3xl mx-auto text-center text-primary-foreground">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-primary-foreground/20 rounded-xl flex items-center justify-center">
-              <Zap className="w-5 h-5" />
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="w-8 h-8 bg-primary-foreground/20 rounded-lg flex items-center justify-center">
+              <Layers className="w-4 h-4" />
             </div>
-            <span className="font-display font-bold text-xl">OnboardFlow HR</span>
+            <span className="font-semibold">OnboardFlow</span>
           </div>
-          <h1 className="font-display text-3xl font-bold mb-2">
-            Welcome to the Team!
-          </h1>
-          <p className="opacity-90">
-            Please complete your onboarding information below
-          </p>
+          <h1 className="text-2xl font-semibold">Welcome to the Team!</h1>
+          <p className="text-sm opacity-90 mt-1">Please complete your onboarding information</p>
         </div>
       </header>
 
-      {/* Form */}
-      <main className="max-w-3xl mx-auto px-4 py-8 -mt-4">
-        <Card className="shadow-large animate-fade-up">
+      <main className="max-w-3xl mx-auto px-4 py-8">
+        <Card>
           <CardHeader>
-            <CardTitle className="font-display flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5 text-primary" />
               Personal Information
             </CardTitle>
-            <CardDescription>
-              For: {invitation.employees?.email}
-            </CardDescription>
+            <CardDescription>For: {invitation.employees?.email}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Info */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">First Name *</Label>
@@ -252,9 +312,8 @@ export default function OnboardingPortal() {
                 />
               </div>
 
-              {/* Sensitive Info */}
               <div className="border-t pt-6">
-                <h3 className="font-display font-semibold mb-4">Financial Information</h3>
+                <h3 className="font-medium mb-4">Financial Information</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="bankAccount">Bank Account Number</Label>
@@ -280,21 +339,15 @@ export default function OnboardingPortal() {
                 </p>
               </div>
 
-              <Button
-                type="submit"
-                variant="hero"
-                size="lg"
-                className="w-full"
-                disabled={submitOnboarding.isPending}
-              >
+              <Button type="submit" className="w-full" disabled={submitOnboarding.isPending}>
                 {submitOnboarding.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Submitting...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="w-4 h-4 mr-2" />
                     Complete Onboarding
                   </>
                 )}

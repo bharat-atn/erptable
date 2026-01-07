@@ -5,66 +5,48 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
+  subtitleColor?: "green" | "red" | "default";
   icon: LucideIcon;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-  variant?: "default" | "primary" | "accent";
-  className?: string;
+  iconColor?: "blue" | "yellow" | "green" | "red";
 }
 
 export function StatsCard({
   title,
   value,
   subtitle,
+  subtitleColor = "default",
   icon: Icon,
-  trend,
-  variant = "default",
-  className,
+  iconColor = "blue",
 }: StatsCardProps) {
+  const iconBgColors = {
+    blue: "bg-primary/10 text-primary",
+    yellow: "bg-warning/10 text-warning",
+    green: "bg-success/10 text-success",
+    red: "bg-destructive/10 text-destructive",
+  };
+
+  const subtitleColors = {
+    green: "text-success",
+    red: "text-destructive",
+    default: "text-muted-foreground",
+  };
+
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-xl border bg-card p-6 shadow-soft transition-all duration-200 hover:shadow-medium",
-        className
-      )}
-    >
+    <div className="bg-card rounded-lg border border-border p-4">
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <div className="flex items-baseline gap-2">
-            <h3 className="font-display text-3xl font-bold">{value}</h3>
-            {trend && (
-              <span
-                className={cn(
-                  "text-xs font-medium",
-                  trend.isPositive ? "text-success" : "text-destructive"
-                )}
-              >
-                {trend.isPositive ? "+" : ""}
-                {trend.value}%
-              </span>
-            )}
-          </div>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="text-2xl font-semibold">{value}</p>
           {subtitle && (
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+            <p className={cn("text-xs", subtitleColors[subtitleColor])}>
+              {subtitle}
+            </p>
           )}
         </div>
-        <div
-          className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-xl",
-            variant === "primary" && "bg-primary/10 text-primary",
-            variant === "accent" && "bg-accent/10 text-accent",
-            variant === "default" && "bg-secondary text-secondary-foreground"
-          )}
-        >
-          <Icon className="h-6 w-6" />
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", iconBgColors[iconColor])}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
-      {variant === "primary" && (
-        <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/5" />
-      )}
     </div>
   );
 }

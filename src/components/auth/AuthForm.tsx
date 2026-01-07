@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, UserPlus, LogIn } from "lucide-react";
+import { Loader2, Mail, Lock, UserPlus, LogIn, Layers } from "lucide-react";
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -47,19 +47,19 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-large animate-fade-up">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-12 h-12 gradient-primary rounded-xl flex items-center justify-center mb-2">
-            <UserPlus className="w-6 h-6 text-primary-foreground" />
+          <div className="mx-auto w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-2">
+            <Layers className="w-6 h-6 text-primary-foreground" />
           </div>
-          <CardTitle className="font-display text-2xl">
+          <CardTitle className="text-xl">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </CardTitle>
           <CardDescription>
             {isSignUp
               ? "Sign up to manage employee onboarding"
-              : "Sign in to your HR dashboard"}
+              : "Sign in to your OnboardFlow dashboard"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,8 +97,6 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
             </div>
             <Button
               type="submit"
-              variant="hero"
-              size="lg"
               className="w-full"
               disabled={isLoading}
             >
@@ -106,12 +104,12 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : isSignUp ? (
                 <>
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="w-4 h-4 mr-2" />
                   Create Account
                 </>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="w-4 h-4 mr-2" />
                   Sign In
                 </>
               )}
