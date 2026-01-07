@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -20,16 +19,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Mail } from "lucide-react";
 
 export function CreateInvitationDialog() {
   const [isOpen, setIsOpen] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [type, setType] = useState<"NEW_HIRE" | "CONTRACT_RENEWAL">("NEW_HIRE");
   const queryClient = useQueryClient();
 
   const createInvitation = useMutation({
-    mutationFn: async ({ email, type }: { email: string; type: string }) => {
+    mutationFn: async () => {
       // Check if employee exists
       const { data: existingEmployee } = await supabase
         .from("employees")
@@ -45,7 +47,13 @@ export function CreateInvitationDialog() {
         }
         const { data: newEmployee, error: empError } = await supabase
           .from("employees")
-          .insert({ email, status: "INVITED" })
+          .insert([{ 
+            email, 
+            first_name: firstName.trim() || null,
+            middle_name: middleName.trim() || null,
+            last_name: lastName.trim() || null,
+            status: "INVITED" as const,
+          }])
           .select("id")
           .single();
 
@@ -70,16 +78,25 @@ export function CreateInvitationDialog() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations-table"] });
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
       toast.success("Invitation created successfully!");
-      setIsOpen(false);
-      setEmail("");
-      setType("NEW_HIRE");
+      resetForm();
     },
     onError: (error: Error) => {
       toast.error(error.message);
     },
   });
+
+  const resetForm = () => {
+    setIsOpen(false);
+    setFirstName("");
+    setMiddleName("");
+    setLastName("");
+    setEmail("");
+    setType("NEW_HIRE");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,7 +104,7 @@ export function CreateInvitationDialog() {
       toast.error("Please enter an email address");
       return;
     }
-    createInvitation.mutate({ email: email.trim(), type });
+    createInvitation.mutate();
   };
 
   return (
@@ -98,46 +115,78 @@ export function CreateInvitationDialog() {
           Create Invitation
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create Invitation</DialogTitle>
-          <DialogDescription>
-            Send an onboarding invitation to a new hire or existing employee
-          </DialogDescription>
+          <DialogTitle className="text-lg font-semibold">New Invitation</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+          {/* Name Fields Row */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First Name</Label>
+              <Input
+                id="firstName"
+                placeholder="Jane"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="middleName">Middle Name</Label>
+              <Input
+                id="middleName"
+                placeholder="Marie"
+                value={middleName}
+                onChange={(e) => setMiddleName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Email Field */}
           <div className="space-y-2">
-            <Label htmlFor="email">Employee Email</Label>
+            <Label htmlFor="email">Email Address</Label>
             <Input
               id="email"
               type="email"
-              placeholder="employee@company.com"
+              placeholder="candidate@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
+
+          {/* Invitation Type */}
           <div className="space-y-2">
             <Label htmlFor="type">Invitation Type</Label>
             <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NEW_HIRE">New Hire</SelectItem>
+                <SelectItem value="NEW_HIRE">New Hire Onboarding</SelectItem>
                 <SelectItem value="CONTRACT_RENEWAL">Contract Renewal</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createInvitation.isPending}>
-              {createInvitation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Create
-            </Button>
-          </div>
+
+          {/* Submit Button */}
+          <Button type="submit" className="w-full" disabled={createInvitation.isPending}>
+            {createInvitation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Mail className="w-4 h-4 mr-2" />
+            )}
+            Send Invitation
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

@@ -65,6 +65,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          middle_name: string | null
           personal_info: Json | null
           status: Database["public"]["Enums"]["employee_status"]
           updated_at: string
@@ -75,6 +76,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          middle_name?: string | null
           personal_info?: Json | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string
@@ -85,6 +87,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          middle_name?: string | null
           personal_info?: Json | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string
