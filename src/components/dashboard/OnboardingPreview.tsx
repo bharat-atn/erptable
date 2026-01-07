@@ -65,14 +65,15 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
-      {/* Floating close button */}
+      {/* Floating close button - positioned above mobile nav */}
       <Button
         variant="default"
-        className="fixed bottom-6 right-6 z-50 shadow-lg gap-2"
+        className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 shadow-lg gap-2"
         onClick={onClose}
       >
         <X className="w-4 h-4" />
-        Switch to Admin View
+        <span className="hidden sm:inline">Switch to Admin View</span>
+        <span className="sm:hidden">Admin</span>
       </Button>
 
       <OnboardingWizard
