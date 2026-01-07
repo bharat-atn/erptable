@@ -12,9 +12,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { Mail, Search, Filter, MoreVertical, Copy, Send, Trash2 } from "lucide-react";
+import { Mail, Search, Filter, MoreVertical, Copy, Send, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { OnboardingPreview } from "./OnboardingPreview";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
 type InvitationStatus = "PENDING" | "SENT" | "ACCEPTED" | "EXPIRED";
@@ -45,6 +46,7 @@ const statusLabels: Record<InvitationStatus, string> = {
 
 export function InvitationsView() {
   const [search, setSearch] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: invitations, isLoading } = useQuery({
@@ -82,6 +84,10 @@ export function InvitationsView() {
     navigator.clipboard.writeText(`${window.location.origin}/onboard/${token}`);
     toast.success("Link copied to clipboard");
   };
+
+  if (showPreview) {
+    return <OnboardingPreview onClose={() => setShowPreview(false)} />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -175,6 +181,10 @@ export function InvitationsView() {
                             <DropdownMenuItem onClick={() => copyLink(invitation.token)}>
                               <Copy className="w-4 h-4 mr-2" />
                               Copy Link
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setShowPreview(true)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Preview Form
                             </DropdownMenuItem>
                             {invitation.status === "PENDING" && (
                               <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}>
