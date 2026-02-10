@@ -8,6 +8,7 @@ import {
   LogOut,
   Layers,
   Briefcase,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +24,10 @@ const menuItems = [
   { id: "employees", label: "Employees", icon: Users },
   { id: "contracts", label: "Contracts", icon: FileText },
   { id: "settings", label: "Settings", icon: Settings },
+];
+
+const configItems = [
+  { id: "process-guide", label: "Process Guide", icon: BookOpen },
 ];
 
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
@@ -43,6 +48,27 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onViewChange(item.id)}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              activeView === item.id
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.label}</span>
+          </button>
+        ))}
+
+        <div className="pt-4 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Configuration
+          </span>
+        </div>
+        {configItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}

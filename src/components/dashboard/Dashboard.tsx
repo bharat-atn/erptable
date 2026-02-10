@@ -7,6 +7,7 @@ import { ContractsView } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
 import { OnboardingPreview } from "./OnboardingPreview";
 import { OperationsView } from "./OperationsView";
+import { ProcessGuideView } from "./ProcessGuideView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
@@ -28,6 +29,8 @@ export function Dashboard() {
         return <ContractsView />;
       case "settings":
         return <SettingsView />;
+      case "process-guide":
+        return <ProcessGuideView />;
       default:
         return <DashboardView />;
     }
