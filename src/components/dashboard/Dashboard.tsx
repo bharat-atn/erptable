@@ -22,7 +22,7 @@ export function Dashboard() {
       case "operations":
         return <OperationsView />;
       case "employees":
-        return <EmployeesView />;
+        return <OperationsView />;
       case "invitations":
         return <InvitationsView />;
       case "contracts":
