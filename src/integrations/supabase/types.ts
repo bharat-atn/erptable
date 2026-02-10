@@ -60,35 +60,47 @@ export type Database = {
       }
       employees: {
         Row: {
+          city: string | null
+          country: string | null
           created_at: string
           email: string
+          employee_code: string | null
           first_name: string | null
           id: string
           last_name: string | null
           middle_name: string | null
           personal_info: Json | null
+          phone: string | null
           status: Database["public"]["Enums"]["employee_status"]
           updated_at: string
         }
         Insert: {
+          city?: string | null
+          country?: string | null
           created_at?: string
           email: string
+          employee_code?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           middle_name?: string | null
           personal_info?: Json | null
+          phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string
         }
         Update: {
+          city?: string | null
+          country?: string | null
           created_at?: string
           email?: string
+          employee_code?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           middle_name?: string | null
           personal_info?: Json | null
+          phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           updated_at?: string
         }
