@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   Layers,
+  Briefcase,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,6 +18,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "operations", label: "Operations", icon: Briefcase },
   { id: "invitations", label: "Invitations", icon: Mail },
   { id: "employees", label: "Employees", icon: Users },
   { id: "contracts", label: "Contracts", icon: FileText },

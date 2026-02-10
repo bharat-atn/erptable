@@ -6,6 +6,7 @@ import { InvitationsView } from "./InvitationsView";
 import { ContractsView } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
 import { OnboardingPreview } from "./OnboardingPreview";
+import { OperationsView } from "./OperationsView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
@@ -17,6 +18,8 @@ export function Dashboard() {
     switch (activeView) {
       case "dashboard":
         return <DashboardView />;
+      case "operations":
+        return <OperationsView />;
       case "employees":
         return <EmployeesView />;
       case "invitations":
