@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Loader2, Mail } from "lucide-react";
+import { Plus, Loader2, Mail, ChevronsUpDown, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function CreateInvitationDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,27 +42,53 @@ export function CreateInvitationDialog() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [type, setType] = useState<"NEW_HIRE" | "CONTRACT_RENEWAL">("NEW_HIRE");
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const { data: employees } = useQuery({
+    queryKey: ["employees-for-renewal"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, first_name, middle_name, last_name, email, employee_code, status")
+        .order("first_name");
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen,
+  });
+
+  const selectedEmployee = employees?.find((e) => e.id === selectedEmployeeId);
 
   const createInvitation = useMutation({
     mutationFn: async () => {
-      // Check if employee exists
-      const { data: existingEmployee } = await supabase
-        .from("employees")
-        .select("id")
-        .eq("email", email)
-        .single();
+      let employeeId: string | undefined;
 
-      let employeeId = existingEmployee?.id;
+      if (type === "CONTRACT_RENEWAL") {
+        if (!selectedEmployeeId) {
+          throw new Error("Please select an employee for contract renewal");
+        }
+        employeeId = selectedEmployeeId;
+      } else {
+        // NEW_HIRE flow
+        if (!email.trim()) {
+          throw new Error("Please enter an email address");
+        }
+        const { data: existingEmployee } = await supabase
+          .from("employees")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
 
-      if (type === "NEW_HIRE") {
         if (existingEmployee) {
           throw new Error("Employee already exists with this email");
         }
+
         const { data: newEmployee, error: empError } = await supabase
           .from("employees")
-          .insert([{ 
-            email, 
+          .insert([{
+            email,
             first_name: firstName.trim() || null,
             middle_name: middleName.trim() || null,
             last_name: lastName.trim() || null,
@@ -59,8 +99,6 @@ export function CreateInvitationDialog() {
 
         if (empError) throw empError;
         employeeId = newEmployee.id;
-      } else if (!existingEmployee) {
-        throw new Error("Employee not found for contract renewal");
       }
 
       const { data, error } = await supabase
@@ -81,6 +119,7 @@ export function CreateInvitationDialog() {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      queryClient.invalidateQueries({ queryKey: ["employees-for-renewal"] });
       toast.success("Invitation created successfully!");
       resetForm();
     },
@@ -96,15 +135,25 @@ export function CreateInvitationDialog() {
     setLastName("");
     setEmail("");
     setType("NEW_HIRE");
+    setSelectedEmployeeId(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
+    if (type === "NEW_HIRE" && !email.trim()) {
       toast.error("Please enter an email address");
       return;
     }
+    if (type === "CONTRACT_RENEWAL" && !selectedEmployeeId) {
+      toast.error("Please select an employee");
+      return;
+    }
     createInvitation.mutate();
+  };
+
+  const getEmployeeLabel = (emp: NonNullable<typeof employees>[number]) => {
+    const name = [emp.first_name, emp.last_name].filter(Boolean).join(" ") || "Unnamed";
+    return `${name} (${emp.employee_code || emp.email})`;
   };
 
   return (
@@ -120,54 +169,13 @@ export function CreateInvitationDialog() {
           <DialogTitle className="text-lg font-semibold">New Invitation</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-          {/* Name Fields Row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                placeholder="Jane"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="middleName">Middle Name</Label>
-              <Input
-                id="middleName"
-                placeholder="Marie"
-                value={middleName}
-                onChange={(e) => setMiddleName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                placeholder="Doe"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Email Field */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="candidate@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
           {/* Invitation Type */}
           <div className="space-y-2">
             <Label htmlFor="type">Invitation Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
+            <Select value={type} onValueChange={(v) => {
+              setType(v as typeof type);
+              setSelectedEmployeeId(null);
+            }}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -177,6 +185,108 @@ export function CreateInvitationDialog() {
               </SelectContent>
             </Select>
           </div>
+
+          {type === "CONTRACT_RENEWAL" ? (
+            /* Employee Picker for Contract Renewal */
+            <div className="space-y-2">
+              <Label>Select Employee</Label>
+              <Popover open={employeePickerOpen} onOpenChange={setEmployeePickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={employeePickerOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    {selectedEmployee
+                      ? getEmployeeLabel(selectedEmployee)
+                      : "Search employee register..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search by name, email, or code..." />
+                    <CommandList>
+                      <CommandEmpty>No employees found.</CommandEmpty>
+                      <CommandGroup>
+                        {employees?.map((emp) => (
+                          <CommandItem
+                            key={emp.id}
+                            value={`${emp.first_name} ${emp.last_name} ${emp.email} ${emp.employee_code}`}
+                            onSelect={() => {
+                              setSelectedEmployeeId(emp.id);
+                              setEmployeePickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedEmployeeId === emp.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">
+                                {[emp.first_name, emp.last_name].filter(Boolean).join(" ") || "Unnamed"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {emp.employee_code || "—"} · {emp.email}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            /* New Hire Fields */
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="Jane"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="middleName">Middle Name</Label>
+                  <Input
+                    id="middleName"
+                    placeholder="Marie"
+                    value={middleName}
+                    onChange={(e) => setMiddleName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="candidate@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            </>
+          )}
 
           {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={createInvitation.isPending}>

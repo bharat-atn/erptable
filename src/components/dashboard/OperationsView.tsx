@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { generateDummyEmployee } from "@/lib/dummy-employees";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
+import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
+import type { Tables } from "@/integrations/supabase/types";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 
@@ -55,6 +60,10 @@ const ITEMS_PER_PAGE = 7;
 export function OperationsView() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [editEmployee, setEditEmployee] = useState<Tables<"employees"> | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteEmployee, setDeleteEmployee] = useState<Tables<"employees"> | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: employees, isLoading } = useQuery({
     queryKey: ["operations-employees"],
@@ -67,6 +76,55 @@ export function OperationsView() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const addDummyEmployee = useMutation({
+    mutationFn: async () => {
+      const dummy = generateDummyEmployee();
+      const { error } = await supabase.from("employees").insert([{
+        first_name: dummy.first_name,
+        last_name: dummy.last_name,
+        email: dummy.email,
+        phone: dummy.phone,
+        city: dummy.city,
+        country: dummy.country,
+        status: dummy.status,
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      toast.success("Dummy employee added!");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const updateEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData & { id: string }) => {
+      const { id, ...rest } = data;
+      const { error } = await supabase.from("employees").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      toast.success("Employee updated!");
+      setFormOpen(false);
+      setEditEmployee(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("employees").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      toast.success("Employee deleted!");
+      setDeleteEmployee(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const filteredEmployees = employees?.filter((emp) =>
@@ -120,13 +178,17 @@ export function OperationsView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => addDummyEmployee.mutate()} disabled={addDummyEmployee.isPending}>
+            <Users className="w-4 h-4" />
+            Add Dummy
+          </Button>
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             Export
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => { setEditEmployee(null); setFormOpen(true); }}>
             <Plus className="w-4 h-4" />
-            New Invitation
+            Add Employee
           </Button>
         </div>
       </div>
@@ -344,8 +406,8 @@ export function OperationsView() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Edit Employee</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditEmployee(employee as Tables<"employees">); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee as Tables<"employees">)}>Delete Employee</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -419,6 +481,33 @@ export function OperationsView() {
           </div>
         </div>
       )}
+
+      <EmployeeFormDialog
+        open={formOpen}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditEmployee(null); }}
+        employee={editEmployee}
+        onSubmit={(data) => {
+          if (editEmployee) {
+            updateEmployee.mutate({ ...data, id: editEmployee.id });
+          } else {
+            supabase.from("employees").insert([data]).then(({ error }) => {
+              if (error) { toast.error(error.message); return; }
+              queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+              toast.success("Employee created!");
+              setFormOpen(false);
+            });
+          }
+        }}
+        isLoading={updateEmployee.isPending}
+      />
+
+      <DeleteEmployeeDialog
+        open={!!deleteEmployee}
+        onOpenChange={(open) => { if (!open) setDeleteEmployee(null); }}
+        employeeName={deleteEmployee ? `${deleteEmployee.first_name || ""} ${deleteEmployee.last_name || ""}`.trim() || deleteEmployee.email : ""}
+        onConfirm={() => { if (deleteEmployee) deleteEmployeeMutation.mutate(deleteEmployee.id); }}
+        isLoading={deleteEmployeeMutation.isPending}
+      />
     </div>
   );
 }
