@@ -39,8 +39,8 @@ const steps = [{
   icon: Users
 }, {
   id: 3,
-  label: "Language",
-  labelSv: "Language Selection",
+  label: "Language Selection",
+  labelSv: "",
   icon: Globe
 }, {
   id: 4,
@@ -125,9 +125,9 @@ export function ContractTemplateView() {
                     {completed ? <Check className="w-4 h-4 text-primary shrink-0" /> : <Circle className={cn("w-4 h-4 shrink-0", active ? "text-primary" : "text-muted-foreground/40")} />}
                     <span className="">
                       {step.label}{" "}
-                      <span className="text-muted-foreground font-normal text-xs">
+    {step.labelSv && <span className="text-muted-foreground font-normal text-xs">
                         / {step.labelSv}
-                      </span>
+                      </span>}
                     </span>
                   </button>;
             })}
