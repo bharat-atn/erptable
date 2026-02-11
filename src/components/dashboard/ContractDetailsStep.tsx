@@ -123,6 +123,7 @@ export function ContractDetailsStep({
   const [section4Open, setSection4Open] = useState(true);
   const [section5Open, setSection5Open] = useState(true);
   const [section6Open, setSection6Open] = useState(true);
+  const [section7Open, setSection7Open] = useState(true);
 
   const pi = employee.personal_info ?? {};
 
@@ -172,6 +173,9 @@ export function ContractDetailsStep({
   const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
   const [partTimePercent, setPartTimePercent] = useState("");
 
+  // Section 7 state
+  const [annualLeaveDays, setAnnualLeaveDays] = useState("25");
+
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -195,7 +199,7 @@ export function ContractDetailsStep({
     seasonalEndAround: seasonalEndAround?.toISOString() ?? null,
     age69FromDate: age69FromDate?.toISOString() ?? null,
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
-    workingTime, partTimePercent,
+    workingTime, partTimePercent, annualLeaveDays,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -208,7 +212,7 @@ export function ContractDetailsStep({
     tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
     seasonalFromDate, seasonalEndAround,
     age69FromDate, age69UntilDate,
-    workingTime, partTimePercent,
+    workingTime, partTimePercent, annualLeaveDays,
   ]);
 
   // Auto-save every 1 second after changes
@@ -275,6 +279,9 @@ export function ContractDetailsStep({
   const section6Missing: string[] = [];
   if (workingTime === "parttime" && !partTimePercent) section6Missing.push("Part Time Percentage");
 
+  const section7Missing: string[] = [];
+  if (!annualLeaveDays) section7Missing.push("Annual Leave Days");
+
   const sectionWarnings: Record<string, string[]> = {
     "2.1": section21Missing,
     "2.2": section22Missing,
@@ -282,6 +289,7 @@ export function ContractDetailsStep({
     "3": section3Missing,
     "5": section5Missing,
     "6": section6Missing,
+    "7": section7Missing,
   };
 
   const renderLabel = (en: string, sv: string, required = true) => (
@@ -358,13 +366,14 @@ export function ContractDetailsStep({
   const progressSteps = [
     { id: "parties", label: "Parties", icon: Users, sections: ["1", "2.1", "2.2", "2.3"] },
     { id: "employment", label: "Employment", icon: Briefcase, sections: ["3", "4", "5", "6"] },
-    { id: "compensation", label: "Compensation", icon: DollarSign, sections: [] },
+    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["7"] },
     { id: "others", label: "Others", icon: MoreHorizontal, sections: [] },
     { id: "review", label: "Review & Sign", icon: CheckCircle, sections: [] },
   ];
 
   // Determine which progress step is active based on which sections are visible/open
   const getActiveProgressIndex = () => {
+    if (section7Open) return 2;
     if (section3Open || section4Open || section5Open || section6Open) return 1;
     return 0;
   };
@@ -1126,6 +1135,45 @@ export function ContractDetailsStep({
                   )}
                 </div>
               </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Section 7: Holidays */}
+        <Collapsible open={section7Open} onOpenChange={setSection7Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="7"
+              titleEn="Holidays"
+              titleSv="Semester"
+              open={section7Open}
+              onToggle={() => setSection7Open(!section7Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">🌴</span>
+                    Holiday Entitlement
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-1.5">
+                    {renderLabel("Annual Leave Days", "Semesterdagar")}
+                    <Input
+                      type="number"
+                      min="0"
+                      max="365"
+                      value={annualLeaveDays}
+                      onChange={(e) => setAnnualLeaveDays(e.target.value)}
+                      className="h-11 text-sm font-medium max-w-xs"
+                      required
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </CollapsibleContent>
         </Collapsible>
