@@ -444,9 +444,33 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
     <div className="min-h-screen bg-muted/30 flex flex-col items-center p-6 pt-16">
       <div className="w-full max-w-5xl">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Application Launcher</h1>
-          <p className="text-muted-foreground">Choose an application to continue</p>
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-1">Application Launcher</h1>
+            <p className="text-muted-foreground">Choose an application to continue</p>
+          </div>
+          <div className="flex gap-2">
+            {editMode && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setEditingApp(null); setFormOpen(true); }}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add App
+              </Button>
+            )}
+            <Button
+              variant={editMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEditMode(!editMode)}
+              className="gap-2"
+            >
+              <Settings2 className="w-4 h-4" />
+              {editMode ? "Done" : "Customize"}
+            </Button>
+          </div>
         </div>
 
         {/* App Grid */}
@@ -537,30 +561,8 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
           })}
         </div>
 
-        {/* Footer actions */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditMode(!editMode)}
-              className="gap-2"
-            >
-              <Settings2 className="w-4 h-4" />
-              {editMode ? "Done Editing" : "Customize Launcher"}
-            </Button>
-            {editMode && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setEditingApp(null); setFormOpen(true); }}
-                className="gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Application
-              </Button>
-            )}
-          </div>
+        {/* Footer */}
+        <div className="text-center">
           <p className="text-xs text-muted-foreground">
             All applications share common employee data and resources.
           </p>
