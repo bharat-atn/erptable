@@ -44,8 +44,8 @@ const steps = [{
   icon: Globe
 }, {
   id: 4,
-  label: "Details",
-  labelSv: "Uppgifter",
+  label: "Employee Details",
+  labelSv: "Section 2:1, 2:2 & 2:3",
   icon: User
 }];
 export function ContractTemplateView() {
