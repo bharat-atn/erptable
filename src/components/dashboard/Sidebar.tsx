@@ -9,6 +9,7 @@ import {
   Layers,
   Briefcase,
   BookOpen,
+  Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,6 +27,7 @@ const menuItems = [
 
 const settingsItems = [
   { id: "contract-template", label: "Contract Template", icon: FileText },
+  { id: "company-register", label: "Company Register", icon: Building2 },
 ];
 
 const configItems = [
