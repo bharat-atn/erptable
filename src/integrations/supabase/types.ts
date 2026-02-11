@@ -18,32 +18,44 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          country: string | null
           created_at: string
+          email: string | null
           id: string
           name: string
           org_number: string | null
+          phone: string | null
           postcode: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           address?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name: string
           org_number?: string | null
+          phone?: string | null
           postcode?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           address?: string | null
           city?: string | null
+          country?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
           org_number?: string | null
+          phone?: string | null
           postcode?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
