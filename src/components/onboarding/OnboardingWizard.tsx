@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
-import { forwardRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TreePine, Upload, ChevronUp } from "lucide-react";
+import { TreePine, Upload, ChevronUp, Folder } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -76,15 +75,32 @@ interface OnboardingWizardProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
+// Muted teal/steel-blue section header matching the reference document style
 const SectionHeader = forwardRef<HTMLButtonElement, { title: string; open: boolean }>(
   ({ title, open, ...props }, ref) => (
-    <CollapsibleTrigger ref={ref} {...props} className="flex items-center justify-between w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+    <CollapsibleTrigger
+      ref={ref}
+      {...props}
+      className="flex items-center justify-between w-full rounded border border-accent/30 bg-accent/60 px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/80 transition-colors"
+    >
       <span>{title}</span>
       <ChevronUp className={cn("w-4 h-4 transition-transform", !open && "rotate-180")} />
     </CollapsibleTrigger>
   )
 );
 SectionHeader.displayName = "SectionHeader";
+
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Label className="text-sm font-bold text-foreground">
+      {children} <span className="text-destructive">*</span>
+    </Label>
+  );
+}
+
+function OptionalLabel({ children }: { children: React.ReactNode }) {
+  return <Label className="text-sm font-bold text-foreground">{children}</Label>;
+}
 
 export function OnboardingWizard({
   formData,
@@ -105,14 +121,12 @@ export function OnboardingWizard({
   const [s5Open, setS5Open] = useState(true);
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="max-w-xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-lg mx-auto px-4 py-8">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <TreePine className="w-10 h-10 text-primary" />
-          </div>
-          <span className="font-bold text-primary text-lg tracking-wide">LJUNGAN FORESTRY</span>
+        <div className="flex flex-col items-center mb-4">
+          <TreePine className="w-12 h-12 text-primary mb-1" />
+          <span className="font-bold text-primary text-base tracking-widest uppercase">Ljungan Forestry</span>
         </div>
 
         <p className="text-center text-primary font-medium text-sm mb-6">
@@ -120,65 +134,65 @@ export function OnboardingWizard({
         </p>
 
         {isPreview && (
-          <div className="text-center mb-4">
-            <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full">
+          <div className="text-center mb-5">
+            <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
               Preview Mode
             </span>
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-5">
           {/* Section 2.1: Name and Address */}
           <Collapsible open={s1Open} onOpenChange={setS1Open}>
             <SectionHeader title="Section 2.1 : Name and Address Information" open={s1Open} />
-            <CollapsibleContent className="pt-4 space-y-4 px-1">
+            <CollapsibleContent className="pt-5 pb-2 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">First Name *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>First Name</RequiredLabel>
                   <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} required={!isPreview} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Middle Name</Label>
+                <div className="space-y-1">
+                  <OptionalLabel>Middle Name</OptionalLabel>
                   <Input value={formData.middleName || ""} onChange={(e) => updateField("middleName", e.target.value)} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Last Name *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>Last Name</RequiredLabel>
                   <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} required={!isPreview} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Preferred Name *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>Preferred Name</RequiredLabel>
                   <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} required={!isPreview} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Address 1 *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>Adress 1</RequiredLabel>
                   <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} required={!isPreview} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Address 2</Label>
+                <div className="space-y-1">
+                  <OptionalLabel>Adress 2</OptionalLabel>
                   <Input value={formData.address2 || ""} onChange={(e) => updateField("address2", e.target.value)} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">ZIP / Postal Code *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>ZIP / Postal Code</RequiredLabel>
                   <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} required={!isPreview} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">City *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>City</RequiredLabel>
                   <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} required={!isPreview} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">State / Province *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>State / Province</RequiredLabel>
                   <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} required={!isPreview} />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Country *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>Country</RequiredLabel>
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
                     <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
@@ -193,13 +207,13 @@ export function OnboardingWizard({
           {/* Section 2.2: Birth and Contact */}
           <Collapsible open={s2Open} onOpenChange={setS2Open}>
             <SectionHeader title="Section 2.2: Birth and Contact Information" open={s2Open} />
-            <CollapsibleContent className="pt-4 space-y-4 px-1">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Birthday *</Label>
+            <CollapsibleContent className="pt-5 pb-2 space-y-4">
+              <div className="space-y-1">
+                <RequiredLabel>Birthday</RequiredLabel>
                 <Input type="date" value={formData.birthday || ""} onChange={(e) => updateField("birthday", e.target.value)} required={!isPreview} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Country of Birth? *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Country of Birth?</RequiredLabel>
                 <Select value={formData.countryOfBirth} onValueChange={(v) => updateField("countryOfBirth", v)}>
                   <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
                   <SelectContent>
@@ -207,8 +221,8 @@ export function OnboardingWizard({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Citizenship? *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Citizenship?</RequiredLabel>
                 <Select value={formData.citizenship} onValueChange={(v) => updateField("citizenship", v)}>
                   <SelectTrigger><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                   <SelectContent>
@@ -216,8 +230,8 @@ export function OnboardingWizard({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Mobile Phone Number *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Mobile Phone Number</RequiredLabel>
                 <div className="flex gap-2">
                   <Select defaultValue="RO">
                     <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
@@ -231,8 +245,8 @@ export function OnboardingWizard({
                   <Input type="tel" value={formData.mobilePhone || ""} onChange={(e) => updateField("mobilePhone", e.target.value)} className="flex-1" required={!isPreview} />
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Email *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Email</RequiredLabel>
                 <Input type="email" value={formData.email || ""} onChange={(e) => updateField("email", e.target.value)} required={!isPreview} />
               </div>
             </CollapsibleContent>
@@ -241,17 +255,17 @@ export function OnboardingWizard({
           {/* Section 2.3: Emergency Contact */}
           <Collapsible open={s3Open} onOpenChange={setS3Open}>
             <SectionHeader title="Section 2.3: Emergency Contact Information" open={s3Open} />
-            <CollapsibleContent className="pt-4 space-y-4 px-1">
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Emergency Contact First Name *</Label>
+            <CollapsibleContent className="pt-5 pb-2 space-y-4">
+              <div className="space-y-1">
+                <RequiredLabel>Emergency Contact First Name</RequiredLabel>
                 <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} required={!isPreview} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Emergency Contact Last Name *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Emergency Contact Last Name</RequiredLabel>
                 <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} required={!isPreview} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Emergency Contact Mobile Phone Number *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Emergency Contact Mobile Phone Number</RequiredLabel>
                 <div className="flex gap-2">
                   <Select defaultValue="RO">
                     <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
@@ -271,13 +285,13 @@ export function OnboardingWizard({
           {/* Bank Information */}
           <Collapsible open={s4Open} onOpenChange={setS4Open}>
             <SectionHeader title="Bank Information" open={s4Open} />
-            <CollapsibleContent className="pt-4 space-y-4 px-1">
+            <CollapsibleContent className="pt-5 pb-2 space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Toggle your Bank</Label>
+                <Label className="text-sm font-bold text-foreground">Toggle your Bank</Label>
                 <RadioGroup
                   value={isOtherBank ? "other" : selectedBank}
                   onValueChange={onBankSelect}
-                  className="space-y-1"
+                  className="space-y-1.5"
                 >
                   {BANKS.map((bank) => (
                     <div key={bank} className="flex items-center space-x-2">
@@ -285,8 +299,8 @@ export function OnboardingWizard({
                       <Label htmlFor={bank} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
                     </div>
                   ))}
-                  <div className="pt-2 border-t border-border">
-                    <Label className="text-sm font-medium mb-2 block">Toggle here if your bank is not in the list above</Label>
+                  <div className="pt-3 mt-2">
+                    <Label className="text-sm font-bold text-foreground mb-2 block">Toggle here if your bank is not in the list above</Label>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="other" id="other-bank" />
                       <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank</Label>
@@ -295,17 +309,17 @@ export function OnboardingWizard({
                 </RadioGroup>
               </div>
               {isOtherBank && (
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium">Bank Name *</Label>
+                <div className="space-y-1">
+                  <RequiredLabel>Bank Name</RequiredLabel>
                   <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} />
                 </div>
               )}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">BIC Code *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>BIC Code</RequiredLabel>
                 <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} required={!isPreview} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-medium">Your bank account number *</Label>
+              <div className="space-y-1">
+                <RequiredLabel>Your bank account number</RequiredLabel>
                 <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} required={!isPreview} />
               </div>
             </CollapsibleContent>
@@ -314,13 +328,13 @@ export function OnboardingWizard({
           {/* ID / Passport Information */}
           <Collapsible open={s5Open} onOpenChange={setS5Open}>
             <SectionHeader title="ID / Passport Information" open={s5Open} />
-            <CollapsibleContent className="pt-4 space-y-4 px-1">
+            <CollapsibleContent className="pt-5 pb-2 space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Please attach your valid EU ID or Passport *</Label>
-                <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                <RequiredLabel>Please attach your valid EU ID or Passport</RequiredLabel>
+                <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer">
                   <input type="file" id="id-upload" accept="image/*,.pdf" onChange={onFileChange} className="hidden" />
                   <label htmlFor="id-upload" className="cursor-pointer block">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                    <Folder className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
                       Drag & drop a file or <span className="text-primary font-medium underline">browse</span>
                     </p>
@@ -335,7 +349,7 @@ export function OnboardingWizard({
 
           {/* Submit */}
           <div className="flex justify-center pt-4 pb-8">
-            <Button type="submit" disabled={isSubmitting || isPreview} className="px-8">
+            <Button type="submit" disabled={isSubmitting || isPreview} size="lg" className="px-10 font-semibold">
               {isSubmitting ? "Submitting..." : "Please submit this form"}
             </Button>
           </div>
