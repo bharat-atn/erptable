@@ -50,7 +50,9 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
+  activeSection: "employee" | "employment-3" | "employment-456" | "compensation";
   onBack: () => void;
+  onNext: () => void;
 }
 
 const COUNTRIES = [
@@ -113,7 +115,9 @@ export function ContractDetailsStep({
   company,
   employee,
   contractId,
+  activeSection,
   onBack,
+  onNext,
 }: ContractDetailsStepProps) {
   const [section1Open, setSection1Open] = useState(false);
   const [section21Open, setSection21Open] = useState(true);
@@ -371,10 +375,10 @@ export function ContractDetailsStep({
     { id: "review", label: "Review & Sign", icon: CheckCircle, sections: [] },
   ];
 
-  // Determine which progress step is active based on which sections are visible/open
+  // Determine which progress step is active based on activeSection
   const getActiveProgressIndex = () => {
-    if (section7Open) return 2;
-    if (section3Open || section4Open || section5Open || section6Open) return 1;
+    if (activeSection === "compensation") return 2;
+    if (activeSection === "employment-3" || activeSection === "employment-456") return 1;
     return 0;
   };
   const activeProgressIdx = getActiveProgressIndex();
@@ -465,7 +469,8 @@ export function ContractDetailsStep({
       </Card>
       <Card className="shadow-md rounded-t-none border-t-0">
       <CardContent className="space-y-5 pt-5">
-        {/* Section 1: Employer Information */}
+        {/* === Employee Details sections (activeSection === "employee") === */}
+        {activeSection === "employee" && <>{/* Section 1: Employer Information */}
         <Collapsible open={section1Open} onOpenChange={setSection1Open}>
           <CollapsibleTrigger asChild>
             <SectionHeader
@@ -708,6 +713,20 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Employment Section 3 (activeSection === "employment-3") === */}
+        {activeSection === "employment-3" && <>
         {/* Section 3: Employment Details */}
         <Collapsible open={section3Open} onOpenChange={setSection3Open}>
           <CollapsibleTrigger asChild>
@@ -766,6 +785,20 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Employment Sections 4, 5, 6 (activeSection === "employment-456") === */}
+        {activeSection === "employment-456" && <>
         {/* Section 4: Collective Agreement */}
         <Collapsible open={section4Open} onOpenChange={setSection4Open}>
           <CollapsibleTrigger asChild>
@@ -1139,6 +1172,20 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Compensation Section 7 (activeSection === "compensation") === */}
+        {activeSection === "compensation" && <>
         {/* Section 7: Holidays */}
         <Collapsible open={section7Open} onOpenChange={setSection7Open}>
           <CollapsibleTrigger asChild>
@@ -1183,11 +1230,12 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8">
+          <Button className="px-8" onClick={onNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
+        </>}
       </CardContent>
     </Card>
     </div>
