@@ -118,6 +118,8 @@ export function ContractDetailsStep({
   const [section23Open, setSection23Open] = useState(true);
   const [section3Open, setSection3Open] = useState(true);
   const [section4Open, setSection4Open] = useState(true);
+  const [section5Open, setSection5Open] = useState(true);
+  const [section6Open, setSection6Open] = useState(true);
 
   const pi = employee.personal_info ?? {};
 
@@ -147,6 +149,15 @@ export function ContractDetailsStep({
   const [jobType, setJobType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
   const [stationing, setStationing] = useState("");
+
+  // Section 5 state
+  const [employmentForm, setEmploymentForm] = useState<"permanent" | "probationary">("permanent");
+  const [employmentStartDate, setEmploymentStartDate] = useState<Date | undefined>(undefined);
+  const [probationStartDate, setProbationStartDate] = useState<Date | undefined>(undefined);
+
+  // Section 6 state
+  const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
+  const [partTimePercent, setPartTimePercent] = useState("");
 
   const renderLabel = (en: string, sv: string, required = true) => (
     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
@@ -545,7 +556,213 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Navigation */}
+        {/* Section 5: Form of Employment */}
+        <Collapsible open={section5Open} onOpenChange={setSection5Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="5"
+              titleEn="Form of Employment"
+              titleSv="Anställningsform"
+              open={section5Open}
+              onToggle={() => setSection5Open(!section5Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-3">
+              {/* Permanent Employment */}
+              <div
+                className={cn(
+                  "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "permanent"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("permanent")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                    employmentForm === "permanent" ? "border-primary" : "border-muted-foreground/40"
+                  )}>
+                    {employmentForm === "permanent" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold">
+                    Permanent Employment from / Tillsvidareanställning från
+                  </span>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-9 text-sm font-medium",
+                        !employmentStartDate && "text-muted-foreground"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {employmentStartDate ? format(employmentStartDate, "yyyy-MM-dd") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={employmentStartDate}
+                      onSelect={setEmploymentStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Probationary Period */}
+              <div
+                className={cn(
+                  "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "probationary"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("probationary")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                    employmentForm === "probationary" ? "border-primary" : "border-muted-foreground/40"
+                  )}>
+                    {employmentForm === "probationary" && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "text-sm font-semibold",
+                    employmentForm !== "probationary" && "text-muted-foreground"
+                  )}>
+                    Probationary Period from / Provanställning från
+                  </span>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-9 text-sm font-medium",
+                        !probationStartDate && "text-muted-foreground"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {probationStartDate ? format(probationStartDate, "yyyy-MM-dd") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={probationStartDate}
+                      onSelect={setProbationStartDate}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Section 6: Working Time & Organisation */}
+        <Collapsible open={section6Open} onOpenChange={setSection6Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="6"
+              titleEn="Working Time & Organisation"
+              titleSv="Arbetstid och arbetstidens förläggning"
+              open={section6Open}
+              onToggle={() => setSection6Open(!section6Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-3">
+              {/* Full time */}
+              <div
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors",
+                  workingTime === "fulltime"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setWorkingTime("fulltime")}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                  workingTime === "fulltime" ? "border-primary" : "border-muted-foreground/40"
+                )}>
+                  {workingTime === "fulltime" && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  )}
+                </div>
+                <span className="text-sm font-semibold">
+                  Full time 38/40 hours per week (excl. public holidays) / Heltid 38/40 timmar per vecka (exkl. helgdagar)
+                </span>
+              </div>
+
+              {/* Part time */}
+              <div
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors",
+                  workingTime === "parttime"
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setWorkingTime("parttime")}
+              >
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0",
+                  workingTime === "parttime" ? "border-primary" : "border-muted-foreground/40"
+                )}>
+                  {workingTime === "parttime" && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={cn(
+                    "text-sm font-semibold",
+                    workingTime !== "parttime" && "text-muted-foreground"
+                  )}>
+                    Part time / Deltid
+                  </span>
+                  {workingTime === "parttime" ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={partTimePercent}
+                        onChange={(e) => setPartTimePercent(e.target.value)}
+                        className="w-20 h-9 text-sm"
+                        placeholder="%"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        per cent of full time / procent av heltid
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      per cent of full time / procent av heltid
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         <div className="flex justify-between pt-4">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-1" />
