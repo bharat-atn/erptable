@@ -154,8 +154,12 @@ export function ContractDetailsStep({
   const [emergencyMobile, setEmergencyMobile] = useState(pi.emergency_mobile ?? "");
 
   // Section 3 state
+  const [mainDuties, setMainDuties] = useState("");
   const [jobType, setJobType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
+  const [postingLocation, setPostingLocation] = useState("");
+  const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">(""); 
+  const [mainWorkplace, setMainWorkplace] = useState("");
   const [stationing, setStationing] = useState(company.city ?? "");
 
   // Section 5 state
@@ -190,7 +194,7 @@ export function ContractDetailsStep({
     birthday: birthday?.toISOString() ?? null,
     countryOfBirth, citizenship, mobile, email,
     emergencyFirstName, emergencyLastName, emergencyMobile,
-    jobType, experienceLevel, stationing,
+    mainDuties, jobType, experienceLevel, postingLocation, workplaceVaries, mainWorkplace, stationing,
     employmentForm,
     permanentFromDate: permanentFromDate?.toISOString() ?? null,
     probationFromDate: probationFromDate?.toISOString() ?? null,
@@ -209,7 +213,7 @@ export function ContractDetailsStep({
     address, address2, zipCode, city, stateProvince, country,
     birthday, countryOfBirth, citizenship, mobile, email,
     emergencyFirstName, emergencyLastName, emergencyMobile,
-    jobType, experienceLevel, stationing,
+    mainDuties, jobType, experienceLevel, postingLocation, workplaceVaries, mainWorkplace, stationing,
     employmentForm,
     permanentFromDate, probationFromDate, probationUntilDate,
     fixedTermFromDate, fixedTermUntilDate,
@@ -268,8 +272,12 @@ export function ContractDetailsStep({
   if (!emergencyMobile) section23Missing.push("Emergency Contact Mobile");
 
   const section3Missing: string[] = [];
+  if (!mainDuties) section3Missing.push("Employed as / Main Duties");
   if (!jobType) section3Missing.push("Job Type");
   if (!experienceLevel) section3Missing.push("Experience Level");
+  if (!postingLocation) section3Missing.push("Posting Location");
+  if (!workplaceVaries) section3Missing.push("Workplace Varies");
+  if (workplaceVaries === "no" && !mainWorkplace) section3Missing.push("Main Workplace");
   if (!stationing) section3Missing.push("Stationing");
 
   const section5Missing: string[] = [];
@@ -738,10 +746,17 @@ export function ContractDetailsStep({
               onToggle={() => setSection3Open(!section3Open)}
             />
           </CollapsibleTrigger>
-          <CollapsibleContent>
+           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
+              {/* Employed as / main duties */}
               <div className="space-y-1.5">
-                {renderLabel("Job Type / Arbetsuppgift / Befattningstyp", "Arbetsuppgift")}
+                {renderLabel("Employed as / Main Duties", "Anställd som / Huvudsakliga arbetsuppgifter")}
+                {renderField(mainDuties, setMainDuties)}
+              </div>
+
+              {/* Job type and salary group */}
+              <div className="space-y-1.5">
+                {renderLabel("Job Type and Salary Group", "Befattningstyp och lönegrupp")}
                 <Select value={jobType} onValueChange={setJobType} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
@@ -762,8 +777,10 @@ export function ContractDetailsStep({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Experience level */}
               <div className="space-y-1.5">
-                {renderLabel("Experience Level / Erfarenhet / Lönegrupp", "Erfarenhet")}
+                {renderLabel("Experience Level / Salary Group", "Erfarenhet / Lönegrupp")}
                 <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Choose the experience level... / Välj erfarenhetsnivå..." />
@@ -777,6 +794,53 @@ export function ContractDetailsStep({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Posting location */}
+              <div className="space-y-1.5">
+                {renderLabel("Posting Location", "Stationeringsort")}
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Used, for example, to calculate travel time compensation / Används till exempel för att beräkna restidsersättning
+                </p>
+                {renderField(postingLocation, setPostingLocation)}
+              </div>
+
+              {/* Workplace varies */}
+              <div className="space-y-2">
+                {renderLabel("Workplace Varies Between Different Days", "Arbetsplatsen varierar mellan olika dagar")}
+                <p className="text-xs text-muted-foreground -mt-1">
+                  Workplace (place where the work is to be performed) varies between different days / Arbetsplats (plats där arbetet ska utföras) varierar mellan olika dagar
+                </p>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="workplaceVaries"
+                      checked={workplaceVaries === "yes"}
+                      onChange={() => setWorkplaceVaries("yes")}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <span className="text-sm font-medium">Yes / Ja</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="workplaceVaries"
+                      checked={workplaceVaries === "no"}
+                      onChange={() => setWorkplaceVaries("no")}
+                      className="w-4 h-4 accent-primary"
+                    />
+                    <span className="text-sm font-medium">No / Nej</span>
+                  </label>
+                </div>
+                {workplaceVaries === "no" && (
+                  <div className="space-y-1.5 mt-2">
+                    {renderLabel("Main Workplace", "Huvudsaklig arbetsplats")}
+                    {renderField(mainWorkplace, setMainWorkplace)}
+                  </div>
+                )}
+              </div>
+
+              {/* Stationing */}
               <div className="space-y-1.5">
                 {renderLabel("Stationing", "Stationeringsort")}
                 {renderField(stationing, setStationing)}
