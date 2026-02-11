@@ -18,6 +18,12 @@ import { Eye } from "lucide-react";
 export function Dashboard() {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
+  const [resumeContractId, setResumeContractId] = useState<string | null>(null);
+
+  const handleContinueContract = (contractId: string) => {
+    setResumeContractId(contractId);
+    setActiveView("contract-template");
+  };
 
   const renderView = () => {
     switch (activeView) {
@@ -30,11 +36,11 @@ export function Dashboard() {
       case "invitations":
         return <InvitationsView />;
       case "contracts":
-        return <ContractsView />;
+        return <ContractsView onContinueContract={handleContinueContract} />;
       case "settings":
         return <SettingsView />;
       case "contract-template":
-        return <ContractTemplateView />;
+        return <ContractTemplateView resumeContractId={resumeContractId} />;
       case "company-register":
         return <CompanyRegisterView />;
       case "process-guide":

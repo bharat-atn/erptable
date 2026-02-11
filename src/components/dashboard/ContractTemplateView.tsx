@@ -77,7 +77,11 @@ const steps = [{
   labelSv: "Section 7",
   icon: Building2
 }];
-export function ContractTemplateView() {
+interface ContractTemplateViewProps {
+  resumeContractId?: string | null;
+}
+
+export function ContractTemplateView({ resumeContractId }: ContractTemplateViewProps) {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [companyOpen, setCompanyOpen] = useState(true);
@@ -86,6 +90,7 @@ export function ContractTemplateView() {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("EN/SE");
   const [contractId, setContractId] = useState<string | null>(null);
+  const [resumeLoaded, setResumeLoaded] = useState(false);
   const {
     data: companies = []
   } = useQuery({
@@ -113,6 +118,42 @@ export function ContractTemplateView() {
     }
   });
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+
+  // Resume draft contract - load existing data
+  useEffect(() => {
+    if (!resumeContractId || resumeLoaded || companies.length === 0 || employees.length === 0) return;
+
+    const loadContract = async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("*")
+        .eq("id", resumeContractId)
+        .single();
+
+      if (error || !data) return;
+
+      setContractId(data.id);
+      if (data.company_id) setSelectedCompanyId(data.company_id);
+
+      const emp = employees.find(e => e.id === data.employee_id);
+      if (emp) setSelectedEmployee(emp);
+
+      // Determine which step to resume at based on form_data
+      const formData = (data.form_data as Record<string, any>) || {};
+      let resumeStep = 4; // default to employee details
+
+      // Check how far they got
+      if (formData.section6) resumeStep = 9; // go to compensation
+      else if (formData.section5) resumeStep = 8; // section 6
+      else if (formData.section4) resumeStep = 7; // section 5
+      else if (formData.section3) resumeStep = 6; // section 4
+
+      setActiveStep(resumeStep);
+      setResumeLoaded(true);
+    };
+
+    loadContract();
+  }, [resumeContractId, resumeLoaded, companies, employees]);
   const isStepCompleted = (stepId: number) => {
     if (stepId === 1) return !!selectedCompanyId;
     if (stepId === 2) return !!selectedEmployee;
