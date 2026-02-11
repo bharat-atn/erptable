@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -81,52 +81,75 @@ function DraggableGroup({
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragItemRef = useRef<number | null>(null);
+  const overIndexRef = useRef<number | null>(null);
+  overIndexRef.current = overIndex;
 
-  const handleDragStart = (e: React.DragEvent, index: number) => {
+  const handlePointerDown = (e: React.PointerEvent, index: number) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest("[data-grip]")) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    dragItemRef.current = index;
     setDragIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", `${groupKey}-${index}`);
-  };
+    overIndexRef.current = null;
+    setOverIndex(null);
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setOverIndex(index);
-  };
+    const handlePointerMove = (ev: PointerEvent) => {
+      if (dragItemRef.current === null || !containerRef.current) return;
+      const children = Array.from(containerRef.current.children) as HTMLElement[];
+      let newOver = children.length - 1;
+      for (let i = 0; i < children.length; i++) {
+        const rect = children[i].getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (ev.clientY < midY) {
+          newOver = i;
+          break;
+        }
+      }
+      overIndexRef.current = newOver;
+      setOverIndex(newOver);
+    };
 
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (dragIndex === null || dragIndex === dropIndex) {
+    const handlePointerUp = () => {
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerUp);
+
+      const from = dragItemRef.current;
+      const to = overIndexRef.current;
+
+      if (from !== null && to !== null && from !== to) {
+        const newItems = [...items];
+        const [moved] = newItems.splice(from, 1);
+        newItems.splice(to, 0, moved);
+        onReorder(newItems);
+      }
+
+      dragItemRef.current = null;
       setDragIndex(null);
       setOverIndex(null);
-      return;
-    }
-    const newItems = [...items];
-    const [moved] = newItems.splice(dragIndex, 1);
-    newItems.splice(dropIndex, 0, moved);
-    onReorder(newItems);
-    setDragIndex(null);
-    setOverIndex(null);
-  };
+    };
 
-  const handleDragEnd = () => {
-    setDragIndex(null);
-    setOverIndex(null);
+    document.addEventListener("pointermove", handlePointerMove);
+    document.addEventListener("pointerup", handlePointerUp);
   };
 
   return (
-    <>
+    <div ref={containerRef}>
       {items.map((item, index) => (
         <div
           key={item.id}
-          draggable
-          onDragStart={(e) => handleDragStart(e, index)}
-          onDragOver={(e) => handleDragOver(e, index)}
-          onDrop={(e) => handleDrop(e, index)}
-          onDragEnd={handleDragEnd}
+          onPointerDown={(e) => handlePointerDown(e, index)}
           className={cn(
-            "group relative",
-            overIndex === index && dragIndex !== null && dragIndex !== index && "before:absolute before:left-3 before:right-3 before:top-0 before:h-0.5 before:bg-primary before:rounded-full",
+            "group relative select-none",
+            dragIndex === index && "opacity-50",
+            overIndex === index && dragIndex !== null && dragIndex !== index && (
+              (dragIndex < index)
+                ? "after:absolute after:left-3 after:right-3 after:bottom-0 after:h-0.5 after:bg-primary after:rounded-full"
+                : "before:absolute before:left-3 before:right-3 before:top-0 before:h-0.5 before:bg-primary before:rounded-full"
+            ),
           )}
         >
           <button
@@ -140,11 +163,16 @@ function DraggableGroup({
           >
             <item.icon className="w-4 h-4 shrink-0" />
             <span className="flex-1 text-left">{item.label}</span>
-            <GripVertical className="w-3.5 h-3.5 opacity-0 group-hover:opacity-40 transition-opacity shrink-0 cursor-grab" />
+            <span
+              data-grip
+              className="opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing p-0.5"
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </span>
           </button>
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
