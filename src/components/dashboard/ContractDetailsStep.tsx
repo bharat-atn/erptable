@@ -117,13 +117,18 @@ export function ContractDetailsStep({
 
   // Employee form state
   const [firstName, setFirstName] = useState(employee.first_name ?? "");
+  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState(employee.last_name ?? "");
+  const [preferredName, setPreferredName] = useState("");
   const [address, setAddress] = useState("");
+  const [address2, setAddress2] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
+  const [stateProvince, setStateProvince] = useState("");
   const [country, setCountry] = useState("");
   const [birthday, setBirthday] = useState<Date | undefined>(undefined);
-  const [personalId, setPersonalId] = useState("");
+  const [countryOfBirth, setCountryOfBirth] = useState("");
+  const [citizenship, setCitizenship] = useState("");
   const [mobile, setMobile] = useState(employee.phone ?? "");
   const [email, setEmail] = useState(employee.email ?? "");
   const [emergencyFirstName, setEmergencyFirstName] = useState("");
@@ -252,13 +257,13 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Section 2.1: Name and Address */}
+        {/* Section 2.1: Name and Address Information */}
         <Collapsible open={section21Open} onOpenChange={setSection21Open}>
           <CollapsibleTrigger asChild>
             <SectionHeader
               number="2.1"
-              titleEn="Name and Address"
-              titleSv="Namn och Adress"
+              titleEn="Name and Address Information"
+              titleSv="Namn och Adressinformation"
               open={section21Open}
               onToggle={() => setSection21Open(!section21Open)}
             />
@@ -271,17 +276,33 @@ export function ContractDetailsStep({
                   {renderField(firstName, setFirstName)}
                 </div>
                 <div className="space-y-1.5">
-                  {renderLabel("Last Name", "Efternamn")}
-                  {renderField(lastName, setLastName)}
+                  {renderLabel("Middle Name", "Mellannamn", false)}
+                  {renderField(middleName, setMiddleName)}
                 </div>
-              </div>
-              <div className="space-y-1.5">
-                {renderLabel("Address Line 1", "Adressrad 1")}
-                {renderField(address, setAddress)}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  {renderLabel("Zip Code", "Postnummer")}
+                  {renderLabel("Last Name", "Efternamn")}
+                  {renderField(lastName, setLastName)}
+                </div>
+                <div className="space-y-1.5">
+                  {renderLabel("Preferred Name", "Tilltalsnamn")}
+                  {renderField(preferredName, setPreferredName)}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  {renderLabel("Address 1", "Adress 1")}
+                  {renderField(address, setAddress)}
+                </div>
+                <div className="space-y-1.5">
+                  {renderLabel("Address 2", "Adress 2", false)}
+                  {renderField(address2, setAddress2)}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  {renderLabel("ZIP / Postal Code", "Postnummer")}
                   {renderField(zipCode, setZipCode)}
                 </div>
                 <div className="space-y-1.5">
@@ -289,9 +310,77 @@ export function ContractDetailsStep({
                   {renderField(city, setCity)}
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  {renderLabel("State / Province", "Län / Region")}
+                  {renderField(stateProvince, setStateProvince)}
+                </div>
+                <div className="space-y-1.5">
+                  {renderLabel("Country", "Land")}
+                  <Select value={country} onValueChange={setCountry} required>
+                    <SelectTrigger className="h-11 text-sm font-medium">
+                      <SelectValue placeholder="Select country..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Section 2.2: Birth and Contact Information */}
+        <Collapsible open={section22Open} onOpenChange={setSection22Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="2.2"
+              titleEn="Birth and Contact Information"
+              titleSv="Födelse- och Kontaktinformation"
+              open={section22Open}
+              onToggle={() => setSection22Open(!section22Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="space-y-1.5">
-                {renderLabel("Country", "Land")}
-                <Select value={country} onValueChange={setCountry} required>
+                {renderLabel("Birthday", "Födelsedag")}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-11 justify-start text-left text-sm font-medium",
+                        !birthday && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {birthday ? format(birthday, "yyyy-MM-dd") : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={birthday}
+                      onSelect={setBirthday}
+                      disabled={(date) =>
+                        date > maxBirthDate || date < minBirthDate
+                      }
+                      defaultMonth={maxBirthDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-1.5">
+                {renderLabel("Country of Birth?", "Födelseland?")}
+                <Select value={countryOfBirth} onValueChange={setCountryOfBirth} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Select country..." />
                   </SelectTrigger>
@@ -304,98 +393,56 @@ export function ContractDetailsStep({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {/* Section 2.2: Birth and Contact */}
-        <Collapsible open={section22Open} onOpenChange={setSection22Open}>
-          <CollapsibleTrigger asChild>
-            <SectionHeader
-              number="2.2"
-              titleEn="Birth and Contact"
-              titleSv="Födelse och Kontakt"
-              open={section22Open}
-              onToggle={() => setSection22Open(!section22Open)}
-            />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="pt-4 pb-2 space-y-4 px-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  {renderLabel("Birthday", "Födelsedag")}
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full h-11 justify-start text-left text-sm font-medium",
-                          !birthday && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {birthday ? format(birthday, "yyyy-MM-dd") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={birthday}
-                        onSelect={setBirthday}
-                        disabled={(date) =>
-                          date > maxBirthDate || date < minBirthDate
-                        }
-                        defaultMonth={maxBirthDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1.5">
-                  {renderLabel("Personal ID / Social Security", "Personnummer")}
-                  {renderField(personalId, setPersonalId)}
-                </div>
+              <div className="space-y-1.5">
+                {renderLabel("Citizenship?", "Medborgarskap?")}
+                <Select value={citizenship} onValueChange={setCitizenship} required>
+                  <SelectTrigger className="h-11 text-sm font-medium">
+                    <SelectValue placeholder="Select country..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  {renderLabel("Mobile Number", "Mobilnummer")}
-                  {renderField(mobile, setMobile)}
-                </div>
-                <div className="space-y-1.5">
-                  {renderLabel("Email Address", "E-post")}
-                  {renderField(email, setEmail, "email")}
-                </div>
+              <div className="space-y-1.5">
+                {renderLabel("Mobile Phone Number", "Mobilnummer")}
+                {renderField(mobile, setMobile)}
+              </div>
+              <div className="space-y-1.5">
+                {renderLabel("Email", "E-post")}
+                {renderField(email, setEmail, "email")}
               </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
 
-        {/* Section 2.3: Emergency Contact */}
+        {/* Section 2.3: Emergency Contact Information */}
         <Collapsible open={section23Open} onOpenChange={setSection23Open}>
           <CollapsibleTrigger asChild>
             <SectionHeader
               number="2.3"
-              titleEn="Emergency Contact"
-              titleSv="Närmast Anhörig"
+              titleEn="Emergency Contact Information"
+              titleSv="Information om Närmast Anhörig"
               open={section23Open}
               onToggle={() => setSection23Open(!section23Open)}
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  {renderLabel("Emergency Contact First Name", "Närmast Anhörig Förnamn")}
-                  {renderField(emergencyFirstName, setEmergencyFirstName)}
-                </div>
-                <div className="space-y-1.5">
-                  {renderLabel("Emergency Contact Last Name", "Närmast Anhörig Efternamn")}
-                  {renderField(emergencyLastName, setEmergencyLastName)}
-                </div>
+              <div className="space-y-1.5">
+                {renderLabel("Emergency Contact First Name", "Närmast Anhörig Förnamn")}
+                {renderField(emergencyFirstName, setEmergencyFirstName)}
               </div>
               <div className="space-y-1.5">
-                {renderLabel("Emergency Contact Mobile", "Närmast Anhörig Mobil")}
+                {renderLabel("Emergency Contact Last Name", "Närmast Anhörig Efternamn")}
+                {renderField(emergencyLastName, setEmergencyLastName)}
+              </div>
+              <div className="space-y-1.5">
+                {renderLabel("Emergency Contact Mobile Phone Number", "Närmast Anhörig Mobilnummer")}
                 {renderField(emergencyMobile, setEmergencyMobile)}
               </div>
             </div>
