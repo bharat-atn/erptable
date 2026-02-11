@@ -227,6 +227,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          employee_email: string
+          employee_first_name: string
+          employee_id: string
+          employee_last_name: string
+          employee_middle_name: string
+          employee_personal_info: Json
+          expires_at: string
+          id: string
+          status: Database["public"]["Enums"]["invitation_status"]
+          type: Database["public"]["Enums"]["invitation_type"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -235,6 +250,16 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      submit_onboarding: {
+        Args: {
+          _first_name: string
+          _last_name: string
+          _middle_name: string
+          _personal_info: Json
+          _token: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "hr_admin" | "hr_staff" | "user"
