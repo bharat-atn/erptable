@@ -81,6 +81,15 @@ export function InvitationsView() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Marked as sent"); },
   });
 
+  const deleteInvitation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("invitations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Invitation deleted"); },
+    onError: (error: Error) => { toast.error(error.message); },
+  });
+
   const copyLink = (token: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/onboard/${token}`);
     toast.success("Link copied to clipboard");
@@ -152,7 +161,7 @@ export function InvitationsView() {
               {invitation.status === "PENDING" && (
                 <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
               )}
-              <DropdownMenuItem className="text-destructive"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => deleteInvitation.mutate(invitation.id)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
