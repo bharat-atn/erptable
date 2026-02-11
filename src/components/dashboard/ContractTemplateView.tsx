@@ -59,10 +59,20 @@ const steps = [{
 }, {
   id: 6,
   label: "Employment",
-  labelSv: "Section 4, 5 & 6",
+  labelSv: "Section 4",
   icon: Briefcase
 }, {
   id: 7,
+  label: "Employment",
+  labelSv: "Section 5",
+  icon: Briefcase
+}, {
+  id: 8,
+  label: "Employment",
+  labelSv: "Section 6",
+  icon: Briefcase
+}, {
+  id: 9,
   label: "Compensation",
   labelSv: "Section 7",
   icon: Building2
@@ -110,6 +120,8 @@ export function ContractTemplateView() {
     if (stepId === 4) return activeStep > 4;
     if (stepId === 5) return activeStep > 5;
     if (stepId === 6) return activeStep > 6;
+    if (stepId === 7) return activeStep > 7;
+    if (stepId === 8) return activeStep > 8;
     return false;
   };
   const filteredEmployees = employees.filter(e => {
@@ -326,7 +338,7 @@ export function ContractTemplateView() {
               setActiveStep(4);
             }} />}
 
-          {(activeStep === 4 || activeStep === 5 || activeStep === 6 || activeStep === 7) && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "employment-3" : activeStep === 6 ? "employment-456" : "compensation"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} />}
+          {activeStep >= 4 && activeStep <= 9 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : "section-7"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} />}
         </div>
       </div>
 
