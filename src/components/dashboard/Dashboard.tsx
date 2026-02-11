@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
-import { EmployeesView } from "./EmployeesView";
+import { EmployeeRegisterView } from "./EmployeeRegisterView";
 import { InvitationsView } from "./InvitationsView";
 import { ContractsView } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
@@ -32,7 +32,7 @@ export function Dashboard() {
       case "operations":
         return <OperationsView />;
       case "employee-register":
-        return <OperationsView />;
+        return <EmployeeRegisterView />;
       case "invitations":
         return <InvitationsView />;
       case "contracts":
