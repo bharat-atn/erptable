@@ -40,13 +40,13 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   };
 
   return (
-    <aside className="w-56 min-h-screen bg-card border-r border-border flex flex-col">
+    <aside className="w-56 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
       <div className="p-4 flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-          <Layers className="w-4 h-4 text-primary-foreground" />
+        <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
+          <Layers className="w-4 h-4 text-sidebar-primary-foreground" />
         </div>
-        <span className="font-semibold text-foreground">OnboardFlow</span>
+        <span className="font-semibold text-sidebar-primary-foreground">OnboardFlow</span>
       </div>
 
       {/* Navigation */}
@@ -111,10 +111,10 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       </nav>
 
       {/* Sign Out */}
-      <div className="p-3 border-t border-border">
+      <div className="p-3 border-t border-sidebar-border">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-300 hover:bg-red-500/10 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>
