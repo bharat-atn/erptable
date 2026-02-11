@@ -23,8 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
+import { ContractDetailsStep } from "./ContractDetailsStep";
 
 interface Company {
   id: string;
@@ -48,6 +49,7 @@ const steps = [
   { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
   { id: 2, label: "Employee", labelSv: "Anställd", icon: Users },
   { id: 3, label: "Language", labelSv: "Språk", icon: Globe },
+  { id: 4, label: "Details", labelSv: "Uppgifter", icon: User },
 ];
 
 export function ContractTemplateView() {
@@ -353,6 +355,15 @@ export function ContractTemplateView() {
               selectedLanguage={selectedLanguage}
               onSelectLanguage={setSelectedLanguage}
               onBack={() => setActiveStep(2)}
+              onNext={() => setActiveStep(4)}
+            />
+          )}
+
+          {activeStep === 4 && selectedCompany && selectedEmployee && (
+            <ContractDetailsStep
+              company={selectedCompany}
+              employee={selectedEmployee}
+              onBack={() => setActiveStep(3)}
             />
           )}
         </div>
