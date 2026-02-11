@@ -158,7 +158,7 @@ export function ContractTemplateView() {
                     <span>
                       {step.label}{" "}
                       <span className="text-muted-foreground font-normal text-xs">
-                        / {step.labelSv}
+                        / {step.id === 1 ? "Section 1" : step.labelSv}
                       </span>
                     </span>
                   </button>
