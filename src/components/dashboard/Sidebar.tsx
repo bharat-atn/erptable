@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Mail,
@@ -11,13 +12,29 @@ import {
   BookOpen,
   Building2,
   GripVertical,
+  Monitor,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+export interface ScreenSizeOption {
+  label: string;
+  width: number | null;
+}
+
+export const screenSizes: ScreenSizeOption[] = [
+  { label: "14\"", width: 1366 },
+  { label: "16\"", width: 1536 },
+  { label: "24\"", width: 1920 },
+  { label: "27\"", width: 2560 },
+  { label: "Full", width: null },
+];
+
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  activeScreenSize: ScreenSizeOption;
+  onScreenSizeChange: (size: ScreenSizeOption) => void;
 }
 
 interface MenuItem {
@@ -176,7 +193,7 @@ function DraggableGroup({
   );
 }
 
-export function Sidebar({ activeView, onViewChange }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange }: SidebarProps) {
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
@@ -248,6 +265,32 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
           />
         </nav>
       </ScrollArea>
+
+      {/* Screen Size Picker */}
+      <div className="px-3 pt-3 pb-1 border-t border-sidebar-border shrink-0">
+        <div className="flex items-center gap-1.5 px-1 pb-2">
+          <Monitor className="w-3.5 h-3.5 text-sidebar-foreground/60" />
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">Screen</span>
+        </div>
+        <div className="flex gap-0.5 bg-sidebar-accent/50 rounded-lg p-0.5">
+          {screenSizes.map((size) => (
+            <Button
+              key={size.label}
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "flex-1 h-6 px-0 text-[10px] font-medium rounded-md transition-all",
+                activeScreenSize.label === size.label
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
+              onClick={() => onScreenSizeChange(size)}
+            >
+              {size.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Sign Out */}
       <div className="p-3 border-t border-sidebar-border shrink-0">
