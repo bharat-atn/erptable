@@ -2,31 +2,15 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
 import { ContractDetailsStep } from "./ContractDetailsStep";
-
 interface Company {
   id: string;
   name: string;
@@ -35,7 +19,6 @@ interface Company {
   postcode: string | null;
   city: string | null;
 }
-
 interface Employee {
   id: string;
   first_name: string | null;
@@ -44,14 +27,27 @@ interface Employee {
   phone: string | null;
   employee_code: string | null;
 }
-
-const steps = [
-  { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
-  { id: 2, label: "Employee", labelSv: "Anställd", icon: Users },
-  { id: 3, label: "Language", labelSv: "Språk", icon: Globe },
-  { id: 4, label: "Details", labelSv: "Section 2:1, 2:2 & 2:3", icon: User },
-];
-
+const steps = [{
+  id: 1,
+  label: "Company",
+  labelSv: "Företag",
+  icon: Building2
+}, {
+  id: 2,
+  label: "Employee",
+  labelSv: "Anställd",
+  icon: Users
+}, {
+  id: 3,
+  label: "Language",
+  labelSv: "Språk",
+  icon: Globe
+}, {
+  id: 4,
+  label: "Details",
+  labelSv: "Uppgifter",
+  icon: User
+}];
 export function ContractTemplateView() {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
@@ -60,65 +56,56 @@ export function ContractTemplateView() {
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("EN/SE");
-
-  const { data: companies = [] } = useQuery({
+  const {
+    data: companies = []
+  } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .order("name");
+      const {
+        data,
+        error
+      } = await supabase.from("companies").select("*").order("name");
       if (error) throw error;
       return data as Company[];
-    },
+    }
   });
-
-  const { data: employees = [] } = useQuery({
+  const {
+    data: employees = []
+  } = useQuery({
     queryKey: ["employees"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, first_name, last_name, email, phone, employee_code")
-        .order("last_name");
+      const {
+        data,
+        error
+      } = await supabase.from("employees").select("id, first_name, last_name, email, phone, employee_code").order("last_name");
       if (error) throw error;
       return data as Employee[];
-    },
+    }
   });
-
-  const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
-
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
   const isStepCompleted = (stepId: number) => {
     if (stepId === 1) return !!selectedCompanyId;
     if (stepId === 2) return !!selectedEmployee;
     if (stepId === 3) return !!selectedLanguage;
     return false;
   };
-
-  const filteredEmployees = employees.filter((e) => {
+  const filteredEmployees = employees.filter(e => {
     if (!employeeSearch) return true;
     const term = employeeSearch.toLowerCase();
     const name = `${e.first_name ?? ""} ${e.last_name ?? ""}`.toLowerCase();
-    return (
-      name.includes(term) ||
-      e.email.toLowerCase().includes(term) ||
-      (e.employee_code ?? "").toLowerCase().includes(term)
-    );
+    return name.includes(term) || e.email.toLowerCase().includes(term) || (e.employee_code ?? "").toLowerCase().includes(term);
   });
-
   const getInitials = (e: Employee) => {
     const f = (e.first_name ?? "").charAt(0).toUpperCase();
     const l = (e.last_name ?? "").charAt(0).toUpperCase();
     return f + l || "?";
   };
-
   const handleNextFromStep1 = () => {
     if (selectedCompanyId) {
       setActiveStep(2);
     }
   };
-
-  return (
-    <div className="space-y-6 animate-fade-in">
+  return <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Contract Template</h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -131,47 +118,26 @@ export function ContractTemplateView() {
         <div className="w-60 shrink-0">
           <Card className="shadow-md">
             <CardContent className="p-3 space-y-1">
-              {steps.map((step) => {
-                const completed = isStepCompleted(step.id);
-                const active = activeStep === step.id;
-                return (
-                  <button
-                    key={step.id}
-                    onClick={() => setActiveStep(step.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors text-left",
-                      active
-                        ? "bg-primary/10 text-primary font-semibold"
-                        : "text-muted-foreground hover:bg-muted/60"
-                    )}
-                  >
-                    {completed ? (
-                      <Check className="w-4 h-4 text-primary shrink-0" />
-                    ) : (
-                      <Circle
-                        className={cn(
-                          "w-4 h-4 shrink-0",
-                          active ? "text-primary" : "text-muted-foreground/40"
-                        )}
-                      />
-                    )}
-                    <span>
+              {steps.map(step => {
+              const completed = isStepCompleted(step.id);
+              const active = activeStep === step.id;
+              return <button key={step.id} onClick={() => setActiveStep(step.id)} className={cn("w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors text-left", active ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-muted/60")}>
+                    {completed ? <Check className="w-4 h-4 text-primary shrink-0" /> : <Circle className={cn("w-4 h-4 shrink-0", active ? "text-primary" : "text-muted-foreground/40")} />}
+                    <span className="">
                       {step.label}{" "}
                       <span className="text-muted-foreground font-normal text-xs">
-                        / {step.id === 1 ? "Section 1" : step.labelSv}
+                        / {step.labelSv}
                       </span>
                     </span>
-                  </button>
-                );
-              })}
+                  </button>;
+            })}
             </CardContent>
           </Card>
         </div>
 
         {/* Step content */}
         <div className="flex-1">
-          {activeStep === 1 && (
-            <Card className="shadow-md">
+          {activeStep === 1 && <Card className="shadow-md">
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-primary" />
@@ -182,24 +148,18 @@ export function ContractTemplateView() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <Select
-                  value={selectedCompanyId}
-                  onValueChange={setSelectedCompanyId}
-                >
+                <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
                   <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Choose a company..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {companies.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+                    {companies.map(c => <SelectItem key={c.id} value={c.id}>
                         {c.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
 
-                {selectedCompany && (
-                  <Collapsible open={companyOpen} onOpenChange={setCompanyOpen}>
+                {selectedCompany && <Collapsible open={companyOpen} onOpenChange={setCompanyOpen}>
                     <Card className="border-2 border-border shadow-sm">
                       <CollapsibleTrigger className="w-full">
                         <CardHeader className="py-4 px-5 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors">
@@ -207,12 +167,7 @@ export function ContractTemplateView() {
                             <Building2 className="w-4 h-4 text-primary" />
                             Company Details / Företagsuppgifter
                           </CardTitle>
-                          <ChevronDown
-                            className={cn(
-                              "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                              companyOpen && "rotate-180"
-                            )}
-                          />
+                          <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", companyOpen && "rotate-180")} />
                         </CardHeader>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
@@ -266,23 +221,18 @@ export function ContractTemplateView() {
                         </CardContent>
                       </CollapsibleContent>
                     </Card>
-                  </Collapsible>
-                )}
+                  </Collapsible>}
 
                 {/* Next button */}
-                {selectedCompanyId && (
-                  <div className="flex justify-end pt-2">
+                {selectedCompanyId && <div className="flex justify-end pt-2">
                     <Button onClick={handleNextFromStep1} className="px-8">
                       Next
                     </Button>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
-            </Card>
-          )}
+            </Card>}
 
-          {activeStep === 2 && (
-            <Card className="shadow-md">
+          {activeStep === 2 && <Card className="shadow-md">
               <CardHeader>
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Users className="w-5 h-5 text-primary" />
@@ -293,8 +243,7 @@ export function ContractTemplateView() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                {selectedEmployee ? (
-                  <div className="flex items-center gap-4 rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
+                {selectedEmployee ? <div className="flex items-center gap-4 rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
                     <div className="w-10 h-10 rounded-full bg-success/20 text-success flex items-center justify-center font-bold text-sm">
                       {getInitials(selectedEmployee)}
                     </div>
@@ -307,32 +256,19 @@ export function ContractTemplateView() {
                           <Mail className="w-3 h-3" />
                           {selectedEmployee.email}
                         </span>
-                        {selectedEmployee.phone && (
-                          <span className="flex items-center gap-1">
+                        {selectedEmployee.phone && <span className="flex items-center gap-1">
                             <Phone className="w-3 h-3" />
                             {selectedEmployee.phone}
-                          </span>
-                        )}
+                          </span>}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEmployeeDialogOpen(true)}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setEmployeeDialogOpen(true)}>
                       Change
                     </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full h-14 text-sm border-dashed border-2"
-                    onClick={() => setEmployeeDialogOpen(true)}
-                  >
+                  </div> : <Button variant="outline" className="w-full h-14 text-sm border-dashed border-2" onClick={() => setEmployeeDialogOpen(true)}>
                     <Users className="w-4 h-4 mr-2" />
                     Select an employee from the register...
-                  </Button>
-                )}
+                  </Button>}
 
                 {/* Navigation buttons */}
                 <div className="flex justify-between pt-2">
@@ -340,32 +276,16 @@ export function ContractTemplateView() {
                     <ArrowLeft className="w-4 h-4 mr-1" />
                     Back
                   </Button>
-                  {selectedEmployee && (
-                    <Button onClick={() => setActiveStep(3)} className="px-8">
+                  {selectedEmployee && <Button onClick={() => setActiveStep(3)} className="px-8">
                       Next
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
               </CardContent>
-            </Card>
-          )}
+            </Card>}
 
-          {activeStep === 3 && (
-            <LanguageSelectionStep
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-              onBack={() => setActiveStep(2)}
-              onNext={() => setActiveStep(4)}
-            />
-          )}
+          {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={() => setActiveStep(4)} />}
 
-          {activeStep === 4 && selectedCompany && selectedEmployee && (
-            <ContractDetailsStep
-              company={selectedCompany}
-              employee={selectedEmployee}
-              onBack={() => setActiveStep(3)}
-            />
-          )}
+          {activeStep === 4 && selectedCompany && selectedEmployee && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} onBack={() => setActiveStep(3)} />}
         </div>
       </div>
 
@@ -384,41 +304,20 @@ export function ContractTemplateView() {
 
           <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or email..."
-              value={employeeSearch}
-              onChange={(e) => setEmployeeSearch(e.target.value)}
-              className="pl-9"
-            />
-            {employeeSearch && (
-              <button
-                onClick={() => setEmployeeSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
+            <Input placeholder="Search by name or email..." value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)} className="pl-9" />
+            {employeeSearch && <button onClick={() => setEmployeeSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2">
                 <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-              </button>
-            )}
+              </button>}
           </div>
 
           <div className="max-h-72 overflow-y-auto -mx-2 space-y-0.5">
-            {filteredEmployees.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">
+            {filteredEmployees.length === 0 ? <p className="text-center text-sm text-muted-foreground py-8">
                 No employees found
-              </p>
-            ) : (
-              filteredEmployees.map((emp) => (
-                <button
-                  key={emp.id}
-                  onClick={() => {
-                    setSelectedEmployee(emp);
-                    setEmployeeDialogOpen(false);
-                    setEmployeeSearch("");
-                  }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left hover:bg-muted/60 transition-colors",
-                    selectedEmployee?.id === emp.id && "bg-primary/10"
-                  )}
-                >
+              </p> : filteredEmployees.map(emp => <button key={emp.id} onClick={() => {
+            setSelectedEmployee(emp);
+            setEmployeeDialogOpen(false);
+            setEmployeeSearch("");
+          }} className={cn("w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left hover:bg-muted/60 transition-colors", selectedEmployee?.id === emp.id && "bg-primary/10")}>
                   <div className="w-9 h-9 rounded-full bg-success/20 text-success flex items-center justify-center font-bold text-xs shrink-0">
                     {getInitials(emp)}
                   </div>
@@ -431,17 +330,12 @@ export function ContractTemplateView() {
                         <Mail className="w-3 h-3 shrink-0" />
                         {emp.email}
                       </span>
-                      {emp.phone && (
-                        <span className="shrink-0">{emp.phone}</span>
-                      )}
+                      {emp.phone && <span className="shrink-0">{emp.phone}</span>}
                     </div>
                   </div>
-                </button>
-              ))
-            )}
+                </button>)}
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
