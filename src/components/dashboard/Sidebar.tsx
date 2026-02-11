@@ -201,7 +201,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   }, []);
 
   return (
-    <aside className="w-56 h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0">
+    <aside className="w-44 lg:w-52 xl:w-56 h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300">
       {/* Logo */}
       <div className="p-4 flex items-center gap-2 shrink-0">
         <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
