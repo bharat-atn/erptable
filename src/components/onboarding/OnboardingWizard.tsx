@@ -2,7 +2,7 @@ import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronUp, Folder } from "lucide-react";
+import { ChevronDown, Folder, AlertTriangle } from "lucide-react";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
@@ -76,26 +76,67 @@ interface OnboardingWizardProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SectionHeader = forwardRef<HTMLButtonElement, { title: string; open: boolean }>(
-  ({ title, open, ...props }, ref) => (
-    <CollapsibleTrigger
-      ref={ref}
-      {...props}
-      className="flex items-center justify-between w-full rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-md"
-    >
-      <span>{title}</span>
-      <ChevronUp className={cn("w-4 h-4 transition-transform", !open && "rotate-180")} />
-    </CollapsibleTrigger>
-  )
-);
-SectionHeader.displayName = "SectionHeader";
-
-function FieldLabel({ children, required = false }: { children: React.ReactNode; required?: boolean }) {
+/* ─── Reusable label matching contract wizard ─── */
+function FieldLabel({ en, sv, required = true }: { en: string; sv: string; required?: boolean }) {
   return (
-    <Label className="text-xs font-bold uppercase tracking-wide text-foreground">
-      {children}
+    <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+      {en} / {sv}
       {required && <span className="text-destructive ml-0.5">*</span>}
-    </Label>
+    </label>
+  );
+}
+
+/* ─── Section header matching contract wizard exactly ─── */
+function SectionHeader({
+  number,
+  titleEn,
+  titleSv,
+  open,
+  onToggle,
+  missingFields = [],
+}: {
+  number: string;
+  titleEn: string;
+  titleSv: string;
+  open: boolean;
+  onToggle: () => void;
+  missingFields?: string[];
+}) {
+  const hasWarning = missingFields.length > 0;
+
+  return (
+    <div className="space-y-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={cn(
+          "w-full flex items-center justify-between rounded-full border px-5 sm:px-6 py-3 text-sm font-semibold transition-colors",
+          hasWarning
+            ? "border-destructive/50 bg-destructive/5 text-primary"
+            : "border-primary bg-primary/5 text-primary"
+        )}
+      >
+        <span className="flex items-center gap-2 text-left">
+          {hasWarning && (
+            <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+          )}
+          <span className="leading-tight">
+            Section {number}: {titleEn} / Sektion {number}: {titleSv}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 shrink-0 transition-transform duration-200 ml-2",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+      {hasWarning && !open && (
+        <p className="text-[11px] text-destructive pl-6">
+          Missing: {missingFields.join(", ")}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -117,78 +158,119 @@ export function OnboardingWizard({
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
 
+  /* ─── Validation: compute missing fields per section ─── */
+  const s1Missing: string[] = [];
+  if (!formData.firstName) s1Missing.push("First Name");
+  if (!formData.lastName) s1Missing.push("Last Name");
+  if (!formData.preferredName) s1Missing.push("Preferred Name");
+  if (!formData.address1) s1Missing.push("Address 1");
+  if (!formData.zipCode) s1Missing.push("ZIP / Postal Code");
+  if (!formData.city) s1Missing.push("City");
+  if (!formData.stateProvince) s1Missing.push("State / Province");
+  if (!formData.country) s1Missing.push("Country");
+
+  const s2Missing: string[] = [];
+  if (!formData.birthday) s2Missing.push("Birthday");
+  if (!formData.countryOfBirth) s2Missing.push("Country of Birth");
+  if (!formData.citizenship) s2Missing.push("Citizenship");
+  if (!formData.mobilePhone) s2Missing.push("Mobile Phone");
+  if (!formData.email) s2Missing.push("Email");
+
+  const s3Missing: string[] = [];
+  if (!formData.emergencyFirstName) s3Missing.push("First Name");
+  if (!formData.emergencyLastName) s3Missing.push("Last Name");
+  if (!formData.emergencyPhone) s3Missing.push("Mobile Phone");
+
+  const s4Missing: string[] = [];
+  if (!selectedBank && !isOtherBank) s4Missing.push("Bank Selection");
+  if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
+  if (!formData.bicCode) s4Missing.push("BIC Code");
+  if (!formData.bankAccountNumber) s4Missing.push("Account Number");
+
+  const s5Missing: string[] = [];
+  if (!uploadedFile) s5Missing.push("ID / Passport Document");
+
   return (
-    <div className="min-h-screen bg-background overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-6">
-          <img src={ljunganLogo} alt="Ljungan Forestry" className="w-20 h-20 mb-1 object-contain" />
-          <span className="font-bold text-primary text-lg tracking-widest uppercase">
+    <div className="min-h-screen bg-background overflow-y-auto safe-area-top safe-area-bottom">
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+        {/* Logo & Header */}
+        <div className="flex flex-col items-center mb-5">
+          <img
+            src={ljunganLogo}
+            alt="Ljungan Forestry"
+            className="w-16 h-16 sm:w-20 sm:h-20 mb-1 object-contain"
+          />
+          <span className="font-bold text-primary text-base sm:text-lg tracking-widest uppercase">
             Ljungan Forestry
           </span>
         </div>
 
-        <p className="text-center text-primary font-semibold text-base mb-8">
-          Please fill out the following information in full
+        <p className="text-center text-primary font-semibold text-sm sm:text-base mb-6">
+          Please fill out the following information in full / Vänligen fyll i följande information fullständigt
         </p>
 
         {isPreview && (
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
               Preview Mode
             </span>
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-6">
-          {/* Section 2.1: Name and Address Information */}
+        <form onSubmit={onSubmit} className="space-y-5">
+
+          {/* ═══ Section 2.1: Name and Address ═══ */}
           <Collapsible open={s1Open} onOpenChange={setS1Open}>
             <SectionHeader
-              title="Section 2.1: Name and Address Information / Sektion 2.1: Namn och Adressinformation"
+              number="2.1"
+              titleEn="Name and Address Information"
+              titleSv="Namn och Adressinformation"
               open={s1Open}
+              onToggle={() => setS1Open(!s1Open)}
+              missingFields={s1Missing}
             />
-            <CollapsibleContent className="pt-6 pb-2 px-1 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel required>First Name / Förnamn</FieldLabel>
-                  <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="First Name" sv="Förnamn" />
+                  <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel>Middle Name / Mellannamn</FieldLabel>
-                  <Input value={formData.middleName || ""} onChange={(e) => updateField("middleName", e.target.value)} className="h-11" />
+                  <FieldLabel en="Middle Name" sv="Mellannamn" required={false} />
+                  <Input value={formData.middleName || ""} onChange={(e) => updateField("middleName", e.target.value)} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Last Name / Efternamn</FieldLabel>
-                  <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Last Name" sv="Efternamn" />
+                  <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Preferred Name / Tilltalsnamn</FieldLabel>
-                  <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Preferred Name" sv="Tilltalsnamn" />
+                  <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Address 1 / Adress 1</FieldLabel>
-                  <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Address 1" sv="Adress 1" />
+                  <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel>Address 2 / Adress 2</FieldLabel>
-                  <Input value={formData.address2 || ""} onChange={(e) => updateField("address2", e.target.value)} className="h-11" />
+                  <FieldLabel en="Address 2" sv="Adress 2" required={false} />
+                  <Input value={formData.address2 || ""} onChange={(e) => updateField("address2", e.target.value)} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>ZIP / Postal Code / Postnummer</FieldLabel>
-                  <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="ZIP / Postal Code" sv="Postnummer" />
+                  <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>City / Ort</FieldLabel>
-                  <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="City" sv="Ort" />
+                  <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>State / Province / Län / Region</FieldLabel>
-                  <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="State / Province" sv="Län / Region" />
+                  <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Country / Land</FieldLabel>
+                  <FieldLabel en="Country" sv="Land" />
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -198,31 +280,35 @@ export function OnboardingWizard({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Section 2.2: Birth and Contact Information */}
+          {/* ═══ Section 2.2: Birth and Contact Information ═══ */}
           <Collapsible open={s2Open} onOpenChange={setS2Open}>
             <SectionHeader
-              title="Section 2.2: Birth and Contact Information / Sektion 2.2: Födelse- och Kontaktinformation"
+              number="2.2"
+              titleEn="Birth and Contact Information"
+              titleSv="Födelse- och Kontaktinformation"
               open={s2Open}
+              onToggle={() => setS2Open(!s2Open)}
+              missingFields={s2Missing}
             />
-            <CollapsibleContent className="pt-6 pb-2 px-1 space-y-5">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-1.5">
-                <FieldLabel required>Birthday / Födelsedag</FieldLabel>
-                <Input type="date" value={formData.birthday || ""} onChange={(e) => updateField("birthday", e.target.value)} required={!isPreview} className="h-11" />
+                <FieldLabel en="Birthday" sv="Födelsedag" />
+                <Input type="date" value={formData.birthday || ""} onChange={(e) => updateField("birthday", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel required>Country of Birth? / Födelseland?</FieldLabel>
+                  <FieldLabel en="Country of Birth" sv="Födelseland" />
                   <Select value={formData.countryOfBirth} onValueChange={(v) => updateField("countryOfBirth", v)}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Citizenship? / Medborgarskap?</FieldLabel>
+                  <FieldLabel en="Citizenship" sv="Medborgarskap" />
                   <Select value={formData.citizenship} onValueChange={(v) => updateField("citizenship", v)}>
-                    <SelectTrigger className="h-11"><SelectValue placeholder="Select citizenship" /></SelectTrigger>
+                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -230,10 +316,10 @@ export function OnboardingWizard({
                 </div>
               </div>
               <div className="space-y-1.5">
-                <FieldLabel required>Mobile Phone Number / Mobiltelefon</FieldLabel>
+                <FieldLabel en="Mobile Phone Number" sv="Mobiltelefon" />
                 <div className="flex gap-2">
                   <Select defaultValue="RO">
-                    <SelectTrigger className="w-24 h-11"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-24 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="RO">🇷🇴 +40</SelectItem>
                       <SelectItem value="US">🇺🇸 +1</SelectItem>
@@ -241,38 +327,42 @@ export function OnboardingWizard({
                       <SelectItem value="SE">🇸🇪 +46</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="tel" value={formData.mobilePhone || ""} onChange={(e) => updateField("mobilePhone", e.target.value)} className="flex-1 h-11" required={!isPreview} />
+                  <Input type="tel" value={formData.mobilePhone || ""} onChange={(e) => updateField("mobilePhone", e.target.value)} className="flex-1 h-11 text-sm font-medium" required={!isPreview} />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <FieldLabel required>Email / E-post</FieldLabel>
-                <Input type="email" value={formData.email || ""} onChange={(e) => updateField("email", e.target.value)} required={!isPreview} className="h-11" />
+                <FieldLabel en="Email" sv="E-post" />
+                <Input type="email" value={formData.email || ""} onChange={(e) => updateField("email", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Section 2.3: Emergency Contact Information */}
+          {/* ═══ Section 2.3: Emergency Contact ═══ */}
           <Collapsible open={s3Open} onOpenChange={setS3Open}>
             <SectionHeader
-              title="Section 2.3: Emergency Contact Information / Sektion 2.3: Nödkontaktinformation"
+              number="2.3"
+              titleEn="Emergency Contact Information"
+              titleSv="Nödkontaktinformation"
               open={s3Open}
+              onToggle={() => setS3Open(!s3Open)}
+              missingFields={s3Missing}
             />
-            <CollapsibleContent className="pt-6 pb-2 px-1 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel required>Emergency Contact First Name / Förnamn</FieldLabel>
-                  <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Emergency Contact First Name" sv="Förnamn" />
+                  <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Emergency Contact Last Name / Efternamn</FieldLabel>
-                  <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Emergency Contact Last Name" sv="Efternamn" />
+                  <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <FieldLabel required>Emergency Contact Mobile Phone / Mobiltelefon</FieldLabel>
+                <FieldLabel en="Emergency Contact Mobile Phone" sv="Mobiltelefon" />
                 <div className="flex gap-2">
                   <Select defaultValue="RO">
-                    <SelectTrigger className="w-24 h-11"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-24 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="RO">🇷🇴 +40</SelectItem>
                       <SelectItem value="US">🇺🇸 +1</SelectItem>
@@ -280,77 +370,88 @@ export function OnboardingWizard({
                       <SelectItem value="SE">🇸🇪 +46</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="tel" value={formData.emergencyPhone || ""} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="flex-1 h-11" required={!isPreview} />
+                  <Input type="tel" value={formData.emergencyPhone || ""} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="flex-1 h-11 text-sm font-medium" required={!isPreview} />
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Bank Information */}
+          {/* ═══ Section 3: Bank Information ═══ */}
           <Collapsible open={s4Open} onOpenChange={setS4Open}>
             <SectionHeader
-              title="Bank Information / Bankinformation"
+              number="3"
+              titleEn="Bank Information"
+              titleSv="Bankinformation"
               open={s4Open}
+              onToggle={() => setS4Open(!s4Open)}
+              missingFields={s4Missing}
             />
-            <CollapsibleContent className="pt-6 pb-2 px-1 space-y-5">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-3">
-                <FieldLabel required>Toggle your Bank / Välj din bank</FieldLabel>
+                <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
                 <RadioGroup
                   value={isOtherBank ? "other" : selectedBank}
                   onValueChange={onBankSelect}
                   className="space-y-2"
                 >
                   {BANKS.map((bank) => (
-                    <div key={bank} className="flex items-center space-x-2.5">
-                      <RadioGroupItem value={bank} id={bank} />
+                    <div key={bank} className="flex items-center space-x-2.5 min-h-[44px]">
+                      <RadioGroupItem value={bank} id={bank} className="shrink-0" />
                       <Label htmlFor={bank} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
                     </div>
                   ))}
                   <div className="pt-3 mt-2 border-t border-border">
-                    <Label className="text-xs font-bold uppercase tracking-wide text-foreground mb-2 block">
-                      Toggle here if your bank is not in the list above
-                    </Label>
-                    <div className="flex items-center space-x-2.5">
-                      <RadioGroupItem value="other" id="other-bank" />
-                      <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank</Label>
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2 block">
+                      Toggle here if your bank is not in the list above / Välj här om din bank inte finns i listan ovan
+                    </label>
+                    <div className="flex items-center space-x-2.5 min-h-[44px]">
+                      <RadioGroupItem value="other" id="other-bank" className="shrink-0" />
+                      <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank / Annan bank</Label>
                     </div>
                   </div>
                 </RadioGroup>
               </div>
               {isOtherBank && (
                 <div className="space-y-1.5">
-                  <FieldLabel required>Bank Name / Banknamn</FieldLabel>
-                  <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} className="h-11" />
+                  <FieldLabel en="Bank Name" sv="Banknamn" />
+                  <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} className="h-11 text-sm font-medium" />
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel required>BIC Code</FieldLabel>
-                  <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="BIC Code" sv="BIC-kod" />
+                  <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
-                  <FieldLabel required>Bank Account Number / Kontonummer</FieldLabel>
-                  <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} required={!isPreview} className="h-11" />
+                  <FieldLabel en="Bank Account Number" sv="Kontonummer" />
+                  <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
                 </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* ID / Passport Information */}
+          {/* ═══ Section 4: ID / Passport ═══ */}
           <Collapsible open={s5Open} onOpenChange={setS5Open}>
             <SectionHeader
-              title="ID / Passport Information / ID- / Passinformation"
+              number="4"
+              titleEn="ID / Passport Information"
+              titleSv="ID- / Passinformation"
               open={s5Open}
+              onToggle={() => setS5Open(!s5Open)}
+              missingFields={s5Missing}
             />
-            <CollapsibleContent className="pt-6 pb-2 px-1 space-y-5">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-3">
-                <FieldLabel required>Please attach your valid EU ID or Passport / Bifoga ditt giltiga EU-ID eller pass</FieldLabel>
-                <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                <FieldLabel en="Please attach your valid EU ID or Passport" sv="Bifoga ditt giltiga EU-ID eller pass" />
+                <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
                   <input type="file" id="id-upload" accept="image/*,.pdf" onChange={onFileChange} className="hidden" />
                   <label htmlFor="id-upload" className="cursor-pointer block">
                     <Folder className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
                       Drag & drop a file or <span className="text-primary font-semibold underline">browse</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">
+                      Accepted formats: JPG, PNG, PDF
                     </p>
                     {uploadedFile && (
                       <p className="mt-3 text-sm text-primary font-semibold">{uploadedFile.name}</p>
@@ -362,9 +463,14 @@ export function OnboardingWizard({
           </Collapsible>
 
           {/* Submit */}
-          <div className="flex justify-center pt-6 pb-10">
-            <Button type="submit" disabled={isSubmitting || isPreview} size="lg" className="px-12 py-3 font-bold text-base rounded-full shadow-md">
-              {isSubmitting ? "Submitting..." : "Please submit this form"}
+          <div className="flex justify-center pt-4 pb-8">
+            <Button
+              type="submit"
+              disabled={isSubmitting || isPreview}
+              size="lg"
+              className="w-full sm:w-auto px-12 py-3 font-bold text-base rounded-full shadow-md min-h-[48px]"
+            >
+              {isSubmitting ? "Submitting... / Skickar..." : "Submit this form / Skicka formuläret"}
             </Button>
           </div>
         </form>
