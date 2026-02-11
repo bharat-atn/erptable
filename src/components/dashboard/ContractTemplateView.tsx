@@ -30,7 +30,7 @@ interface Employee {
 const steps = [{
   id: 1,
   label: "Company",
-  labelSv: "Företag",
+  labelSv: "Section 1",
   icon: Building2
 }, {
   id: 2,
