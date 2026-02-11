@@ -1,10 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { toast } from "sonner";
 
 interface ContractsViewProps {
   onContinueContract?: (contractId: string) => void;
@@ -32,6 +35,9 @@ const statusFilterOptions = [
 ];
 
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
+  const queryClient = useQueryClient();
+  const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
+
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
     queryFn: async () => {
@@ -44,6 +50,24 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
   });
 
+  const deleteContract = useMutation({
+    mutationFn: async (contract: ContractRow) => {
+      const { error } = await supabase
+        .from("contracts")
+        .delete()
+        .eq("id", contract.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success("Contract deleted successfully");
+      setDeleteTarget(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete contract: ${error.message}`);
+    },
+  });
+
   // Add a derived "statusLabel" for filtering
   const dataWithStatus = (contracts ?? []).map((c) => ({
     ...c,
@@ -52,8 +76,15 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
 
   type ContractWithStatus = typeof dataWithStatus[number];
 
+  const getContractLabel = (c: ContractRow) => {
+    const empName = c.employees?.first_name && c.employees?.last_name
+      ? `${c.employees.first_name} ${c.employees.last_name}`
+      : c.employees?.email || "Unknown";
+    return `${c.contract_code || "Draft"} — ${empName}`;
+  };
+
   const columns: ColumnDef<ContractWithStatus>[] = [
-    { key: "contract_code", header: "Contract No.", accessor: (c) => c.contract_code, hideable: false, render: (c, hl) => <span className="font-medium text-sm">{hl?.(c.contract_code || "—") ?? c.contract_code ?? "—"}</span> },
+    { key: "contract_code", header: "Contract ID", accessor: (c) => c.contract_code, hideable: false, render: (c, hl) => <span className="font-medium text-sm">{hl?.(c.contract_code || "—") ?? c.contract_code ?? "—"}</span> },
     {
       key: "employee", header: "Employee",
       accessor: (c) => c.employees?.first_name ? `${c.employees.first_name} ${c.employees.last_name}` : c.employees?.email,
@@ -97,13 +128,39 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         enableHighlight
         stickyHeader
         filters={[{ key: "_statusLabel", label: "Status", options: statusFilterOptions }]}
-        rowActions={onContinueContract ? (contract) => (
-          contract.status === "draft" ? (
-            <Button variant="outline" size="sm" className="gap-1" onClick={() => onContinueContract(contract.id)}>
-              Continue <ArrowRight className="w-3 h-3" />
+        rowActions={(contract) => (
+          <div className="flex items-center gap-1">
+            {onContinueContract && contract.status === "draft" && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => onContinueContract(contract.id)}>
+                Continue <ArrowRight className="w-3 h-3" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setDeleteTarget(contract)}
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
-          ) : null
-        ) : undefined}
+          </div>
+        )}
+      />
+
+      {/* Delete confirmation */}
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Contract"
+        itemName={deleteTarget ? getContractLabel(deleteTarget) : ""}
+        description={
+          deleteTarget?.contract_code
+            ? `Contract ID "${deleteTarget.contract_code}" will be released and can be reassigned to a future contract.`
+            : "This draft contract has no assigned Contract ID yet."
+        }
+        onConfirm={() => deleteTarget && deleteContract.mutate(deleteTarget)}
+        isLoading={deleteContract.isPending}
+        requireTypedConfirmation
       />
     </div>
   );
