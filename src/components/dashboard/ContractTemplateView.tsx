@@ -35,7 +35,7 @@ const steps = [{
 }, {
   id: 2,
   label: "Employee",
-  labelSv: "Anställd",
+  labelSv: "Employee Selection",
   icon: Users
 }, {
   id: 3,
