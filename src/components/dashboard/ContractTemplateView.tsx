@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
 import { ContractDetailsStep } from "./ContractDetailsStep";
 interface Company {
@@ -51,6 +51,11 @@ const steps = [{
   label: "Employee Details",
   labelSv: "Section 2:1, 2:2 & 2:3",
   icon: User
+}, {
+  id: 5,
+  label: "Employment",
+  labelSv: "Section 3, 4, 5 & 6",
+  icon: Briefcase
 }];
 export function ContractTemplateView() {
   const [activeStep, setActiveStep] = useState(1);
@@ -91,6 +96,7 @@ export function ContractTemplateView() {
     if (stepId === 1) return !!selectedCompanyId;
     if (stepId === 2) return !!selectedEmployee;
     if (stepId === 3) return !!selectedLanguage;
+    if (stepId === 4) return activeStep > 4;
     return false;
   };
   const filteredEmployees = employees.filter(e => {
@@ -289,7 +295,7 @@ export function ContractTemplateView() {
 
           {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={() => setActiveStep(4)} />}
 
-          {activeStep === 4 && selectedCompany && selectedEmployee && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} onBack={() => setActiveStep(3)} />}
+          {(activeStep === 4 || activeStep === 5) && selectedCompany && selectedEmployee && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} onBack={() => setActiveStep(3)} />}
         </div>
       </div>
 

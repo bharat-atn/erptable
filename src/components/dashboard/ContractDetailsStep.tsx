@@ -304,8 +304,10 @@ export function ContractDetailsStep({
   const activeProgressIdx = getActiveProgressIndex();
 
   return (
-    <Card className="shadow-md">
-      <CardHeader className="pb-2">
+    <div>
+      {/* Sticky progress bar */}
+      <Card className="shadow-md sticky top-0 z-20 rounded-b-none border-b-0">
+        <CardHeader className="pb-4">
         <CardTitle className="text-base font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
@@ -361,7 +363,9 @@ export function ContractDetailsStep({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-5">
+      </Card>
+      <Card className="shadow-md rounded-t-none border-t-0">
+      <CardContent className="space-y-5 pt-5">
         {/* Section 1: Employer Information */}
         <Collapsible open={section1Open} onOpenChange={setSection1Open}>
           <CollapsibleTrigger asChild>
@@ -1048,5 +1052,6 @@ export function ContractDetailsStep({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
