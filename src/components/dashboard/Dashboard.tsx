@@ -17,7 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Dashboard() {
+interface DashboardProps {
+  onBackToLauncher?: () => void;
+}
+
+export function Dashboard({ onBackToLauncher }: DashboardProps) {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
@@ -66,6 +70,7 @@ export function Dashboard() {
           onViewChange={setActiveView}
           activeScreenSize={screenSize}
           onScreenSizeChange={setScreenSize}
+          onBackToLauncher={onBackToLauncher}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">

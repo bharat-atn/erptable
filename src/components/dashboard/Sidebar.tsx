@@ -13,6 +13,7 @@ import {
   Building2,
   GripVertical,
   Monitor,
+  LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
   activeScreenSize: ScreenSizeOption;
   onScreenSizeChange: (size: ScreenSizeOption) => void;
+  onBackToLauncher?: () => void;
 }
 
 interface MenuItem {
@@ -194,7 +196,7 @@ function DraggableGroup({
   );
 }
 
-export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher }: SidebarProps) {
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
@@ -293,11 +295,24 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         </div>
       </div>
 
+      {/* Back to Launcher */}
+      {onBackToLauncher && (
+        <div className="px-3 pt-3 border-t border-sidebar-border shrink-0">
+          <button
+            onClick={onBackToLauncher}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+          >
+            <LayoutGrid className="w-4 h-4" />
+            <span>All Apps</span>
+          </button>
+        </div>
+      )}
+
       {/* Sign Out */}
       <div className="p-3 border-t border-sidebar-border shrink-0">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-300 hover:bg-red-500/10 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           <span>Sign Out</span>

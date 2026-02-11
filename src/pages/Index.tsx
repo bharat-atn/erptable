@@ -2,21 +2,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { AppLauncher } from "@/components/dashboard/AppLauncher";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeApp, setActiveApp] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -38,7 +38,11 @@ const Index = () => {
     return <AuthForm onSuccess={() => {}} />;
   }
 
-  return <Dashboard />;
+  if (activeApp === "hr-management") {
+    return <Dashboard onBackToLauncher={() => setActiveApp(null)} />;
+  }
+
+  return <AppLauncher onLaunchApp={(appId) => setActiveApp(appId)} />;
 };
 
 export default Index;
