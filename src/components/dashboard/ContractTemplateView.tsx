@@ -40,7 +40,7 @@ const steps = [{
 }, {
   id: 3,
   label: "Language",
-  labelSv: "Språk",
+  labelSv: "Language Selection",
   icon: Globe
 }, {
   id: 4,
