@@ -35,6 +35,19 @@ export function ContractIdSettingsView() {
     },
   });
 
+  const { data: empConfig } = useQuery({
+    queryKey: ["employee-id-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employee_id_settings")
+        .select("prefix, separator, padding, next_number")
+        .limit(1)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const [form, setForm] = useState({
     prefix: "EC",
     separator: "-",
@@ -72,10 +85,13 @@ export function ContractIdSettingsView() {
   });
 
   const year = new Date().getFullYear();
-  const exampleEmpCode = "EPM-001";
+  const exampleEmpCode = empConfig
+    ? `${empConfig.prefix}${empConfig.separator}${String(empConfig.next_number).padStart(empConfig.padding, "0")}`
+    : "EMP-0001";
   const preview = form.include_year
     ? `${form.prefix}${form.separator}${year}${form.separator}${exampleEmpCode}`
     : `${form.prefix}${form.separator}${exampleEmpCode}`;
+  const exampleText = `EC-${year}-EMP-0001`;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading...</p>;
 
@@ -99,7 +115,7 @@ export function ContractIdSettingsView() {
           </CardTitle>
           <CardDescription>
             Contract IDs are composed of a prefix, the year, and the employee code.
-            Example: EC-2026-EPM-001
+            Example: {exampleText}
           </CardDescription>
         </CardHeader>
         <CardContent>
