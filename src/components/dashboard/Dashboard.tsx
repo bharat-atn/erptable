@@ -31,7 +31,7 @@ export function Dashboard() {
         return <DashboardView />;
       case "operations":
         return <OperationsView />;
-      case "employees":
+      case "employee-register":
         return <OperationsView />;
       case "invitations":
         return <InvitationsView />;
