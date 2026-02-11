@@ -1,7 +1,7 @@
 const SWEDEN_DATA = {
-  firstNames: ["Erik", "Anna", "Lars", "Sofia", "Oskar", "Astrid", "Gustav", "Elsa", "Nils", "Freja"],
+  firstNames: ["Erik", "Lars", "Oskar", "Gustav", "Nils", "Johan", "Anders", "Per", "Karl", "Sven"],
   lastNames: ["Lindqvist", "Johansson", "Andersson", "Svensson", "Bergström", "Nilsson", "Eriksson", "Larsson"],
-  middleNames: ["Karl", "Maria", "Anders", "Birgitta", "Johan", "Karin", "Per", "Eva"],
+  middleNames: ["Karl", "Anders", "Johan", "Per", "Sven", "Olof", "Magnus", "Henrik"],
   cities: ["Stockholm", "Gothenburg", "Malmö", "Uppsala", "Lund"],
   states: ["Stockholm County", "Västra Götaland", "Skåne", "Uppsala County", "Norrbotten"],
   addresses: ["Kungsgatan 12", "Drottninggatan 45", "Storgatan 8", "Vasagatan 21", "Sveavägen 33"],
@@ -10,9 +10,9 @@ const SWEDEN_DATA = {
 };
 
 const ROMANIA_DATA = {
-  firstNames: ["Andrei", "Elena", "Mihai", "Ioana", "Dragos", "Maria", "Alexandru", "Ana", "Stefan", "Cristina"],
+  firstNames: ["Andrei", "Mihai", "Dragos", "Alexandru", "Stefan", "Ion", "Vasile", "Nicolae", "Gheorghe", "Marius"],
   lastNames: ["Popescu", "Ionescu", "Popa", "Dumitru", "Stan", "Gheorghe", "Rusu", "Munteanu"],
-  middleNames: ["Ion", "Maria", "Vasile", "Ana", "Nicolae", "Elena", "Gheorghe", "Ioana"],
+  middleNames: ["Ion", "Vasile", "Nicolae", "Gheorghe", "Constantin", "Florin", "Adrian", "Daniel"],
   cities: ["Bucharest", "Cluj-Napoca", "Timișoara", "Iași", "Constanța"],
   states: ["Bucharest", "Cluj", "Timiș", "Iași", "Constanța"],
   addresses: ["Strada Victoriei 15", "Bulevardul Unirii 28", "Calea Dorobanți 42", "Strada Lipscani 7"],
@@ -21,7 +21,7 @@ const ROMANIA_DATA = {
 };
 
 const THAILAND_DATA = {
-  firstNames: ["Somchai", "Siriporn", "Prasit", "Nattaya", "Kittisak", "Supaporn", "Thanawat", "Aranya", "Pichit", "Malai"],
+  firstNames: ["Somchai", "Prasit", "Kittisak", "Thanawat", "Pichit", "Anon", "Somsak", "Wichai", "Chaiwat", "Narong"],
   lastNames: ["Srisai", "Chaiyasit", "Thongkham", "Wongsawat", "Rattanapong", "Suwan", "Phetcharat", "Bunnak"],
   middleNames: ["", "", "", "", "", "", "", ""],
   cities: ["Bangkok", "Chiang Mai", "Phuket", "Pattaya", "Khon Kaen"],
@@ -74,8 +74,10 @@ export interface DummyEmployeeData {
   };
 }
 
-export function generateDummyEmployee(): DummyEmployeeData {
-  const key = pick(Object.keys(COUNTRY_MAP));
+export type DummyCountry = "Sweden" | "Romania" | "Thailand";
+
+export function generateDummyEmployee(selectedCountry?: DummyCountry): DummyEmployeeData {
+  const key = selectedCountry || pick(Object.keys(COUNTRY_MAP)) as DummyCountry;
   const { country, data } = COUNTRY_MAP[key];
   const first = pick(data.firstNames);
   const last = pick(data.lastNames);

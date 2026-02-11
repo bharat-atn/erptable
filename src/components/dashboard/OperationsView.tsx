@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { generateDummyEmployee } from "@/lib/dummy-employees";
+import { generateDummyEmployee, type DummyCountry } from "@/lib/dummy-employees";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,8 +79,8 @@ export function OperationsView() {
   });
 
   const addDummyEmployee = useMutation({
-    mutationFn: async () => {
-      const dummy = generateDummyEmployee();
+    mutationFn: async (country: DummyCountry) => {
+      const dummy = generateDummyEmployee(country);
       const { error } = await supabase.from("employees").insert([{
         first_name: dummy.first_name,
         last_name: dummy.last_name,
@@ -180,10 +180,19 @@ export function OperationsView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => addDummyEmployee.mutate()} disabled={addDummyEmployee.isPending}>
-            <Users className="w-4 h-4" />
-            Add Dummy
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2" disabled={addDummyEmployee.isPending}>
+                <Users className="w-4 h-4" />
+                Add Dummy
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Sweden")}>🇸🇪 Swedish</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Romania")}>🇷🇴 Romanian</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Thailand")}>🇹🇭 Thai</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
             Export
