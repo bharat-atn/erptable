@@ -28,6 +28,7 @@ const menuItems = [
 const settingsItems = [
   { id: "contract-template", label: "Contract Template", icon: FileText },
   { id: "company-register", label: "Company Register", icon: Building2 },
+  { id: "employee-id-settings", label: "Employee ID", icon: Users },
 ];
 
 const configItems = [

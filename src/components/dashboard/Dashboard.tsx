@@ -10,6 +10,7 @@ import { CompanyRegisterView } from "./CompanyRegisterView";
 import { OnboardingPreview } from "./OnboardingPreview";
 import { OperationsView } from "./OperationsView";
 import { ProcessGuideView } from "./ProcessGuideView";
+import { EmployeeIdSettingsView } from "./EmployeeIdSettingsView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
@@ -37,6 +38,8 @@ export function Dashboard() {
         return <CompanyRegisterView />;
       case "process-guide":
         return <ProcessGuideView />;
+      case "employee-id-settings":
+        return <EmployeeIdSettingsView />;
       default:
         return <DashboardView />;
     }
