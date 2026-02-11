@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -15,7 +17,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 interface Company {
   id: string;
@@ -46,6 +52,57 @@ const COUNTRIES = [
   "Estonia", "Germany", "Spain", "France", "Thailand",
 ];
 
+const JOB_TYPES = [
+  {
+    group: "Type 1: General Forestry Work",
+    items: [
+      "Planting / Plantering",
+      "Brush clearing / Motormanuell röjning",
+      "Chainsaw felling / Motormanuell huggning",
+    ],
+  },
+  {
+    group: "Type 2: Nursery Work",
+    items: [
+      "Nursery worker type 1 / Plantskolearbetare typ 1",
+      "Nursery worker type 2 / Plantskolearbetare typ 2",
+      "Nursery worker type 3 / Plantskolearbetare typ 3",
+    ],
+  },
+  {
+    group: "Type 3: Machine Work",
+    items: [
+      "Forwarder operator / Skotarförare",
+      "Harvester operator / Skördarförare",
+      "Combined operator / Både skotar- + skördarförare",
+    ],
+  },
+  {
+    group: "Type 4: Machine Repair Work",
+    items: [
+      "Machine repair LG2 / Maskinreparation LG2",
+      "Machine repair LG3 / Maskinreparation LG3",
+    ],
+  },
+  {
+    group: "Type 5: Special Forestry Work",
+    items: [
+      "Data collection / Enklare datainsamling",
+      "Qualified tasks / Kvalificerade uppgifter",
+      "Conservation planning / Naturvårdsplanläggning",
+      "Team leader / Lagbas",
+    ],
+  },
+];
+
+const EXPERIENCE_LEVELS = [
+  "Entry Level (0 years / < 1 season)",
+  "Junior (1 year / 1 season)",
+  "Experienced (2 years / seasons)",
+  "Senior (3 years / seasons)",
+  "Expert (4+ years / seasons)",
+];
+
 export function ContractDetailsStep({
   company,
   employee,
@@ -55,15 +112,17 @@ export function ContractDetailsStep({
   const [section21Open, setSection21Open] = useState(true);
   const [section22Open, setSection22Open] = useState(true);
   const [section23Open, setSection23Open] = useState(true);
+  const [section3Open, setSection3Open] = useState(true);
+  const [section4Open, setSection4Open] = useState(true);
 
-  // Employee form state pre-filled from register
+  // Employee form state
   const [firstName, setFirstName] = useState(employee.first_name ?? "");
   const [lastName, setLastName] = useState(employee.last_name ?? "");
   const [address, setAddress] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
-  const [birthday, setBirthday] = useState("");
+  const [birthday, setBirthday] = useState<Date | undefined>(undefined);
   const [personalId, setPersonalId] = useState("");
   const [mobile, setMobile] = useState(employee.phone ?? "");
   const [email, setEmail] = useState(employee.email ?? "");
@@ -71,7 +130,12 @@ export function ContractDetailsStep({
   const [emergencyLastName, setEmergencyLastName] = useState("");
   const [emergencyMobile, setEmergencyMobile] = useState("");
 
-  const renderLabel = (en: string, sv: string, required?: boolean) => (
+  // Section 3 state
+  const [jobType, setJobType] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState("");
+  const [stationing, setStationing] = useState("");
+
+  const renderLabel = (en: string, sv: string, required = true) => (
     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
       {en} / {sv}
       {required && <span className="text-destructive ml-0.5">*</span>}
@@ -84,6 +148,7 @@ export function ContractDetailsStep({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="h-11 text-sm font-medium"
+      required
     />
   );
 
@@ -93,22 +158,18 @@ export function ContractDetailsStep({
     titleSv,
     open,
     onToggle,
-    variant = "default",
   }: {
     number: string;
     titleEn: string;
     titleSv: string;
     open: boolean;
     onToggle: () => void;
-    variant?: "primary" | "default";
   }) => (
     <button
       onClick={onToggle}
       className={cn(
         "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold transition-colors",
-        variant === "primary"
-          ? "border-primary bg-primary/5 text-primary"
-          : "border-border bg-muted/20 text-foreground"
+        "border-primary bg-primary/5 text-primary"
       )}
     >
       <span>
@@ -122,6 +183,11 @@ export function ContractDetailsStep({
       />
     </button>
   );
+
+  // Birthday date range: 16-80 years old
+  const today = new Date();
+  const minBirthDate = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
+  const maxBirthDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
 
   return (
     <Card className="shadow-md">
@@ -144,7 +210,6 @@ export function ContractDetailsStep({
               titleSv="Arbetsgivarinformation"
               open={section1Open}
               onToggle={() => setSection1Open(!section1Open)}
-              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -196,18 +261,17 @@ export function ContractDetailsStep({
               titleSv="Namn och Adress"
               open={section21Open}
               onToggle={() => setSection21Open(!section21Open)}
-              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  {renderLabel("First Name", "Förnamn", true)}
+                  {renderLabel("First Name", "Förnamn")}
                   {renderField(firstName, setFirstName)}
                 </div>
                 <div className="space-y-1.5">
-                  {renderLabel("Last Name", "Efternamn", true)}
+                  {renderLabel("Last Name", "Efternamn")}
                   {renderField(lastName, setLastName)}
                 </div>
               </div>
@@ -221,13 +285,13 @@ export function ContractDetailsStep({
                   {renderField(zipCode, setZipCode)}
                 </div>
                 <div className="space-y-1.5">
-                  {renderLabel("City", "Ort", true)}
+                  {renderLabel("City", "Ort")}
                   {renderField(city, setCity)}
                 </div>
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Country", "Land")}
-                <Select value={country} onValueChange={setCountry}>
+                <Select value={country} onValueChange={setCountry} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Select country..." />
                   </SelectTrigger>
@@ -253,24 +317,49 @@ export function ContractDetailsStep({
               titleSv="Födelse och Kontakt"
               open={section22Open}
               onToggle={() => setSection22Open(!section22Open)}
-              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  {renderLabel("Birthday", "Födelsedag", true)}
-                  {renderField(birthday, setBirthday, "date")}
+                  {renderLabel("Birthday", "Födelsedag")}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full h-11 justify-start text-left text-sm font-medium",
+                          !birthday && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {birthday ? format(birthday, "yyyy-MM-dd") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={birthday}
+                        onSelect={setBirthday}
+                        disabled={(date) =>
+                          date > maxBirthDate || date < minBirthDate
+                        }
+                        defaultMonth={maxBirthDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="space-y-1.5">
-                  {renderLabel("Personal ID / Social Security", "Personnummer", true)}
+                  {renderLabel("Personal ID / Social Security", "Personnummer")}
                   {renderField(personalId, setPersonalId)}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  {renderLabel("Mobile Number", "Mobilnummer", true)}
+                  {renderLabel("Mobile Number", "Mobilnummer")}
                   {renderField(mobile, setMobile)}
                 </div>
                 <div className="space-y-1.5">
@@ -291,7 +380,6 @@ export function ContractDetailsStep({
               titleSv="Närmast Anhörig"
               open={section23Open}
               onToggle={() => setSection23Open(!section23Open)}
-              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -309,6 +397,94 @@ export function ContractDetailsStep({
               <div className="space-y-1.5">
                 {renderLabel("Emergency Contact Mobile", "Närmast Anhörig Mobil")}
                 {renderField(emergencyMobile, setEmergencyMobile)}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Section 3: Employment Details */}
+        <Collapsible open={section3Open} onOpenChange={setSection3Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="3"
+              titleEn="Employment Details"
+              titleSv="Anställningsuppgifter"
+              open={section3Open}
+              onToggle={() => setSection3Open(!section3Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 space-y-4 px-2">
+              <div className="space-y-1.5">
+                {renderLabel("Job Type / Arbetsuppgift / Befattningstyp", "Arbetsuppgift")}
+                <Select value={jobType} onValueChange={setJobType} required>
+                  <SelectTrigger className="h-11 text-sm font-medium">
+                    <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {JOB_TYPES.map((group) => (
+                      <SelectGroup key={group.group}>
+                        <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          {group.group}
+                        </SelectLabel>
+                        {group.items.map((item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                {renderLabel("Experience Level / Erfarenhet / Lönegrupp", "Erfarenhet")}
+                <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
+                  <SelectTrigger className="h-11 text-sm font-medium">
+                    <SelectValue placeholder="Choose the experience level... / Välj erfarenhetsnivå..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXPERIENCE_LEVELS.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                {renderLabel("Stationing", "Stationeringsort")}
+                {renderField(stationing, setStationing)}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Section 4: Collective Agreement */}
+        <Collapsible open={section4Open} onOpenChange={setSection4Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="4"
+              titleEn="Collective Agreement"
+              titleSv="Kollektivavtal"
+              open={section4Open}
+              onToggle={() => setSection4Open(!section4Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2">
+              <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-wide text-foreground">
+                    Skogsavtalet / GS-Facket
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Covered by Skogsavtalet between GS and Gröna arbetsgivare. / Anställningen omfattas av Skogsavtalet mellan GS och Gröna arbetsgivare.
+                  </p>
+                </div>
               </div>
             </div>
           </CollapsibleContent>
