@@ -676,18 +676,11 @@ export function ContractDetailsStep({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2">
-              <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-wide text-foreground">
-                    Skogsavtalet / GS-Facket
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Covered by Skogsavtalet between GS and Gröna arbetsgivare. / Anställningen omfattas av Skogsavtalet mellan GS och Gröna arbetsgivare.
-                  </p>
-                </div>
+              <div className="rounded-xl border border-border bg-muted/20 p-5">
+                <p className="text-sm font-bold mb-1">Collective agreement / Kollektivavtal</p>
+                <p className="text-sm text-muted-foreground">
+                  The employment arrangement is covered by the collective agreement known as Skogsavtalet [<em>Forest Agreement</em>] between the GS trade union and Gröna arbetsgivare. / Anställningen omfattas av kollektivavtalet Skogsavtalet mellan fackförbundet GS och Gröna arbetsgivare.
+                </p>
               </div>
             </div>
           </CollapsibleContent>
