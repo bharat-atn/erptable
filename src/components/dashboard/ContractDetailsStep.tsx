@@ -144,7 +144,7 @@ export function ContractDetailsStep({
               titleSv="Arbetsgivarinformation"
               open={section1Open}
               onToggle={() => setSection1Open(!section1Open)}
-              variant="default"
+              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
