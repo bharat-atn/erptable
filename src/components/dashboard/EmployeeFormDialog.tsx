@@ -31,6 +31,7 @@ interface EmployeeFormDialogProps {
 export interface EmployeeFormData {
   first_name: string;
   last_name: string;
+  middle_name: string;
   email: string;
   phone: string;
   city: string;
@@ -41,6 +42,7 @@ export interface EmployeeFormData {
 const initialForm: EmployeeFormData = {
   first_name: "",
   last_name: "",
+  middle_name: "",
   email: "",
   phone: "",
   city: "",
@@ -62,6 +64,7 @@ export function EmployeeFormDialog({
       setForm({
         first_name: employee.first_name || "",
         last_name: employee.last_name || "",
+        middle_name: employee.middle_name || "",
         email: employee.email,
         phone: employee.phone || "",
         city: employee.city || "",

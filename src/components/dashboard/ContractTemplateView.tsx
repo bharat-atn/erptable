@@ -23,9 +23,13 @@ interface Employee {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  middle_name: string | null;
   email: string;
   phone: string | null;
   employee_code: string | null;
+  city: string | null;
+  country: string | null;
+  personal_info: Record<string, any> | null;
 }
 const steps = [{
   id: 1,
@@ -77,7 +81,7 @@ export function ContractTemplateView() {
       const {
         data,
         error
-      } = await supabase.from("employees").select("id, first_name, last_name, email, phone, employee_code").order("last_name");
+      } = await supabase.from("employees").select("id, first_name, last_name, middle_name, email, phone, employee_code, city, country, personal_info").order("last_name");
       if (error) throw error;
       return data as Employee[];
     }

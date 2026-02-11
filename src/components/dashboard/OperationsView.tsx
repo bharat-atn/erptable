@@ -84,11 +84,13 @@ export function OperationsView() {
       const { error } = await supabase.from("employees").insert([{
         first_name: dummy.first_name,
         last_name: dummy.last_name,
+        middle_name: dummy.middle_name,
         email: dummy.email,
         phone: dummy.phone,
         city: dummy.city,
         country: dummy.country,
         status: dummy.status,
+        personal_info: dummy.personal_info,
       }]);
       if (error) throw error;
     },

@@ -36,9 +36,13 @@ interface Employee {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  middle_name: string | null;
   email: string;
   phone: string | null;
   employee_code: string | null;
+  city: string | null;
+  country: string | null;
+  personal_info: Record<string, any> | null;
 }
 
 interface ContractDetailsStepProps {
@@ -115,25 +119,29 @@ export function ContractDetailsStep({
   const [section3Open, setSection3Open] = useState(true);
   const [section4Open, setSection4Open] = useState(true);
 
+  const pi = employee.personal_info ?? {};
+
   // Employee form state
   const [firstName, setFirstName] = useState(employee.first_name ?? "");
-  const [middleName, setMiddleName] = useState("");
+  const [middleName, setMiddleName] = useState(employee.middle_name ?? "");
   const [lastName, setLastName] = useState(employee.last_name ?? "");
-  const [preferredName, setPreferredName] = useState("");
-  const [address, setAddress] = useState("");
-  const [address2, setAddress2] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [city, setCity] = useState("");
-  const [stateProvince, setStateProvince] = useState("");
-  const [country, setCountry] = useState("");
-  const [birthday, setBirthday] = useState<Date | undefined>(undefined);
-  const [countryOfBirth, setCountryOfBirth] = useState("");
-  const [citizenship, setCitizenship] = useState("");
+  const [preferredName, setPreferredName] = useState(pi.preferred_name ?? "");
+  const [address, setAddress] = useState(pi.address1 ?? "");
+  const [address2, setAddress2] = useState(pi.address2 ?? "");
+  const [zipCode, setZipCode] = useState(pi.zip_code ?? "");
+  const [city, setCity] = useState(employee.city ?? "");
+  const [stateProvince, setStateProvince] = useState(pi.state_province ?? "");
+  const [country, setCountry] = useState(employee.country ?? "");
+  const [birthday, setBirthday] = useState<Date | undefined>(
+    pi.birthday ? new Date(pi.birthday) : undefined
+  );
+  const [countryOfBirth, setCountryOfBirth] = useState(pi.country_of_birth ?? "");
+  const [citizenship, setCitizenship] = useState(pi.citizenship ?? "");
   const [mobile, setMobile] = useState(employee.phone ?? "");
   const [email, setEmail] = useState(employee.email ?? "");
-  const [emergencyFirstName, setEmergencyFirstName] = useState("");
-  const [emergencyLastName, setEmergencyLastName] = useState("");
-  const [emergencyMobile, setEmergencyMobile] = useState("");
+  const [emergencyFirstName, setEmergencyFirstName] = useState(pi.emergency_first_name ?? "");
+  const [emergencyLastName, setEmergencyLastName] = useState(pi.emergency_last_name ?? "");
+  const [emergencyMobile, setEmergencyMobile] = useState(pi.emergency_mobile ?? "");
 
   // Section 3 state
   const [jobType, setJobType] = useState("");
