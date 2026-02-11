@@ -17,7 +17,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -213,16 +213,78 @@ export function ContractDetailsStep({
   const minBirthDate = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
   const maxBirthDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
 
+  const progressSteps = [
+    { id: "parties", label: "Parties", icon: Users, sections: ["1", "2.1", "2.2", "2.3"] },
+    { id: "employment", label: "Employment", icon: Briefcase, sections: ["3", "4", "5", "6"] },
+    { id: "compensation", label: "Compensation", icon: DollarSign, sections: [] },
+    { id: "others", label: "Others", icon: MoreHorizontal, sections: [] },
+    { id: "review", label: "Review & Sign", icon: CheckCircle, sections: [] },
+  ];
+
+  // Determine which progress step is active based on which sections are visible/open
+  const getActiveProgressIndex = () => {
+    if (section3Open || section4Open || section5Open || section6Open) return 1;
+    return 0;
+  };
+  const activeProgressIdx = getActiveProgressIndex();
+
   return (
     <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <User className="w-5 h-5 text-primary" />
-          Contract Details{" "}
-          <span className="text-muted-foreground font-normal text-sm">
-            / Avtalsuppgifter
-          </span>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-primary" />
+            Employment contract for workers{" "}
+            <span className="text-muted-foreground font-normal text-sm">
+              / Anställningsavtal för arbetare
+            </span>
+          </div>
+          <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onBack}>
+            Exit / Avsluta
+          </Button>
         </CardTitle>
+
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between relative">
+            {/* Connection line */}
+            <div className="absolute top-5 left-0 right-0 h-0.5 bg-border z-0" />
+            <div
+              className="absolute top-5 left-0 h-0.5 bg-primary z-0 transition-all duration-500"
+              style={{ width: `${(activeProgressIdx / (progressSteps.length - 1)) * 100}%` }}
+            />
+
+            {progressSteps.map((step, idx) => {
+              const Icon = step.icon;
+              const isCompleted = idx < activeProgressIdx;
+              const isActive = idx === activeProgressIdx;
+              const isFuture = idx > activeProgressIdx;
+
+              return (
+                <div key={step.id} className="flex flex-col items-center gap-1.5 relative z-10">
+                  <div
+                    className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors",
+                      isCompleted && "bg-primary border-primary text-primary-foreground",
+                      isActive && "bg-primary border-primary text-primary-foreground shadow-md shadow-primary/30",
+                      isFuture && "bg-background border-border text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold uppercase tracking-wider",
+                      (isCompleted || isActive) ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         {/* Section 1: Employer Information */}
