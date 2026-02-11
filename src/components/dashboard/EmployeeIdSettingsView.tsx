@@ -133,10 +133,14 @@ export function EmployeeIdSettingsView() {
                 <Label htmlFor="next_number">Next Number / Nästa nummer</Label>
                 <Input
                   id="next_number"
-                  type="number"
-                  min={1}
-                  value={form.next_number}
-                  onChange={(e) => setForm((p) => ({ ...p, next_number: Number(e.target.value) }))}
+                  value={String(form.next_number).padStart(form.padding, "0")}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, "");
+                    if (!raw) return;
+                    const num = parseInt(raw, 10);
+                    const newPadding = Math.max(form.padding, raw.length);
+                    setForm((p) => ({ ...p, next_number: num, padding: newPadding }));
+                  }}
                   required
                 />
               </div>
