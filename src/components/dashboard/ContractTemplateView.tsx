@@ -56,6 +56,11 @@ const steps = [{
   label: "Employment",
   labelSv: "Section 3, 4, 5 & 6",
   icon: Briefcase
+}, {
+  id: 6,
+  label: "Compensation",
+  labelSv: "Section 7",
+  icon: Building2
 }];
 export function ContractTemplateView() {
   const [activeStep, setActiveStep] = useState(1);
@@ -98,6 +103,7 @@ export function ContractTemplateView() {
     if (stepId === 2) return !!selectedEmployee;
     if (stepId === 3) return !!selectedLanguage;
     if (stepId === 4) return activeStep > 4;
+    if (stepId === 5) return activeStep > 5;
     return false;
   };
   const filteredEmployees = employees.filter(e => {
@@ -314,7 +320,7 @@ export function ContractTemplateView() {
               setActiveStep(4);
             }} />}
 
-          {(activeStep === 4 || activeStep === 5) && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} onBack={() => setActiveStep(3)} />}
+          {(activeStep === 4 || activeStep === 5 || activeStep === 6) && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} onBack={() => setActiveStep(3)} />}
         </div>
       </div>
 
