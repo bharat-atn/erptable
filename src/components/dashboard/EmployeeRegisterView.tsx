@@ -2,8 +2,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { generateDummyEmployee, type DummyCountry } from "@/lib/dummy-employees";
 import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,17 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Search,
-  Plus,
-  MoreVertical,
-  Users,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Calendar,
-  Download,
-  Upload,
+  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -30,7 +18,7 @@ import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
 import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
 import type { Tables } from "@/integrations/supabase/types";
 import { CsvImportDialog } from "./CsvImportDialog";
-import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
+import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
@@ -42,21 +30,21 @@ const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
   INACTIVE: { label: "Terminated", dot: "bg-red-500" },
 };
 
-const ITEMS_PER_PAGE = 7;
-
 const employeeColumns: ColumnDef<Employee>[] = [
   {
     key: "employee_code",
     header: "Employee ID",
     accessor: (e) => e.employee_code,
-    render: (e) => <span className="font-medium text-sm">{e.employee_code || "—"}</span>,
+    hideable: false,
+    render: (e, hl) => <span className="font-medium text-sm">{hl?.(e.employee_code || "—") ?? e.employee_code ?? "—"}</span>,
   },
   {
     key: "name",
     header: "Name",
     accessor: (e) => `${e.first_name || ""} ${e.last_name || ""}`.trim(),
     minWidth: 180,
-    render: (e) => {
+    hideable: false,
+    render: (e, hl) => {
       const fullName = e.first_name && e.last_name ? `${e.first_name} ${e.last_name}` : "—";
       const initials = e.first_name ? `${e.first_name[0]}${e.last_name?.[0] || ""}` : "?";
       return (
@@ -64,15 +52,35 @@ const employeeColumns: ColumnDef<Employee>[] = [
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <span className="text-xs font-medium text-primary">{initials}</span>
           </div>
-          <span className="font-medium text-sm">{fullName}</span>
+          <span className="font-medium text-sm">{hl?.(fullName) ?? fullName}</span>
         </div>
       );
     },
   },
-  { key: "email", header: "Email", accessor: (e) => e.email, className: "text-sm" },
-  { key: "phone", header: "Phone", accessor: (e) => e.phone, className: "text-sm text-muted-foreground" },
-  { key: "city", header: "City", accessor: (e) => e.city, className: "text-sm text-muted-foreground" },
-  { key: "country", header: "Country", accessor: (e) => e.country, className: "text-sm text-muted-foreground" },
+  {
+    key: "email",
+    header: "Email",
+    accessor: (e) => e.email,
+    render: (e, hl) => <span className="text-sm">{hl?.(e.email) ?? e.email}</span>,
+  },
+  {
+    key: "phone",
+    header: "Phone",
+    accessor: (e) => e.phone,
+    render: (e, hl) => <span className="text-sm text-muted-foreground">{hl?.(e.phone || "—") ?? e.phone ?? "—"}</span>,
+  },
+  {
+    key: "city",
+    header: "City",
+    accessor: (e) => e.city,
+    render: (e, hl) => <span className="text-sm text-muted-foreground">{hl?.(e.city || "—") ?? e.city ?? "—"}</span>,
+  },
+  {
+    key: "country",
+    header: "Country",
+    accessor: (e) => e.country,
+    render: (e, hl) => <span className="text-sm text-muted-foreground">{hl?.(e.country || "—") ?? e.country ?? "—"}</span>,
+  },
   {
     key: "status",
     header: "Status",
@@ -91,6 +99,7 @@ const employeeColumns: ColumnDef<Employee>[] = [
     key: "created_at",
     header: "Timeline",
     accessor: (e) => e.created_at,
+    defaultVisible: false,
     render: (e) => (
       <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Calendar className="w-3.5 h-3.5" />
@@ -100,9 +109,14 @@ const employeeColumns: ColumnDef<Employee>[] = [
   },
 ];
 
+const statusFilterOptions = [
+  { value: "INVITED", label: "Invited", dot: "bg-blue-500" },
+  { value: "ONBOARDING", label: "Onboarding", dot: "bg-amber-500" },
+  { value: "ACTIVE", label: "Active", dot: "bg-emerald-500" },
+  { value: "INACTIVE", label: "Terminated", dot: "bg-red-500" },
+];
+
 export function EmployeeRegisterView() {
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
@@ -151,43 +165,6 @@ export function EmployeeRegisterView() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const filteredEmployees = employees?.filter((emp) => {
-    const term = search.toLowerCase();
-    return (
-      emp.email?.toLowerCase().includes(term) ||
-      emp.first_name?.toLowerCase().includes(term) ||
-      emp.last_name?.toLowerCase().includes(term) ||
-      emp.employee_code?.toLowerCase().includes(term) ||
-      emp.city?.toLowerCase().includes(term) ||
-      emp.country?.toLowerCase().includes(term)
-    );
-  }) ?? [];
-
-  const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
-  const paginatedEmployees = filteredEmployees.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const total = employees?.length || 0;
-  const active = employees?.filter((e) => e.status === "ACTIVE").length || 0;
-  const onboarding = employees?.filter((e) => e.status === "ONBOARDING").length || 0;
-  const invited = employees?.filter((e) => e.status === "INVITED").length || 0;
-  const terminated = employees?.filter((e) => e.status === "INACTIVE").length || 0;
-
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    if (totalPages <= 5) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
-    else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("...");
-      pages.push(totalPages);
-    }
-    return pages;
-  };
-
   const exportCsv = () => {
     if (!employees || employees.length === 0) { toast.error("No employees to export"); return; }
     const headers = ["employee_code", "first_name", "last_name", "middle_name", "email", "phone", "city", "country", "status", "created_at"];
@@ -206,6 +183,11 @@ export function EmployeeRegisterView() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(`Exported ${employees.length} employees`);
+  };
+
+  const handleBulkDelete = (ids: string[], clearSelection: () => void) => {
+    // For now just show count — could wire to a bulk delete mutation
+    toast.info(`${ids.length} employees selected for action`);
   };
 
   return (
@@ -240,69 +222,42 @@ export function EmployeeRegisterView() {
         </div>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-5 gap-3">
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Total Employees</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Invited</p><p className="text-2xl font-bold text-blue-600">{invited}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Onboarding</p><p className="text-2xl font-bold text-amber-600">{onboarding}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Active</p><p className="text-2xl font-bold text-emerald-600">{active}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Terminated</p><p className="text-2xl font-bold text-red-600">{terminated}</p></CardContent></Card>
-      </div>
-
-      {/* Search */}
-      <div className="flex items-center justify-between">
-        <div className="relative w-[300px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="pl-9" />
-        </div>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <SortableTable<Employee>
-            data={paginatedEmployees}
-            columns={employeeColumns}
-            rowKey={(e) => e.id}
-            defaultSortKey="employee_code"
-            isLoading={isLoading}
-            emptyMessage="No employees found"
-            rowActions={(employee) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee)}>Delete Employee</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</p>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage(1)}><ChevronsLeft className="w-4 h-4" /></Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}><ChevronLeft className="w-4 h-4" /></Button>
-            {getPageNumbers().map((page, i) =>
-              typeof page === "string" ? (
-                <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground text-sm">…</span>
-              ) : (
-                <Button key={page} variant={currentPage === page ? "default" : "outline"} size="icon" className="h-8 w-8" onClick={() => setCurrentPage(page)}>{page}</Button>
-              )
-            )}
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}><ChevronRight className="w-4 h-4" /></Button>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}><ChevronsRight className="w-4 h-4" /></Button>
-          </div>
-        </div>
-      )}
+      <EnhancedTable<Employee>
+        data={employees ?? []}
+        columns={employeeColumns}
+        rowKey={(e) => e.id}
+        defaultSortKey="employee_code"
+        isLoading={isLoading}
+        emptyMessage="No employees found"
+        searchPlaceholder="Search by name, email, city, country... (combine terms)"
+        enableSelection
+        enableColumnToggle
+        enableDenseToggle
+        enableHighlight
+        stickyHeader
+        filters={[
+          { key: "status", label: "Status", options: statusFilterOptions },
+        ]}
+        bulkActions={(ids, clear) => (
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive h-7" onClick={() => handleBulkDelete(ids, clear)}>
+            <Trash2 className="w-3.5 h-3.5" /> Delete Selected
+          </Button>
+        )}
+        onRowClick={(employee) => { setEditEmployee(employee); setFormOpen(true); }}
+        rowActions={(employee) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee)}>Delete Employee</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
 
       <EmployeeFormDialog
         open={formOpen}

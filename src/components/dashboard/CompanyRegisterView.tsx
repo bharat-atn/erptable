@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Building2, Plus, MoreHorizontal, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { CompanyFormDialog, type CompanyFormData } from "./CompanyFormDialog";
 import { toast } from "sonner";
-import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
+import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 interface Company {
   id: string;
@@ -29,19 +27,24 @@ interface Company {
 }
 
 const columns: ColumnDef<Company>[] = [
-  { key: "name", header: "Employer / Arbetsgivare", accessor: (c) => c.name, render: (c) => <span className="font-medium text-sm">{c.name}</span> },
-  { key: "org_number", header: "Org. Number", accessor: (c) => c.org_number, className: "text-sm" },
-  { key: "city", header: "City / Ort", accessor: (c) => c.city, className: "text-sm" },
-  { key: "country", header: "Country", accessor: (c) => c.country, className: "text-sm text-muted-foreground" },
-  { key: "phone", header: "Phone", accessor: (c) => c.phone, className: "text-sm text-muted-foreground" },
-  { key: "email", header: "Email", accessor: (c) => c.email, className: "text-sm text-muted-foreground" },
+  {
+    key: "name", header: "Employer / Arbetsgivare", accessor: (c) => c.name, hideable: false,
+    render: (c, hl) => <span className="font-medium text-sm">{hl?.(c.name) ?? c.name}</span>,
+  },
+  { key: "org_number", header: "Org. Number", accessor: (c) => c.org_number, render: (c, hl) => <span className="text-sm">{hl?.(c.org_number || "—") ?? c.org_number ?? "—"}</span> },
+  { key: "city", header: "City / Ort", accessor: (c) => c.city, render: (c, hl) => <span className="text-sm">{hl?.(c.city || "—") ?? c.city ?? "—"}</span> },
+  { key: "country", header: "Country", accessor: (c) => c.country, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.country || "—") ?? c.country ?? "—"}</span> },
+  { key: "phone", header: "Phone", accessor: (c) => c.phone, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.phone || "—") ?? c.phone ?? "—"}</span> },
+  { key: "email", header: "Email", accessor: (c) => c.email, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.email || "—") ?? c.email ?? "—"}</span> },
+  { key: "website", header: "Website", accessor: (c) => c.website, defaultVisible: false, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.website || "—") ?? c.website ?? "—"}</span> },
+  { key: "address", header: "Address", accessor: (c) => c.address, defaultVisible: false, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.address || "—") ?? c.address ?? "—"}</span> },
+  { key: "postcode", header: "Postcode", accessor: (c) => c.postcode, defaultVisible: false, className: "text-sm text-muted-foreground" },
 ];
 
 export function CompanyRegisterView() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [search, setSearch] = useState("");
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["companies"],
@@ -83,13 +86,6 @@ export function CompanyRegisterView() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const filtered = companies.filter((c) => {
-    const term = search.toLowerCase();
-    return c.name?.toLowerCase().includes(term) || c.org_number?.toLowerCase().includes(term) ||
-      c.city?.toLowerCase().includes(term) || c.country?.toLowerCase().includes(term) ||
-      c.email?.toLowerCase().includes(term);
-  });
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -105,34 +101,31 @@ export function CompanyRegisterView() {
         </Button>
       </div>
 
-      <div className="relative w-[300px]">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <SortableTable<Company>
-            data={filtered}
-            columns={columns}
-            rowKey={(c) => c.id}
-            defaultSortKey="name"
-            isLoading={isLoading}
-            emptyMessage="No companies registered yet."
-            rowActions={(c) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setEditingCompany(c); setDialogOpen(true); }}><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          />
-        </CardContent>
-      </Card>
+      <EnhancedTable<Company>
+        data={companies}
+        columns={columns}
+        rowKey={(c) => c.id}
+        defaultSortKey="name"
+        isLoading={isLoading}
+        emptyMessage="No companies registered yet."
+        searchPlaceholder="Search companies by name, org number, city..."
+        enableColumnToggle
+        enableDenseToggle
+        enableHighlight
+        stickyHeader
+        onRowClick={(c) => { setEditingCompany(c); setDialogOpen(true); }}
+        rowActions={(c) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => { setEditingCompany(c); setDialogOpen(true); }}><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
 
       <CompanyFormDialog
         open={dialogOpen}
