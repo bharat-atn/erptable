@@ -5,6 +5,7 @@ import { EmployeesView } from "./EmployeesView";
 import { InvitationsView } from "./InvitationsView";
 import { ContractsView } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
+import { ContractTemplateView } from "./ContractTemplateView";
 import { OnboardingPreview } from "./OnboardingPreview";
 import { OperationsView } from "./OperationsView";
 import { ProcessGuideView } from "./ProcessGuideView";
@@ -29,6 +30,8 @@ export function Dashboard() {
         return <ContractsView />;
       case "settings":
         return <SettingsView />;
+      case "contract-template":
+        return <ContractTemplateView />;
       case "process-guide":
         return <ProcessGuideView />;
       default:

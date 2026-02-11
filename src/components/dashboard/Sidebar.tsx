@@ -22,7 +22,10 @@ const menuItems = [
   { id: "operations", label: "Employee Register", icon: Users },
   { id: "invitations", label: "Invitations", icon: Mail },
   { id: "contracts", label: "Contracts", icon: FileText },
-  { id: "settings", label: "Settings", icon: Settings },
+];
+
+const settingsItems = [
+  { id: "contract-template", label: "Contract Template", icon: FileText },
 ];
 
 const configItems = [
@@ -47,6 +50,27 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onViewChange(item.id)}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+              activeView === item.id
+                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            )}
+          >
+            <item.icon className="w-4 h-4" />
+            <span>{item.label}</span>
+          </button>
+        ))}
+
+        <div className="pt-4 pb-1 px-3">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Settings
+          </span>
+        </div>
+        {settingsItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onViewChange(item.id)}
