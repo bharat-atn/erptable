@@ -1,14 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { ChevronDown, GripVertical, Eye, EyeOff, Save, Loader2, AlertTriangle, FileText, CheckCircle } from "lucide-react";
+import { ChevronDown, Save, Loader2, AlertTriangle, FileText, Upload, X, Image } from "lucide-react";
 import { toast } from "sonner";
 
 interface TemplateField {
@@ -23,18 +23,32 @@ interface TemplateField {
   field_type: string;
 }
 
-const SECTION_LABELS: Record<string, { en: string; sv: string }> = {
-  "2.1": { en: "Name and Address Information", sv: "Namn och Adressinformation" },
-  "2.2": { en: "Birth and Contact Information", sv: "Födelse- och Kontaktinformation" },
-  "2.3": { en: "Emergency Contact Information", sv: "Nödkontaktinformation" },
-  "3": { en: "Bank Information", sv: "Bankinformation" },
-  "4": { en: "ID / Passport Information", sv: "ID- / Passinformation" },
+const SECTION_LABELS: Record<string, { en: string; sv: string; displayKey: string }> = {
+  "2.1": { en: "Name and Address Information", sv: "Namn och Adressinformation", displayKey: "2.1" },
+  "2.2": { en: "Birth and Contact Information", sv: "Födelse- och Kontaktinformation", displayKey: "2.2" },
+  "2.3": { en: "Emergency Contact Information", sv: "Nödkontaktinformation", displayKey: "2.3" },
+  "3": { en: "Bank Information", sv: "Bankinformation", displayKey: "2.4" },
+  "4": { en: "ID / Passport Information", sv: "ID- / Passinformation", displayKey: "2.5" },
 };
+
+function loadLogo(): string | null {
+  return localStorage.getItem("invitation-template-logo");
+}
+
+function saveLogo(dataUrl: string | null) {
+  if (dataUrl) {
+    localStorage.setItem("invitation-template-logo", dataUrl);
+  } else {
+    localStorage.removeItem("invitation-template-logo");
+  }
+}
 
 export function InvitationTemplateView() {
   const queryClient = useQueryClient();
   const [editedFields, setEditedFields] = useState<Map<string, Partial<TemplateField>>>(new Map());
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(Object.keys(SECTION_LABELS)));
+  const [logo, setLogo] = useState<string | null>(loadLogo);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: fields = [], isLoading } = useQuery({
     queryKey: ["invitation-template-fields"],
@@ -48,7 +62,7 @@ export function InvitationTemplateView() {
     },
   });
 
-  const saveFields = useMutation({
+  const saveFieldsMutation = useMutation({
     mutationFn: async () => {
       const updates = Array.from(editedFields.entries()).map(([id, changes]) => ({
         id,
@@ -87,9 +101,36 @@ export function InvitationTemplateView() {
     });
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setLogo(dataUrl);
+      saveLogo(dataUrl);
+      toast.success("Logo uploaded successfully");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogo(null);
+    saveLogo(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    toast.success("Logo removed");
+  };
+
   const hasChanges = editedFields.size > 0;
 
-  // Group fields by section
   const sections = Object.keys(SECTION_LABELS);
   const fieldsBySection = sections.map((sectionKey) => ({
     key: sectionKey,
@@ -129,16 +170,16 @@ export function InvitationTemplateView() {
           </p>
         </div>
         <Button
-          onClick={() => saveFields.mutate()}
-          disabled={!hasChanges || saveFields.isPending}
+          onClick={() => saveFieldsMutation.mutate()}
+          disabled={!hasChanges || saveFieldsMutation.isPending}
           className="gap-2"
         >
-          {saveFields.isPending ? (
+          {saveFieldsMutation.isPending ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <Save className="w-4 h-4" />
           )}
-          {saveFields.isPending ? "Saving..." : "Save Changes"}
+          {saveFieldsMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </div>
 
@@ -151,6 +192,65 @@ export function InvitationTemplateView() {
         </div>
       )}
 
+      {/* Logo Upload Section */}
+      <Card className="shadow-md">
+        <CardHeader className="py-3 px-5">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-primary">
+            <Image className="w-4 h-4" />
+            Section 1: Form Logo / Sektion 1: Formulärlogotyp
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-5 pb-4 pt-0">
+          <p className="text-xs text-muted-foreground mb-3">
+            Upload a company logo to display at the top of the onboarding form sent to candidates.
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleLogoUpload}
+          />
+          {logo ? (
+            <div className="flex items-center gap-4">
+              <div className="relative w-48 h-20 border border-border rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden">
+                <img src={logo} alt="Form logo" className="max-w-full max-h-full object-contain p-2" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Replace Logo
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeLogo}
+                  className="gap-2 text-destructive hover:text-destructive"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full max-w-sm border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center gap-2 hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+            >
+              <Upload className="w-6 h-6 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Click to upload logo</span>
+              <span className="text-xs text-muted-foreground/60">PNG, JPG or SVG — max 2MB</span>
+            </button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Field Sections */}
       <div className="space-y-4">
         {fieldsBySection.map((section) => {
           const isOpen = openSections.has(section.key);
@@ -165,7 +265,7 @@ export function InvitationTemplateView() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-semibold flex items-center gap-2">
                         <span className="text-primary">
-                          Section {section.key}: {section.en} / Sektion {section.key}: {section.sv}
+                          Section {section.displayKey}: {section.en} / Sektion {section.displayKey}: {section.sv}
                         </span>
                       </CardTitle>
                       <div className="flex items-center gap-3">
@@ -184,7 +284,6 @@ export function InvitationTemplateView() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0 pb-4 px-5">
-                    {/* Table header */}
                     <div className="grid grid-cols-[1fr_1fr_80px_80px] gap-3 pb-2 mb-2 border-b border-border">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">English Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Swedish Label</span>
