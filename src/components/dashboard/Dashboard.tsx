@@ -11,6 +11,7 @@ import { OnboardingPreview } from "./OnboardingPreview";
 import { OperationsView } from "./OperationsView";
 import { ProcessGuideView } from "./ProcessGuideView";
 import { EmployeeIdSettingsView } from "./EmployeeIdSettingsView";
+import { ContractIdSettingsView } from "./ContractIdSettingsView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
@@ -40,6 +41,8 @@ export function Dashboard() {
         return <ProcessGuideView />;
       case "employee-id-settings":
         return <EmployeeIdSettingsView />;
+      case "contract-id-settings":
+        return <ContractIdSettingsView />;
       default:
         return <DashboardView />;
     }

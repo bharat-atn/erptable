@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -65,6 +65,7 @@ export function ContractTemplateView() {
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("EN/SE");
+  const [contractId, setContractId] = useState<string | null>(null);
   const {
     data: companies = []
   } = useQuery({
@@ -293,9 +294,27 @@ export function ContractTemplateView() {
               </CardContent>
             </Card>}
 
-          {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={() => setActiveStep(4)} />}
+          {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={async () => {
+              // Create or reuse contract when entering step 4
+              if (!contractId && selectedEmployee && selectedCompanyId) {
+                const { data, error } = await supabase
+                  .from("contracts")
+                  .insert({
+                    employee_id: selectedEmployee.id,
+                    company_id: selectedCompanyId,
+                    season_year: new Date().getFullYear().toString(),
+                    status: "draft",
+                  })
+                  .select("id")
+                  .single();
+                if (!error && data) {
+                  setContractId(data.id);
+                }
+              }
+              setActiveStep(4);
+            }} />}
 
-          {(activeStep === 4 || activeStep === 5) && selectedCompany && selectedEmployee && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} onBack={() => setActiveStep(3)} />}
+          {(activeStep === 4 || activeStep === 5) && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} onBack={() => setActiveStep(3)} />}
         </div>
       </div>
 
