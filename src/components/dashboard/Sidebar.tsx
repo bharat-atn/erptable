@@ -20,13 +20,14 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "operations", label: "Employee Register", icon: Users },
+  { id: "operations", label: "Operations", icon: Briefcase },
   { id: "invitations", label: "Invitations", icon: Mail },
   { id: "contracts", label: "Contracts", icon: FileText },
 ];
 
 const settingsItems = [
   { id: "contract-template", label: "Contract Template", icon: FileText },
+  { id: "employee-register", label: "Employee Register", icon: Users },
   { id: "company-register", label: "Company Register", icon: Building2 },
   { id: "employee-id-settings", label: "Employee ID", icon: Users },
   { id: "contract-id-settings", label: "Contract ID", icon: FileText },
