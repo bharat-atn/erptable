@@ -93,22 +93,22 @@ export function ContractDetailsStep({
     titleSv,
     open,
     onToggle,
-    variant = "green",
+    variant = "default",
   }: {
     number: string;
     titleEn: string;
     titleSv: string;
     open: boolean;
     onToggle: () => void;
-    variant?: "green" | "default";
+    variant?: "primary" | "default";
   }) => (
     <button
       onClick={onToggle}
       className={cn(
-        "w-full flex items-center justify-between rounded-full border-2 px-6 py-3 text-sm font-semibold transition-colors",
-        variant === "green"
+        "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold transition-colors",
+        variant === "primary"
           ? "border-primary bg-primary/5 text-primary"
-          : "border-border bg-muted/30 text-foreground"
+          : "border-border bg-muted/20 text-foreground"
       )}
     >
       <span>
@@ -196,7 +196,7 @@ export function ContractDetailsStep({
               titleSv="Namn och Adress"
               open={section21Open}
               onToggle={() => setSection21Open(!section21Open)}
-              variant="green"
+              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -253,7 +253,7 @@ export function ContractDetailsStep({
               titleSv="Födelse och Kontakt"
               open={section22Open}
               onToggle={() => setSection22Open(!section22Open)}
-              variant="green"
+              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -291,7 +291,7 @@ export function ContractDetailsStep({
               titleSv="Närmast Anhörig"
               open={section23Open}
               onToggle={() => setSection23Open(!section23Open)}
-              variant="green"
+              variant="primary"
             />
           </CollapsibleTrigger>
           <CollapsibleContent>
