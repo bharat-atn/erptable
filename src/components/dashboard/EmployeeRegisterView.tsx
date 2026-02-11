@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { generateDummyEmployee, type DummyCountry } from "@/lib/dummy-employees";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,15 +15,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Search,
   Filter,
-  FileText,
+  Plus,
+  MoreVertical,
   Users,
-  Star,
-  Clock,
-  CheckCircle,
-  Snowflake,
-  XCircle,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -31,6 +35,9 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
+import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
+import type { Tables } from "@/integrations/supabase/types";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 
@@ -43,12 +50,16 @@ const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
 
 const ITEMS_PER_PAGE = 7;
 
-export function OperationsView() {
+export function EmployeeRegisterView() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [editEmployee, setEditEmployee] = useState<Tables<"employees"> | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteEmployee, setDeleteEmployee] = useState<Tables<"employees"> | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: employees, isLoading } = useQuery({
-    queryKey: ["operations-employees"],
+    queryKey: ["register-employees"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
@@ -57,6 +68,34 @@ export function OperationsView() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const updateEmployee = useMutation({
+    mutationFn: async (data: EmployeeFormData & { id: string }) => {
+      const { id, ...rest } = data;
+      const { error } = await supabase.from("employees").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      toast.success("Employee updated!");
+      setFormOpen(false);
+      setEditEmployee(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteEmployeeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("employees").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      toast.success("Employee deleted!");
+      setDeleteEmployee(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const filteredEmployees = employees?.filter((emp) => {
@@ -79,10 +118,9 @@ export function OperationsView() {
 
   // Stats
   const total = employees?.length || 0;
-  const invited = employees?.filter((e) => e.status === "INVITED").length || 0;
-  const onboarding = employees?.filter((e) => e.status === "ONBOARDING").length || 0;
   const active = employees?.filter((e) => e.status === "ACTIVE").length || 0;
-  const inactive = employees?.filter((e) => e.status === "INACTIVE").length || 0;
+  const onboarding = employees?.filter((e) => e.status === "ONBOARDING").length || 0;
+  const invited = employees?.filter((e) => e.status === "INVITED").length || 0;
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -101,118 +139,45 @@ export function OperationsView() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold">Operations</h1>
-        <p className="text-muted-foreground text-sm">
-          Manage workflows and employee lifecycle.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Employee Register</h1>
+          <p className="text-muted-foreground text-sm">
+            Add and manage employees in your organization.
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => { setEditEmployee(null); setFormOpen(true); }}>
+          <Plus className="w-4 h-4" />
+          Add Employee
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-7 gap-3">
-        <Card className="border-2 border-primary bg-primary/5">
+      {/* Summary stats */}
+      <div className="grid grid-cols-4 gap-3">
+        <Card>
           <CardContent className="p-4">
-            <FileText className="w-5 h-5 text-primary mb-2" />
-            <p className="text-xs font-medium text-primary">Total Contracts</p>
+            <p className="text-xs font-medium text-muted-foreground">Total Employees</p>
             <p className="text-2xl font-bold">{total}</p>
-            <Badge variant="default" className="mt-1 text-[10px] px-1.5 py-0">
-              Active Entities
-            </Badge>
           </CardContent>
         </Card>
-
-        {/* Before Season */}
-        <div className="col-span-2 space-y-2">
-          <div className="text-center">
-            <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px]">
-              Before Season
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Invited</span>
-                </div>
-                <p className="text-2xl font-bold">{invited}</p>
-                <p className="text-[10px] text-muted-foreground">Candidate Action</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Star className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Renewal</span>
-                </div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-[10px] text-muted-foreground">Re-onboarding</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Under Season */}
-        <div className="col-span-2 space-y-2">
-          <div className="text-center">
-            <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]">
-              Under Season
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Onboarding</span>
-                </div>
-                <p className="text-2xl font-bold">{onboarding}</p>
-                <p className="text-[10px] text-muted-foreground">HR Action Required</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Active Duty</span>
-                </div>
-                <p className="text-2xl font-bold">{active}</p>
-                <p className="text-[10px] text-muted-foreground">Contract Signed</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* After Season */}
-        <div className="col-span-2 space-y-2">
-          <div className="text-center">
-            <Badge variant="outline" className="bg-violet-50 text-violet-600 border-violet-200 text-[10px]">
-              After Season
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Snowflake className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Seasonal Pool</span>
-                </div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-[10px] text-muted-foreground">Eligible for Rehire</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">Terminated</span>
-                </div>
-                <p className="text-2xl font-bold">{inactive}</p>
-                <p className="text-[10px] text-muted-foreground">Archived Data</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground">Active</p>
+            <p className="text-2xl font-bold text-emerald-600">{active}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground">Onboarding</p>
+            <p className="text-2xl font-bold text-amber-600">{onboarding}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs font-medium text-muted-foreground">Invited</p>
+            <p className="text-2xl font-bold text-blue-600">{invited}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search & Filters */}
@@ -252,20 +217,21 @@ export function OperationsView() {
                 <TableHead>Country</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Timeline</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 [...Array(5)].map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={9}>
                       <div className="h-4 bg-muted rounded animate-pulse" />
                     </TableCell>
                   </TableRow>
                 ))
               ) : paginatedEmployees?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     No employees found
                   </TableCell>
                 </TableRow>
@@ -307,6 +273,19 @@ export function OperationsView() {
                           {format(new Date(employee.created_at), "MMM dd yyyy")}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setEditEmployee(employee as Tables<"employees">); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee as Tables<"employees">)}>Delete Employee</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -347,6 +326,33 @@ export function OperationsView() {
           </div>
         </div>
       )}
+
+      <EmployeeFormDialog
+        open={formOpen}
+        onOpenChange={(open) => { setFormOpen(open); if (!open) setEditEmployee(null); }}
+        employee={editEmployee}
+        onSubmit={(data) => {
+          if (editEmployee) {
+            updateEmployee.mutate({ ...data, id: editEmployee.id });
+          } else {
+            supabase.from("employees").insert([data]).then(({ error }) => {
+              if (error) { toast.error(error.message); return; }
+              queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+              toast.success("Employee created!");
+              setFormOpen(false);
+            });
+          }
+        }}
+        isLoading={updateEmployee.isPending}
+      />
+
+      <DeleteEmployeeDialog
+        open={!!deleteEmployee}
+        onOpenChange={(open) => { if (!open) setDeleteEmployee(null); }}
+        employeeName={deleteEmployee ? `${deleteEmployee.first_name || ""} ${deleteEmployee.last_name || ""}`.trim() || deleteEmployee.email : ""}
+        onConfirm={() => { if (deleteEmployee) deleteEmployeeMutation.mutate(deleteEmployee.id); }}
+        isLoading={deleteEmployeeMutation.isPending}
+      />
     </div>
   );
 }
