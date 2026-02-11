@@ -119,7 +119,7 @@ export function ContractTemplateView() {
 
       <div className="flex gap-6">
         {/* Wizard sidebar */}
-        <div className="w-60 shrink-0">
+        <div className="w-60 shrink-0 sticky top-6 self-start">
           <Card className="shadow-md">
             <CardContent className="p-3 space-y-1">
               {steps.map(step => {

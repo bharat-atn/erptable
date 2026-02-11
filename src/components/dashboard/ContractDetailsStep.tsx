@@ -17,7 +17,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -159,6 +159,50 @@ export function ContractDetailsStep({
   const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
   const [partTimePercent, setPartTimePercent] = useState("");
 
+  // Validation: which required fields are missing per section
+  const section21Missing: string[] = [];
+  if (!firstName) section21Missing.push("First Name");
+  if (!lastName) section21Missing.push("Last Name");
+  if (!preferredName) section21Missing.push("Preferred Name");
+  if (!address) section21Missing.push("Address 1");
+  if (!zipCode) section21Missing.push("ZIP / Postal Code");
+  if (!city) section21Missing.push("City");
+  if (!stateProvince) section21Missing.push("State / Province");
+  if (!country) section21Missing.push("Country");
+
+  const section22Missing: string[] = [];
+  if (!birthday) section22Missing.push("Birthday");
+  if (!countryOfBirth) section22Missing.push("Country of Birth");
+  if (!citizenship) section22Missing.push("Citizenship");
+  if (!mobile) section22Missing.push("Mobile Phone Number");
+  if (!email) section22Missing.push("Email");
+
+  const section23Missing: string[] = [];
+  if (!emergencyFirstName) section23Missing.push("Emergency Contact First Name");
+  if (!emergencyLastName) section23Missing.push("Emergency Contact Last Name");
+  if (!emergencyMobile) section23Missing.push("Emergency Contact Mobile");
+
+  const section3Missing: string[] = [];
+  if (!jobType) section3Missing.push("Job Type");
+  if (!experienceLevel) section3Missing.push("Experience Level");
+  if (!stationing) section3Missing.push("Stationing");
+
+  const section5Missing: string[] = [];
+  if (employmentForm === "permanent" && !employmentStartDate) section5Missing.push("Employment Start Date");
+  if (employmentForm === "probationary" && !probationStartDate) section5Missing.push("Probation Start Date");
+
+  const section6Missing: string[] = [];
+  if (workingTime === "parttime" && !partTimePercent) section6Missing.push("Part Time Percentage");
+
+  const sectionWarnings: Record<string, string[]> = {
+    "2.1": section21Missing,
+    "2.2": section22Missing,
+    "2.3": section23Missing,
+    "3": section3Missing,
+    "5": section5Missing,
+    "6": section6Missing,
+  };
+
   const renderLabel = (en: string, sv: string, required = true) => (
     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
       {en} / {sv}
@@ -188,25 +232,42 @@ export function ContractDetailsStep({
     titleSv: string;
     open: boolean;
     onToggle: () => void;
-  }) => (
-    <button
-      onClick={onToggle}
-      className={cn(
-        "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold transition-colors",
-        "border-primary bg-primary/5 text-primary"
-      )}
-    >
-      <span>
-        Section {number}: {titleEn} / Sektion {number}: {titleSv}
-      </span>
-      <ChevronDown
-        className={cn(
-          "w-4 h-4 transition-transform duration-200",
-          open && "rotate-180"
+  }) => {
+    const missing = sectionWarnings[number] || [];
+    const hasWarning = missing.length > 0;
+
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={onToggle}
+          className={cn(
+            "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold transition-colors",
+            hasWarning
+              ? "border-destructive/50 bg-destructive/5 text-primary"
+              : "border-primary bg-primary/5 text-primary"
+          )}
+        >
+          <span className="flex items-center gap-2">
+            {hasWarning && (
+              <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+            )}
+            Section {number}: {titleEn} / Sektion {number}: {titleSv}
+          </span>
+          <ChevronDown
+            className={cn(
+              "w-4 h-4 transition-transform duration-200",
+              open && "rotate-180"
+            )}
+          />
+        </button>
+        {hasWarning && !open && (
+          <p className="text-[11px] text-destructive pl-6">
+            Missing: {missing.join(", ")}
+          </p>
         )}
-      />
-    </button>
-  );
+      </div>
+    );
+  };
 
   // Birthday date range: 16-80 years old
   const today = new Date();
