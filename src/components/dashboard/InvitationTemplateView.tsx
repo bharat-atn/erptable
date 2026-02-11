@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,22 +25,36 @@ interface TemplateField {
   field_type: string;
 }
 
-const SECTION_LABELS: Record<string, { en: string; sv: string; displayKey: string }> = {
+const SECTION_LABELS: Record<string, { en: string; sv: string; displayKey: string | null }> = {
   "2.1": { en: "Name and Address Information", sv: "Namn och Adressinformation", displayKey: "2.1" },
   "2.2": { en: "Birth and Contact Information", sv: "Födelse- och Kontaktinformation", displayKey: "2.2" },
   "2.3": { en: "Emergency Contact Information", sv: "Nödkontaktinformation", displayKey: "2.3" },
-  "3": { en: "Bank Information", sv: "Bankinformation", displayKey: "2.4" },
-  "4": { en: "ID / Passport Information", sv: "ID- / Passinformation", displayKey: "2.5" },
+  "3": { en: "Bank Information", sv: "Bankinformation", displayKey: null },
+  "4": { en: "ID / Passport Information", sv: "ID- / Passinformation", displayKey: null },
 };
 
-function loadLogo(): string | null {
-  return localStorage.getItem("invitation-template-logo");
+interface LogoSettings {
+  dataUrl: string;
+  size: number; // percentage 50-200
+  padding: number; // px 0-48
 }
 
-function saveLogo(dataUrl: string | null) {
-  if (dataUrl) {
-    localStorage.setItem("invitation-template-logo", dataUrl);
+function loadLogo(): LogoSettings | null {
+  try {
+    const saved = localStorage.getItem("invitation-template-logo-v2");
+    if (saved) return JSON.parse(saved);
+    // migrate from old format
+    const old = localStorage.getItem("invitation-template-logo");
+    if (old) return { dataUrl: old, size: 100, padding: 16 };
+    return null;
+  } catch { return null; }
+}
+
+function saveLogo(settings: LogoSettings | null) {
+  if (settings) {
+    localStorage.setItem("invitation-template-logo-v2", JSON.stringify(settings));
   } else {
+    localStorage.removeItem("invitation-template-logo-v2");
     localStorage.removeItem("invitation-template-logo");
   }
 }
@@ -47,7 +63,7 @@ export function InvitationTemplateView() {
   const queryClient = useQueryClient();
   const [editedFields, setEditedFields] = useState<Map<string, Partial<TemplateField>>>(new Map());
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(Object.keys(SECTION_LABELS)));
-  const [logo, setLogo] = useState<string | null>(loadLogo);
+  const [logoSettings, setLogoSettings] = useState<LogoSettings | null>(loadLogo);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: fields = [], isLoading } = useQuery({
@@ -115,15 +131,23 @@ export function InvitationTemplateView() {
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
-      setLogo(dataUrl);
-      saveLogo(dataUrl);
+      const newSettings: LogoSettings = { dataUrl, size: logoSettings?.size ?? 100, padding: logoSettings?.padding ?? 16 };
+      setLogoSettings(newSettings);
+      saveLogo(newSettings);
       toast.success("Logo uploaded successfully");
     };
     reader.readAsDataURL(file);
   };
 
+  const updateLogoSetting = (key: "size" | "padding", value: number) => {
+    if (!logoSettings) return;
+    const updated = { ...logoSettings, [key]: value };
+    setLogoSettings(updated);
+    saveLogo(updated);
+  };
+
   const removeLogo = () => {
-    setLogo(null);
+    setLogoSettings(null);
     saveLogo(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     toast.success("Logo removed");
@@ -211,30 +235,53 @@ export function InvitationTemplateView() {
             className="hidden"
             onChange={handleLogoUpload}
           />
-          {logo ? (
-            <div className="flex items-center gap-4">
-              <div className="relative w-48 h-20 border border-border rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden">
-                <img src={logo} alt="Form logo" className="max-w-full max-h-full object-contain p-2" />
+          {logoSettings ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div
+                  className="border border-border rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden"
+                  style={{ padding: `${logoSettings.padding}px`, width: "auto", maxWidth: "300px" }}
+                >
+                  <img
+                    src={logoSettings.dataUrl}
+                    alt="Form logo"
+                    className="object-contain"
+                    style={{ width: `${logoSettings.size}px` }}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-2">
+                    <Upload className="w-3.5 h-3.5" />
+                    Replace Logo
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={removeLogo} className="gap-2 text-destructive hover:text-destructive">
+                    <X className="w-3.5 h-3.5" />
+                    Remove
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-2"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  Replace Logo
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={removeLogo}
-                  className="gap-2 text-destructive hover:text-destructive"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Remove
-                </Button>
+              {/* Size & Padding controls */}
+              <div className="grid grid-cols-2 gap-4 max-w-sm">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Logo Size: {logoSettings.size}px</Label>
+                  <Slider
+                    value={[logoSettings.size]}
+                    onValueChange={([v]) => updateLogoSetting("size", v)}
+                    min={32}
+                    max={200}
+                    step={4}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Padding: {logoSettings.padding}px</Label>
+                  <Slider
+                    value={[logoSettings.padding]}
+                    onValueChange={([v]) => updateLogoSetting("padding", v)}
+                    min={0}
+                    max={48}
+                    step={4}
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -265,7 +312,10 @@ export function InvitationTemplateView() {
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-semibold flex items-center gap-2">
                         <span className="text-primary">
-                          Section {section.displayKey}: {section.en} / Sektion {section.displayKey}: {section.sv}
+                          {section.displayKey
+                            ? `Section ${section.displayKey}: ${section.en} / Sektion ${section.displayKey}: ${section.sv}`
+                            : `${section.en} / ${section.sv}`
+                          }
                         </span>
                       </CardTitle>
                       <div className="flex items-center gap-3">
