@@ -20,30 +20,20 @@ export default function OnboardingPortal() {
     queryKey: ["invitation", token],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("invitations")
-        .select(`*, employees (id, email, first_name, middle_name, last_name, personal_info)`)
-        .eq("token", token)
+        .rpc('get_invitation_by_token', { _token: token! })
         .single();
 
       if (error) throw error;
       if (!data) throw new Error("Invitation not found");
-      if (data.status === "EXPIRED" || new Date(data.expires_at) < new Date()) {
-        throw new Error("This invitation has expired");
-      }
-      if (data.status === "ACCEPTED") {
-        throw new Error("This invitation has already been completed");
-      }
       
       // Pre-fill form with existing employee data
-      if (data.employees) {
-        setFormData((prev) => ({
-          ...prev,
-          firstName: data.employees.first_name || "",
-          middleName: data.employees.middle_name || "",
-          lastName: data.employees.last_name || "",
-          email: data.employees.email || "",
-        }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        firstName: data.employee_first_name || "",
+        middleName: data.employee_middle_name || "",
+        lastName: data.employee_last_name || "",
+        email: data.employee_email || "",
+      }));
       
       return data;
     },
@@ -54,54 +44,37 @@ export default function OnboardingPortal() {
     mutationFn: async (data: PersonalInfo) => {
       const validated = personalInfoSchema.parse(data);
 
-      const { error: empError } = await supabase
-        .from("employees")
-        .update({
-          first_name: validated.firstName,
-          middle_name: validated.middleName,
-          last_name: validated.lastName,
-          personal_info: {
-            preferredName: validated.preferredName,
-            address1: validated.address1,
-            address2: validated.address2,
-            zipCode: validated.zipCode,
-            city: validated.city,
-            stateProvince: validated.stateProvince,
-            country: validated.country,
-            birthday: validated.birthday,
-            countryOfBirth: validated.countryOfBirth,
-            citizenship: validated.citizenship,
-            mobilePhone: validated.mobilePhone,
-            bankName: isOtherBank ? validated.otherBankName : validated.bankName,
-            bicCode: validated.bicCode,
-            bankAccountNumber: validated.bankAccountNumber,
-            emergencyContact: {
-              firstName: validated.emergencyFirstName,
-              lastName: validated.emergencyLastName,
-              phone: validated.emergencyPhone,
-            },
-          },
-          status: "ONBOARDING",
-        })
-        .eq("id", invitation?.employees?.id);
+      const personalInfo = {
+        preferredName: validated.preferredName,
+        address1: validated.address1,
+        address2: validated.address2,
+        zipCode: validated.zipCode,
+        city: validated.city,
+        stateProvince: validated.stateProvince,
+        country: validated.country,
+        birthday: validated.birthday,
+        countryOfBirth: validated.countryOfBirth,
+        citizenship: validated.citizenship,
+        mobilePhone: validated.mobilePhone,
+        bankName: isOtherBank ? validated.otherBankName : validated.bankName,
+        bicCode: validated.bicCode,
+        bankAccountNumber: validated.bankAccountNumber,
+        emergencyContact: {
+          firstName: validated.emergencyFirstName,
+          lastName: validated.emergencyLastName,
+          phone: validated.emergencyPhone,
+        },
+      };
 
-      if (empError) throw empError;
+      const { error } = await supabase.rpc('submit_onboarding', {
+        _token: token!,
+        _first_name: validated.firstName,
+        _middle_name: validated.middleName || '',
+        _last_name: validated.lastName,
+        _personal_info: personalInfo as any,
+      });
 
-      const { error: invError } = await supabase
-        .from("invitations")
-        .update({ status: "ACCEPTED" })
-        .eq("id", invitation?.id);
-
-      if (invError) throw invError;
-
-      const { error: contractError } = await supabase
-        .from("contracts")
-        .insert({
-          employee_id: invitation?.employees?.id,
-          season_year: new Date().getFullYear().toString(),
-        });
-
-      if (contractError) throw contractError;
+      if (error) throw error;
     },
     onSuccess: () => {
       setIsSubmitted(true);
