@@ -49,7 +49,7 @@ const steps = [
   { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
   { id: 2, label: "Employee", labelSv: "Anställd", icon: Users },
   { id: 3, label: "Language", labelSv: "Språk", icon: Globe },
-  { id: 4, label: "Details", labelSv: "Uppgifter", icon: User },
+  { id: 4, label: "Details", labelSv: "Section 2:1, 2:2 & 2:3", icon: User },
 ];
 
 export function ContractTemplateView() {
