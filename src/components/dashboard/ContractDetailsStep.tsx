@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle, Cloud, CloudOff, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Company {
   id: string;
@@ -48,6 +49,7 @@ interface Employee {
 interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
+  contractId: string;
   onBack: () => void;
 }
 
@@ -110,6 +112,7 @@ const EXPERIENCE_LEVELS = [
 export function ContractDetailsStep({
   company,
   employee,
+  contractId,
   onBack,
 }: ContractDetailsStepProps) {
   const [section1Open, setSection1Open] = useState(false);
@@ -165,9 +168,73 @@ export function ContractDetailsStep({
   const [age69FromDate, setAge69FromDate] = useState<Date | undefined>(undefined);
   const [age69UntilDate, setAge69UntilDate] = useState<Date | undefined>(undefined);
 
-  // Section 6 state
+   // Section 6 state
   const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
   const [partTimePercent, setPartTimePercent] = useState("");
+
+  // Auto-save state
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const getFormData = useCallback(() => ({
+    firstName, middleName, lastName, preferredName,
+    address, address2, zipCode, city, stateProvince, country,
+    birthday: birthday?.toISOString() ?? null,
+    countryOfBirth, citizenship, mobile, email,
+    emergencyFirstName, emergencyLastName, emergencyMobile,
+    jobType, experienceLevel, stationing,
+    employmentForm,
+    permanentFromDate: permanentFromDate?.toISOString() ?? null,
+    probationFromDate: probationFromDate?.toISOString() ?? null,
+    probationUntilDate: probationUntilDate?.toISOString() ?? null,
+    fixedTermFromDate: fixedTermFromDate?.toISOString() ?? null,
+    fixedTermUntilDate: fixedTermUntilDate?.toISOString() ?? null,
+    tempReplacementFromDate: tempReplacementFromDate?.toISOString() ?? null,
+    tempReplacementPosition, tempReplacementNoLaterThan: tempReplacementNoLaterThan?.toISOString() ?? null,
+    seasonalFromDate: seasonalFromDate?.toISOString() ?? null,
+    seasonalEndAround: seasonalEndAround?.toISOString() ?? null,
+    age69FromDate: age69FromDate?.toISOString() ?? null,
+    age69UntilDate: age69UntilDate?.toISOString() ?? null,
+    workingTime, partTimePercent,
+  }), [
+    firstName, middleName, lastName, preferredName,
+    address, address2, zipCode, city, stateProvince, country,
+    birthday, countryOfBirth, citizenship, mobile, email,
+    emergencyFirstName, emergencyLastName, emergencyMobile,
+    jobType, experienceLevel, stationing,
+    employmentForm,
+    permanentFromDate, probationFromDate, probationUntilDate,
+    fixedTermFromDate, fixedTermUntilDate,
+    tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
+    seasonalFromDate, seasonalEndAround,
+    age69FromDate, age69UntilDate,
+    workingTime, partTimePercent,
+  ]);
+
+  // Auto-save every 1 second after changes
+  useEffect(() => {
+    if (!contractId) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    saveTimerRef.current = setTimeout(async () => {
+      setSaveStatus("saving");
+      try {
+        const { error } = await supabase
+          .from("contracts")
+          .update({ form_data: getFormData() })
+          .eq("id", contractId);
+        if (error) throw error;
+        setSaveStatus("saved");
+      } catch {
+        setSaveStatus("error");
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [getFormData, contractId]);
 
   // Validation: which required fields are missing per section
   const section21Missing: string[] = [];
@@ -316,9 +383,32 @@ export function ContractDetailsStep({
               / Anställningsavtal för arbetare
             </span>
           </div>
-          <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onBack}>
-            Exit / Avsluta
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Auto-save indicator */}
+            <span className="flex items-center gap-1.5 text-xs font-normal">
+              {saveStatus === "saving" && (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  <span className="text-muted-foreground">Saving...</span>
+                </>
+              )}
+              {saveStatus === "saved" && (
+                <>
+                  <Cloud className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-primary">Saved</span>
+                </>
+              )}
+              {saveStatus === "error" && (
+                <>
+                  <CloudOff className="w-3.5 h-3.5 text-destructive" />
+                  <span className="text-destructive">Save failed</span>
+                </>
+              )}
+            </span>
+            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onBack}>
+              Exit / Avsluta
+            </Button>
+          </div>
         </CardTitle>
 
         {/* Progress Bar */}

@@ -47,41 +47,93 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_id_settings: {
+        Row: {
+          created_at: string
+          id: string
+          include_year: boolean
+          next_number: number
+          padding: number
+          prefix: string
+          separator: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          include_year?: boolean
+          next_number?: number
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          include_year?: boolean
+          next_number?: number
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contracts: {
         Row: {
+          company_id: string | null
+          contract_code: string | null
           created_at: string
           employee_id: string
           end_date: string | null
+          form_data: Json | null
           id: string
           salary: number | null
           season_year: string | null
           signed_at: string | null
           start_date: string | null
+          status: string
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
+          contract_code?: string | null
           created_at?: string
           employee_id: string
           end_date?: string | null
+          form_data?: Json | null
           id?: string
           salary?: number | null
           season_year?: string | null
           signed_at?: string | null
           start_date?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
+          contract_code?: string | null
           created_at?: string
           employee_id?: string
           end_date?: string | null
+          form_data?: Json | null
           id?: string
           salary?: number | null
           season_year?: string | null
           signed_at?: string | null
           start_date?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contracts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contracts_employee_id_fkey"
             columns: ["employee_id"]
