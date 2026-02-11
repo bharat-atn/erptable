@@ -151,9 +151,19 @@ export function ContractDetailsStep({
   const [stationing, setStationing] = useState("");
 
   // Section 5 state
-  const [employmentForm, setEmploymentForm] = useState<"permanent" | "probationary">("permanent");
-  const [employmentStartDate, setEmploymentStartDate] = useState<Date | undefined>(undefined);
-  const [probationStartDate, setProbationStartDate] = useState<Date | undefined>(undefined);
+  const [employmentForm, setEmploymentForm] = useState<string>("permanent");
+  const [permanentFromDate, setPermanentFromDate] = useState<Date | undefined>(undefined);
+  const [probationFromDate, setProbationFromDate] = useState<Date | undefined>(undefined);
+  const [probationUntilDate, setProbationUntilDate] = useState<Date | undefined>(undefined);
+  const [fixedTermFromDate, setFixedTermFromDate] = useState<Date | undefined>(undefined);
+  const [fixedTermUntilDate, setFixedTermUntilDate] = useState<Date | undefined>(undefined);
+  const [tempReplacementFromDate, setTempReplacementFromDate] = useState<Date | undefined>(undefined);
+  const [tempReplacementPosition, setTempReplacementPosition] = useState("");
+  const [tempReplacementNoLaterThan, setTempReplacementNoLaterThan] = useState<Date | undefined>(undefined);
+  const [seasonalFromDate, setSeasonalFromDate] = useState<Date | undefined>(undefined);
+  const [seasonalEndAround, setSeasonalEndAround] = useState<Date | undefined>(undefined);
+  const [age69FromDate, setAge69FromDate] = useState<Date | undefined>(undefined);
+  const [age69UntilDate, setAge69UntilDate] = useState<Date | undefined>(undefined);
 
   // Section 6 state
   const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
@@ -188,8 +198,12 @@ export function ContractDetailsStep({
   if (!stationing) section3Missing.push("Stationing");
 
   const section5Missing: string[] = [];
-  if (employmentForm === "permanent" && !employmentStartDate) section5Missing.push("Employment Start Date");
-  if (employmentForm === "probationary" && !probationStartDate) section5Missing.push("Probation Start Date");
+  if (employmentForm === "permanent" && !permanentFromDate) section5Missing.push("Permanent Start Date");
+  if (employmentForm === "probationary" && (!probationFromDate || !probationUntilDate)) section5Missing.push("Probation Dates");
+  if (employmentForm === "fixed_term" && (!fixedTermFromDate || !fixedTermUntilDate)) section5Missing.push("Fixed-Term Dates");
+  if (employmentForm === "temporary_replacement" && !tempReplacementFromDate) section5Missing.push("Temp Replacement Start Date");
+  if (employmentForm === "seasonal" && !seasonalFromDate) section5Missing.push("Seasonal Start Date");
+  if (employmentForm === "age69" && (!age69FromDate || !age69UntilDate)) section5Missing.push("Age 69 Dates");
 
   const section6Missing: string[] = [];
   if (workingTime === "parttime" && !partTimePercent) section6Missing.push("Part Time Percentage");
@@ -692,107 +706,250 @@ export function ContractDetailsStep({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-3">
-              {/* Permanent Employment */}
+              {/* 1. Permanent Employment */}
               <div
                 className={cn(
-                  "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors",
-                  employmentForm === "permanent"
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:bg-muted/30"
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "permanent" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
                 onClick={() => setEmploymentForm("permanent")}
               >
                 <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                    employmentForm === "permanent" ? "border-primary" : "border-muted-foreground/40"
-                  )}>
-                    {employmentForm === "permanent" && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                    )}
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "permanent" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "permanent" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">
-                    Permanent Employment from / Tillsvidareanställning från
-                  </span>
+                  <span className="text-sm font-semibold">Permanent employment from / Tillsvidareanställning från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium ml-auto", !permanentFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {permanentFromDate ? format(permanentFromDate, "yyyy-MM-dd") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={permanentFromDate} onSelect={setPermanentFromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-[10px] text-muted-foreground align-super">1)</span>
                 </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "h-9 text-sm font-medium",
-                        !employmentStartDate && "text-muted-foreground"
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {employmentStartDate ? format(employmentStartDate, "yyyy-MM-dd") : "Select date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      mode="single"
-                      selected={employmentStartDate}
-                      onSelect={setEmploymentStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
               </div>
 
-              {/* Probationary Period */}
+              {/* 2. Probationary Period */}
               <div
                 className={cn(
-                  "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors",
-                  employmentForm === "probationary"
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:bg-muted/30"
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "probationary" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
                 onClick={() => setEmploymentForm("probationary")}
               >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                    employmentForm === "probationary" ? "border-primary" : "border-muted-foreground/40"
-                  )}>
-                    {employmentForm === "probationary" && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                    )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "probationary" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "probationary" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className={cn(
-                    "text-sm font-semibold",
-                    employmentForm !== "probationary" && "text-muted-foreground"
-                  )}>
-                    Probationary Period from / Provanställning från
-                  </span>
+                  <span className="text-sm font-semibold">Probationary period (max. 6 months) from / Provanställning (max 6 mån) från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {probationFromDate ? format(probationFromDate, "yyyy-MM-dd") : "from"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={probationFromDate} onSelect={setProbationFromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {probationUntilDate ? format(probationUntilDate, "yyyy-MM-dd") : "until"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={probationUntilDate} onSelect={setProbationUntilDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-[10px] text-muted-foreground align-super">2)</span>
                 </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "h-9 text-sm font-medium",
-                        !probationStartDate && "text-muted-foreground"
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {probationStartDate ? format(probationStartDate, "yyyy-MM-dd") : "Select date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      mode="single"
-                      selected={probationStartDate}
-                      onSelect={setProbationStartDate}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+              </div>
+
+              {/* 3. General Fixed-Term Employment */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "fixed_term" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("fixed_term")}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "fixed_term" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "fixed_term" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-semibold">General fixed-term employment from / Allmän visstidsanställning från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fixedTermFromDate ? format(fixedTermFromDate, "yyyy-MM-dd") : "from"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={fixedTermFromDate} onSelect={setFixedTermFromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {fixedTermUntilDate ? format(fixedTermUntilDate, "yyyy-MM-dd") : "until"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={fixedTermUntilDate} onSelect={setFixedTermUntilDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-[10px] text-muted-foreground align-super">3) and 4)</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 ml-8">
+                  See also annex for repeated periods of employment on a general fixed-term basis. / Se även bilaga för upprepade perioder av allmän visstidsanställning.
+                </p>
+              </div>
+
+              {/* 4. Temporary Replacement Employment */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "temporary_replacement" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("temporary_replacement")}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "temporary_replacement" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "temporary_replacement" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-semibold">Temporary replacement employment from / Vikariat från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !tempReplacementFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {tempReplacementFromDate ? format(tempReplacementFromDate, "yyyy-MM-dd") : "from"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={tempReplacementFromDate} onSelect={setTempReplacementFromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                {employmentForm === "temporary_replacement" && (
+                  <div className="mt-3 ml-8 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      The employment ends when the holder of the regular position returns to work. But no later than: / Anställningen upphör när ordinarie befattningshavare återgår i tjänst. Dock senast:
+                    </p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">Position / Befattning</label>
+                        <Input value={tempReplacementPosition} onChange={(e) => setTempReplacementPosition(e.target.value)} className="h-9 text-sm w-48" placeholder="Position..." onClick={(e) => e.stopPropagation()} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">No later than / Dock senast</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !tempReplacementNoLaterThan && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {tempReplacementNoLaterThan ? format(tempReplacementNoLaterThan, "yyyy-MM-dd") : "Select date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="end">
+                            <Calendar mode="single" selected={tempReplacementNoLaterThan} onSelect={setTempReplacementNoLaterThan} initialFocus className="p-3 pointer-events-auto" />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground align-super mt-5">3) and 5)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Seasonal Employment */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "seasonal" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("seasonal")}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "seasonal" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "seasonal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-semibold">Seasonal employment from / Säsongsanställning från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {seasonalFromDate ? format(seasonalFromDate, "yyyy-MM-dd") : "from"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={seasonalFromDate} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-sm text-muted-foreground">The season is expected to end around / Säsongen förväntas sluta omkring</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalEndAround && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {seasonalEndAround ? format(seasonalEndAround, "yyyy-MM-dd") : "end around"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={seasonalEndAround} onSelect={setSeasonalEndAround} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-[10px] text-muted-foreground align-super">3)</span>
+                </div>
+              </div>
+
+              {/* 6. When the employee has reached the age of 69 */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  employmentForm === "age69" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setEmploymentForm("age69")}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "age69" ? "border-primary" : "border-muted-foreground/40")}>
+                    {employmentForm === "age69" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-semibold">When the employee has reached the age of 69 from / När den anställde har fyllt 69 år från</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69FromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {age69FromDate ? format(age69FromDate, "yyyy-MM-dd") : "from"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={age69FromDate} onSelect={setAge69FromDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69UntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {age69UntilDate ? format(age69UntilDate, "yyyy-MM-dd") : "until"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar mode="single" selected={age69UntilDate} onSelect={setAge69UntilDate} initialFocus className="p-3 pointer-events-auto" />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-[10px] text-muted-foreground align-super">3)</span>
+                </div>
               </div>
             </div>
           </CollapsibleContent>
