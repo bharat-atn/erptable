@@ -16,7 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Tables } from "@/integrations/supabase/types";
+import type { Json } from "@/integrations/supabase/types";
 
 type Employee = Tables<"employees">;
 
@@ -37,9 +45,38 @@ export interface EmployeeFormData {
   city: string;
   country: string;
   status: "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
+  personal_info: Json;
 }
 
-const initialForm: EmployeeFormData = {
+interface PersonalInfo {
+  preferred_name: string;
+  address_1: string;
+  address_2: string;
+  zip: string;
+  state: string;
+  birthday: string;
+  country_of_birth: string;
+  citizenship: string;
+  emergency_first_name: string;
+  emergency_last_name: string;
+  emergency_phone: string;
+}
+
+const initialPersonalInfo: PersonalInfo = {
+  preferred_name: "",
+  address_1: "",
+  address_2: "",
+  zip: "",
+  state: "",
+  birthday: "",
+  country_of_birth: "",
+  citizenship: "",
+  emergency_first_name: "",
+  emergency_last_name: "",
+  emergency_phone: "",
+};
+
+const initialForm: Omit<EmployeeFormData, "personal_info"> = {
   first_name: "",
   last_name: "",
   middle_name: "",
@@ -50,6 +87,15 @@ const initialForm: EmployeeFormData = {
   status: "INVITED",
 };
 
+function SectionHeader({ title, open }: { title: string; open: boolean }) {
+  return (
+    <CollapsibleTrigger className="flex items-center justify-between w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+      <span>{title}</span>
+      <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+    </CollapsibleTrigger>
+  );
+}
+
 export function EmployeeFormDialog({
   open,
   onOpenChange,
@@ -57,7 +103,11 @@ export function EmployeeFormDialog({
   onSubmit,
   isLoading,
 }: EmployeeFormDialogProps) {
-  const [form, setForm] = useState<EmployeeFormData>(initialForm);
+  const [form, setForm] = useState(initialForm);
+  const [info, setInfo] = useState<PersonalInfo>(initialPersonalInfo);
+  const [section1Open, setSection1Open] = useState(true);
+  const [section2Open, setSection2Open] = useState(true);
+  const [section3Open, setSection3Open] = useState(true);
 
   useEffect(() => {
     if (employee) {
@@ -71,99 +121,181 @@ export function EmployeeFormDialog({
         country: employee.country || "",
         status: employee.status,
       });
+      const pi = (employee.personal_info as Record<string, any>) || {};
+      setInfo({
+        preferred_name: pi.preferred_name || "",
+        address_1: pi.address_1 || "",
+        address_2: pi.address_2 || "",
+        zip: pi.zip || "",
+        state: pi.state || "",
+        birthday: pi.birthday || "",
+        country_of_birth: pi.country_of_birth || "",
+        citizenship: pi.citizenship || "",
+        emergency_first_name: pi.emergency_first_name || "",
+        emergency_last_name: pi.emergency_last_name || "",
+        emergency_phone: pi.emergency_phone || "",
+      });
     } else {
       setForm(initialForm);
+      setInfo(initialPersonalInfo);
     }
   }, [employee, open]);
 
   const isEdit = !!employee;
 
+  const handleSubmit = () => {
+    onSubmit({
+      ...form,
+      personal_info: info as unknown as Json,
+    });
+  };
+
+  const updateInfo = (field: keyof PersonalInfo, value: string) => {
+    setInfo((prev) => ({ ...prev, [field]: value }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[640px] max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
           <DialogTitle>{isEdit ? "Edit Employee" : "Add Employee"}</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="first_name">First Name</Label>
-              <Input
-                id="first_name"
-                value={form.first_name}
-                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+
+        <ScrollArea className="flex-1 px-6">
+          <div className="space-y-4 pb-4">
+            {/* Section 2.1: Name and Address */}
+            <Collapsible open={section1Open} onOpenChange={setSection1Open}>
+              <SectionHeader
+                title="Section 2.1: Name and Address Information / Sektion 2.1: Namn och Adressinformation"
+                open={section1Open}
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="last_name">Last Name</Label>
-              <Input
-                id="last_name"
-                value={form.last_name}
-                onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+              <CollapsibleContent className="pt-4 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">First Name / Förnamn *</Label>
+                    <Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Middle Name / Mellannamn</Label>
+                    <Input value={form.middle_name} onChange={(e) => setForm({ ...form, middle_name: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Last Name / Efternamn *</Label>
+                    <Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Preferred Name / Tilltalsnamn *</Label>
+                    <Input value={info.preferred_name} onChange={(e) => updateInfo("preferred_name", e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Address 1 / Adress 1 *</Label>
+                    <Input value={info.address_1} onChange={(e) => updateInfo("address_1", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Address 2 / Adress 2</Label>
+                    <Input value={info.address_2} onChange={(e) => updateInfo("address_2", e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Zip / Postal Code / Postnummer *</Label>
+                    <Input value={info.zip} onChange={(e) => updateInfo("zip", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">City / Ort *</Label>
+                    <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">State / Province / Län / Region *</Label>
+                    <Input value={info.state} onChange={(e) => updateInfo("state", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Country / Land *</Label>
+                    <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Section 2.2: Birth and Contact */}
+            <Collapsible open={section2Open} onOpenChange={setSection2Open}>
+              <SectionHeader
+                title="Section 2.2: Birth and Contact Information / Sektion 2.2: Födelse- och Kontaktinformation"
+                open={section2Open}
               />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              <CollapsibleContent className="pt-4 space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Birthday / Födelsedag *</Label>
+                  <Input type="date" value={info.birthday} onChange={(e) => updateInfo("birthday", e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Country of Birth? / Födelseland? *</Label>
+                    <Input value={info.country_of_birth} onChange={(e) => updateInfo("country_of_birth", e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold uppercase tracking-wide">Citizenship? / Medborgarskap? *</Label>
+                    <Input value={info.citizenship} onChange={(e) => updateInfo("citizenship", e.target.value)} />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Mobile Phone Number / Mobilnummer *</Label>
+                  <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Email / E-post *</Label>
+                  <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Section 2.3: Emergency Contact */}
+            <Collapsible open={section3Open} onOpenChange={setSection3Open}>
+              <SectionHeader
+                title="Section 2.3: Emergency Contact Information / Sektion 2.3: Information om Närmast Anhörig"
+                open={section3Open}
               />
-            </div>
+              <CollapsibleContent className="pt-4 space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Emergency Contact First Name / Närmast Anhörig Förnamn *</Label>
+                  <Input value={info.emergency_first_name} onChange={(e) => updateInfo("emergency_first_name", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Emergency Contact Last Name / Närmast Anhörig Efternamn *</Label>
+                  <Input value={info.emergency_last_name} onChange={(e) => updateInfo("emergency_last_name", e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold uppercase tracking-wide">Emergency Contact Mobile Phone Number / Närmast Anhörig Mobilnummer *</Label>
+                  <Input value={info.emergency_phone} onChange={(e) => updateInfo("emergency_phone", e.target.value)} />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Status */}
             <div className="space-y-1.5">
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-              />
+              <Label className="text-xs font-semibold uppercase tracking-wide">Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as EmployeeFormData["status"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INVITED">Invited</SelectItem>
+                  <SelectItem value="ONBOARDING">Onboarding</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Terminated</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <Select
-              value={form.status}
-              onValueChange={(v) => setForm({ ...form, status: v as EmployeeFormData["status"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="INVITED">Invited</SelectItem>
-                <SelectItem value="ONBOARDING">Onboarding</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => onSubmit(form)}
-            disabled={!form.email || !form.first_name || isLoading}
-          >
+        </ScrollArea>
+
+        <DialogFooter className="px-6 pb-6 pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={!form.email || !form.first_name || isLoading}>
             {isLoading ? "Saving..." : isEdit ? "Update" : "Create"}
           </Button>
         </DialogFooter>
