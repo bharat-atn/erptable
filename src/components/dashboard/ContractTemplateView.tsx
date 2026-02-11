@@ -14,8 +14,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone } from "lucide-react";
 
 interface Company {
   id: string;
@@ -26,14 +34,27 @@ interface Company {
   city: string | null;
 }
 
+interface Employee {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  phone: string | null;
+  employee_code: string | null;
+}
+
 const steps = [
   { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
+  { id: 2, label: "Employee", labelSv: "Anställd", icon: Users },
 ];
 
 export function ContractTemplateView() {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [companyOpen, setCompanyOpen] = useState(true);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
+  const [employeeSearch, setEmployeeSearch] = useState("");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -47,10 +68,47 @@ export function ContractTemplateView() {
     },
   });
 
+  const { data: employees = [] } = useQuery({
+    queryKey: ["employees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, first_name, last_name, email, phone, employee_code")
+        .order("last_name");
+      if (error) throw error;
+      return data as Employee[];
+    },
+  });
+
   const selectedCompany = companies.find((c) => c.id === selectedCompanyId);
+
   const isStepCompleted = (stepId: number) => {
     if (stepId === 1) return !!selectedCompanyId;
+    if (stepId === 2) return !!selectedEmployee;
     return false;
+  };
+
+  const filteredEmployees = employees.filter((e) => {
+    if (!employeeSearch) return true;
+    const term = employeeSearch.toLowerCase();
+    const name = `${e.first_name ?? ""} ${e.last_name ?? ""}`.toLowerCase();
+    return (
+      name.includes(term) ||
+      e.email.toLowerCase().includes(term) ||
+      (e.employee_code ?? "").toLowerCase().includes(term)
+    );
+  });
+
+  const getInitials = (e: Employee) => {
+    const f = (e.first_name ?? "").charAt(0).toUpperCase();
+    const l = (e.last_name ?? "").charAt(0).toUpperCase();
+    return f + l || "?";
+  };
+
+  const handleNextFromStep1 = () => {
+    if (selectedCompanyId) {
+      setActiveStep(2);
+    }
   };
 
   return (
@@ -154,7 +212,6 @@ export function ContractTemplateView() {
                       <CollapsibleContent>
                         <CardContent className="px-5 pb-5 pt-0">
                           <div className="space-y-4">
-                            {/* Row 1: Employer + Org Number */}
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
@@ -173,7 +230,6 @@ export function ContractTemplateView() {
                                 </div>
                               </div>
                             </div>
-                            {/* Row 2: Address (full width) */}
                             <div className="space-y-1.5">
                               <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
                                 Address / Adress
@@ -182,7 +238,6 @@ export function ContractTemplateView() {
                                 {selectedCompany.address || "—"}
                               </div>
                             </div>
-                            {/* Row 3: Postcode + City */}
                             <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-1.5">
                                 <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
@@ -207,11 +262,150 @@ export function ContractTemplateView() {
                     </Card>
                   </Collapsible>
                 )}
+
+                {/* Next button */}
+                {selectedCompanyId && (
+                  <div className="flex justify-end pt-2">
+                    <Button onClick={handleNextFromStep1} className="px-8">
+                      Next
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {activeStep === 2 && (
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-primary" />
+                  Select Employee{" "}
+                  <span className="text-muted-foreground font-normal text-sm">
+                    / Välj anställd
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {selectedEmployee ? (
+                  <div className="flex items-center gap-4 rounded-lg border-2 border-primary/30 bg-primary/5 p-4">
+                    <div className="w-10 h-10 rounded-full bg-success/20 text-success flex items-center justify-center font-bold text-sm">
+                      {getInitials(selectedEmployee)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">
+                        {selectedEmployee.first_name} {selectedEmployee.last_name}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                        <span className="flex items-center gap-1">
+                          <Mail className="w-3 h-3" />
+                          {selectedEmployee.email}
+                        </span>
+                        {selectedEmployee.phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {selectedEmployee.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEmployeeDialogOpen(true)}
+                    >
+                      Change
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full h-14 text-sm border-dashed border-2"
+                    onClick={() => setEmployeeDialogOpen(true)}
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Select an employee from the register...
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      {/* Employee selection dialog */}
+      <Dialog open={employeeDialogOpen} onOpenChange={setEmployeeDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader className="bg-primary rounded-t-lg -mx-6 -mt-6 px-6 py-4">
+            <DialogTitle className="text-primary-foreground flex items-center gap-2 text-base">
+              <Users className="w-5 h-5" />
+              Select Employee
+            </DialogTitle>
+            <p className="text-primary-foreground/80 text-sm">
+              Choose the employee for whom you are drafting this contract
+            </p>
+          </DialogHeader>
+
+          <div className="relative mt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or email..."
+              value={employeeSearch}
+              onChange={(e) => setEmployeeSearch(e.target.value)}
+              className="pl-9"
+            />
+            {employeeSearch && (
+              <button
+                onClick={() => setEmployeeSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-72 overflow-y-auto -mx-2 space-y-0.5">
+            {filteredEmployees.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                No employees found
+              </p>
+            ) : (
+              filteredEmployees.map((emp) => (
+                <button
+                  key={emp.id}
+                  onClick={() => {
+                    setSelectedEmployee(emp);
+                    setEmployeeDialogOpen(false);
+                    setEmployeeSearch("");
+                  }}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left hover:bg-muted/60 transition-colors",
+                    selectedEmployee?.id === emp.id && "bg-primary/10"
+                  )}
+                >
+                  <div className="w-9 h-9 rounded-full bg-success/20 text-success flex items-center justify-center font-bold text-xs shrink-0">
+                    {getInitials(emp)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">
+                      {emp.first_name} {emp.last_name}
+                    </p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 truncate">
+                        <Mail className="w-3 h-3 shrink-0" />
+                        {emp.email}
+                      </span>
+                      {emp.phone && (
+                        <span className="shrink-0">{emp.phone}</span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
