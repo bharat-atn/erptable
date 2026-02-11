@@ -9,8 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, Check, Circle } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle } from "lucide-react";
 
 interface Company {
   id: string;
@@ -23,12 +28,12 @@ interface Company {
 
 const steps = [
   { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
-  // Future steps will be added here
 ];
 
 export function ContractTemplateView() {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [companyOpen, setCompanyOpen] = useState(true);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -51,16 +56,16 @@ export function ContractTemplateView() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold">Contract Template</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="text-2xl font-bold tracking-tight">Contract Template</h1>
+        <p className="text-muted-foreground text-sm mt-1">
           Build a contract step by step
         </p>
       </div>
 
       <div className="flex gap-6">
         {/* Wizard sidebar */}
-        <div className="w-56 shrink-0">
-          <Card>
+        <div className="w-60 shrink-0">
+          <Card className="shadow-md">
             <CardContent className="p-3 space-y-1">
               {steps.map((step) => {
                 const completed = isStepCompleted(step.id);
@@ -70,10 +75,10 @@ export function ContractTemplateView() {
                     key={step.id}
                     onClick={() => setActiveStep(step.id)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-left",
+                      "w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors text-left",
                       active
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-muted/50"
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-muted-foreground hover:bg-muted/60"
                     )}
                   >
                     {completed ? (
@@ -102,22 +107,22 @@ export function ContractTemplateView() {
         {/* Step content */}
         <div className="flex-1">
           {activeStep === 1 && (
-            <Card>
+            <Card className="shadow-md">
               <CardHeader>
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-primary" />
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-primary" />
                   Select Company{" "}
                   <span className="text-muted-foreground font-normal text-sm">
                     / Välj företag
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 <Select
                   value={selectedCompanyId}
                   onValueChange={setSelectedCompanyId}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 text-sm font-medium">
                     <SelectValue placeholder="Choose a company..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -130,32 +135,77 @@ export function ContractTemplateView() {
                 </Select>
 
                 {selectedCompany && (
-                  <Card className="bg-muted/30 border-dashed">
-                    <CardContent className="p-4 space-y-2 text-sm">
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                        <div>
-                          <span className="text-muted-foreground">Employer / Arbetsgivare</span>
-                          <p className="font-medium">{selectedCompany.name}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Org. Number / Organisationsnummer</span>
-                          <p className="font-medium">{selectedCompany.org_number || "—"}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Address / Adress</span>
-                          <p className="font-medium">{selectedCompany.address || "—"}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Postcode / Postnummer</span>
-                          <p className="font-medium">{selectedCompany.postcode || "—"}</p>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">City / Ort</span>
-                          <p className="font-medium">{selectedCompany.city || "—"}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <Collapsible open={companyOpen} onOpenChange={setCompanyOpen}>
+                    <Card className="border-2 border-border shadow-sm">
+                      <CollapsibleTrigger className="w-full">
+                        <CardHeader className="py-4 px-5 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors">
+                          <CardTitle className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-primary" />
+                            Company Details / Företagsuppgifter
+                          </CardTitle>
+                          <ChevronDown
+                            className={cn(
+                              "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                              companyOpen && "rotate-180"
+                            )}
+                          />
+                        </CardHeader>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <CardContent className="px-5 pb-5 pt-0">
+                          <div className="space-y-4">
+                            {/* Row 1: Employer + Org Number */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                                  Employer / Arbetsgivare
+                                </label>
+                                <div className="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground">
+                                  {selectedCompany.name}
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                                  Organization Number / Organisationsnummer
+                                </label>
+                                <div className="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground">
+                                  {selectedCompany.org_number || "—"}
+                                </div>
+                              </div>
+                            </div>
+                            {/* Row 2: Address (full width) */}
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                                Address / Adress
+                              </label>
+                              <div className="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground">
+                                {selectedCompany.address || "—"}
+                              </div>
+                            </div>
+                            {/* Row 3: Postcode + City */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                                  Postcode / Postnummer
+                                </label>
+                                <div className="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground">
+                                  {selectedCompany.postcode || "—"}
+                                </div>
+                              </div>
+                              <div className="space-y-1.5">
+                                <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                                  City / Ort
+                                </label>
+                                <div className="rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm font-medium text-foreground uppercase">
+                                  {selectedCompany.city || "—"}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
                 )}
               </CardContent>
             </Card>
