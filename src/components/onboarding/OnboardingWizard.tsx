@@ -1,8 +1,8 @@
-import { useState, forwardRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Folder, AlertTriangle } from "lucide-react";
+import { ChevronDown, Folder, AlertTriangle, CheckCircle2 } from "lucide-react";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/collapsible";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const BANKS = [
   "BANCA TRANSILVANIA S.A.",
@@ -36,6 +37,21 @@ const COUNTRIES = [
   "Hungary", "Czech Republic", "Portugal", "Greece", "Ireland"
 ];
 
+/* ─── Date validation helpers ─── */
+const today = new Date();
+const MIN_AGE = 16;
+const MAX_AGE = 80;
+const minBirthYear = today.getFullYear() - MAX_AGE;
+const maxBirthYear = today.getFullYear() - MIN_AGE;
+
+function isBirthdayReasonable(dateStr: string): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const year = d.getFullYear();
+  return year >= minBirthYear && year <= maxBirthYear;
+}
+
 export const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   middleName: z.string().max(100).optional(),
@@ -47,7 +63,9 @@ export const personalInfoSchema = z.object({
   city: z.string().min(1, "City is required").max(100),
   stateProvince: z.string().min(1, "State/Province is required").max(100),
   country: z.string().min(1, "Country is required").max(100),
-  birthday: z.string().min(1, "Birthday is required"),
+  birthday: z.string().min(1, "Birthday is required").refine(isBirthdayReasonable, {
+    message: `Birthday must be between ${minBirthYear} and ${maxBirthYear}`,
+  }),
   countryOfBirth: z.string().min(1, "Country of birth is required"),
   citizenship: z.string().min(1, "Citizenship is required"),
   mobilePhone: z.string().min(10, "Valid phone number required").max(20),
@@ -94,6 +112,7 @@ function SectionHeader({
   open,
   onToggle,
   missingFields = [],
+  showValidation = false,
 }: {
   number: string;
   titleEn: string;
@@ -101,8 +120,10 @@ function SectionHeader({
   open: boolean;
   onToggle: () => void;
   missingFields?: string[];
+  showValidation?: boolean;
 }) {
-  const hasWarning = missingFields.length > 0;
+  const hasWarning = showValidation && missingFields.length > 0;
+  const isComplete = showValidation && missingFields.length === 0;
 
   return (
     <div className="space-y-1">
@@ -113,12 +134,17 @@ function SectionHeader({
           "w-full flex items-center justify-between rounded-full border px-5 sm:px-6 py-3 text-sm font-semibold transition-colors",
           hasWarning
             ? "border-destructive/50 bg-destructive/5 text-primary"
-            : "border-primary bg-primary/5 text-primary"
+            : isComplete
+              ? "border-success/50 bg-success/5 text-primary"
+              : "border-primary bg-primary/5 text-primary"
         )}
       >
         <span className="flex items-center gap-2 text-left">
           {hasWarning && (
             <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+          )}
+          {isComplete && (
+            <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
           )}
           <span className="leading-tight">
             Section {number}: {titleEn} / Sektion {number}: {titleSv}
@@ -157,6 +183,7 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+  const [validationAttempted, setValidationAttempted] = useState(false);
 
   /* ─── Validation: compute missing fields per section ─── */
   const s1Missing: string[] = [];
@@ -170,16 +197,23 @@ export function OnboardingWizard({
   if (!formData.country) s1Missing.push("Country");
 
   const s2Missing: string[] = [];
-  if (!formData.birthday) s2Missing.push("Birthday");
+  if (!formData.birthday) {
+    s2Missing.push("Birthday");
+  } else if (!isBirthdayReasonable(formData.birthday)) {
+    s2Missing.push(`Birthday (must be ${minBirthYear}–${maxBirthYear})`);
+  }
   if (!formData.countryOfBirth) s2Missing.push("Country of Birth");
   if (!formData.citizenship) s2Missing.push("Citizenship");
   if (!formData.mobilePhone) s2Missing.push("Mobile Phone");
+  else if (formData.mobilePhone.length < 10) s2Missing.push("Mobile Phone (min 10 digits)");
   if (!formData.email) s2Missing.push("Email");
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) s2Missing.push("Email (invalid format)");
 
   const s3Missing: string[] = [];
   if (!formData.emergencyFirstName) s3Missing.push("First Name");
   if (!formData.emergencyLastName) s3Missing.push("Last Name");
   if (!formData.emergencyPhone) s3Missing.push("Mobile Phone");
+  else if (formData.emergencyPhone.length < 10) s3Missing.push("Mobile Phone (min 10 digits)");
 
   const s4Missing: string[] = [];
   if (!selectedBank && !isOtherBank) s4Missing.push("Bank Selection");
@@ -189,6 +223,39 @@ export function OnboardingWizard({
 
   const s5Missing: string[] = [];
   if (!uploadedFile) s5Missing.push("ID / Passport Document");
+
+  const totalMissing = s1Missing.length + s2Missing.length + s3Missing.length + s4Missing.length + s5Missing.length;
+  const allComplete = totalMissing === 0;
+
+  /* ─── Enhanced submit handler with validation ─── */
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationAttempted(true);
+
+    if (!allComplete) {
+      // Open sections that have issues
+      if (s1Missing.length > 0) setS1Open(true);
+      if (s2Missing.length > 0) setS2Open(true);
+      if (s3Missing.length > 0) setS3Open(true);
+      if (s4Missing.length > 0) setS4Open(true);
+      if (s5Missing.length > 0) setS5Open(true);
+
+      toast.error(
+        `Please complete all required fields. ${totalMissing} field${totalMissing > 1 ? "s" : ""} remaining.`,
+        { duration: 5000 }
+      );
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // All fields valid — call parent onSubmit
+    onSubmit(e);
+  };
+
+  /* ─── Field error styling helper ─── */
+  const fieldError = (hasError: boolean) =>
+    validationAttempted && hasError ? "border-destructive focus-visible:ring-destructive/30" : "";
 
   return (
     <div className="min-h-screen bg-background overflow-y-auto safe-area-top safe-area-bottom">
@@ -217,7 +284,33 @@ export function OnboardingWizard({
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-5">
+        {/* Validation summary banner */}
+        {validationAttempted && !allComplete && (
+          <div className="mb-5 rounded-lg border-2 border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-destructive">
+                Form incomplete — {totalMissing} required field{totalMissing > 1 ? "s" : ""} missing
+              </p>
+              <p className="text-xs text-destructive/70 mt-1">
+                Please review each section marked with ⚠️ and fill in all required fields before submitting.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {validationAttempted && allComplete && (
+          <div className="mb-5 rounded-lg border-2 border-success/30 bg-success/5 p-4 flex items-start gap-3">
+            <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-success">
+                All fields completed — ready to submit!
+              </p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleFormSubmit} className="space-y-5">
 
           {/* ═══ Section 2.1: Name and Address ═══ */}
           <Collapsible open={s1Open} onOpenChange={setS1Open}>
@@ -228,12 +321,13 @@ export function OnboardingWizard({
               open={s1Open}
               onToggle={() => setS1Open(!s1Open)}
               missingFields={s1Missing}
+              showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="First Name" sv="Förnamn" />
-                  <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.firstName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Middle Name" sv="Mellannamn" required={false} />
@@ -241,15 +335,15 @@ export function OnboardingWizard({
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Last Name" sv="Efternamn" />
-                  <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.lastName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Preferred Name" sv="Tilltalsnamn" />
-                  <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.preferredName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 1" sv="Adress 1" />
-                  <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.address1))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 2" sv="Adress 2" required={false} />
@@ -257,20 +351,20 @@ export function OnboardingWizard({
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="ZIP / Postal Code" sv="Postnummer" />
-                  <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.zipCode))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="City" sv="Ort" />
-                  <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.city))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="State / Province" sv="Län / Region" />
-                  <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.stateProvince))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Country" sv="Land" />
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
-                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -289,17 +383,30 @@ export function OnboardingWizard({
               open={s2Open}
               onToggle={() => setS2Open(!s2Open)}
               missingFields={s2Missing}
+              showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-1.5">
                 <FieldLabel en="Birthday" sv="Födelsedag" />
-                <Input type="date" value={formData.birthday || ""} onChange={(e) => updateField("birthday", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                <Input
+                  type="date"
+                  value={formData.birthday || ""}
+                  onChange={(e) => updateField("birthday", e.target.value)}
+                  min={`${minBirthYear}-01-01`}
+                  max={`${maxBirthYear}-12-31`}
+                  className={cn("h-11 text-sm font-medium", fieldError(!formData.birthday || !isBirthdayReasonable(formData.birthday || "")))}
+                />
+                {formData.birthday && !isBirthdayReasonable(formData.birthday) && (
+                  <p className="text-[11px] text-destructive">
+                    Age must be between {MIN_AGE} and {MAX_AGE} years old
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Country of Birth" sv="Födelseland" />
                   <Select value={formData.countryOfBirth} onValueChange={(v) => updateField("countryOfBirth", v)}>
-                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -308,7 +415,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Citizenship" sv="Medborgarskap" />
                   <Select value={formData.citizenship} onValueChange={(v) => updateField("citizenship", v)}>
-                    <SelectTrigger className="h-11 text-sm font-medium"><SelectValue placeholder="Select citizenship" /></SelectTrigger>
+                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
@@ -327,12 +434,22 @@ export function OnboardingWizard({
                       <SelectItem value="SE">🇸🇪 +46</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="tel" value={formData.mobilePhone || ""} onChange={(e) => updateField("mobilePhone", e.target.value)} className="flex-1 h-11 text-sm font-medium" required={!isPreview} />
+                  <Input
+                    type="tel"
+                    value={formData.mobilePhone || ""}
+                    onChange={(e) => updateField("mobilePhone", e.target.value)}
+                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || formData.mobilePhone.length < 10))}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <FieldLabel en="Email" sv="E-post" />
-                <Input type="email" value={formData.email || ""} onChange={(e) => updateField("email", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                <Input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => updateField("email", e.target.value)}
+                  className={cn("h-11 text-sm font-medium", fieldError(!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email || "")))}
+                />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -346,16 +463,17 @@ export function OnboardingWizard({
               open={s3Open}
               onToggle={() => setS3Open(!s3Open)}
               missingFields={s3Missing}
+              showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact First Name" sv="Förnamn" />
-                  <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyFirstName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact Last Name" sv="Efternamn" />
-                  <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyLastName))} />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -370,7 +488,12 @@ export function OnboardingWizard({
                       <SelectItem value="SE">🇸🇪 +46</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input type="tel" value={formData.emergencyPhone || ""} onChange={(e) => updateField("emergencyPhone", e.target.value)} className="flex-1 h-11 text-sm font-medium" required={!isPreview} />
+                  <Input
+                    type="tel"
+                    value={formData.emergencyPhone || ""}
+                    onChange={(e) => updateField("emergencyPhone", e.target.value)}
+                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || formData.emergencyPhone.length < 10))}
+                  />
                 </div>
               </div>
             </CollapsibleContent>
@@ -385,6 +508,7 @@ export function OnboardingWizard({
               open={s4Open}
               onToggle={() => setS4Open(!s4Open)}
               missingFields={s4Missing}
+              showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-3">
@@ -414,17 +538,17 @@ export function OnboardingWizard({
               {isOtherBank && (
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
-                  <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} className="h-11 text-sm font-medium" />
+                  <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(isOtherBank && !formData.otherBankName))} />
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
-                  <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
-                  <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} required={!isPreview} className="h-11 text-sm font-medium" />
+                  <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber))} />
                 </div>
               </div>
             </CollapsibleContent>
@@ -439,11 +563,15 @@ export function OnboardingWizard({
               open={s5Open}
               onToggle={() => setS5Open(!s5Open)}
               missingFields={s5Missing}
+              showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-3">
                 <FieldLabel en="Please attach your valid EU ID or Passport" sv="Bifoga ditt giltiga EU-ID eller pass" />
-                <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                <div className={cn(
+                  "border-2 border-dashed rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer",
+                  validationAttempted && !uploadedFile ? "border-destructive/50 bg-destructive/5" : "border-muted-foreground/30"
+                )}>
                   <input type="file" id="id-upload" accept="image/*,.pdf" onChange={onFileChange} className="hidden" />
                   <label htmlFor="id-upload" className="cursor-pointer block">
                     <Folder className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
@@ -466,9 +594,12 @@ export function OnboardingWizard({
           <div className="flex justify-center pt-4 pb-8">
             <Button
               type="submit"
-              disabled={isSubmitting || isPreview}
+              disabled={isSubmitting}
               size="lg"
-              className="w-full sm:w-auto px-12 py-3 font-bold text-base rounded-full shadow-md min-h-[48px]"
+              className={cn(
+                "w-full sm:w-auto px-12 py-3 font-bold text-base rounded-full shadow-md min-h-[48px]",
+                isPreview && "opacity-50 cursor-not-allowed"
+              )}
             >
               {isSubmitting ? "Submitting... / Skickar..." : "Submit this form / Skicka formuläret"}
             </Button>
