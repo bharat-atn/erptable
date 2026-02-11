@@ -31,7 +31,7 @@ const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
   INVITED: { label: "Invited", dot: "bg-blue-500" },
   ONBOARDING: { label: "Onboarding", dot: "bg-amber-500" },
   ACTIVE: { label: "Active", dot: "bg-emerald-500" },
-  INACTIVE: { label: "Absent", dot: "bg-muted-foreground" },
+  INACTIVE: { label: "Terminated", dot: "bg-red-500" },
 };
 
 const ITEMS_PER_PAGE = 7;

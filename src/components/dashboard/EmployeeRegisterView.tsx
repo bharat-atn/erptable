@@ -39,7 +39,7 @@ const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
   INVITED: { label: "Invited", dot: "bg-blue-500" },
   ONBOARDING: { label: "Onboarding", dot: "bg-amber-500" },
   ACTIVE: { label: "Active", dot: "bg-emerald-500" },
-  INACTIVE: { label: "Absent", dot: "bg-muted-foreground" },
+  INACTIVE: { label: "Terminated", dot: "bg-red-500" },
 };
 
 const ITEMS_PER_PAGE = 7;
@@ -173,6 +173,7 @@ export function EmployeeRegisterView() {
   const active = employees?.filter((e) => e.status === "ACTIVE").length || 0;
   const onboarding = employees?.filter((e) => e.status === "ONBOARDING").length || 0;
   const invited = employees?.filter((e) => e.status === "INVITED").length || 0;
+  const terminated = employees?.filter((e) => e.status === "INACTIVE").length || 0;
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -240,11 +241,12 @@ export function EmployeeRegisterView() {
       </div>
 
       {/* Summary stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Total Employees</p><p className="text-2xl font-bold">{total}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Active</p><p className="text-2xl font-bold text-emerald-600">{active}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Onboarding</p><p className="text-2xl font-bold text-amber-600">{onboarding}</p></CardContent></Card>
         <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Invited</p><p className="text-2xl font-bold text-blue-600">{invited}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Onboarding</p><p className="text-2xl font-bold text-amber-600">{onboarding}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Active</p><p className="text-2xl font-bold text-emerald-600">{active}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs font-medium text-muted-foreground">Terminated</p><p className="text-2xl font-bold text-red-600">{terminated}</p></CardContent></Card>
       </div>
 
       {/* Search */}
