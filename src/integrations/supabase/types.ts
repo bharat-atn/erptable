@@ -233,6 +233,48 @@ export type Database = {
         }
         Relationships: []
       }
+      invitation_template_fields: {
+        Row: {
+          created_at: string
+          field_key: string
+          field_type: string
+          id: string
+          is_required: boolean
+          is_visible: boolean
+          label_en: string
+          label_sv: string
+          section: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          is_visible?: boolean
+          label_en: string
+          label_sv: string
+          section: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          is_visible?: boolean
+          label_en?: string
+          label_sv?: string
+          section?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string
