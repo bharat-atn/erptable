@@ -32,12 +32,15 @@ import {
   ChevronsRight,
   Columns,
   Calendar,
+  Download,
+  Upload,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
 import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
 import type { Tables } from "@/integrations/supabase/types";
+import { CsvImportDialog } from "./CsvImportDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 
@@ -56,7 +59,31 @@ export function EmployeeRegisterView() {
   const [editEmployee, setEditEmployee] = useState<Tables<"employees"> | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteEmployee, setDeleteEmployee] = useState<Tables<"employees"> | null>(null);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const queryClient = useQueryClient();
+
+  const addDummyEmployee = useMutation({
+    mutationFn: async (country: DummyCountry) => {
+      const dummy = generateDummyEmployee(country);
+      const { error } = await supabase.from("employees").insert([{
+        first_name: dummy.first_name,
+        last_name: dummy.last_name,
+        middle_name: dummy.middle_name,
+        email: dummy.email,
+        phone: dummy.phone,
+        city: dummy.city,
+        country: dummy.country,
+        status: dummy.status,
+        personal_info: dummy.personal_info,
+      }]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      toast.success("Dummy employee added!");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const { data: employees, isLoading } = useQuery({
     queryKey: ["register-employees"],
@@ -136,6 +163,31 @@ export function EmployeeRegisterView() {
     return pages;
   };
 
+  const exportCsv = () => {
+    if (!employees || employees.length === 0) {
+      toast.error("No employees to export");
+      return;
+    }
+    const headers = ["employee_code", "first_name", "last_name", "middle_name", "email", "phone", "city", "country", "status", "created_at"];
+    const rows = employees.map((e) =>
+      headers.map((h) => {
+        const val = (e as any)[h] ?? "";
+        // Escape commas and quotes
+        const str = String(val);
+        return str.includes(",") || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+      }).join(",")
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `employees_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${employees.length} employees`);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -146,10 +198,33 @@ export function EmployeeRegisterView() {
             Add and manage employees in your organization.
           </p>
         </div>
-        <Button className="gap-2" onClick={() => { setEditEmployee(null); setFormOpen(true); }}>
-          <Plus className="w-4 h-4" />
-          Add Employee
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2" disabled={addDummyEmployee.isPending}>
+                <Users className="w-4 h-4" />
+                Add Dummy
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Sweden")}>🇸🇪 Swedish</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Romania")}>🇷🇴 Romanian</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyEmployee.mutate("Thailand")}>🇹🇭 Thai</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" className="gap-2" onClick={exportCsv}>
+            <Download className="w-4 h-4" />
+            Export CSV
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={() => setCsvImportOpen(true)}>
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
+          <Button className="gap-2" onClick={() => { setEditEmployee(null); setFormOpen(true); }}>
+            <Plus className="w-4 h-4" />
+            Add Employee
+          </Button>
+        </div>
       </div>
 
       {/* Summary stats */}
@@ -352,6 +427,12 @@ export function EmployeeRegisterView() {
         employeeName={deleteEmployee ? `${deleteEmployee.first_name || ""} ${deleteEmployee.last_name || ""}`.trim() || deleteEmployee.email : ""}
         onConfirm={() => { if (deleteEmployee) deleteEmployeeMutation.mutate(deleteEmployee.id); }}
         isLoading={deleteEmployeeMutation.isPending}
+      />
+
+      <CsvImportDialog
+        open={csvImportOpen}
+        onOpenChange={setCsvImportOpen}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: ["register-employees"] })}
       />
     </div>
   );
