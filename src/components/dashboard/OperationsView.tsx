@@ -344,9 +344,9 @@ export function OperationsView() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Employee ID</TableHead>
                 <TableHead className="w-[200px]">Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Employee ID</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>City</TableHead>
                 <TableHead>Country</TableHead>
@@ -384,6 +384,7 @@ export function OperationsView() {
 
                   return (
                     <TableRow key={employee.id}>
+                      <TableCell className="text-sm font-medium">{emp.employee_code || "—"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -393,7 +394,6 @@ export function OperationsView() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">{employee.email}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{emp.employee_code || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{emp.phone || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{emp.city || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{emp.country || "—"}</TableCell>
