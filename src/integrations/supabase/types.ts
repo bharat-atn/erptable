@@ -91,6 +91,36 @@ export type Database = {
           },
         ]
       }
+      employee_id_settings: {
+        Row: {
+          created_at: string
+          id: string
+          next_number: number
+          padding: number
+          prefix: string
+          separator: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           city: string | null
