@@ -23,7 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft } from "lucide-react";
+import { LanguageSelectionStep } from "./LanguageSelectionStep";
 
 interface Company {
   id: string;
@@ -46,6 +47,7 @@ interface Employee {
 const steps = [
   { id: 1, label: "Company", labelSv: "Företag", icon: Building2 },
   { id: 2, label: "Employee", labelSv: "Anställd", icon: Users },
+  { id: 3, label: "Language", labelSv: "Språk", icon: Globe },
 ];
 
 export function ContractTemplateView() {
@@ -55,6 +57,7 @@ export function ContractTemplateView() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const [selectedLanguage, setSelectedLanguage] = useState("EN/SE");
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -85,6 +88,7 @@ export function ContractTemplateView() {
   const isStepCompleted = (stepId: number) => {
     if (stepId === 1) return !!selectedCompanyId;
     if (stepId === 2) return !!selectedEmployee;
+    if (stepId === 3) return !!selectedLanguage;
     return false;
   };
 
@@ -327,8 +331,29 @@ export function ContractTemplateView() {
                     Select an employee from the register...
                   </Button>
                 )}
+
+                {/* Navigation buttons */}
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" onClick={() => setActiveStep(1)}>
+                    <ArrowLeft className="w-4 h-4 mr-1" />
+                    Back
+                  </Button>
+                  {selectedEmployee && (
+                    <Button onClick={() => setActiveStep(3)} className="px-8">
+                      Next
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
+          )}
+
+          {activeStep === 3 && (
+            <LanguageSelectionStep
+              selectedLanguage={selectedLanguage}
+              onSelectLanguage={setSelectedLanguage}
+              onBack={() => setActiveStep(2)}
+            />
           )}
         </div>
       </div>
