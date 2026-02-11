@@ -15,7 +15,7 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
-import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { Tables } from "@/integrations/supabase/types";
 import { CsvImportDialog } from "./CsvImportDialog";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
@@ -277,10 +277,12 @@ export function EmployeeRegisterView() {
         isLoading={updateEmployee.isPending}
       />
 
-      <DeleteEmployeeDialog
+      <DeleteConfirmDialog
         open={!!deleteEmployee}
         onOpenChange={(open) => { if (!open) setDeleteEmployee(null); }}
-        employeeName={deleteEmployee ? `${deleteEmployee.first_name || ""} ${deleteEmployee.last_name || ""}`.trim() || deleteEmployee.email : ""}
+        title="Delete Employee"
+        itemName={deleteEmployee ? `${deleteEmployee.first_name || ""} ${deleteEmployee.last_name || ""}`.trim() || deleteEmployee.email : ""}
+        description="This will remove the employee record, including all personal information stored in the system."
         onConfirm={() => { if (deleteEmployee) deleteEmployeeMutation.mutate(deleteEmployee.id); }}
         isLoading={deleteEmployeeMutation.isPending}
       />

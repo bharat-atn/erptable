@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { CompanyFormDialog, type CompanyFormData } from "./CompanyFormDialog";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "sonner";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
@@ -45,6 +46,7 @@ export function CompanyRegisterView() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["companies"],
@@ -121,7 +123,7 @@ export function CompanyRegisterView() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => { setEditingCompany(c); setDialogOpen(true); }}><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(c.id)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(c)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
@@ -132,6 +134,16 @@ export function CompanyRegisterView() {
         onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingCompany(null); }}
         onSubmit={(data) => upsertMutation.mutate(editingCompany ? { ...data, id: editingCompany.id } : data)}
         initialData={editingCompany}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Company"
+        itemName={deleteTarget?.name || ""}
+        description="This company will be removed from the register. Any contracts referencing this company may be affected."
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+        isLoading={deleteMutation.isPending}
       />
     </div>
   );

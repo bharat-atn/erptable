@@ -14,6 +14,7 @@ import { MoreVertical, Copy, Send, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
@@ -59,6 +60,7 @@ type InvitationRow = {
 
 export function InvitationsView() {
   const [showPreview, setShowPreview] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<InvitationRow | null>(null);
   const queryClient = useQueryClient();
 
   const { data: invitations, isLoading } = useQuery({
@@ -161,10 +163,20 @@ export function InvitationsView() {
               {invitation.status === "PENDING" && (
                 <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
               )}
-              <DropdownMenuItem className="text-destructive" onClick={() => deleteInvitation.mutate(invitation.id)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(invitation)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+      />
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Invitation"
+        itemName={deleteTarget ? `Invitation for ${deleteTarget.employees?.first_name || ""} ${deleteTarget.employees?.last_name || deleteTarget.employees?.email || "unknown"}`.trim() : ""}
+        description="The invitation link will become invalid and the candidate will no longer be able to access the onboarding form."
+        onConfirm={() => { if (deleteTarget) { deleteInvitation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+        isLoading={deleteInvitation.isPending}
       />
     </div>
   );
