@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sidebar } from "./Sidebar";
+import { Sidebar, screenSizes, type ScreenSizeOption } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
 import { EmployeeRegisterView } from "./EmployeeRegisterView";
 import { InvitationsView } from "./InvitationsView";
@@ -12,14 +12,15 @@ import { OperationsView } from "./OperationsView";
 import { ProcessGuideView } from "./ProcessGuideView";
 import { EmployeeIdSettingsView } from "./EmployeeIdSettingsView";
 import { ContractIdSettingsView } from "./ContractIdSettingsView";
-import { ScreenSizeSimulator } from "./ScreenSizeSimulator";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function Dashboard() {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
+  const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
 
   const handleContinueContract = (contractId: string) => {
     setResumeContractId(contractId);
@@ -47,10 +48,23 @@ export function Dashboard() {
     return <OnboardingPreview onClose={() => setShowPreview(false)} />;
   }
 
+  const isConstrained = screenSize.width !== null;
+
   return (
-    <ScreenSizeSimulator>
-      <div className="flex min-h-screen bg-background">
-        <Sidebar activeView={activeView} onViewChange={setActiveView} />
+    <div className="flex justify-center min-h-screen bg-muted/30">
+      <div
+        className={cn(
+          "flex min-h-screen bg-background w-full transition-all duration-300 ease-out",
+          isConstrained && "shadow-xl border-x border-border/50"
+        )}
+        style={{ maxWidth: isConstrained ? `${screenSize.width}px` : undefined }}
+      >
+        <Sidebar
+          activeView={activeView}
+          onViewChange={setActiveView}
+          activeScreenSize={screenSize}
+          onScreenSizeChange={setScreenSize}
+        />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {renderView()}
@@ -66,6 +80,6 @@ export function Dashboard() {
           Switch to Candidate View
         </Button>
       </div>
-    </ScreenSizeSimulator>
+    </div>
   );
 }
