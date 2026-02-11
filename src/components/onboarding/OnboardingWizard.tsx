@@ -2,7 +2,8 @@ import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TreePine, ChevronUp, Folder } from "lucide-react";
+import { ChevronUp, Folder } from "lucide-react";
+import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
   SelectContent,
@@ -121,7 +122,7 @@ export function OnboardingWizard({
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
         {/* Logo */}
         <div className="flex flex-col items-center mb-6">
-          <TreePine className="w-14 h-14 text-primary mb-1" />
+          <img src={ljunganLogo} alt="Ljungan Forestry" className="w-20 h-20 mb-1 object-contain" />
           <span className="font-bold text-primary text-lg tracking-widest uppercase">
             Ljungan Forestry
           </span>
