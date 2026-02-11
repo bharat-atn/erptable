@@ -148,7 +148,7 @@ export function ContractDetailsStep({
   // Section 3 state
   const [jobType, setJobType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
-  const [stationing, setStationing] = useState("");
+  const [stationing, setStationing] = useState(company.city ?? "");
 
   // Section 5 state
   const [employmentForm, setEmploymentForm] = useState<string>("permanent");
