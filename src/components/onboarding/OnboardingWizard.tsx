@@ -81,6 +81,22 @@ export const personalInfoSchema = z.object({
 
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
 
+interface LogoSettings {
+  dataUrl: string;
+  size: number;
+  padding: number;
+}
+
+function loadTemplateLogo(): LogoSettings | null {
+  try {
+    const saved = localStorage.getItem("invitation-template-logo-v2");
+    if (saved) return JSON.parse(saved);
+    const old = localStorage.getItem("invitation-template-logo");
+    if (old) return { dataUrl: old, size: 100, padding: 16 };
+    return null;
+  } catch { return null; }
+}
+
 interface OnboardingWizardProps {
   formData: Partial<PersonalInfo>;
   updateField: (field: keyof PersonalInfo, value: string) => void;
@@ -114,7 +130,7 @@ function SectionHeader({
   missingFields = [],
   showValidation = false,
 }: {
-  number: string;
+  number?: string;
   titleEn: string;
   titleSv: string;
   open: boolean;
@@ -147,7 +163,10 @@ function SectionHeader({
             <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
           )}
           <span className="leading-tight">
-            Section {number}: {titleEn} / Sektion {number}: {titleSv}
+            {number
+              ? `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`
+              : `${titleEn} / ${titleSv}`
+            }
           </span>
         </span>
         <ChevronDown
@@ -178,6 +197,7 @@ export function OnboardingWizard({
   uploadedFile,
   onFileChange,
 }: OnboardingWizardProps) {
+  const templateLogo = loadTemplateLogo();
   const [s1Open, setS1Open] = useState(true);
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);
@@ -262,14 +282,27 @@ export function OnboardingWizard({
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
         {/* Logo & Header */}
         <div className="flex flex-col items-center mb-5">
-          <img
-            src={ljunganLogo}
-            alt="Ljungan Forestry"
-            className="w-16 h-16 sm:w-20 sm:h-20 mb-1 object-contain"
-          />
-          <span className="font-bold text-primary text-base sm:text-lg tracking-widest uppercase">
-            Ljungan Forestry
-          </span>
+          {templateLogo ? (
+            <div style={{ padding: `${templateLogo.padding}px` }}>
+              <img
+                src={templateLogo.dataUrl}
+                alt="Company Logo"
+                className="object-contain mb-1"
+                style={{ width: `${templateLogo.size}px` }}
+              />
+            </div>
+          ) : (
+            <>
+              <img
+                src={ljunganLogo}
+                alt="Ljungan Forestry"
+                className="w-16 h-16 sm:w-20 sm:h-20 mb-1 object-contain"
+              />
+              <span className="font-bold text-primary text-base sm:text-lg tracking-widest uppercase">
+                Ljungan Forestry
+              </span>
+            </>
+          )}
         </div>
 
         <p className="text-center text-primary font-semibold text-sm sm:text-base mb-6">
@@ -502,7 +535,6 @@ export function OnboardingWizard({
           {/* ═══ Section 3: Bank Information ═══ */}
           <Collapsible open={s4Open} onOpenChange={setS4Open}>
             <SectionHeader
-              number="3"
               titleEn="Bank Information"
               titleSv="Bankinformation"
               open={s4Open}
@@ -557,7 +589,6 @@ export function OnboardingWizard({
           {/* ═══ Section 4: ID / Passport ═══ */}
           <Collapsible open={s5Open} onOpenChange={setS5Open}>
             <SectionHeader
-              number="4"
               titleEn="ID / Passport Information"
               titleSv="ID- / Passinformation"
               open={s5Open}
