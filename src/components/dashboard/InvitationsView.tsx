@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { Mail, Search, Filter, MoreVertical, Copy, Send, Trash2, Eye } from "lucide-react";
+import { MoreVertical, Copy, Send, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
-import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
+import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
 type InvitationStatus = "PENDING" | "SENT" | "ACCEPTED" | "EXPIRED";
@@ -42,6 +40,13 @@ const statusLabels: Record<InvitationStatus, string> = {
   EXPIRED: "Expired",
 };
 
+const statusFilterOptions = [
+  { value: "PENDING", label: "Pending", dot: "bg-amber-500" },
+  { value: "SENT", label: "Sent", dot: "bg-blue-500" },
+  { value: "ACCEPTED", label: "Completed", dot: "bg-emerald-500" },
+  { value: "EXPIRED", label: "Expired", dot: "bg-red-500" },
+];
+
 type InvitationRow = {
   id: string;
   token: string;
@@ -53,7 +58,6 @@ type InvitationRow = {
 };
 
 export function InvitationsView() {
-  const [search, setSearch] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
 
@@ -77,10 +81,6 @@ export function InvitationsView() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Marked as sent"); },
   });
 
-  const filteredInvitations = invitations?.filter((inv) =>
-    inv.employees?.email?.toLowerCase().includes(search.toLowerCase())
-  ) ?? [];
-
   const copyLink = (token: string) => {
     navigator.clipboard.writeText(`${window.location.origin}/onboard/${token}`);
     toast.success("Link copied to clipboard");
@@ -91,7 +91,20 @@ export function InvitationsView() {
   }
 
   const columns: ColumnDef<InvitationRow>[] = [
-    { key: "email", header: "Email", accessor: (inv) => inv.employees?.email, className: "text-sm" },
+    {
+      key: "email", header: "Employee", accessor: (inv) => inv.employees?.email, hideable: false,
+      render: (inv, hl) => {
+        const name = inv.employees?.first_name && inv.employees?.last_name
+          ? `${inv.employees.first_name} ${inv.employees.last_name}`
+          : null;
+        return (
+          <div>
+            <span className="text-sm font-medium">{hl?.(name || inv.employees?.email || "—") ?? (name || inv.employees?.email || "—")}</span>
+            {name && <p className="text-xs text-muted-foreground">{inv.employees?.email}</p>}
+          </div>
+        );
+      },
+    },
     {
       key: "type", header: "Type", accessor: (inv) => inv.type,
       render: (inv) => <Badge variant={typeVariants[inv.type as InvitationType]}>{typeLabels[inv.type as InvitationType]}</Badge>,
@@ -114,46 +127,36 @@ export function InvitationsView() {
         <CreateInvitationDialog />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Mail className="w-4 h-4 text-primary" /> All Invitations
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 w-[180px]" />
-            </div>
-            <Button variant="outline" size="icon" className="h-9 w-9"><Filter className="w-4 h-4" /></Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <SortableTable<InvitationRow>
-            data={filteredInvitations}
-            columns={columns}
-            rowKey={(inv) => inv.id}
-            defaultSortKey="created_at"
-            defaultSortDirection="desc"
-            isLoading={isLoading}
-            emptyMessage="No invitations found"
-            rowActions={(invitation) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => copyLink(invitation.token)}><Copy className="w-4 h-4 mr-2" /> Copy Link</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowPreview(true)}><Eye className="w-4 h-4 mr-2" /> Preview Form</DropdownMenuItem>
-                  {invitation.status === "PENDING" && (
-                    <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem className="text-destructive"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          />
-        </CardContent>
-      </Card>
+      <EnhancedTable<InvitationRow>
+        data={invitations ?? []}
+        columns={columns}
+        rowKey={(inv) => inv.id}
+        defaultSortKey="created_at"
+        defaultSortDirection="desc"
+        isLoading={isLoading}
+        emptyMessage="No invitations found"
+        searchPlaceholder="Search invitations by email, name..."
+        enableColumnToggle
+        enableDenseToggle
+        enableHighlight
+        stickyHeader
+        filters={[{ key: "status", label: "Status", options: statusFilterOptions }]}
+        rowActions={(invitation) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => copyLink(invitation.token)}><Copy className="w-4 h-4 mr-2" /> Copy Link</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowPreview(true)}><Eye className="w-4 h-4 mr-2" /> Preview Form</DropdownMenuItem>
+              {invitation.status === "PENDING" && (
+                <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
+              )}
+              <DropdownMenuItem className="text-destructive"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      />
     </div>
   );
 }
