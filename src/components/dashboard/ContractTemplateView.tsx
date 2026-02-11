@@ -34,8 +34,8 @@ const steps = [{
   icon: Building2
 }, {
   id: 2,
-  label: "Employee",
-  labelSv: "Employee Selection",
+  label: "Employee Selection",
+  labelSv: "",
   icon: Users
 }, {
   id: 3,
