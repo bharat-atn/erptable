@@ -33,7 +33,7 @@ export function EmployeeIdSettingsView() {
     },
   });
 
-  const [form, setForm] = useState({ prefix: "", separator: "", next_number: 1, padding: 3 });
+  const [form, setForm] = useState({ prefix: "", separator: "", next_number: 1, padding: 4 });
 
   useEffect(() => {
     if (config) {
