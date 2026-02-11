@@ -49,12 +49,14 @@ interface LanguageSelectionStepProps {
   selectedLanguage: string;
   onSelectLanguage: (code: string) => void;
   onBack: () => void;
+  onNext?: () => void;
 }
 
 export function LanguageSelectionStep({
   selectedLanguage,
   onSelectLanguage,
   onBack,
+  onNext,
 }: LanguageSelectionStepProps) {
   const renderCard = (lang: LanguageOption) => {
     const isSelected = selectedLanguage === lang.code;
@@ -130,6 +132,11 @@ export function LanguageSelectionStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
+          {onNext && selectedLanguage && (
+            <Button onClick={onNext} className="px-8">
+              Next
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
