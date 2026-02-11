@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { forwardRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TreePine, Upload, ChevronUp } from "lucide-react";
@@ -75,14 +76,15 @@ interface OnboardingWizardProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-function SectionHeader({ title, open }: { title: string; open: boolean }) {
-  return (
-    <CollapsibleTrigger className="flex items-center justify-between w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+const SectionHeader = forwardRef<HTMLButtonElement, { title: string; open: boolean }>(
+  ({ title, open, ...props }, ref) => (
+    <CollapsibleTrigger ref={ref} {...props} className="flex items-center justify-between w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
       <span>{title}</span>
       <ChevronUp className={cn("w-4 h-4 transition-transform", !open && "rotate-180")} />
     </CollapsibleTrigger>
-  );
-}
+  )
+);
+SectionHeader.displayName = "SectionHeader";
 
 export function OnboardingWizard({
   formData,
@@ -283,14 +285,14 @@ export function OnboardingWizard({
                       <Label htmlFor={bank} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
                     </div>
                   ))}
+                  <div className="pt-2 border-t border-border">
+                    <Label className="text-sm font-medium mb-2 block">Toggle here if your bank is not in the list above</Label>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="other" id="other-bank" />
+                      <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank</Label>
+                    </div>
+                  </div>
                 </RadioGroup>
-              </div>
-              <div className="space-y-2 pt-2">
-                <Label className="text-sm font-medium">Toggle here if your bank is not in the list above</Label>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="other" id="other-bank" checked={isOtherBank} onClick={() => onBankSelect("other")} />
-                  <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank</Label>
-                </div>
               </div>
               {isOtherBank && (
                 <div className="space-y-1.5">
