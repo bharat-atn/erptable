@@ -78,14 +78,16 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
           </div>
         </main>
         
-        <Button
-          variant="default"
-          className="fixed bottom-6 right-6 shadow-lg gap-2 z-40"
-          onClick={() => setShowPreview(true)}
-        >
-          <Eye className="w-4 h-4" />
-          Switch to Candidate View
-        </Button>
+        {(activeView === "invitations" || activeView === "invitation-template") && (
+          <Button
+            variant="default"
+            className="fixed bottom-6 right-6 shadow-lg gap-2 z-40"
+            onClick={() => setShowPreview(true)}
+          >
+            <Eye className="w-4 h-4" />
+            Switch to Candidate View
+          </Button>
+        )}
       </div>
     </div>
   );
