@@ -13,6 +13,7 @@ import { ProcessGuideView } from "./ProcessGuideView";
 import { EmployeeIdSettingsView } from "./EmployeeIdSettingsView";
 import { ContractIdSettingsView } from "./ContractIdSettingsView";
 import { InvitationTemplateView } from "./InvitationTemplateView";
+import { ContractDataRegistryView } from "./ContractDataRegistryView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
       case "employee-id-settings": return <EmployeeIdSettingsView />;
       case "contract-id-settings": return <ContractIdSettingsView />;
       case "invitation-template": return <InvitationTemplateView />;
+      case "contract-data": return <ContractDataRegistryView />;
       default: return <DashboardView />;
     }
   };
