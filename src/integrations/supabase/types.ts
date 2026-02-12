@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      agreement_periods: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          hourly_rate: number
+          id: string
+          monthly_rate: number
+          period_label: string
+          position_id: string
+          skill_group_id: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          hourly_rate?: number
+          id?: string
+          monthly_rate?: number
+          period_label?: string
+          position_id: string
+          skill_group_id: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          hourly_rate?: number
+          id?: string
+          monthly_rate?: number
+          period_label?: string
+          position_id?: string
+          skill_group_id?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agreement_periods_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agreement_periods_skill_group_id_fkey"
+            columns: ["skill_group_id"]
+            isOneToOne: false
+            referencedRelation: "skill_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -313,6 +367,42 @@ export type Database = {
           },
         ]
       }
+      positions: {
+        Row: {
+          created_at: string
+          id: string
+          label_en: string
+          label_sv: string
+          sort_order: number
+          type_label_en: string
+          type_label_sv: string
+          type_number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_en: string
+          label_sv: string
+          sort_order?: number
+          type_label_en?: string
+          type_label_sv?: string
+          type_number?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_en?: string
+          label_sv?: string
+          sort_order?: number
+          type_label_en?: string
+          type_label_sv?: string
+          type_number?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -337,6 +427,33 @@ export type Database = {
           role?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      skill_groups: {
+        Row: {
+          created_at: string
+          id: string
+          label_en: string
+          label_sv: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_en: string
+          label_sv: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_en?: string
+          label_sv?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
