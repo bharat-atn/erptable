@@ -363,11 +363,44 @@ function SalariesPeriodsTab() {
     },
   });
 
+  const handleExportCsv = () => {
+    if (agreements.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    const headers = ["Position (EN)", "Position (SV)", "Skill Group (EN)", "Skill Group (SV)", "Period", "Monthly Rate (SEK)", "Hourly Rate (SEK)", "Start Date", "End Date"];
+    const rows = agreements.map((a) => [
+      (a as any).positions?.label_en || "",
+      (a as any).positions?.label_sv || "",
+      (a as any).skill_groups?.label_en || "",
+      (a as any).skill_groups?.label_sv || "",
+      a.period_label,
+      a.monthly_rate,
+      a.hourly_rate,
+      a.start_date || "",
+      a.end_date || "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `salaries-periods-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported");
+  };
+
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Agreement Period Mapping</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Agreement Period Mapping</p>
+            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={agreements.length === 0}>
+              <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
+            </Button>
+          </div>
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Position</Label>
