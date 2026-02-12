@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle, Cloud, CloudOff, Loader2 } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -50,7 +51,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8";
   onBack: () => void;
   onNext: () => void;
 }
@@ -184,6 +185,53 @@ export function ContractDetailsStep({
   // Section 7 state
   const [annualLeaveDays, setAnnualLeaveDays] = useState("25");
 
+  // Section 8: Salary state
+  const [salaryType, setSalaryType] = useState<"hourly" | "monthly">("hourly");
+  const [hourlyBasic, setHourlyBasic] = useState("");
+  const [hourlyPremium, setHourlyPremium] = useState("");
+  const [monthlyBasic, setMonthlyBasic] = useState("");
+  const [monthlyPremium, setMonthlyPremium] = useState("");
+  const [rateApplied, setRateApplied] = useState(false);
+  const [section8Open, setSection8Open] = useState(true);
+
+  // Fetch agreement periods for salary lookup
+  const { data: agreementData } = useQuery({
+    queryKey: ["agreement-lookup"],
+    queryFn: async () => {
+      const [posRes, sgRes, apRes] = await Promise.all([
+        supabase.from("positions").select("id, label_en"),
+        supabase.from("skill_groups").select("id, label_en"),
+        supabase.from("agreement_periods").select("position_id, skill_group_id, hourly_rate, monthly_rate"),
+      ]);
+      return {
+        positions: posRes.data ?? [],
+        skillGroups: sgRes.data ?? [],
+        agreements: apRes.data ?? [],
+      };
+    },
+  });
+
+  // Look up official rate based on jobType and experienceLevel
+  const getOfficialRate = () => {
+    if (!agreementData || !jobType || !experienceLevel) return null;
+    // jobType is like "Planting / Plantering" — extract the English part before " / "
+    const jobEnglish = jobType.split(" / ")[0].trim();
+    const pos = agreementData.positions.find(p => p.label_en === jobEnglish);
+    const sg = agreementData.skillGroups.find(s => s.label_en === experienceLevel);
+    if (!pos || !sg) return null;
+    const ap = agreementData.agreements.find(a => a.position_id === pos.id && a.skill_group_id === sg.id);
+    return ap ? { hourly: Number(ap.hourly_rate), monthly: Number(ap.monthly_rate) } : null;
+  };
+
+  const officialRate = getOfficialRate();
+
+  const handleApplyRate = () => {
+    if (!officialRate) return;
+    setHourlyBasic(officialRate.hourly.toString());
+    setMonthlyBasic(officialRate.monthly.toString());
+    setRateApplied(true);
+  };
+
   // Auto-save state
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -208,6 +256,7 @@ export function ContractDetailsStep({
     age69FromDate: age69FromDate?.toISOString() ?? null,
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
+    salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -221,6 +270,7 @@ export function ContractDetailsStep({
     seasonalFromDate, seasonalEndAround,
     age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
+    salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
   ]);
 
   // Auto-save every 1 second after changes
@@ -294,6 +344,11 @@ export function ContractDetailsStep({
   const section7Missing: string[] = [];
   if (!annualLeaveDays) section7Missing.push("Annual Leave Days");
 
+  const section8Missing: string[] = [];
+  if (!rateApplied) section8Missing.push("Apply Official Rate");
+  if (salaryType === "hourly" && !hourlyBasic) section8Missing.push("Hourly Basic Rate");
+  if (salaryType === "monthly" && !monthlyBasic) section8Missing.push("Monthly Basic Rate");
+
   const sectionWarnings: Record<string, string[]> = {
     "2.1": section21Missing,
     "2.2": section22Missing,
@@ -302,6 +357,7 @@ export function ContractDetailsStep({
     "5": section5Missing,
     "6": section6Missing,
     "7": section7Missing,
+    "8": section8Missing,
   };
 
   const renderLabel = (en: string, sv: string, required = true) => (
@@ -378,14 +434,14 @@ export function ContractDetailsStep({
   const progressSteps = [
     { id: "parties", label: "Parties", icon: Users, sections: ["1", "2.1", "2.2", "2.3"] },
     { id: "employment", label: "Employment", icon: Briefcase, sections: ["3", "4", "5", "6"] },
-    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["7"] },
+    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["7", "8"] },
     { id: "others", label: "Others", icon: MoreHorizontal, sections: [] },
     { id: "review", label: "Review & Sign", icon: CheckCircle, sections: [] },
   ];
 
   // Determine which progress step is active based on activeSection
   const getActiveProgressIndex = () => {
-    if (activeSection === "section-7") return 2;
+    if (activeSection === "section-7" || activeSection === "section-8") return 2;
     if (activeSection === "section-3" || activeSection === "section-4" || activeSection === "section-5" || activeSection === "section-6") return 1;
     return 0;
   };
@@ -1323,6 +1379,167 @@ export function ContractDetailsStep({
             Back / Tillbaka
           </Button>
           <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 8: Salary (activeSection === "section-8") === */}
+        {activeSection === "section-8" && <>
+        <Collapsible open={section8Open} onOpenChange={setSection8Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="8"
+              titleEn="Salary"
+              titleSv="Lön"
+              open={section8Open}
+              onToggle={() => setSection8Open(!section8Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-5">
+              {/* Official Rate Lookup */}
+              <Card className={cn(
+                "border-2 shadow-sm",
+                officialRate ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
+              )}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Lightbulb className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                          Official Skogsavtalet Rate
+                        </p>
+                        {officialRate ? (
+                          <p className="text-xl font-bold text-foreground">
+                            {officialRate.hourly.toFixed(2)} SEK/hr
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {!jobType || !experienceLevel
+                              ? "Select Job Type and Experience Level in Section 3 first"
+                              : "No matching rate found in agreement data"}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleApplyRate}
+                      disabled={!officialRate || rateApplied}
+                      className="px-6"
+                    >
+                      {rateApplied ? "Applied ✓" : "Apply Rate"}
+                    </Button>
+                  </div>
+                  {officialRate && (
+                    <p className="text-xs text-muted-foreground mt-2 ml-[52px]">
+                      Monthly: {officialRate.monthly.toLocaleString()} SEK/month
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Monthly Salary */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  salaryType === "monthly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setSalaryType("monthly")}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "monthly" ? "border-primary" : "border-muted-foreground/40")}>
+                    {salaryType === "monthly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-bold uppercase tracking-wider">Monthly Salary / Månadslön</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 ml-8">
+                  <div className="space-y-1.5">
+                    {renderLabel("Basic / Grund (SEK)", "", true)}
+                    <Input
+                      type="number"
+                      value={monthlyBasic}
+                      onChange={(e) => { setMonthlyBasic(e.target.value); }}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "monthly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    {renderLabel("Premium / Premie (SEK)", "", false)}
+                    <Input
+                      type="number"
+                      value={monthlyPremium}
+                      onChange={(e) => setMonthlyPremium(e.target.value)}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "monthly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hourly Pay */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  salaryType === "hourly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setSalaryType("hourly")}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "hourly" ? "border-primary" : "border-muted-foreground/40")}>
+                    {salaryType === "hourly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-bold uppercase tracking-wider">Hourly Pay / Timlön</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 ml-8">
+                  <div className="space-y-1.5">
+                    {renderLabel("Basic / Grund (SEK)", "", true)}
+                    <Input
+                      type="number"
+                      value={hourlyBasic}
+                      onChange={(e) => { setHourlyBasic(e.target.value); }}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "hourly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    {renderLabel("Premium / Premie (SEK)", "", false)}
+                    <Input
+                      type="number"
+                      value={hourlyPremium}
+                      onChange={(e) => setHourlyPremium(e.target.value)}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "hourly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button
+            className="px-8"
+            onClick={onNext}
+            disabled={!rateApplied || (salaryType === "hourly" ? !hourlyBasic : !monthlyBasic)}
+          >
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>

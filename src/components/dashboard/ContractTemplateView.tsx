@@ -76,6 +76,11 @@ const steps = [{
   label: "Compensation",
   labelSv: "Section 7",
   icon: Building2
+}, {
+  id: 10,
+  label: "Salary",
+  labelSv: "Section 8",
+  icon: Building2
 }];
 interface ContractTemplateViewProps {
   resumeContractId?: string | null;
@@ -163,6 +168,7 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
     if (stepId === 6) return activeStep > 6;
     if (stepId === 7) return activeStep > 7;
     if (stepId === 8) return activeStep > 8;
+    if (stepId === 9) return activeStep > 9;
     return false;
   };
   const filteredEmployees = employees.filter(e => {
@@ -379,7 +385,7 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
               setActiveStep(4);
             }} />}
 
-          {activeStep >= 4 && activeStep <= 9 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : "section-7"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} />}
+          {activeStep >= 4 && activeStep <= 10 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : "section-8"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} />}
         </div>
       </div>
 
