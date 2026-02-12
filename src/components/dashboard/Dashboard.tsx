@@ -62,10 +62,10 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
     <div className="flex justify-center min-h-screen bg-muted/30">
       <div
         className={cn(
-          "flex min-h-screen bg-background w-full transition-all duration-300 ease-out",
+          "flex min-h-screen bg-background transition-all duration-300 ease-out",
           isConstrained && "shadow-xl border-x border-border/50"
         )}
-        style={{ maxWidth: isConstrained ? `${screenSize.width}px` : undefined }}
+        style={{ width: isConstrained ? `${screenSize.width}px` : "100%", maxWidth: "100%" }}
       >
         <Sidebar
           activeView={activeView}
@@ -75,7 +75,7 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
           onBackToLauncher={onBackToLauncher}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto" style={{ maxWidth: isConstrained ? undefined : "80rem" }}>
             {renderView()}
           </div>
         </main>
