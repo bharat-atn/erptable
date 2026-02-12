@@ -393,14 +393,23 @@ function SalariesPeriodsTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Agreement Period Mapping</p>
-            <Button variant="outline" size="sm" onClick={handleExportCsv} disabled={agreements.length === 0}>
-              <Download className="w-3.5 h-3.5 mr-1.5" /> Export CSV
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Export Salary & Period Data</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Download all agreement period mappings as a CSV file for review or editing</p>
+            </div>
+            <Button onClick={handleExportCsv} disabled={agreements.length === 0} className="gap-2 px-6">
+              <Download className="w-4 h-4" /> Export CSV
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Agreement Period Mapping</p>
           <div className="grid grid-cols-3 gap-3 mb-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Position</Label>
