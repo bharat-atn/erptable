@@ -169,21 +169,21 @@ export function OperationsView() {
           </CardContent>
         </Card>
         <div className="col-span-2 space-y-2">
-          <div className="text-center"><Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 text-[10px]">Before Season</Badge></div>
+          <div className="text-center"><Badge variant="outline" className="w-full justify-center bg-orange-50 text-orange-600 border-orange-200 text-xs py-1 font-semibold">Before Season</Badge></div>
           <div className="grid grid-cols-2 gap-2">
             <Card className={cn("cursor-pointer transition-all", statusFilter === "INVITED" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("INVITED")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Clock className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Invited</span></div><p className="text-2xl font-bold">{invited}</p><p className="text-[10px] text-muted-foreground">Candidate Action</p></CardContent></Card>
             <Card className={cn("cursor-pointer transition-all", statusFilter === "RENEWAL" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("RENEWAL")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Star className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Renewal</span></div><p className="text-2xl font-bold">0</p><p className="text-[10px] text-muted-foreground">Re-onboarding</p></CardContent></Card>
           </div>
         </div>
         <div className="col-span-2 space-y-2">
-          <div className="text-center"><Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px]">Under Season</Badge></div>
+          <div className="text-center"><Badge variant="outline" className="w-full justify-center bg-amber-50 text-amber-600 border-amber-200 text-xs py-1 font-semibold">Under Season</Badge></div>
           <div className="grid grid-cols-2 gap-2">
             <Card className={cn("cursor-pointer transition-all", statusFilter === "ONBOARDING" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ONBOARDING")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Onboarding</span></div><p className="text-2xl font-bold">{onboarding}</p><p className="text-[10px] text-muted-foreground">HR Action Required</p></CardContent></Card>
             <Card className={cn("cursor-pointer transition-all", statusFilter === "ACTIVE" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ACTIVE")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><CheckCircle className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Active Duty</span></div><p className="text-2xl font-bold">{active}</p><p className="text-[10px] text-muted-foreground">Contract Signed</p></CardContent></Card>
           </div>
         </div>
         <div className="col-span-2 space-y-2">
-          <div className="text-center"><Badge variant="outline" className="bg-violet-50 text-violet-600 border-violet-200 text-[10px]">After Season</Badge></div>
+          <div className="text-center"><Badge variant="outline" className="w-full justify-center bg-violet-50 text-violet-600 border-violet-200 text-xs py-1 font-semibold">After Season</Badge></div>
           <div className="grid grid-cols-2 gap-2">
             <Card className={cn("cursor-pointer transition-all", statusFilter === "SEASONAL" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("SEASONAL")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Snowflake className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Seasonal Pool</span></div><p className="text-2xl font-bold">0</p><p className="text-[10px] text-muted-foreground">Eligible for Rehire</p></CardContent></Card>
             <Card className={cn("cursor-pointer transition-all", statusFilter === "INACTIVE" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("INACTIVE")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><XCircle className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Terminated</span></div><p className="text-2xl font-bold">{inactive}</p><p className="text-[10px] text-muted-foreground">Archived Data</p></CardContent></Card>
