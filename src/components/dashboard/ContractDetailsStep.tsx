@@ -199,7 +199,10 @@ export function ContractDetailsStep({
 
   // Section 9: Training
   const [section9Open, setSection9Open] = useState(true);
-  const [mandatoryTraining, setMandatoryTraining] = useState("");
+  const [trainingSkotselskolan, setTrainingSkotselskolan] = useState(true);
+  const [trainingSYN, setTrainingSYN] = useState(true);
+  const [trainingOtherEnabled, setTrainingOtherEnabled] = useState(false);
+  const [trainingOtherText, setTrainingOtherText] = useState("");
 
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
@@ -263,7 +266,10 @@ export function ContractDetailsStep({
       if (fd.pieceWorkPay) setPieceWorkPay(fd.pieceWorkPay);
       if (fd.otherSalaryBenefits) setOtherSalaryBenefits(fd.otherSalaryBenefits);
       if (fd.paymentMethod) setPaymentMethod(fd.paymentMethod);
-      if (fd.mandatoryTraining) setMandatoryTraining(fd.mandatoryTraining);
+      if (fd.trainingSkotselskolan !== undefined) setTrainingSkotselskolan(fd.trainingSkotselskolan);
+      if (fd.trainingSYN !== undefined) setTrainingSYN(fd.trainingSYN);
+      if (fd.trainingOtherEnabled !== undefined) setTrainingOtherEnabled(fd.trainingOtherEnabled);
+      if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
       setInitialLoaded(true);
     };
     load();
@@ -335,22 +341,21 @@ export function ContractDetailsStep({
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
-    pieceWorkPay, otherSalaryBenefits, paymentMethod, mandatoryTraining,
+    pieceWorkPay, otherSalaryBenefits, paymentMethod,
+    trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
     birthday, countryOfBirth, citizenship, mobile, email,
     emergencyFirstName, emergencyLastName, emergencyMobile,
     mainDuties, jobType, experienceLevel, postingLocation, workplaceVaries, mainWorkplace, stationing,
-    employmentForm,
-    permanentFromDate, probationFromDate, probationUntilDate,
-    fixedTermFromDate, fixedTermUntilDate,
-    tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
-    seasonalFromDate, seasonalEndAround,
-    age69FromDate, age69UntilDate,
+    employmentForm, permanentFromDate, probationFromDate, probationUntilDate,
+    fixedTermFromDate, fixedTermUntilDate, tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
+    seasonalFromDate, seasonalEndAround, age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
-    pieceWorkPay, otherSalaryBenefits, paymentMethod, mandatoryTraining,
+    pieceWorkPay, otherSalaryBenefits, paymentMethod,
+    trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
   ]);
 
   // Auto-save every 1 second after changes
@@ -1794,16 +1799,94 @@ export function ContractDetailsStep({
                     Mandatory Training / Obligatorisk utbildning
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <p className="text-sm text-muted-foreground">
                     Mandatory training (if appropriate) to which the employee is entitled: / Obligatorisk utbildning (om tillämpligt) som den anställde har rätt till:
                   </p>
-                  <textarea
-                    value={mandatoryTraining}
-                    onChange={(e) => setMandatoryTraining(e.target.value)}
-                    className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    placeholder="Enter mandatory training details here... / Ange obligatoriska utbildningsdetaljer här..."
-                  />
+
+                  {/* Skötselskolan */}
+                  <button
+                    type="button"
+                    onClick={() => setTrainingSkotselskolan(!trainingSkotselskolan)}
+                    className={cn(
+                      "w-full flex items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
+                      trainingSkotselskolan
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
+                      trainingSkotselskolan ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                    )}>
+                      {trainingSkotselskolan && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">Skötselskolan</p>
+                      <p className="text-xs text-muted-foreground">
+                        Forestry care and management training program / Utbildningsprogram för skogsvård och skötsel
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* SYN */}
+                  <button
+                    type="button"
+                    onClick={() => setTrainingSYN(!trainingSYN)}
+                    className={cn(
+                      "w-full flex items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
+                      trainingSYN
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
+                      trainingSYN ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                    )}>
+                      {trainingSYN && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">Skogsbrukets yrkesnämnd (SYN)</p>
+                      <p className="text-xs text-muted-foreground">
+                        Forestry vocational board – safety &amp; project handling certification / Skogsbrukets yrkesnämnd – säkerhet &amp; projekthanteringscertifiering
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* Other */}
+                  <button
+                    type="button"
+                    onClick={() => setTrainingOtherEnabled(!trainingOtherEnabled)}
+                    className={cn(
+                      "w-full flex items-start gap-3 rounded-lg border-2 p-4 text-left transition-all",
+                      trainingOtherEnabled
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-muted-foreground/30"
+                    )}
+                  >
+                    <div className={cn(
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors",
+                      trainingOtherEnabled ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                    )}>
+                      {trainingOtherEnabled && <Check className="h-3.5 w-3.5" />}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold">Other Training / Annan utbildning</p>
+                      <p className="text-xs text-muted-foreground">
+                        Additional training requirements / Ytterligare utbildningskrav
+                      </p>
+                    </div>
+                  </button>
+
+                  {trainingOtherEnabled && (
+                    <textarea
+                      value={trainingOtherText}
+                      onChange={(e) => setTrainingOtherText(e.target.value)}
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      placeholder="Describe additional training... / Beskriv ytterligare utbildning..."
+                    />
+                  )}
                 </CardContent>
               </Card>
             </div>
