@@ -25,6 +25,7 @@ import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { ContractDocument } from "./ContractDocument";
+import { SchedulingStep, type SchedulingData } from "./SchedulingStep";
 
 interface Company {
   id: string;
@@ -52,7 +53,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13" | "section-14";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13" | "section-scheduling" | "section-14";
   onBack: () => void;
   onNext: () => void;
   onGoToStep?: (step: number) => void;
@@ -233,6 +234,22 @@ export function ContractDetailsStep({
     { value: "other", label: "Other Deduction", labelSv: "Annat avdrag" },
   ];
   const [salaryDeductions, setSalaryDeductions] = useState<SalaryDeduction[]>([]);
+
+  // Scheduling state
+  const [schedulingData, setSchedulingData] = useState<SchedulingData>({
+    seasonYear: new Date().getFullYear(),
+    contractStartDate: null,
+    contractEndDate: null,
+    weeklyHours: 40,
+    startTime: "06:30",
+    endTime: "17:00",
+    workStartDate: null,
+    workEndDate: null,
+    vacationEnabled: false,
+    vacationStartDate: null,
+    vacationEndDate: null,
+    attachToContract: false,
+  });
 
   // Section 14: Signing
   const [signingStatus, setSigningStatus] = useState("not_sent");
@@ -477,6 +494,7 @@ export function ContractDetailsStep({
       if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
       if (fd.miscellaneousText) setMiscellaneousText(fd.miscellaneousText);
       if (fd.salaryDeductions) setSalaryDeductions(fd.salaryDeductions);
+      if (fd.schedulingData) setSchedulingData(fd.schedulingData);
       setInitialLoaded(true);
     };
     load();
@@ -552,6 +570,7 @@ export function ContractDetailsStep({
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText,
     salaryDeductions,
+    schedulingData: schedulingData as unknown as Record<string, any>,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -565,7 +584,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
-    miscellaneousText, salaryDeductions,
+    miscellaneousText, salaryDeductions, schedulingData,
   ]);
 
   // Auto-save every 1 second after changes
@@ -2513,6 +2532,16 @@ export function ContractDetailsStep({
         </div>
         </>}
 
+        {/* === Scheduling (activeSection === "section-scheduling") === */}
+        {activeSection === "section-scheduling" && (
+          <SchedulingStep
+            initialData={schedulingData}
+            onChange={setSchedulingData}
+            onBack={onBack}
+            onNext={onNext}
+          />
+        )}
+
         {/* === Signing (activeSection === "section-14") === */}
         {activeSection === "section-14" && <>
         <div className="space-y-1 mb-4">
@@ -2635,14 +2664,7 @@ export function ContractDetailsStep({
         </div>
 
         <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={() => {
-            // Skip Section 13 (Deductions) if no deductions exist — go back to Section 12 (step 14)
-            if (salaryDeductions.length === 0 && onGoToStep) {
-              onGoToStep(14);
-            } else {
-              onBack();
-            }
-          }}>
+          <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>

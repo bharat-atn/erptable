@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase } from "lucide-react";
+import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase, CalendarDays } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
 import { ContractDetailsStep } from "./ContractDetailsStep";
 interface Company {
@@ -108,6 +108,11 @@ const steps = [{
   icon: Building2
 }, {
   id: 16,
+  label: "Schedule",
+  labelSv: "Schema",
+  icon: CalendarDays
+}, {
+  id: 17,
   label: "Signing",
   labelSv: "Underskrift",
   icon: Briefcase
@@ -416,7 +421,7 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
               setActiveStep(4);
             }} />}
 
-          {activeStep >= 4 && activeStep <= 16 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : "section-14"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} onGoToStep={(step: number) => setActiveStep(step)} />}
+          {activeStep >= 4 && activeStep <= 17 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : activeStep === 16 ? "section-scheduling" : "section-14"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} onGoToStep={(step: number) => setActiveStep(step)} />}
         </div>
       </div>
 
