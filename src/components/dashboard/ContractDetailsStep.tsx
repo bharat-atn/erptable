@@ -877,8 +877,13 @@ export function ContractDetailsStep({
               {/* Job type and salary group */}
               <div className="space-y-1.5">
                 {renderLabel("Job Type and Salary Group", "Befattningstyp och lönegrupp")}
+                {!jobType && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Required – please select a job type / Obligatoriskt – välj en befattningstyp
+                  </p>
+                )}
                 <Select value={jobType} onValueChange={setJobType} required>
-                  <SelectTrigger className="h-11 text-sm font-medium">
+                  <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
                     <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -901,8 +906,13 @@ export function ContractDetailsStep({
               {/* Experience level */}
               <div className="space-y-1.5">
                 {renderLabel("Experience Level / Salary Group", "Erfarenhet / Lönegrupp")}
+                {!experienceLevel && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Required – please select an experience level / Obligatoriskt – välj erfarenhetsnivå
+                  </p>
+                )}
                 <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
-                  <SelectTrigger className="h-11 text-sm font-medium">
+                  <SelectTrigger className={cn("h-11 text-sm font-medium", !experienceLevel && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
                     <SelectValue placeholder="Choose the experience level... / Välj erfarenhetsnivå..." />
                   </SelectTrigger>
                   <SelectContent>
