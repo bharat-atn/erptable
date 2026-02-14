@@ -2534,12 +2534,13 @@ export function ContractDetailsStep({
         </>}
 
         {/* === Scheduling (activeSection === "section-scheduling") === */}
-        {activeSection === "section-scheduling" && (
+         {activeSection === "section-scheduling" && (
           <SchedulingStep
             initialData={schedulingData}
             onChange={setSchedulingData}
             onBack={onBack}
             onNext={onNext}
+            contractId={contractId}
           />
         )}
 
