@@ -182,11 +182,19 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
       const formData = (data.form_data as Record<string, any>) || {};
       let resumeStep = 4; // default to employee details
 
-      // Check how far they got
-      if (formData.section6) resumeStep = 9; // go to compensation
-      else if (formData.section5) resumeStep = 8; // section 6
-      else if (formData.section4) resumeStep = 7; // section 5
-      else if (formData.section3) resumeStep = 6; // section 4
+      // Determine furthest completed step from form_data
+      if (formData.schedulingData) resumeStep = 16; // scheduling
+      else if (formData.salaryDeductions) resumeStep = 15; // deductions
+      else if (formData.miscellaneousText !== undefined) resumeStep = 14; // notes
+      else if (formData.trainingSkotselskolan !== undefined) resumeStep = 13; // misc
+      else if (formData.socialSecurityViewed) resumeStep = 12; // social security
+      else if (formData.paymentMethod) resumeStep = 11; // training
+      else if (formData.hourlyRate !== undefined) resumeStep = 10; // salary
+      else if (formData.compensationType) resumeStep = 9; // compensation
+      else if (formData.section6) resumeStep = 9;
+      else if (formData.section5) resumeStep = 8;
+      else if (formData.section4) resumeStep = 7;
+      else if (formData.section3) resumeStep = 6;
 
       setActiveStep(resumeStep);
       setResumeLoaded(true);
