@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
+import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import { CheckCircle, Loader2, AlertTriangle } from "lucide-react";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
 
@@ -15,6 +16,14 @@ interface SigningData {
   signing_status: string;
   employee_signed_at: string | null;
   employer_signed_at: string | null;
+  form_data: Record<string, any> | null;
+  company_org_number: string | null;
+  company_address: string | null;
+  company_postcode: string | null;
+  company_city: string | null;
+  employee_email: string | null;
+  employee_phone: string | null;
+  season_year: string | null;
 }
 
 export default function ContractSigning() {
@@ -36,7 +45,7 @@ export default function ContractSigning() {
         setLoading(false);
         return;
       }
-      setData(rows[0] as SigningData);
+      setData(rows[0] as unknown as SigningData);
       setLoading(false);
     };
     load();
@@ -47,12 +56,10 @@ export default function ContractSigning() {
     setSubmitting(true);
 
     try {
-      // Convert data URL to blob
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const filePath = `employee/${data.contract_id}.png`;
 
-      // Upload to storage
       const { error: uploadErr } = await supabase.storage
         .from("signatures")
         .upload(filePath, blob, { upsert: true, contentType: "image/png" });
@@ -63,14 +70,12 @@ export default function ContractSigning() {
         .from("signatures")
         .getPublicUrl(filePath);
 
-      // Submit signature via RPC
       const { error: rpcErr } = await supabase.rpc("submit_employee_signature", {
         _token: token,
         _signature_url: urlData.publicUrl,
       });
 
       if (rpcErr) throw rpcErr;
-
       setSigned(true);
     } catch (err: any) {
       setError(err.message || "Failed to submit signature");
@@ -104,46 +109,44 @@ export default function ContractSigning() {
   if (!data) return null;
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
+  const fd = data.form_data || {};
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <img src={logoImg} alt="Logo" className="h-12 mx-auto" />
-          <h1 className="text-2xl font-bold">Employment Contract Signing</h1>
-          <p className="text-sm text-muted-foreground">Contract: {data.contract_code}</p>
         </div>
 
-        {/* Contract Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Contract Details / Avtalsdetaljer</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Employee / Anställd</p>
-                <p className="font-medium">{data.employee_first_name} {data.employee_last_name}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Company / Företag</p>
-                <p className="font-medium">{data.company_name}</p>
-              </div>
-            </div>
+        {/* Full Contract Document */}
+        <Card className="shadow-md">
+          <CardContent className="p-0">
+            <ContractDocument
+              companyName={data.company_name}
+              companyOrgNumber={data.company_org_number}
+              companyAddress={data.company_address}
+              companyPostcode={data.company_postcode}
+              companyCity={data.company_city}
+              contractCode={data.contract_code}
+              seasonYear={data.season_year}
+              formData={fd}
+              employeeSignatureUrl={null}
+              employerSignatureUrl={null}
+            />
           </CardContent>
         </Card>
 
         {/* Signing Area */}
-        <Card>
+        <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-base">Employee Signature / Anställds underskrift</CardTitle>
           </CardHeader>
           <CardContent>
             {signed || alreadySigned ? (
               <div className="text-center py-8 space-y-3">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
-                <p className="text-lg font-semibold text-green-700">
+                <CheckCircle className="w-16 h-16 text-primary mx-auto" />
+                <p className="text-lg font-semibold text-primary">
                   Signed Successfully / Signerat framgångsrikt
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -154,8 +157,8 @@ export default function ContractSigning() {
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Please draw your signature below to sign this employment contract. / 
-                  Vänligen rita din underskrift nedan för att signera detta anställningsavtal.
+                  By signing below, you confirm that you have read and agree to the terms of this employment contract. / 
+                  Genom att signera nedan bekräftar du att du har läst och godkänner villkoren i detta anställningsavtal.
                 </p>
                 <SignatureCanvas onSave={handleSign} disabled={submitting} />
                 {submitting && (

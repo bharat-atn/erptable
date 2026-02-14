@@ -504,14 +504,25 @@ export type Database = {
       get_contract_for_signing: {
         Args: { _token: string }
         Returns: {
+          company_address: string
+          company_city: string
           company_name: string
+          company_org_number: string
+          company_postcode: string
           contract_code: string
           contract_id: string
+          employee_email: string
           employee_first_name: string
           employee_last_name: string
+          employee_phone: string
           employee_signed_at: string
           employer_signed_at: string
+          end_date: string
+          form_data: Json
+          salary: number
+          season_year: string
           signing_status: string
+          start_date: string
         }[]
       }
       get_invitation_by_token: {
