@@ -45,6 +45,21 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
 
     const efLabels = employmentFormLabels[fd.employmentForm] || [fd.employmentForm, ""];
 
+    const frequencyLabels: Record<string, string> = {
+      monthly: "Monthly / Månadsvis",
+      weekly: "Weekly / Veckovis",
+      "one-time": "One-time / Engångs",
+      "per-km": "Per km / Per km",
+    };
+
+    const deductionTypeLabels: Record<string, string> = {
+      rent: "Rent / Accommodation / Hyra / Boende",
+      car: "Company Car Usage / Tjänstebil",
+      travel: "Travel Costs / Resekostnader",
+      immigration: "Immigration Process Fees / Migrationsverkets avgifter",
+      other: "Other Deduction / Annat avdrag",
+    };
+
     return (
       <div ref={ref} className="contract-doc">
         {/* ── HEADER ── */}
@@ -53,6 +68,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           <p className="doc-subtitle">
             {contractCode || "—"} · Season / Säsong: {seasonYear || new Date().getFullYear()}
           </p>
+          <p className="doc-legal-lang">The legally binding language of this contract is Swedish. / <span className="info-sv-inline">Det juridiskt bindande språket i detta avtal är svenska.</span></p>
         </div>
 
         {/* ── §1 EMPLOYER ── */}
@@ -390,14 +406,20 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
                 </tr>
               </thead>
               <tbody>
-                {fd.salaryDeductions.map((d: any, i: number) => (
-                  <tr key={i}>
-                    <td data-label="Type / Typ">{d.label || d.type}</td>
-                    <td data-label="Amount / Belopp">{d.amount ? `${d.amount} SEK` : "—"}</td>
-                    <td data-label="Frequency / Frekvens">{d.frequency || "—"}</td>
-                    <td data-label="Note / Anteckning">{d.note || "—"}</td>
-                  </tr>
-                ))}
+                {fd.salaryDeductions.map((d: any, i: number) => {
+                  const bilingualLabel = d.labelSv
+                    ? `${d.label} / ${d.labelSv}`
+                    : deductionTypeLabels[d.type] || d.label || d.type;
+                  const bilingualFreq = frequencyLabels[d.frequency] || d.frequency || "—";
+                  return (
+                    <tr key={i}>
+                      <td data-label="Type / Typ">{bilingualLabel}</td>
+                      <td data-label="Amount / Belopp">{d.amount ? `${d.amount} SEK` : "—"}</td>
+                      <td data-label="Frequency / Frekvens">{bilingualFreq}</td>
+                      <td data-label="Note / Anteckning">{d.note || "—"}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </>
