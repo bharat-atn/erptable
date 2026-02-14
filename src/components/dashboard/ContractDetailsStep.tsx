@@ -51,7 +51,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13";
   onBack: () => void;
   onNext: () => void;
 }
@@ -211,6 +211,26 @@ export function ContractDetailsStep({
   const [section11Open, setSection11Open] = useState(true);
   const [miscellaneousText, setMiscellaneousText] = useState("");
 
+  // Section 13: Salary Deductions
+  const [section13Open, setSection13Open] = useState(true);
+  type SalaryDeduction = {
+    id: string;
+    type: string;
+    label: string;
+    amount: string;
+    frequency: string;
+    note: string;
+    [key: string]: string;
+  };
+  const DEDUCTION_TYPES = [
+    { value: "rent", label: "Rent / Accommodation", labelSv: "Hyra / Boende" },
+    { value: "car", label: "Company Car Usage", labelSv: "Tjänstebil" },
+    { value: "travel", label: "Travel Costs", labelSv: "Resekostnader" },
+    { value: "immigration", label: "Immigration Process Fees", labelSv: "Migrationsverkets avgifter" },
+    { value: "other", label: "Other Deduction", labelSv: "Annat avdrag" },
+  ];
+  const [salaryDeductions, setSalaryDeductions] = useState<SalaryDeduction[]>([]);
+
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
   useEffect(() => {
@@ -278,6 +298,7 @@ export function ContractDetailsStep({
       if (fd.trainingOtherEnabled !== undefined) setTrainingOtherEnabled(fd.trainingOtherEnabled);
       if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
       if (fd.miscellaneousText) setMiscellaneousText(fd.miscellaneousText);
+      if (fd.salaryDeductions) setSalaryDeductions(fd.salaryDeductions);
       setInitialLoaded(true);
     };
     load();
@@ -352,6 +373,7 @@ export function ContractDetailsStep({
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText,
+    salaryDeductions,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -365,7 +387,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
-    miscellaneousText,
+    miscellaneousText, salaryDeductions,
   ]);
 
   // Auto-save every 1 second after changes
@@ -2103,6 +2125,192 @@ export function ContractDetailsStep({
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 13: Salary Deductions (activeSection === "section-13") === */}
+        {activeSection === "section-13" && <>
+        <Collapsible open={section13Open} onOpenChange={setSection13Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="13"
+              titleEn="Salary Deductions"
+              titleSv="Löneavdrag"
+              open={section13Open}
+              onToggle={() => setSection13Open(!section13Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">💰</span>
+                    Net Salary Deductions / Nettolöneavdrag
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Define recurring or one-time deductions from the employee's net salary. / Definiera återkommande eller engångsavdrag från den anställdes nettolön.
+                  </p>
+
+                  {salaryDeductions.map((deduction, index) => {
+                    const typeInfo = DEDUCTION_TYPES.find(t => t.value === deduction.type);
+                    return (
+                      <Card key={deduction.id} className="border border-border bg-muted/30">
+                        <CardContent className="pt-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold">
+                              {typeInfo ? `${typeInfo.label} / ${typeInfo.labelSv}` : "Deduction"}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive h-7 px-2"
+                              onClick={() => {
+                                setSalaryDeductions(prev => prev.filter(d => d.id !== deduction.id));
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-medium text-muted-foreground">Amount (SEK) / Belopp (SEK)</label>
+                              <Input
+                                type="number"
+                                value={deduction.amount}
+                                onChange={(e) => {
+                                  setSalaryDeductions(prev => prev.map(d =>
+                                    d.id === deduction.id ? { ...d, amount: e.target.value } : d
+                                  ));
+                                }}
+                                placeholder="0.00"
+                                className="h-9"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-medium text-muted-foreground">Frequency / Frekvens</label>
+                              <Select
+                                value={deduction.frequency}
+                                onValueChange={(val) => {
+                                  setSalaryDeductions(prev => prev.map(d =>
+                                    d.id === deduction.id ? { ...d, frequency: val } : d
+                                  ));
+                                }}
+                              >
+                                <SelectTrigger className="h-9">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="monthly">Monthly / Månatligen</SelectItem>
+                                  <SelectItem value="one-time">One-time / Engångs</SelectItem>
+                                  <SelectItem value="per-km">Per km / Per km</SelectItem>
+                                  <SelectItem value="seasonal">Per season / Per säsong</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {deduction.type === "car" && (
+                            <div className="rounded-md bg-accent/50 border border-border px-3 py-2">
+                              <p className="text-xs text-muted-foreground">
+                                💡 For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven. / 
+                                <span className="italic"> Ange pris per km. Totalavdraget beräknas utifrån körda kilometer.</span>
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Note / Anteckning</label>
+                            <Input
+                              value={deduction.note}
+                              onChange={(e) => {
+                                setSalaryDeductions(prev => prev.map(d =>
+                                  d.id === deduction.id ? { ...d, note: e.target.value } : d
+                                ));
+                              }}
+                              placeholder="Optional description... / Valfri beskrivning..."
+                              className="h-9"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {/* Add deduction buttons */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Add Deduction / Lägg till avdrag</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {DEDUCTION_TYPES.map(dt => (
+                        <button
+                          key={dt.value}
+                          type="button"
+                          onClick={() => {
+                            setSalaryDeductions(prev => [...prev, {
+                              id: crypto.randomUUID(),
+                              type: dt.value,
+                              label: dt.label,
+                              amount: "",
+                              frequency: dt.value === "car" ? "per-km" : "monthly",
+                              note: "",
+                            }]);
+                          }}
+                          className="flex items-center gap-2 rounded-lg border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 p-3 text-left transition-all"
+                        >
+                          <span className="text-lg">
+                            {dt.value === "rent" ? "🏠" : dt.value === "car" ? "🚗" : dt.value === "travel" ? "✈️" : dt.value === "immigration" ? "🏛️" : "📄"}
+                          </span>
+                          <div>
+                            <p className="text-xs font-semibold">{dt.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{dt.labelSv}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {salaryDeductions.length > 0 && (
+                    <div className="rounded-lg border border-border bg-accent/30 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">Total Monthly Deductions / Totala månatliga avdrag</span>
+                        <span className="text-sm font-bold text-destructive">
+                          {salaryDeductions
+                            .filter(d => d.frequency === "monthly" && d.amount)
+                            .reduce((sum, d) => sum + parseFloat(d.amount || "0"), 0)
+                            .toLocaleString("sv-SE")} SEK / month
+                        </span>
+                      </div>
+                      {salaryDeductions.some(d => d.frequency === "one-time" && d.amount) && (
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-xs text-muted-foreground">One-time deductions / Engångsavdrag</span>
+                          <span className="text-xs font-medium">
+                            {salaryDeductions
+                              .filter(d => d.frequency === "one-time" && d.amount)
+                              .reduce((sum, d) => sum + parseFloat(d.amount || "0"), 0)
+                              .toLocaleString("sv-SE")} SEK
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
