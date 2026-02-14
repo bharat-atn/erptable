@@ -6,8 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, eachDayOfInterval, isWeekend, differenceInDays, parseISO, addDays } from "date-fns";
-import { CalendarIcon, CalendarDays, Briefcase, Clock, Plane, ArrowLeft, ArrowRight, Save } from "lucide-react";
+import { format, eachDayOfInterval, isWeekend, parseISO, addDays } from "date-fns";
+import { CalendarIcon, CalendarDays, Briefcase, Clock, Plane, ArrowLeft, ArrowRight, Save, Filter } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Swedish public holidays (fixed + Easter-based for multiple years)
 function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
@@ -109,12 +111,17 @@ interface SchedulingStepProps {
   onChange: (data: SchedulingData) => void;
   onBack: () => void;
   onNext: () => void;
+  contractId: string;
 }
+
+type FilterMode = "all" | "holidays" | "vacation" | "workdays";
 
 const SEASON_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032];
 
-export function SchedulingStep({ initialData, onChange, onBack, onNext }: SchedulingStepProps) {
+export function SchedulingStep({ initialData, onChange, onBack, onNext, contractId }: SchedulingStepProps) {
   const [data, setData] = useState<SchedulingData>(initialData);
+  const [filter, setFilter] = useState<FilterMode>("all");
+  const [saving, setSaving] = useState(false);
 
   const update = useCallback((partial: Partial<SchedulingData>) => {
     setData(prev => {
@@ -148,26 +155,33 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext }: Schedu
         const holidayInfo = holidays.find(h => h.date === dateStr);
         const isVacation = vacStart && vacEnd && d >= vacStart && d <= vacEnd && !weekend && !holiday;
 
-        // Work period check
         const workStart = data.workStartDate ? parseISO(data.workStartDate) : null;
         const workEnd = data.workEndDate ? parseISO(data.workEndDate) : null;
         const inWorkPeriod = workStart && workEnd ? d >= workStart && d <= workEnd : true;
 
         let type: "Weekend" | "Holiday" | "Vacation" | "Workday" | "Off-season" = "Workday";
         let hours = hoursPerDay;
-        let status = "work";
 
-        if (weekend) { type = "Weekend"; hours = 0; status = "Rest"; }
-        else if (holiday) { type = "Holiday"; hours = 0; status = "Rest"; }
-        else if (isVacation) { type = "Vacation"; hours = 0; status = "Vacation"; }
-        else if (!inWorkPeriod) { type = "Off-season"; hours = 0; status = "Off"; }
+        if (weekend) { type = "Weekend"; hours = 0; }
+        else if (holiday) { type = "Holiday"; hours = 0; }
+        else if (isVacation) { type = "Vacation"; hours = 0; }
+        else if (!inWorkPeriod) { type = "Off-season"; hours = 0; }
 
-        return { date: dateStr, type, hours, status, holidayInfo };
+        return { date: dateStr, type, hours, holidayInfo };
       });
     } catch {
       return [];
     }
   }, [data, holidayDates, holidays]);
+
+  // Filtered schedule
+  const filteredSchedule = useMemo(() => {
+    if (filter === "all") return schedule;
+    if (filter === "holidays") return schedule.filter(d => d.type === "Holiday");
+    if (filter === "vacation") return schedule.filter(d => d.type === "Vacation");
+    if (filter === "workdays") return schedule.filter(d => d.type === "Workday");
+    return schedule;
+  }, [schedule, filter]);
 
   // Stats
   const stats = useMemo(() => {
@@ -179,10 +193,45 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext }: Schedu
     return { totalDays, workDays, totalHours, holidayCount, vacationDays };
   }, [schedule]);
 
-  const applyVacation = () => {
-    // Just enable vacation — dates are already set via pickers
-    if (data.vacationStartDate && data.vacationEndDate) {
-      update({ vacationEnabled: true });
+  // Save schedule to database
+  const saveScheduleToDb = async () => {
+    if (!contractId || schedule.length === 0) {
+      toast.error("No schedule to save. Set contract dates first.");
+      return;
+    }
+    setSaving(true);
+    try {
+      // Delete existing schedule entries for this contract
+      const { error: delErr } = await supabase
+        .from("contract_schedules")
+        .delete()
+        .eq("contract_id", contractId);
+      if (delErr) throw delErr;
+
+      // Insert in batches of 100
+      const rows = schedule.map(d => ({
+        contract_id: contractId,
+        schedule_date: d.date,
+        day_type: d.type,
+        scheduled_hours: d.hours,
+        holiday_name_en: d.holidayInfo?.nameEn || null,
+        holiday_name_sv: d.holidayInfo?.nameSv || null,
+        start_time: d.type === "Workday" ? data.startTime : null,
+        end_time: d.type === "Workday" ? data.endTime : null,
+      }));
+
+      for (let i = 0; i < rows.length; i += 100) {
+        const batch = rows.slice(i, i + 100);
+        const { error } = await supabase.from("contract_schedules").insert(batch);
+        if (error) throw error;
+      }
+
+      toast.success(`Schedule saved! ${rows.length} days stored for time reporting.`);
+    } catch (err: any) {
+      console.error("Save schedule error:", err);
+      toast.error("Failed to save schedule: " + (err.message || "Unknown error"));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -355,11 +404,6 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext }: Schedu
                 <DatePicker label="VACATION START / SEMESTERSTART" value={data.vacationStartDate} onSelect={(d) => update({ vacationStartDate: d })} />
                 <DatePicker label="VACATION END / SEMESTERSTOPP" value={data.vacationEndDate} onSelect={(d) => update({ vacationEndDate: d })} />
               </div>
-              <div className="flex items-center justify-end mt-3">
-                <Button onClick={applyVacation} className="bg-warning text-warning-foreground hover:bg-warning/90">
-                  Apply Leave / Applicera ledighet
-                </Button>
-              </div>
             </div>
             <p className="text-xs text-muted-foreground">
               * Weekends and public holidays are automatically excluded from vacation day counts. / 
@@ -375,77 +419,117 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext }: Schedu
           <CardTitle className="text-sm font-bold flex items-center gap-2">
             📋 DAILY SCHEDULE REPORT / DAGLIGT SCHEMA
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={data.attachToContract}
-              onCheckedChange={(v) => update({ attachToContract: !!v })}
-            />
-            <span className="text-xs font-medium">Attach to Contract (Appendix) / Bifoga till avtal</span>
+          <div className="flex items-center gap-3">
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5 text-muted-foreground" />
+              {([
+                { key: "all" as FilterMode, label: "All", count: schedule.length },
+                { key: "workdays" as FilterMode, label: "Work", count: stats.workDays },
+                { key: "holidays" as FilterMode, label: "Holidays", count: stats.holidayCount },
+                { key: "vacation" as FilterMode, label: "Vacation", count: stats.vacationDays },
+              ]).map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={cn(
+                    "px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors",
+                    filter === f.key
+                      ? f.key === "holidays" ? "bg-destructive text-destructive-foreground"
+                        : f.key === "vacation" ? "bg-primary text-primary-foreground"
+                        : "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {f.label} ({f.count})
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={data.attachToContract}
+                onCheckedChange={(v) => update({ attachToContract: !!v })}
+              />
+              <span className="text-xs font-medium">Attach / Bifoga</span>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {schedule.length > 0 ? (
+          {filteredSchedule.length > 0 ? (
             <>
               <div className="max-h-[400px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-muted">
                     <tr>
                       <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider">Date / Datum</th>
+                      <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider">Day / Dag</th>
                       <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider">Type / Typ</th>
                       <th className="text-center px-4 py-2 text-xs font-bold uppercase tracking-wider">Hours / Timmar</th>
-                      <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider">Status</th>
+                      <th className="text-left px-4 py-2 text-xs font-bold uppercase tracking-wider">Time / Tid</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {schedule.map((row) => (
-                      <tr key={row.date} className="border-t border-border">
-                        <td className="px-4 py-2 font-mono text-xs">{row.date}</td>
-                        <td className="px-4 py-2">
-                          <span className={cn(
-                            "text-xs font-semibold",
-                            row.type === "Weekend" && "text-primary",
-                            row.type === "Holiday" && "text-destructive",
-                            row.type === "Vacation" && "text-warning",
-                            row.type === "Off-season" && "text-muted-foreground",
-                          )}>
-                            {row.type}
-                            {row.holidayInfo && (
-                              <span className="ml-1 font-normal text-muted-foreground">
-                                ({row.holidayInfo.nameSv})
-                              </span>
-                            )}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-center font-mono text-xs">
-                          {row.hours > 0 ? row.hours.toFixed(1) : "—"}
-                        </td>
-                        <td className="px-4 py-2">
-                          {row.status === "work" ? (
-                            <span className="inline-block w-3 h-3 rounded-full bg-primary" />
-                          ) : (
+                    {filteredSchedule.map((row) => {
+                      const d = parseISO(row.date);
+                      const dayName = format(d, "EEEE");
+                      return (
+                        <tr key={row.date} className={cn(
+                          "border-t border-border",
+                          row.type === "Holiday" && "bg-destructive/5",
+                          row.type === "Vacation" && "bg-primary/5",
+                          row.type === "Weekend" && "bg-muted/50",
+                        )}>
+                          <td className="px-4 py-2 font-mono text-xs">{row.date}</td>
+                          <td className="px-4 py-2 text-xs">{dayName}</td>
+                          <td className="px-4 py-2">
                             <span className={cn(
-                              "text-xs font-medium",
-                              row.status === "Rest" && "text-primary",
-                              row.status === "Vacation" && "text-warning",
-                              row.status === "Off" && "text-muted-foreground",
+                              "text-xs font-semibold",
+                              row.type === "Weekend" && "text-muted-foreground",
+                              row.type === "Holiday" && "text-destructive",
+                              row.type === "Vacation" && "text-primary",
+                              row.type === "Off-season" && "text-muted-foreground",
+                              row.type === "Workday" && "text-foreground",
                             )}>
-                              {row.status === "Rest" ? "Rest / Vila" : row.status === "Vacation" ? "Vacation / Semester" : "Off / Ledig"}
+                              {row.type}
+                              {row.holidayInfo && (
+                                <span className="ml-1 font-normal text-muted-foreground">
+                                  ({row.holidayInfo.nameSv})
+                                </span>
+                              )}
                             </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-4 py-2 text-center font-mono text-xs">
+                            {row.hours > 0 ? row.hours.toFixed(1) : "—"}
+                          </td>
+                          <td className="px-4 py-2 text-xs text-muted-foreground">
+                            {row.type === "Workday" ? `${data.startTime} – ${data.endTime}` : "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-              <div className="text-center py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground border-t border-border">
-                SHOWING {schedule.length} DAYS / VISAR {schedule.length} DAGAR
+              <div className="flex items-center justify-between px-4 py-2 border-t border-border">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  SHOWING {filteredSchedule.length} OF {schedule.length} DAYS / VISAR {filteredSchedule.length} AV {schedule.length} DAGAR
+                </span>
+                <Button
+                  onClick={saveScheduleToDb}
+                  disabled={saving}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {saving ? "Saving..." : "Save Schedule to DB / Spara schema"}
+                </Button>
               </div>
             </>
           ) : (
             <div className="text-center py-8 text-sm text-muted-foreground">
-              Set contract start and end dates to generate the schedule. / 
-              Ange start- och slutdatum för att generera schemat.
+              {schedule.length === 0
+                ? "Set contract start and end dates to generate the schedule. / Ange start- och slutdatum för att generera schemat."
+                : "No matching entries for selected filter. / Inga matchande poster för valt filter."}
             </div>
           )}
         </CardContent>

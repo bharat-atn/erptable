@@ -146,6 +146,56 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_schedules: {
+        Row: {
+          contract_id: string
+          created_at: string
+          day_type: string
+          end_time: string | null
+          holiday_name_en: string | null
+          holiday_name_sv: string | null
+          id: string
+          schedule_date: string
+          scheduled_hours: number
+          start_time: string | null
+          updated_at: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          day_type?: string
+          end_time?: string | null
+          holiday_name_en?: string | null
+          holiday_name_sv?: string | null
+          id?: string
+          schedule_date: string
+          scheduled_hours?: number
+          start_time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          day_type?: string
+          end_time?: string | null
+          holiday_name_en?: string | null
+          holiday_name_sv?: string | null
+          id?: string
+          schedule_date?: string
+          scheduled_hours?: number
+          start_time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_schedules_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           company_id: string | null
