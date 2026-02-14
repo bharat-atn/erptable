@@ -241,6 +241,8 @@ export function ContractDetailsStep({
   const [employerSignatureUrl, setEmployerSignatureUrl] = useState("");
   const [sendingForSigning, setSendingForSigning] = useState(false);
   const [submittingEmployerSig, setSubmittingEmployerSig] = useState(false);
+  const [contractCode, setContractCode] = useState<string | null>(null);
+  const [seasonYear, setSeasonYear] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
@@ -290,6 +292,8 @@ export function ContractDetailsStep({
   /* Checklists */
   .checklist { margin-bottom: 6px; }
   .check-item { font-size: 10pt; margin-bottom: 3px; }
+  .training-mandatory-note { font-size: 9pt; color: #444; margin-bottom: 6px; font-style: italic; }
+  .training-mandatory-badge { display: inline-block; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 6.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b91c1c; border: 1px solid #b91c1c; border-radius: 2px; padding: 0 3px; margin-left: 4px; vertical-align: middle; }
 
   /* Deduction table */
   .deduction-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9.5pt; }
@@ -409,9 +413,11 @@ export function ContractDetailsStep({
     const load = async () => {
       const { data } = await supabase
         .from("contracts")
-        .select("form_data")
+        .select("form_data, contract_code, season_year")
         .eq("id", contractId)
         .single();
+      if (data?.contract_code) setContractCode(data.contract_code);
+      if (data?.season_year) setSeasonYear(data.season_year);
       if (!data?.form_data) { setInitialLoaded(true); return; }
       const fd = data.form_data as Record<string, any>;
       if (fd.firstName) setFirstName(fd.firstName);
@@ -2538,8 +2544,8 @@ export function ContractDetailsStep({
                   companyAddress={company.address}
                   companyPostcode={company.postcode}
                   companyCity={company.city}
-                  contractCode={null}
-                  seasonYear={new Date().getFullYear().toString()}
+                  contractCode={contractCode}
+                  seasonYear={seasonYear || new Date().getFullYear().toString()}
                   formData={getFormData()}
                   employeeSignatureUrl={employeeSignatureUrl || null}
                   employerSignatureUrl={employerSignatureUrl || null}

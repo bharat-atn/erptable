@@ -164,11 +164,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           </div>
           <div className="field">
             <span className="field-label">Main Workplace / Huvudarbetsplats</span>
-            <span className="field-value">{fd.mainWorkplace || "—"}</span>
+            <span className="field-value">{fd.mainWorkplace || fd.postingLocation || "—"}</span>
           </div>
           <div className="field">
             <span className="field-label">Workplace Varies / Arbetsplats Varierar</span>
-            <span className="field-value">{fd.workplaceVaries || "—"}</span>
+            <span className="field-value">{fd.workplaceVaries === "yes" ? "Yes / Ja" : fd.workplaceVaries === "no" ? "No / Nej" : fd.workplaceVaries || "—"}</span>
           </div>
         </div>
 
@@ -317,15 +317,16 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           </div>
           <div className="field">
             <span className="field-label">Payment Method / Utbetalningssätt</span>
-            <span className="field-value">{fd.paymentMethod || "—"}</span>
+            <span className="field-value">{fd.paymentMethod === "account" ? "Bank Account / Bankkonto" : fd.paymentMethod === "cash" ? "Cash / Kontant" : fd.paymentMethod || "—"}</span>
           </div>
         </div>
 
         {/* ── §9 TRAINING ── */}
-        <h2 className="section-title page-break-avoid">§9. Training / Utbildning</h2>
+        <h2 className="section-title page-break-avoid">§9. Mandatory Training / Obligatorisk Utbildning</h2>
+        <p className="training-mandatory-note">The following training programs are mandatory for the employee before commencing work. / <span className="info-sv-inline">Följande utbildningsprogram är obligatoriska för arbetstagaren innan arbetet påbörjas.</span></p>
         <div className="checklist">
-          <p className="check-item">{fd.trainingSkotselskolan ? "☑" : "☐"} Skötselskolan</p>
-          <p className="check-item">{fd.trainingSYN ? "☑" : "☐"} SYN (Säkerhets- och yrkesutbildning)</p>
+          <p className="check-item">{fd.trainingSkotselskolan ? "☑" : "☐"} <strong>Skötselskolan</strong> <span className="training-mandatory-badge">MANDATORY / OBLIGATORISK</span></p>
+          <p className="check-item">{fd.trainingSYN ? "☑" : "☐"} <strong>SYN</strong> (Säkerhets- och yrkesutbildning) <span className="training-mandatory-badge">MANDATORY / OBLIGATORISK</span></p>
           {fd.trainingOtherEnabled && fd.trainingOtherText && (
             <p className="check-item">☑ Other / Annat: {fd.trainingOtherText}</p>
           )}

@@ -149,6 +149,8 @@
 .contract-doc .legal-notes p { margin-bottom: 8px; font-size: 0.76rem; line-height: 1.5; }
 .contract-doc .checklist { margin-bottom: 6px; }
 .contract-doc .check-item { font-size: 0.8rem; margin-bottom: 4px; padding: 2px 0; }
+.contract-doc .training-mandatory-note { font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-bottom: 6px; font-style: italic; }
+.contract-doc .training-mandatory-badge { display: inline-block; font-family: Arial, Helvetica, sans-serif; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #b91c1c; border: 1px solid #b91c1c; border-radius: 2px; padding: 0 3px; margin-left: 4px; vertical-align: middle; }
 .contract-doc .deduction-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
 .contract-doc .deduction-table th { font-family: Arial, Helvetica, sans-serif; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: hsl(var(--muted-foreground)); text-align: left; padding: 6px 8px; border-bottom: 2px solid hsl(var(--border)); }
 .contract-doc .deduction-table td { padding: 6px 8px; border-bottom: 1px solid hsl(var(--border)); }
