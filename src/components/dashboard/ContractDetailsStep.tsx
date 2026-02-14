@@ -159,7 +159,7 @@ export function ContractDetailsStep({
   const [jobType, setJobType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
   const [postingLocation, setPostingLocation] = useState(company.city ?? "");
-  const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">(""); 
+  const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">("yes"); 
   const [mainWorkplace, setMainWorkplace] = useState("");
   const [stationing, setStationing] = useState<"main" | "alternative" | "exception">("exception");
 
