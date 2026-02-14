@@ -16,288 +16,429 @@ interface ContractDocumentProps {
   employerSignedAt?: string | null;
 }
 
-function formatDate(val: string | null | undefined): string {
+function fmtDate(val: string | null | undefined): string {
   if (!val) return "—";
-  try {
-    return format(new Date(val), "yyyy-MM-dd");
-  } catch {
-    return val;
-  }
+  try { return format(new Date(val), "yyyy-MM-dd"); } catch { return val; }
 }
 
-function Field({ label, labelSv, value }: { label: string; labelSv: string; value: string | null | undefined }) {
-  return (
-    <div className="space-y-0.5">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground print:text-gray-500">
-        {label} / {labelSv}
-      </p>
-      <p className="text-sm print:text-xs">{value || "—"}</p>
-    </div>
-  );
-}
-
-function SectionTitle({ number, titleEn, titleSv }: { number: string; titleEn: string; titleSv: string }) {
-  return (
-    <div className="border-b-2 border-foreground/20 pb-1 mt-6 mb-3 print:mt-4 print:mb-2 print:border-gray-300">
-      <h3 className="text-sm font-bold uppercase tracking-wide print:text-xs">
-        §{number}. {titleEn} / {titleSv}
-      </h3>
-    </div>
-  );
-}
-
+/**
+ * Full employment contract rendered as a printable document.
+ * Every section (1–13) is always rendered. Conditional content appears only where relevant.
+ * Print CSS is handled externally via the print handler.
+ */
 export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps>(
-  function ContractDocument(
-    {
-      companyName,
-      companyOrgNumber,
-      companyAddress,
-      companyPostcode,
-      companyCity,
-      contractCode,
-      seasonYear,
-      formData: fd,
-      employeeSignatureUrl,
-      employerSignatureUrl,
-      employeeSignedAt,
-      employerSignedAt,
-    },
-    ref
-  ) {
-    const employmentFormLabels: Record<string, string> = {
-      permanent: "Permanent / Tillsvidareanställning",
-      probation: "Probationary / Provanställning",
-      "fixed-term": "Fixed-term / Tidsbegränsad anställning",
-      "temp-replacement": "Temporary replacement / Vikariat",
-      seasonal: "Seasonal / Säsongsanställning",
-      "age-69": "Age 69+ / Anställning efter 69 år",
+  function ContractDocument(props, ref) {
+    const {
+      companyName, companyOrgNumber, companyAddress, companyPostcode, companyCity,
+      contractCode, seasonYear, formData: fd,
+      employeeSignatureUrl, employerSignatureUrl, employeeSignedAt, employerSignedAt,
+    } = props;
+
+    const employmentFormLabels: Record<string, [string, string]> = {
+      permanent: ["Permanent", "Tillsvidareanställning"],
+      probation: ["Probationary", "Provanställning"],
+      "fixed-term": ["Fixed-term", "Tidsbegränsad anställning"],
+      "temp-replacement": ["Temporary replacement", "Vikariat"],
+      seasonal: ["Seasonal", "Säsongsanställning"],
+      "age-69": ["Age 69+", "Anställning efter 69 år"],
     };
 
-    const salaryTypeLabels: Record<string, string> = {
-      hourly: "Hourly / Timlön",
-      monthly: "Monthly / Månadslön",
-    };
+    const efLabels = employmentFormLabels[fd.employmentForm] || [fd.employmentForm, ""];
 
     return (
-      <div
-        ref={ref}
-        className="bg-background text-foreground print:bg-white print:text-black max-w-[210mm] mx-auto p-8 print:p-[15mm] space-y-1 text-sm print:text-[11px] leading-relaxed"
-      >
-        {/* Header */}
-        <div className="text-center space-y-1 mb-6 print:mb-4">
-          <h1 className="text-lg font-bold uppercase tracking-widest print:text-base">
-            Employment Contract / Anställningsavtal
-          </h1>
-          <p className="text-xs text-muted-foreground print:text-gray-500">
-            {contractCode && `${contractCode} · `}Season / Säsong: {seasonYear || new Date().getFullYear()}
+      <div ref={ref} className="contract-doc">
+        {/* ── HEADER ── */}
+        <div className="doc-header">
+          <h1>EMPLOYMENT CONTRACT / ANSTÄLLNINGSAVTAL</h1>
+          <p className="doc-subtitle">
+            {contractCode || "—"} · Season / Säsong: {seasonYear || new Date().getFullYear()}
           </p>
         </div>
 
-        {/* Section 1: Employer */}
-        <SectionTitle number="1" titleEn="Employer" titleSv="Arbetsgivare" />
-        <div className="grid grid-cols-2 gap-4 print:gap-2">
-          <Field label="Employer" labelSv="Arbetsgivare" value={companyName} />
-          <Field label="Organization Number" labelSv="Organisationsnummer" value={companyOrgNumber} />
-          <Field label="Address" labelSv="Adress" value={companyAddress} />
-          <Field label="Postcode & City" labelSv="Postnummer & Ort" value={`${companyPostcode || ""} ${companyCity || ""}`.trim() || null} />
+        {/* ── §1 EMPLOYER ── */}
+        <h2 className="section-title">§1. Employer / Arbetsgivare</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Employer / Arbetsgivare</span>
+            <span className="field-value">{companyName}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Organization Number / Organisationsnummer</span>
+            <span className="field-value">{companyOrgNumber || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Address / Adress</span>
+            <span className="field-value">{companyAddress || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Postcode & City / Postnummer & Ort</span>
+            <span className="field-value">{`${companyPostcode || ""} ${companyCity || ""}`.trim() || "—"}</span>
+          </div>
         </div>
 
-        {/* Section 2: Employee */}
-        <SectionTitle number="2" titleEn="Employee" titleSv="Arbetstagare" />
-        <div className="grid grid-cols-3 gap-4 print:gap-2">
-          <Field label="First Name" labelSv="Förnamn" value={fd.firstName} />
-          <Field label="Middle Name" labelSv="Mellannamn" value={fd.middleName} />
-          <Field label="Last Name" labelSv="Efternamn" value={fd.lastName} />
+        {/* ── §2 EMPLOYEE ── */}
+        <h2 className="section-title">§2. Employee / Arbetstagare</h2>
+        <div className="field-grid-3">
+          <div className="field">
+            <span className="field-label">First Name / Förnamn</span>
+            <span className="field-value">{fd.firstName || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Middle Name / Mellannamn</span>
+            <span className="field-value">{fd.middleName || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Last Name / Efternamn</span>
+            <span className="field-value">{fd.lastName || "—"}</span>
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-4 print:gap-2 mt-2">
-          <Field label="Address" labelSv="Adress" value={fd.address} />
-          <Field label="City" labelSv="Ort" value={fd.city} />
-          <Field label="Postcode" labelSv="Postnummer" value={fd.zipCode} />
-          <Field label="Country" labelSv="Land" value={fd.country} />
-          <Field label="Date of Birth" labelSv="Födelsedatum" value={formatDate(fd.birthday)} />
-          <Field label="Citizenship" labelSv="Medborgarskap" value={fd.citizenship} />
-          <Field label="Mobile" labelSv="Mobilnummer" value={fd.mobile} />
-          <Field label="Email" labelSv="E-post" value={fd.email} />
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Address / Adress</span>
+            <span className="field-value">{fd.address || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">City / Ort</span>
+            <span className="field-value">{fd.city || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Postcode / Postnummer</span>
+            <span className="field-value">{fd.zipCode || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Country / Land</span>
+            <span className="field-value">{fd.country || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Date of Birth / Födelsedatum</span>
+            <span className="field-value">{fmtDate(fd.birthday)}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Citizenship / Medborgarskap</span>
+            <span className="field-value">{fd.citizenship || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Mobile / Mobilnummer</span>
+            <span className="field-value">{fd.mobile || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Email / E-post</span>
+            <span className="field-value">{fd.email || "—"}</span>
+          </div>
         </div>
-
         {/* Emergency Contact */}
-        {(fd.emergencyFirstName || fd.emergencyLastName) && (
-          <>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mt-3 print:text-gray-500">
-              Emergency Contact / Nödkontakt
-            </p>
-            <div className="grid grid-cols-3 gap-4 print:gap-2">
-              <Field label="First Name" labelSv="Förnamn" value={fd.emergencyFirstName} />
-              <Field label="Last Name" labelSv="Efternamn" value={fd.emergencyLastName} />
-              <Field label="Mobile" labelSv="Mobilnummer" value={fd.emergencyMobile} />
-            </div>
-          </>
-        )}
-
-        {/* Section 3: Employment */}
-        <SectionTitle number="3" titleEn="Position & Duties" titleSv="Befattning & arbetsuppgifter" />
-        <div className="grid grid-cols-2 gap-4 print:gap-2">
-          <Field label="Main Duties" labelSv="Huvudsakliga arbetsuppgifter" value={fd.mainDuties} />
-          <Field label="Job Type" labelSv="Anställningstyp" value={fd.jobType} />
-          <Field label="Experience Level" labelSv="Erfarenhetsnivå" value={fd.experienceLevel} />
-          <Field label="Posting Location" labelSv="Stationeringsort" value={fd.postingLocation} />
-          <Field label="Main Workplace" labelSv="Huvudarbetsplats" value={fd.mainWorkplace} />
-          <Field label="Workplace Varies" labelSv="Arbetsplats varierar" value={fd.workplaceVaries} />
+        <p className="subsection-label">Emergency Contact / Nödkontakt</p>
+        <div className="field-grid-3">
+          <div className="field">
+            <span className="field-label">First Name / Förnamn</span>
+            <span className="field-value">{fd.emergencyFirstName || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Last Name / Efternamn</span>
+            <span className="field-value">{fd.emergencyLastName || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Mobile / Mobilnummer</span>
+            <span className="field-value">{fd.emergencyMobile || "—"}</span>
+          </div>
         </div>
 
-        {/* Section 4: Form of Employment */}
-        <SectionTitle number="4" titleEn="Form of Employment" titleSv="Anställningsform" />
-        <Field
-          label="Employment Form"
-          labelSv="Anställningsform"
-          value={employmentFormLabels[fd.employmentForm] || fd.employmentForm}
-        />
+        {/* ── §3 POSITION & DUTIES ── */}
+        <h2 className="section-title page-break-avoid">§3. Position & Duties / Befattning & Arbetsuppgifter</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Main Duties / Huvudsakliga Arbetsuppgifter</span>
+            <span className="field-value">{fd.mainDuties || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Job Type / Anställningstyp</span>
+            <span className="field-value">{fd.jobType || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Experience Level / Erfarenhetsnivå</span>
+            <span className="field-value">{fd.experienceLevel || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Posting Location / Stationeringsort</span>
+            <span className="field-value">{fd.postingLocation || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Main Workplace / Huvudarbetsplats</span>
+            <span className="field-value">{fd.mainWorkplace || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Workplace Varies / Arbetsplats Varierar</span>
+            <span className="field-value">{fd.workplaceVaries || "—"}</span>
+          </div>
+        </div>
+
+        {/* ── §4 FORM OF EMPLOYMENT ── */}
+        <h2 className="section-title page-break-avoid">§4. Form of Employment / Anställningsform</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Employment Form / Anställningsform</span>
+            <span className="field-value">{efLabels[0]} / {efLabels[1]}</span>
+          </div>
+        </div>
         {fd.employmentForm === "permanent" && (
-          <Field label="From Date" labelSv="Från datum" value={formatDate(fd.permanentFromDate)} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From Date / Från Datum</span>
+              <span className="field-value">{fmtDate(fd.permanentFromDate)}</span>
+            </div>
+          </div>
         )}
         {fd.employmentForm === "probation" && (
-          <div className="grid grid-cols-2 gap-4 print:gap-2">
-            <Field label="From" labelSv="Från" value={formatDate(fd.probationFromDate)} />
-            <Field label="Until" labelSv="Till" value={formatDate(fd.probationUntilDate)} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From / Från</span>
+              <span className="field-value">{fmtDate(fd.probationFromDate)}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Until / Till</span>
+              <span className="field-value">{fmtDate(fd.probationUntilDate)}</span>
+            </div>
           </div>
         )}
         {fd.employmentForm === "fixed-term" && (
-          <div className="grid grid-cols-2 gap-4 print:gap-2">
-            <Field label="From" labelSv="Från" value={formatDate(fd.fixedTermFromDate)} />
-            <Field label="Until" labelSv="Till" value={formatDate(fd.fixedTermUntilDate)} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From / Från</span>
+              <span className="field-value">{fmtDate(fd.fixedTermFromDate)}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Until / Till</span>
+              <span className="field-value">{fmtDate(fd.fixedTermUntilDate)}</span>
+            </div>
+          </div>
+        )}
+        {fd.employmentForm === "temp-replacement" && (
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From / Från</span>
+              <span className="field-value">{fmtDate(fd.tempReplacementFromDate)}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Position / Befattning</span>
+              <span className="field-value">{fd.tempReplacementPosition || "—"}</span>
+            </div>
           </div>
         )}
         {fd.employmentForm === "seasonal" && (
-          <div className="grid grid-cols-2 gap-4 print:gap-2">
-            <Field label="From" labelSv="Från" value={formatDate(fd.seasonalFromDate)} />
-            <Field label="End Around" labelSv="Slutar omkring" value={formatDate(fd.seasonalEndAround)} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From / Från</span>
+              <span className="field-value">{fmtDate(fd.seasonalFromDate)}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">End Around / Slutar Omkring</span>
+              <span className="field-value">{fmtDate(fd.seasonalEndAround)}</span>
+            </div>
+          </div>
+        )}
+        {fd.employmentForm === "age-69" && (
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">From / Från</span>
+              <span className="field-value">{fmtDate(fd.age69FromDate)}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Until / Till</span>
+              <span className="field-value">{fmtDate(fd.age69UntilDate)}</span>
+            </div>
           </div>
         )}
 
-        {/* Section 5: Working Time */}
-        <SectionTitle number="5" titleEn="Working Time & Leave" titleSv="Arbetstid & semester" />
-        <div className="grid grid-cols-3 gap-4 print:gap-2">
-          <Field label="Working Time" labelSv="Arbetstid" value={fd.workingTime === "part-time" ? `Part-time ${fd.partTimePercent || ""}%` : "Full-time / Heltid"} />
-          <Field label="Annual Leave" labelSv="Semesterdagar" value={fd.annualLeaveDays ? `${fd.annualLeaveDays} days` : null} />
+        {/* ── §5 WORKING TIME & LEAVE ── */}
+        <h2 className="section-title page-break-avoid">§5. Working Time & Leave / Arbetstid & Semester</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Working Time / Arbetstid</span>
+            <span className="field-value">
+              {fd.workingTime === "part-time" ? `Part-time / Deltid ${fd.partTimePercent ? `(${fd.partTimePercent}%)` : ""}` : "Full-time / Heltid"}
+            </span>
+          </div>
+          <div className="field">
+            <span className="field-label">Annual Leave / Semesterdagar</span>
+            <span className="field-value">{fd.annualLeaveDays ? `${fd.annualLeaveDays} days` : "—"}</span>
+          </div>
         </div>
 
-        {/* Section 7/8: Salary */}
-        <SectionTitle number="7" titleEn="Compensation" titleSv="Ersättning" />
-        <Field label="Salary Type" labelSv="Lönetyp" value={salaryTypeLabels[fd.salaryType] || fd.salaryType} />
+        {/* ── §6 NOTICE PERIOD ── */}
+        <h2 className="section-title page-break-avoid">§6. Notice Period / Uppsägningstid</h2>
+        <div className="info-block">
+          <p>Notice periods are regulated in accordance with the Swedish Employment Protection Act (LAS) and applicable collective agreements (Skogsavtalet).</p>
+          <p className="info-sv">Uppsägningstider regleras i enlighet med lagen om anställningsskydd (LAS) och tillämpliga kollektivavtal (Skogsavtalet).</p>
+        </div>
+
+        {/* ── §7 COMPENSATION ── */}
+        <h2 className="section-title page-break-avoid">§7. Compensation / Ersättning</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Salary Type / Lönetyp</span>
+            <span className="field-value">{fd.salaryType === "hourly" ? "Hourly / Timlön" : fd.salaryType === "monthly" ? "Monthly / Månadslön" : fd.salaryType || "—"}</span>
+          </div>
+        </div>
         {fd.salaryType === "hourly" && (
-          <div className="grid grid-cols-2 gap-4 print:gap-2 mt-1">
-            <Field label="Hourly Basic Rate" labelSv="Grundtimlön" value={fd.hourlyBasic ? `${fd.hourlyBasic} SEK` : null} />
-            <Field label="Hourly Premium" labelSv="Tillägg" value={fd.hourlyPremium ? `${fd.hourlyPremium} SEK` : null} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">Hourly Basic Rate / Grundtimlön</span>
+              <span className="field-value">{fd.hourlyBasic ? `${fd.hourlyBasic} SEK` : "—"}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Hourly Premium / Tillägg</span>
+              <span className="field-value">{fd.hourlyPremium ? `${fd.hourlyPremium} SEK` : "—"}</span>
+            </div>
           </div>
         )}
         {fd.salaryType === "monthly" && (
-          <div className="grid grid-cols-2 gap-4 print:gap-2 mt-1">
-            <Field label="Monthly Basic Rate" labelSv="Grundmånadslön" value={fd.monthlyBasic ? `${fd.monthlyBasic} SEK` : null} />
-            <Field label="Monthly Premium" labelSv="Tillägg" value={fd.monthlyPremium ? `${fd.monthlyPremium} SEK` : null} />
+          <div className="field-grid-2">
+            <div className="field">
+              <span className="field-label">Monthly Basic Rate / Grundmånadslön</span>
+              <span className="field-value">{fd.monthlyBasic ? `${fd.monthlyBasic} SEK` : "—"}</span>
+            </div>
+            <div className="field">
+              <span className="field-label">Monthly Premium / Tillägg</span>
+              <span className="field-value">{fd.monthlyPremium ? `${fd.monthlyPremium} SEK` : "—"}</span>
+            </div>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4 print:gap-2 mt-1">
-          <Field label="Piece Work Pay" labelSv="Ackordslön" value={fd.pieceWorkPay} />
-          <Field label="Other Benefits" labelSv="Övriga förmåner" value={fd.otherSalaryBenefits} />
-          <Field label="Payment Method" labelSv="Utbetalningssätt" value={fd.paymentMethod} />
+
+        {/* ── §8 SALARY DETAILS ── */}
+        <h2 className="section-title page-break-avoid">§8. Salary Details / Löneuppgifter</h2>
+        <div className="field-grid-2">
+          <div className="field">
+            <span className="field-label">Piece Work Pay / Ackordslön</span>
+            <span className="field-value">{fd.pieceWorkPay || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Other Benefits / Övriga Förmåner</span>
+            <span className="field-value">{fd.otherSalaryBenefits || "—"}</span>
+          </div>
+          <div className="field">
+            <span className="field-label">Payment Method / Utbetalningssätt</span>
+            <span className="field-value">{fd.paymentMethod || "—"}</span>
+          </div>
         </div>
 
-        {/* Section 9: Training */}
-        {(fd.trainingSkotselskolan || fd.trainingSYN || fd.trainingOtherText) && (
-          <>
-            <SectionTitle number="9" titleEn="Training" titleSv="Utbildning" />
-            <div className="space-y-1">
-              {fd.trainingSkotselskolan && <p className="text-sm print:text-xs">☑ Skötselskolan</p>}
-              {fd.trainingSYN && <p className="text-sm print:text-xs">☑ SYN (Säkerhets- och yrkesutbildning)</p>}
-              {fd.trainingOtherText && <p className="text-sm print:text-xs">Other / Annat: {fd.trainingOtherText}</p>}
-            </div>
-          </>
+        {/* ── §9 TRAINING ── */}
+        <h2 className="section-title page-break-avoid">§9. Training / Utbildning</h2>
+        <div className="checklist">
+          <p className="check-item">{fd.trainingSkotselskolan ? "☑" : "☐"} Skötselskolan</p>
+          <p className="check-item">{fd.trainingSYN ? "☑" : "☐"} SYN (Säkerhets- och yrkesutbildning)</p>
+          {fd.trainingOtherEnabled && fd.trainingOtherText && (
+            <p className="check-item">☑ Other / Annat: {fd.trainingOtherText}</p>
+          )}
+          {!fd.trainingSkotselskolan && !fd.trainingSYN && !fd.trainingOtherText && (
+            <p className="info-text-muted">No mandatory training programs selected. / Inga obligatoriska utbildningsprogram valda.</p>
+          )}
+        </div>
+
+        {/* ── §10 SOCIAL SECURITY ── */}
+        <h2 className="section-title page-break-avoid">§10. Social Security / Social Trygghet</h2>
+        <div className="info-block">
+          <p>Social security contributions and insurance are provided in accordance with Swedish law and applicable collective agreements. The employer shall ensure that the employee is covered by:</p>
+          <ul className="info-list">
+            <li>Occupational pension (Tjänstepension) as per Skogsavtalet</li>
+            <li>Occupational group life insurance (TGL)</li>
+            <li>Occupational injury insurance (TFA)</li>
+            <li>Severance pay insurance (AGS)</li>
+          </ul>
+          <p className="info-sv">Sociala avgifter och försäkringar tillhandahålls i enlighet med svensk lag och tillämpliga kollektivavtal. Arbetsgivaren ska säkerställa att arbetstagaren omfattas av:</p>
+          <ul className="info-list info-sv">
+            <li>Tjänstepension enligt Skogsavtalet</li>
+            <li>Tjänstegrupplivförsäkring (TGL)</li>
+            <li>Trygghetsförsäkring vid arbetsskada (TFA)</li>
+            <li>Avtalsgruppsjukförsäkring (AGS)</li>
+          </ul>
+        </div>
+
+        {/* ── §11 MISCELLANEOUS ── */}
+        <h2 className="section-title page-break-avoid">§11. Miscellaneous / Övrigt</h2>
+        {fd.miscellaneousText ? (
+          <div className="info-block">
+            <p className="whitespace-pre-wrap">{fd.miscellaneousText}</p>
+          </div>
+        ) : (
+          <div className="info-block">
+            <p className="info-text-muted">No additional terms specified. / Inga ytterligare villkor angivna.</p>
+          </div>
         )}
 
-        {/* Section 10: Social Security */}
-        <SectionTitle number="10" titleEn="Social Security" titleSv="Social trygghet" />
-        <p className="text-sm print:text-xs text-muted-foreground print:text-gray-600">
-          Social security contributions and insurance are provided in accordance with Swedish law and applicable collective agreements. /
-          Sociala avgifter och försäkringar tillhandahålls i enlighet med svensk lag och tillämpliga kollektivavtal.
-        </p>
+        {/* ── §12 NOTES / LEGAL CLAUSES ── */}
+        <h2 className="section-title page-break-avoid">§12. Notes / Anmärkningar</h2>
+        <div className="info-block legal-notes">
+          <p><strong>1.</strong> This contract is governed by Swedish law and the collective agreement for the forestry sector (Skogsavtalet). / <span className="info-sv-inline">Detta avtal regleras av svensk lag och kollektivavtalet för skogssektorn (Skogsavtalet).</span></p>
+          <p><strong>2.</strong> The employee is required to comply with workplace health and safety regulations (AFS). / <span className="info-sv-inline">Arbetstagaren är skyldig att följa arbetsmiljöföreskrifter (AFS).</span></p>
+          <p><strong>3.</strong> Any changes to this agreement must be confirmed in writing by both parties. / <span className="info-sv-inline">Ändringar i detta avtal ska bekräftas skriftligen av båda parter.</span></p>
+          <p><strong>4.</strong> Dispute resolution deadlines are governed by LAS §§ 40-42. / <span className="info-sv-inline">Frister för underrättelse och väckande av talan vid tvist om avslut av anställning finns i §§ LAS 40-42.</span></p>
+          <p><strong>5.</strong> Rules for notice, information and the obligation to negotiate are set out in MBL §§ 11-14. / <span className="info-sv-inline">Regler för varsel, information och förhandlingsskyldighet finns i §§ MBL 11-14.</span></p>
+        </div>
 
-        {/* Section 11: Miscellaneous */}
-        {fd.miscellaneousText && (
-          <>
-            <SectionTitle number="11" titleEn="Miscellaneous" titleSv="Övrigt" />
-            <p className="text-sm print:text-xs whitespace-pre-wrap">{fd.miscellaneousText}</p>
-          </>
-        )}
-
-        {/* Section 13: Deductions */}
+        {/* ── §13 DEDUCTIONS (conditional) ── */}
         {fd.salaryDeductions && fd.salaryDeductions.length > 0 && (
           <>
-            <SectionTitle number="13" titleEn="Net Salary Deductions" titleSv="Nettolöneavdrag" />
-            <div className="space-y-2">
-              {fd.salaryDeductions.map((d: any, i: number) => (
-                <div key={i} className="flex justify-between border-b border-border/50 pb-1 print:border-gray-200">
-                  <span className="text-sm print:text-xs">{d.label || d.type}{d.note ? ` — ${d.note}` : ""}</span>
-                  <span className="text-sm font-medium print:text-xs">
-                    {d.amount ? `${d.amount} SEK` : "—"} / {d.frequency}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <h2 className="section-title page-break-avoid">§13. Net Salary Deductions / Nettolöneavdrag</h2>
+            <table className="deduction-table">
+              <thead>
+                <tr>
+                  <th>Type / Typ</th>
+                  <th>Amount / Belopp</th>
+                  <th>Frequency / Frekvens</th>
+                  <th>Note / Anteckning</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fd.salaryDeductions.map((d: any, i: number) => (
+                  <tr key={i}>
+                    <td>{d.label || d.type}</td>
+                    <td>{d.amount ? `${d.amount} SEK` : "—"}</td>
+                    <td>{d.frequency || "—"}</td>
+                    <td>{d.note || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </>
         )}
 
-        {/* Signing section */}
-        <div className="mt-10 print:mt-8 pt-6 border-t-2 border-foreground/20 print:border-gray-400">
-          <h3 className="text-sm font-bold uppercase tracking-wide mb-6 print:text-xs print:mb-4">
-            Signatures / Underskrifter
-          </h3>
-          <div className="grid grid-cols-2 gap-12 print:gap-8">
-            {/* Employer */}
-            <div className="space-y-6 print:space-y-4">
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-8 print:h-6 print:border-gray-400" />
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Place and date / Plats och datum</p>
+        {/* ── SIGNATURES ── */}
+        <div className="signatures-section page-break-avoid">
+          <h2 className="section-title sig-title">Signatures / Underskrifter</h2>
+          <p className="sig-intro">This contract has been drawn up in two identical copies, of which each party has received one. / <span className="info-sv-inline">Detta avtal har upprättats i två likalydande exemplar, varav parterna tagit var sitt.</span></p>
+          <div className="sig-grid">
+            <div className="sig-column">
+              <div className="sig-field">
+                <div className="sig-line" />
+                <span className="sig-label">Place and date / Plats och datum</span>
               </div>
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-8 print:h-6 print:border-gray-400">
-                  <span className="text-sm print:text-xs">{companyName}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Company / Företag</p>
+              <div className="sig-field">
+                <div className="sig-line"><span className="sig-prefill">{companyName}</span></div>
+                <span className="sig-label">Company / Företag</span>
               </div>
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-10 print:h-8 flex items-end print:border-gray-400">
-                  {employerSignatureUrl && (
-                    <img src={employerSignatureUrl} alt="Employer signature" className="h-8 print:h-6 object-contain" />
-                  )}
+              <div className="sig-field">
+                <div className="sig-line sig-line-tall">
+                  {employerSignatureUrl && <img src={employerSignatureUrl} alt="Employer signature" className="sig-img" />}
                 </div>
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Employer's signature / Arbetsgivarens underskrift</p>
-                {employerSignedAt && (
-                  <p className="text-[10px] text-muted-foreground print:text-gray-400">Signed: {formatDate(employerSignedAt)}</p>
-                )}
+                <span className="sig-label">Employer's signature / Arbetsgivarens underskrift</span>
+                {employerSignedAt && <span className="sig-date">Signed: {fmtDate(employerSignedAt)}</span>}
               </div>
             </div>
-            {/* Employee */}
-            <div className="space-y-6 print:space-y-4">
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-8 print:h-6 print:border-gray-400" />
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Place and date / Plats och datum</p>
+            <div className="sig-column">
+              <div className="sig-field">
+                <div className="sig-line" />
+                <span className="sig-label">Place and date / Plats och datum</span>
               </div>
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-8 print:h-6 print:border-gray-400">
-                  <span className="text-sm print:text-xs">{fd.firstName} {fd.lastName}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Employee / Arbetstagare</p>
+              <div className="sig-field">
+                <div className="sig-line"><span className="sig-prefill">{fd.firstName || ""} {fd.lastName || ""}</span></div>
+                <span className="sig-label">Employee / Arbetstagare</span>
               </div>
-              <div className="space-y-1">
-                <div className="border-b border-foreground/30 pb-1 h-10 print:h-8 flex items-end print:border-gray-400">
-                  {employeeSignatureUrl && (
-                    <img src={employeeSignatureUrl} alt="Employee signature" className="h-8 print:h-6 object-contain" />
-                  )}
+              <div className="sig-field">
+                <div className="sig-line sig-line-tall">
+                  {employeeSignatureUrl && <img src={employeeSignatureUrl} alt="Employee signature" className="sig-img" />}
                 </div>
-                <p className="text-[10px] text-muted-foreground print:text-gray-500">Employee's signature / Arbetstagarens underskrift</p>
-                {employeeSignedAt && (
-                  <p className="text-[10px] text-muted-foreground print:text-gray-400">Signed: {formatDate(employeeSignedAt)}</p>
-                )}
+                <span className="sig-label">Employee's signature / Arbetstagarens underskrift</span>
+                {employeeSignedAt && <span className="sig-date">Signed: {fmtDate(employeeSignedAt)}</span>}
               </div>
             </div>
           </div>

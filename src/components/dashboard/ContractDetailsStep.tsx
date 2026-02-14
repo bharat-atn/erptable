@@ -248,36 +248,83 @@ export function ContractDetailsStep({
     if (!printContent) return;
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Employment Contract / Anställningsavtal</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; background: #fff; padding: 15mm; font-size: 11px; line-height: 1.5; }
-          h1 { font-size: 16px; margin-bottom: 4px; }
-          h3 { font-size: 12px; border-bottom: 2px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 8px; }
-          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-          .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-          .field-label { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #666; }
-          .field-value { font-size: 11px; margin-top: 1px; }
-          .sig-line { border-bottom: 1px solid #999; height: 28px; margin-bottom: 2px; }
-          .sig-label { font-size: 9px; color: #666; }
-          .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; padding-top: 20px; border-top: 2px solid #999; }
-          .sig-block { display: flex; flex-direction: column; gap: 16px; }
-          .text-center { text-align: center; }
-          .mt-2 { margin-top: 8px; }
-          .deduction-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 3px 0; }
-          @media print { body { padding: 10mm; } }
-        </style>
-      </head>
-      <body>${printContent.innerHTML}</body>
-      </html>
-    `);
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>Employment Contract / Anställningsavtal</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm 20mm 15mm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Georgia', 'Times New Roman', serif; color: #1a1a1a; background: #fff; font-size: 10.5pt; line-height: 1.55; }
+
+  .contract-doc { max-width: 100%; }
+
+  /* Header */
+  .doc-header { text-align: center; padding-bottom: 14px; border-bottom: 3px double #333; margin-bottom: 18px; }
+  .doc-header h1 { font-size: 15pt; font-weight: 700; letter-spacing: 2.5px; margin-bottom: 3px; font-family: 'Arial', 'Helvetica', sans-serif; }
+  .doc-subtitle { font-size: 9pt; color: #555; letter-spacing: 0.5px; }
+
+  /* Section titles */
+  .section-title { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #333; padding-bottom: 3px; margin-top: 18px; margin-bottom: 10px; color: #1a1a1a; }
+  .sig-title { margin-top: 28px; }
+
+  /* Field grids */
+  .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-bottom: 4px; }
+  .field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px 20px; margin-bottom: 4px; }
+  .field { padding: 3px 0; border-bottom: 1px solid #e0e0e0; }
+  .field-label { display: block; font-family: 'Arial', 'Helvetica', sans-serif; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #666; margin-bottom: 1px; }
+  .field-value { display: block; font-size: 10pt; color: #111; min-height: 14px; }
+
+  .subsection-label { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 8pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #444; margin-top: 10px; margin-bottom: 5px; }
+
+  /* Info blocks */
+  .info-block { background: #f8f8f8; border-left: 3px solid #ccc; padding: 8px 12px; margin-bottom: 6px; font-size: 9.5pt; line-height: 1.5; }
+  .info-block p { margin-bottom: 5px; }
+  .info-sv { font-style: italic; color: #444; }
+  .info-sv-inline { font-style: italic; color: #444; }
+  .info-list { margin: 4px 0 6px 18px; font-size: 9pt; }
+  .info-list li { margin-bottom: 2px; }
+  .info-text-muted { color: #888; font-style: italic; font-size: 9pt; }
+  .legal-notes p { margin-bottom: 6px; font-size: 9.5pt; }
+
+  /* Checklists */
+  .checklist { margin-bottom: 6px; }
+  .check-item { font-size: 10pt; margin-bottom: 3px; }
+
+  /* Deduction table */
+  .deduction-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 9.5pt; }
+  .deduction-table th { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; text-align: left; padding: 5px 8px; border-bottom: 2px solid #999; }
+  .deduction-table td { padding: 5px 8px; border-bottom: 1px solid #ddd; }
+
+  /* Signatures */
+  .signatures-section { margin-top: 30px; }
+  .sig-intro { font-size: 9pt; color: #555; margin-bottom: 20px; font-style: italic; }
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .sig-column { display: flex; flex-direction: column; gap: 20px; }
+  .sig-field { display: flex; flex-direction: column; }
+  .sig-line { border-bottom: 1px solid #555; height: 28px; display: flex; align-items: flex-end; padding-bottom: 2px; }
+  .sig-line-tall { height: 40px; }
+  .sig-prefill { font-size: 10pt; }
+  .sig-label { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 7pt; color: #777; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .sig-date { font-size: 7pt; color: #999; margin-top: 1px; }
+  .sig-img { height: 32px; object-fit: contain; }
+
+  /* Page break control */
+  .page-break-avoid { page-break-inside: avoid; break-inside: avoid; }
+  .signatures-section { page-break-inside: avoid; break-inside: avoid; }
+  .field-grid-2, .field-grid-3 { page-break-inside: avoid; break-inside: avoid; }
+  .info-block { page-break-inside: avoid; break-inside: avoid; }
+  .deduction-table { page-break-inside: avoid; break-inside: avoid; }
+  h2.section-title { page-break-after: avoid; break-after: avoid; }
+
+  .whitespace-pre-wrap { white-space: pre-wrap; }
+</style>
+</head>
+<body>${printContent.innerHTML}</body>
+</html>`);
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 250);
+    setTimeout(() => { printWindow.print(); }, 300);
   };
 
   // Load signing status from contract
