@@ -51,7 +51,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12";
   onBack: () => void;
   onNext: () => void;
 }
@@ -2021,6 +2021,101 @@ export function ContractDetailsStep({
           </Button>
           <Button className="px-8" onClick={onNext}>
             Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 12: Notes (activeSection === "section-12") === */}
+        {activeSection === "section-12" && <>
+        <Collapsible open={true}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="12"
+              titleEn="Notes"
+              titleSv="Noter"
+              open={true}
+              onToggle={() => {}}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📋</span>
+                    Notes / Noter
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-4">
+                    <ol className="list-decimal list-outside space-y-3 pl-5 text-sm leading-relaxed">
+                      <li>
+                        The period of notice is set out in Section 4 of Skogsavtalet.
+                        <br /><span className="italic text-muted-foreground">Uppsägningstiden framgår av Skogsavtalet §4.</span>
+                      </li>
+                      <li>
+                        Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.
+                        <br /><span className="italic text-muted-foreground">Villkor för provanställningen samt dess avslutande framgår av Skogsavtalet §4.</span>
+                      </li>
+                      <li>
+                        The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.
+                        <br /><span className="italic text-muted-foreground">De förutsättningar som gäller för att anställningen ska upphöra framgår av Skogsavtalet §4.</span>
+                      </li>
+                      <li>
+                        If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.
+                        <br /><span className="italic text-muted-foreground">Om en arbetstagare varit anställd hos arbetsgivaren i allmän visstidsanställning i sammanlagt mer än två år under en femårsperiod övergår anställningen till en tillsvidareanställning.</span>
+                      </li>
+                      <li>
+                        This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.
+                        <br /><span className="italic text-muted-foreground">Denna anställning upphör även om och när den ordinarie befattningshavarens anställning upphör enligt Skogsavtalet §4. Om en arbetstagare har varit anställd hos arbetsgivaren som vikarie i sammanlagt mer än två år under en femårsperiod, övergår anställningen till en tillsvidareanställning.</span>
+                      </li>
+                      <li>
+                        The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).
+                        <br /><span className="italic text-muted-foreground">Begränsningsperioden får högst vara 16 veckor. Med stöd av lokal överenskommelse kan begränsningsperioden vara längre, dock längst 12 månader (årsarbetstid).</span>
+                      </li>
+                    </ol>
+
+                    <div className="border-t border-border pt-3 space-y-2">
+                      <p className="text-sm leading-relaxed">
+                        Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).
+                      </p>
+                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                        I övrigt gäller för avslutande av anställningsförhållandet vad som följer av §§ LAS 8-10, 19, 20, 30, 33, 33c och 34-37.
+                      </p>
+                    </div>
+
+                    <div className="border-t border-border pt-3 space-y-2">
+                      <p className="text-sm leading-relaxed">
+                        Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).
+                      </p>
+                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                        Frister för underrättelse och väckande av talan vid tvist om avslut av anställning finns i §§ LAS 40-42.
+                      </p>
+                    </div>
+
+                    <div className="border-t border-border pt-3 space-y-2">
+                      <p className="text-sm leading-relaxed">
+                        Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).
+                      </p>
+                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                        Regler för varsel, information och förhandlingsskyldighet finns i §§ MBL 11-14.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Complete / Slutför
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
