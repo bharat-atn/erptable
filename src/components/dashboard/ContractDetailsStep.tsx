@@ -236,18 +236,19 @@ export function ContractDetailsStep({
   const [salaryDeductions, setSalaryDeductions] = useState<SalaryDeduction[]>([]);
 
   // Scheduling state
+  const defaultSeasonYear = new Date().getFullYear();
   const [schedulingData, setSchedulingData] = useState<SchedulingData>({
-    seasonYear: new Date().getFullYear(),
-    contractStartDate: null,
-    contractEndDate: null,
+    seasonYear: defaultSeasonYear,
+    contractStartDate: `${defaultSeasonYear}-02-01`,
+    contractEndDate: `${defaultSeasonYear}-11-30`,
     weeklyHours: 40,
     startTime: "06:30",
     endTime: "17:00",
-    workStartDate: null,
-    workEndDate: null,
-    vacationEnabled: false,
-    vacationStartDate: null,
-    vacationEndDate: null,
+    workStartDate: `${defaultSeasonYear}-03-01`,
+    workEndDate: `${defaultSeasonYear}-10-31`,
+    vacationEnabled: true,
+    vacationStartDate: `${defaultSeasonYear}-07-01`,
+    vacationEndDate: `${defaultSeasonYear}-07-31`,
     attachToContract: false,
   });
 

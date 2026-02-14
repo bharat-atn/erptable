@@ -253,7 +253,15 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext }: Schedu
               {SEASON_YEARS.map(y => (
                 <button
                   key={y}
-                  onClick={() => update({ seasonYear: y })}
+                  onClick={() => update({
+                    seasonYear: y,
+                    contractStartDate: `${y}-02-01`,
+                    contractEndDate: `${y}-11-30`,
+                    workStartDate: `${y}-03-01`,
+                    workEndDate: `${y}-10-31`,
+                    vacationStartDate: `${y}-07-01`,
+                    vacationEndDate: `${y}-07-31`,
+                  })}
                   className={cn(
                     "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                     data.seasonYear === y ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"
