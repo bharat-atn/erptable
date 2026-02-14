@@ -1936,37 +1936,27 @@ export function ContractDetailsStep({
                     Social Security / Socialförsäkring
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-3">
+                <CardContent>
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-4">
                     <p className="text-sm leading-relaxed">
                       The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).
+                    </p>
+                    <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980).
                     </p>
                     <p className="text-sm leading-relaxed">
                       Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:
                     </p>
-                    <ul className="text-sm leading-relaxed list-disc list-inside space-y-1 pl-2">
-                      <li>Contractual pension SAF-LO</li>
-                      <li>Contractual group health insurance (AGS)</li>
-                      <li>Parental benefit supplement (FPT)</li>
-                      <li>Employment transition fund (TSL)</li>
-                      <li>Occupational injury insurance (TFA)</li>
-                      <li>Occupational group life insurance</li>
-                    </ul>
-                  </div>
-                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-3">
-                    <p className="text-sm leading-relaxed italic text-muted-foreground">
-                      Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980).
-                    </p>
                     <p className="text-sm leading-relaxed italic text-muted-foreground">
                       Anställda arbetstagare har rätt till sjuklön enligt sjuklönelagen (1991:1047) och följande kollektivavtalsbaserade förmåner:
                     </p>
-                    <ul className="text-sm leading-relaxed italic text-muted-foreground list-disc list-inside space-y-1 pl-2">
-                      <li>Avtalspension SAF-LO</li>
-                      <li>Avtalsgruppsjukförsäkring (AGS)</li>
-                      <li>Föräldrapenningtillägg (FPT)</li>
-                      <li>Omställningsförsäkring (TSL)</li>
-                      <li>Trygghetsförsäkring vid arbetsskada (TFA)</li>
-                      <li>Tjänstegrupplivförsäkring</li>
+                    <ul className="text-sm leading-relaxed list-disc list-inside space-y-1.5 pl-2">
+                      <li>Contractual pension SAF-LO / <span className="italic text-muted-foreground">Avtalspension SAF-LO</span></li>
+                      <li>Contractual group health insurance (AGS) / <span className="italic text-muted-foreground">Avtalsgruppsjukförsäkring (AGS)</span></li>
+                      <li>Parental benefit supplement (FPT) / <span className="italic text-muted-foreground">Föräldrapenningtillägg (FPT)</span></li>
+                      <li>Employment transition fund (TSL) / <span className="italic text-muted-foreground">Omställningsförsäkring (TSL)</span></li>
+                      <li>Occupational injury insurance (TFA) / <span className="italic text-muted-foreground">Trygghetsförsäkring vid arbetsskada (TFA)</span></li>
+                      <li>Occupational group life insurance / <span className="italic text-muted-foreground">Tjänstegrupplivförsäkring</span></li>
                     </ul>
                   </div>
                 </CardContent>
