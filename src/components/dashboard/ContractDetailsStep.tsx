@@ -1722,7 +1722,7 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">🌴</span>
-                    Holiday Entitlement
+                    Holiday Entitlement / Semesterrätt
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
