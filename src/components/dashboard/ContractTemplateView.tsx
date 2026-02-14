@@ -109,7 +109,7 @@ const steps = [{
 }, {
   id: 16,
   label: "Signing",
-  labelSv: "Section 14",
+  labelSv: "Underskrift",
   icon: Briefcase
 }];
 interface ContractTemplateViewProps {
