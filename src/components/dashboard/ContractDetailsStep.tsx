@@ -155,10 +155,10 @@ export function ContractDetailsStep({
   const [emergencyMobile, setEmergencyMobile] = useState(pi.emergency_mobile ?? "");
 
   // Section 3 state
-  const [mainDuties, setMainDuties] = useState("");
+  const [mainDuties, setMainDuties] = useState("Forest Worker / Skogsarbetare");
   const [jobType, setJobType] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
-  const [postingLocation, setPostingLocation] = useState("");
+  const [postingLocation, setPostingLocation] = useState(company.city ?? "");
   const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">(""); 
   const [mainWorkplace, setMainWorkplace] = useState("");
   const [stationing, setStationing] = useState(company.city ?? "");
