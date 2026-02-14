@@ -194,6 +194,70 @@ export function ContractDetailsStep({
   const [rateApplied, setRateApplied] = useState(false);
   const [section8Open, setSection8Open] = useState(true);
 
+  // Load saved form_data from the contract on mount
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  useEffect(() => {
+    if (initialLoaded || !contractId) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("contracts")
+        .select("form_data")
+        .eq("id", contractId)
+        .single();
+      if (!data?.form_data) { setInitialLoaded(true); return; }
+      const fd = data.form_data as Record<string, any>;
+      if (fd.firstName) setFirstName(fd.firstName);
+      if (fd.middleName) setMiddleName(fd.middleName);
+      if (fd.lastName) setLastName(fd.lastName);
+      if (fd.preferredName) setPreferredName(fd.preferredName);
+      if (fd.address) setAddress(fd.address);
+      if (fd.address2) setAddress2(fd.address2);
+      if (fd.zipCode) setZipCode(fd.zipCode);
+      if (fd.city) setCity(fd.city);
+      if (fd.stateProvince) setStateProvince(fd.stateProvince);
+      if (fd.country) setCountry(fd.country);
+      if (fd.birthday) setBirthday(new Date(fd.birthday));
+      if (fd.countryOfBirth) setCountryOfBirth(fd.countryOfBirth);
+      if (fd.citizenship) setCitizenship(fd.citizenship);
+      if (fd.mobile) setMobile(fd.mobile);
+      if (fd.email) setEmail(fd.email);
+      if (fd.emergencyFirstName) setEmergencyFirstName(fd.emergencyFirstName);
+      if (fd.emergencyLastName) setEmergencyLastName(fd.emergencyLastName);
+      if (fd.emergencyMobile) setEmergencyMobile(fd.emergencyMobile);
+      if (fd.mainDuties) setMainDuties(fd.mainDuties);
+      if (fd.jobType) setJobType(fd.jobType);
+      if (fd.experienceLevel) setExperienceLevel(fd.experienceLevel);
+      if (fd.postingLocation) setPostingLocation(fd.postingLocation);
+      if (fd.workplaceVaries) setWorkplaceVaries(fd.workplaceVaries);
+      if (fd.mainWorkplace) setMainWorkplace(fd.mainWorkplace);
+      if (fd.stationing) setStationing(fd.stationing);
+      if (fd.employmentForm) setEmploymentForm(fd.employmentForm);
+      if (fd.permanentFromDate) setPermanentFromDate(new Date(fd.permanentFromDate));
+      if (fd.probationFromDate) setProbationFromDate(new Date(fd.probationFromDate));
+      if (fd.probationUntilDate) setProbationUntilDate(new Date(fd.probationUntilDate));
+      if (fd.fixedTermFromDate) setFixedTermFromDate(new Date(fd.fixedTermFromDate));
+      if (fd.fixedTermUntilDate) setFixedTermUntilDate(new Date(fd.fixedTermUntilDate));
+      if (fd.tempReplacementFromDate) setTempReplacementFromDate(new Date(fd.tempReplacementFromDate));
+      if (fd.tempReplacementPosition) setTempReplacementPosition(fd.tempReplacementPosition);
+      if (fd.tempReplacementNoLaterThan) setTempReplacementNoLaterThan(new Date(fd.tempReplacementNoLaterThan));
+      if (fd.seasonalFromDate) setSeasonalFromDate(new Date(fd.seasonalFromDate));
+      if (fd.seasonalEndAround) setSeasonalEndAround(new Date(fd.seasonalEndAround));
+      if (fd.age69FromDate) setAge69FromDate(new Date(fd.age69FromDate));
+      if (fd.age69UntilDate) setAge69UntilDate(new Date(fd.age69UntilDate));
+      if (fd.workingTime) setWorkingTime(fd.workingTime);
+      if (fd.partTimePercent) setPartTimePercent(fd.partTimePercent);
+      if (fd.annualLeaveDays) setAnnualLeaveDays(fd.annualLeaveDays);
+      if (fd.salaryType) setSalaryType(fd.salaryType);
+      if (fd.hourlyBasic) setHourlyBasic(fd.hourlyBasic);
+      if (fd.hourlyPremium) setHourlyPremium(fd.hourlyPremium);
+      if (fd.monthlyBasic) setMonthlyBasic(fd.monthlyBasic);
+      if (fd.monthlyPremium) setMonthlyPremium(fd.monthlyPremium);
+      if (fd.rateApplied) setRateApplied(fd.rateApplied);
+      setInitialLoaded(true);
+    };
+    load();
+  }, [contractId, initialLoaded]);
+
   // Fetch agreement periods for salary lookup
   const { data: agreementData } = useQuery({
     queryKey: ["agreement-lookup"],
