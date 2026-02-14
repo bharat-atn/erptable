@@ -51,7 +51,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11";
   onBack: () => void;
   onNext: () => void;
 }
@@ -204,6 +204,13 @@ export function ContractDetailsStep({
   const [trainingOtherEnabled, setTrainingOtherEnabled] = useState(false);
   const [trainingOtherText, setTrainingOtherText] = useState("");
 
+  // Section 10: Social Security (read-only)
+  const [section10Open, setSection10Open] = useState(true);
+
+  // Section 11: Miscellaneous
+  const [section11Open, setSection11Open] = useState(true);
+  const [miscellaneousText, setMiscellaneousText] = useState("");
+
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
   useEffect(() => {
@@ -270,6 +277,7 @@ export function ContractDetailsStep({
       if (fd.trainingSYN !== undefined) setTrainingSYN(fd.trainingSYN);
       if (fd.trainingOtherEnabled !== undefined) setTrainingOtherEnabled(fd.trainingOtherEnabled);
       if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
+      if (fd.miscellaneousText) setMiscellaneousText(fd.miscellaneousText);
       setInitialLoaded(true);
     };
     load();
@@ -343,6 +351,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
+    miscellaneousText,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -356,6 +365,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
+    miscellaneousText,
   ]);
 
   // Auto-save every 1 second after changes
@@ -1887,6 +1897,127 @@ export function ContractDetailsStep({
                       placeholder="Describe additional training... / Beskriv ytterligare utbildning..."
                     />
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 10: Social Security (activeSection === "section-10") === */}
+        {activeSection === "section-10" && <>
+        <Collapsible open={section10Open} onOpenChange={setSection10Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="10"
+              titleEn="Social Security"
+              titleSv="Socialförsäkring"
+              open={section10Open}
+              onToggle={() => setSection10Open(!section10Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">🛡️</span>
+                    Social Security / Socialförsäkring
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-3">
+                    <p className="text-sm leading-relaxed">
+                      The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).
+                    </p>
+                    <p className="text-sm leading-relaxed">
+                      Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:
+                    </p>
+                    <ul className="text-sm leading-relaxed list-disc list-inside space-y-1 pl-2">
+                      <li>Contractual pension SAF-LO</li>
+                      <li>Contractual group health insurance (AGS)</li>
+                      <li>Parental benefit supplement (FPT)</li>
+                      <li>Employment transition fund (TSL)</li>
+                      <li>Occupational injury insurance (TFA)</li>
+                      <li>Occupational group life insurance</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-3">
+                    <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980).
+                    </p>
+                    <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      Anställda arbetstagare har rätt till sjuklön enligt sjuklönelagen (1991:1047) och följande kollektivavtalsbaserade förmåner:
+                    </p>
+                    <ul className="text-sm leading-relaxed italic text-muted-foreground list-disc list-inside space-y-1 pl-2">
+                      <li>Avtalspension SAF-LO</li>
+                      <li>Avtalsgruppsjukförsäkring (AGS)</li>
+                      <li>Föräldrapenningtillägg (FPT)</li>
+                      <li>Omställningsförsäkring (TSL)</li>
+                      <li>Trygghetsförsäkring vid arbetsskada (TFA)</li>
+                      <li>Tjänstegrupplivförsäkring</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 11: Miscellaneous (activeSection === "section-11") === */}
+        {activeSection === "section-11" && <>
+        <Collapsible open={section11Open} onOpenChange={setSection11Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="11"
+              titleEn="Miscellaneous"
+              titleSv="Övrigt"
+              open={section11Open}
+              onToggle={() => setSection11Open(!section11Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📝</span>
+                    Miscellaneous / Övrigt
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement. / Ange övriga villkor för anställningen, t.ex. lön och förmåner utöver tillämpligt kollektivavtal.
+                  </p>
+                  <textarea
+                    value={miscellaneousText}
+                    onChange={(e) => setMiscellaneousText(e.target.value)}
+                    className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Enter additional terms and conditions... / Ange ytterligare villkor..."
+                  />
                 </CardContent>
               </Card>
             </div>
