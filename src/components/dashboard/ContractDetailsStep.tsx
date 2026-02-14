@@ -161,7 +161,7 @@ export function ContractDetailsStep({
   const [postingLocation, setPostingLocation] = useState(company.city ?? "");
   const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">(""); 
   const [mainWorkplace, setMainWorkplace] = useState("");
-  const [stationing, setStationing] = useState(company.city ?? "");
+  const [stationing, setStationing] = useState<"main" | "alternative" | "exception">("exception");
 
   // Section 5 state
   const [employmentForm, setEmploymentForm] = useState<string>("permanent");
@@ -328,7 +328,7 @@ export function ContractDetailsStep({
   if (!postingLocation) section3Missing.push("Posting Location");
   if (!workplaceVaries) section3Missing.push("Workplace Varies");
   if (workplaceVaries === "no" && !mainWorkplace) section3Missing.push("Main Workplace");
-  if (!stationing) section3Missing.push("Stationing");
+  
 
   const section5Missing: string[] = [];
   if (employmentForm === "permanent" && !permanentFromDate) section5Missing.push("Permanent Start Date");
@@ -896,10 +896,58 @@ export function ContractDetailsStep({
                 )}
               </div>
 
-              {/* Stationing */}
-              <div className="space-y-1.5">
-                {renderLabel("Stationing", "Stationeringsort")}
-                {renderField(stationing, setStationing)}
+              {/* Place of Employment / Stationeringsort */}
+              <div className="space-y-2">
+                {renderLabel("Place of Employment", "Stationeringsort")}
+                <div className="space-y-2">
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      stationing === "main" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40"
+                    )}
+                    onClick={() => setStationing("main")}
+                  >
+                    <div className={cn("mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center", stationing === "main" ? "border-primary bg-primary" : "border-muted-foreground/40")}>
+                      {stationing === "main" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-semibold underline">The main rule:</span>{" "}
+                      The place of employment is the place where the employee performs the main part of his work.
+                    </div>
+                  </label>
+
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      stationing === "alternative" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40"
+                    )}
+                    onClick={() => setStationing("alternative")}
+                  >
+                    <div className={cn("mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center", stationing === "alternative" ? "border-primary bg-primary" : "border-muted-foreground/40")}>
+                      {stationing === "alternative" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-semibold underline">The alternative rule:</span>{" "}
+                      If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks.
+                    </div>
+                  </label>
+
+                  <label
+                    className={cn(
+                      "flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors",
+                      stationing === "exception" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40"
+                    )}
+                    onClick={() => setStationing("exception")}
+                  >
+                    <div className={cn("mt-0.5 w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center", stationing === "exception" ? "border-primary bg-primary" : "border-muted-foreground/40")}>
+                      {stationing === "exception" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
+                    </div>
+                    <div className="text-sm">
+                      <span className="font-semibold underline">The exception rule:</span>{" "}
+                      If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment.
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
           </CollapsibleContent>
