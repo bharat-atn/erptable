@@ -164,7 +164,7 @@ export function ContractDetailsStep({
   const [stationing, setStationing] = useState<"main" | "alternative" | "exception">("exception");
 
   // Section 5 state
-  const [employmentForm, setEmploymentForm] = useState<string>("permanent");
+  const [employmentForm, setEmploymentForm] = useState<string>("seasonal");
   const [permanentFromDate, setPermanentFromDate] = useState<Date | undefined>(undefined);
   const [probationFromDate, setProbationFromDate] = useState<Date | undefined>(undefined);
   const [probationUntilDate, setProbationUntilDate] = useState<Date | undefined>(undefined);
