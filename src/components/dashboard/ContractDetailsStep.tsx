@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -578,24 +578,21 @@ export function ContractDetailsStep({
     />
   );
 
-  const SectionHeader = ({
-    number,
-    titleEn,
-    titleSv,
-    open,
-    onToggle,
-  }: {
-    number: string;
-    titleEn: string;
-    titleSv: string;
-    open: boolean;
-    onToggle: () => void;
-  }) => {
+  const SectionHeader = React.forwardRef<
+    HTMLDivElement,
+    {
+      number: string;
+      titleEn: string;
+      titleSv: string;
+      open: boolean;
+      onToggle: () => void;
+    }
+  >(({ number, titleEn, titleSv, open, onToggle, ...props }, ref) => {
     const missing = sectionWarnings[number] || [];
     const hasWarning = missing.length > 0;
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-1" ref={ref} {...props}>
         <button
           onClick={onToggle}
           className={cn(
@@ -625,7 +622,7 @@ export function ContractDetailsStep({
         )}
       </div>
     );
-  };
+  });
 
   // Birthday date range: 16-80 years old
   const today = new Date();
