@@ -975,8 +975,8 @@ export function ContractDetailsStep({
                       {stationing === "main" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The main rule:</span>{" "}
-                      The place of employment is the place where the employee performs the main part of his work.
+                      <span className="font-semibold underline">The main rule / Huvudregeln:</span>{" "}
+                      The place of employment is the place where the employee performs the main part of his work. / Stationeringsorten är den plats där arbetstagaren utför huvuddelen av sitt arbete.
                     </div>
                   </label>
 
@@ -991,8 +991,8 @@ export function ContractDetailsStep({
                       {stationing === "alternative" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The alternative rule:</span>{" "}
-                      If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks.
+                      <span className="font-semibold underline">The alternative rule / Alternativregeln:</span>{" "}
+                      If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks. / Om arbetet utförs under förflyttning eller på arbetsplatser som ständigt växlar, är stationeringsorten i stället den plats där arbetstagaren hämtar och lämnar arbetsmaterial eller förbereder och avslutar sina arbetsuppgifter.
                     </div>
                   </label>
 
@@ -1007,8 +1007,8 @@ export function ContractDetailsStep({
                       {stationing === "exception" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The exception rule:</span>{" "}
-                      If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment.
+                      <span className="font-semibold underline">The exception rule / Undantagsregeln:</span>{" "}
+                      If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment. / Om arbetet pågår under begränsad tid på varje plats, vilket gäller för vissa arbeten inom byggnads- och anläggningsbranschen och liknande branscher, är bostaden stationeringsort.
                     </div>
                   </label>
                 </div>
