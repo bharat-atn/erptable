@@ -24,6 +24,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { SignatureCanvas } from "./SignatureCanvas";
 
 interface Company {
   id: string;
@@ -51,7 +52,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13" | "section-14";
   onBack: () => void;
   onNext: () => void;
 }
@@ -230,6 +231,89 @@ export function ContractDetailsStep({
     { value: "other", label: "Other Deduction", labelSv: "Annat avdrag" },
   ];
   const [salaryDeductions, setSalaryDeductions] = useState<SalaryDeduction[]>([]);
+
+  // Section 14: Signing
+  const [signingStatus, setSigningStatus] = useState("not_sent");
+  const [signingLink, setSigningLink] = useState("");
+  const [employeeSignatureUrl, setEmployeeSignatureUrl] = useState("");
+  const [employerSignatureUrl, setEmployerSignatureUrl] = useState("");
+  const [sendingForSigning, setSendingForSigning] = useState(false);
+  const [submittingEmployerSig, setSubmittingEmployerSig] = useState(false);
+
+  // Load signing status from contract
+  useEffect(() => {
+    if (!contractId) return;
+    const loadSigning = async () => {
+      const { data } = await supabase
+        .from("contracts")
+        .select("signing_status, signing_token, employee_signature_url, employer_signature_url")
+        .eq("id", contractId)
+        .single();
+      if (data) {
+        setSigningStatus(data.signing_status || "not_sent");
+        if (data.signing_token) {
+          setSigningLink(`${window.location.origin}/sign/${data.signing_token}`);
+        }
+        if (data.employee_signature_url) setEmployeeSignatureUrl(data.employee_signature_url);
+        if (data.employer_signature_url) setEmployerSignatureUrl(data.employer_signature_url);
+      }
+    };
+    loadSigning();
+  }, [contractId]);
+
+  const handleSendForSigning = async () => {
+    setSendingForSigning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-signing-email", {
+        body: { contractId, signingUrl: window.location.origin },
+      });
+      if (error) throw error;
+      if (data?.signingToken) {
+        const link = `${window.location.origin}/sign/${data.signingToken}`;
+        setSigningLink(link);
+        setSigningStatus("sent_to_employee");
+      }
+    } catch (err) {
+      console.error("Failed to send for signing:", err);
+    } finally {
+      setSendingForSigning(false);
+    }
+  };
+
+  const handleEmployerSign = async (dataUrl: string) => {
+    setSubmittingEmployerSig(true);
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const filePath = `employer/${contractId}.png`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("signatures")
+        .upload(filePath, blob, { upsert: true, contentType: "image/png" });
+      if (uploadErr) throw uploadErr;
+
+      const { data: urlData } = supabase.storage.from("signatures").getPublicUrl(filePath);
+
+      const { error: updateErr } = await supabase
+        .from("contracts")
+        .update({
+          employer_signature_url: urlData.publicUrl,
+          employer_signed_at: new Date().toISOString(),
+          signing_status: "employer_signed",
+          signed_at: new Date().toISOString(),
+          status: "signed",
+        })
+        .eq("id", contractId);
+      if (updateErr) throw updateErr;
+
+      setEmployerSignatureUrl(urlData.publicUrl);
+      setSigningStatus("employer_signed");
+    } catch (err) {
+      console.error("Failed to save employer signature:", err);
+    } finally {
+      setSubmittingEmployerSig(false);
+    }
+  };
 
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
@@ -2323,8 +2407,150 @@ export function ContractDetailsStep({
             Back / Tillbaka
           </Button>
           <Button className="px-8" onClick={onNext}>
-            Complete / Slutför
+            Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 14: Signing (activeSection === "section-14") === */}
+        {activeSection === "section-14" && <>
+        <Collapsible open={true}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="14"
+              titleEn="Signing"
+              titleSv="Underskrift"
+              open={true}
+              onToggle={() => {}}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">✍️</span>
+                    E-Signing / E-signering
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-sm text-muted-foreground">
+                    Send this contract for electronic signing. The employee signs first, then it is returned to the employer for final signature. / 
+                    Skicka detta avtal för elektronisk signering. Den anställde signerar först, sedan returneras det till arbetsgivaren för slutgiltig underskrift.
+                  </p>
+
+                  {/* Signing Layout Preview */}
+                  <div className="rounded-lg border border-border bg-muted/30 p-6">
+                    <div className="grid grid-cols-2 gap-8">
+                      {/* Employer Side */}
+                      <div className="space-y-6">
+                        <div className="space-y-1">
+                          <div className="border-b border-foreground/30 pb-1 h-8" />
+                          <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="border-b border-foreground/30 pb-1 h-8">
+                            <span className="text-sm">{company.name}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Company / Företag</p>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
+                            {signingStatus === "employer_signed" && employerSignatureUrl && (
+                              <img src={employerSignatureUrl} alt="Employer signature" className="h-7 object-contain" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Employer's signature / Arbetsgivarens underskrift</p>
+                        </div>
+                      </div>
+
+                      {/* Employee Side */}
+                      <div className="space-y-6">
+                        <div className="space-y-1">
+                          <div className="border-b border-foreground/30 pb-1 h-8" />
+                          <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
+                            {signingStatus !== "not_sent" && employeeSignatureUrl && (
+                              <img src={employeeSignatureUrl} alt="Employee signature" className="h-7 object-contain" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Employee's signature / Arbetstagarens underskrift</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status & Actions */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-3 h-3 rounded-full",
+                        signingStatus === "not_sent" ? "bg-muted-foreground/40" :
+                        signingStatus === "sent_to_employee" ? "bg-yellow-500 animate-pulse" :
+                        signingStatus === "employee_signed" ? "bg-blue-500" :
+                        "bg-green-500"
+                      )} />
+                      <span className="text-sm font-medium">
+                        {signingStatus === "not_sent" && "Not yet sent for signing / Ännu ej skickat för signering"}
+                        {signingStatus === "sent_to_employee" && "Awaiting employee signature / Väntar på anställds underskrift"}
+                        {signingStatus === "employee_signed" && "Employee signed – awaiting employer signature / Anställd har signerat – väntar på arbetsgivarens underskrift"}
+                        {signingStatus === "employer_signed" && "✅ Fully signed / Fullständigt signerat"}
+                      </span>
+                    </div>
+
+                    {signingStatus === "not_sent" && (
+                      <Button
+                        className="w-full"
+                        onClick={handleSendForSigning}
+                        disabled={sendingForSigning}
+                      >
+                        {sendingForSigning ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                        ) : (
+                          "Send for E-Signing / Skicka för e-signering"
+                        )}
+                      </Button>
+                    )}
+
+                    {signingStatus === "sent_to_employee" && signingLink && (
+                      <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
+                        <p className="text-xs font-medium">Signing link (share with employee) / Signeringslänk:</p>
+                        <div className="flex gap-2">
+                          <Input value={signingLink} readOnly className="h-8 text-xs" />
+                          <Button size="sm" variant="outline" onClick={() => {
+                            navigator.clipboard.writeText(signingLink);
+                          }}>
+                            Copy
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {signingStatus === "employee_signed" && (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">Employer Signature / Arbetsgivarens underskrift</p>
+                        <SignatureCanvas onSave={handleEmployerSign} disabled={submittingEmployerSig} />
+                        {submittingEmployerSig && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
           </Button>
         </div>
         </>}
