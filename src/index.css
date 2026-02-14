@@ -122,6 +122,15 @@
   font-size: 0.7rem;
   color: hsl(var(--muted-foreground));
 }
+.contract-doc .doc-legal-lang {
+  font-size: 0.65rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 6px;
+  font-style: italic;
+  letter-spacing: 0.3px;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 5px;
+}
 .contract-doc .section-title {
   font-family: Arial, Helvetica, sans-serif;
   font-size: 0.8rem;

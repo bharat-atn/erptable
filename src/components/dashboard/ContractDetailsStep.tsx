@@ -265,6 +265,7 @@ export function ContractDetailsStep({
   .doc-header { text-align: center; padding-bottom: 14px; border-bottom: 3px double #333; margin-bottom: 18px; }
   .doc-header h1 { font-size: 15pt; font-weight: 700; letter-spacing: 2.5px; margin-bottom: 3px; font-family: 'Arial', 'Helvetica', sans-serif; }
   .doc-subtitle { font-size: 9pt; color: #555; letter-spacing: 0.5px; }
+  .doc-legal-lang { font-size: 8pt; color: #666; margin-top: 6px; font-style: italic; letter-spacing: 0.3px; border-top: 1px solid #ccc; padding-top: 5px; }
 
   /* Section titles */
   .section-title { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 10.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 2px solid #333; padding-bottom: 3px; margin-top: 18px; margin-bottom: 10px; color: #1a1a1a; }
@@ -2450,6 +2451,7 @@ export function ContractDetailsStep({
                               id: crypto.randomUUID(),
                               type: dt.value,
                               label: dt.label,
+                              labelSv: dt.labelSv,
                               amount: "",
                               frequency: dt.value === "car" ? "per-km" : "monthly",
                               note: "",
