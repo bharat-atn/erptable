@@ -105,11 +105,11 @@ const JOB_TYPES = [
 ];
 
 const EXPERIENCE_LEVELS = [
-  "Entry Level (0 years / < 1 season)",
-  "Junior (1 year / 1 season)",
-  "Experienced (2 years / seasons)",
-  "Senior (3 years / seasons)",
-  "Expert (4+ years / seasons)",
+  "Entry Level / Nybörjare (0 years / < 1 season / 0 år / < 1 säsong)",
+  "Junior / Junior (1 year / 1 season / 1 år / 1 säsong)",
+  "Experienced / Erfaren (2 years / seasons / 2 år / säsonger)",
+  "Senior / Senior (3 years / seasons / 3 år / säsonger)",
+  "Expert / Expert (4+ years / seasons / 4+ år / säsonger)",
 ];
 
 export function ContractDetailsStep({
