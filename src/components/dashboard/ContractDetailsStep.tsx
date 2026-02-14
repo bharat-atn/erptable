@@ -18,7 +18,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -51,7 +51,7 @@ interface ContractDetailsStepProps {
   company: Company;
   employee: Employee;
   contractId: string;
-  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8";
+  activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9";
   onBack: () => void;
   onNext: () => void;
 }
@@ -191,8 +191,15 @@ export function ContractDetailsStep({
   const [hourlyPremium, setHourlyPremium] = useState("");
   const [monthlyBasic, setMonthlyBasic] = useState("");
   const [monthlyPremium, setMonthlyPremium] = useState("");
+  const [pieceWorkPay, setPieceWorkPay] = useState(false);
+  const [otherSalaryBenefits, setOtherSalaryBenefits] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"account" | "cash">("account");
   const [rateApplied, setRateApplied] = useState(false);
   const [section8Open, setSection8Open] = useState(true);
+
+  // Section 9: Training
+  const [section9Open, setSection9Open] = useState(true);
+  const [mandatoryTraining, setMandatoryTraining] = useState("");
 
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
@@ -253,6 +260,10 @@ export function ContractDetailsStep({
       if (fd.monthlyBasic) setMonthlyBasic(fd.monthlyBasic);
       if (fd.monthlyPremium) setMonthlyPremium(fd.monthlyPremium);
       if (fd.rateApplied) setRateApplied(fd.rateApplied);
+      if (fd.pieceWorkPay) setPieceWorkPay(fd.pieceWorkPay);
+      if (fd.otherSalaryBenefits) setOtherSalaryBenefits(fd.otherSalaryBenefits);
+      if (fd.paymentMethod) setPaymentMethod(fd.paymentMethod);
+      if (fd.mandatoryTraining) setMandatoryTraining(fd.mandatoryTraining);
       setInitialLoaded(true);
     };
     load();
@@ -324,6 +335,7 @@ export function ContractDetailsStep({
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
+    pieceWorkPay, otherSalaryBenefits, paymentMethod, mandatoryTraining,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -338,6 +350,7 @@ export function ContractDetailsStep({
     age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
+    pieceWorkPay, otherSalaryBenefits, paymentMethod, mandatoryTraining,
   ]);
 
   // Auto-save every 1 second after changes
@@ -1568,7 +1581,49 @@ export function ContractDetailsStep({
                 </CardContent>
               </Card>
 
-              {/* Monthly Salary */}
+              {/* Hourly Pay — PRIMARY */}
+              <div
+                className={cn(
+                  "rounded-xl border-2 p-4 cursor-pointer transition-colors",
+                  salaryType === "hourly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setSalaryType("hourly")}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "hourly" ? "border-primary" : "border-muted-foreground/40")}>
+                    {salaryType === "hourly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  </div>
+                  <span className="text-sm font-bold uppercase tracking-wider">Hourly Pay / Timlön **</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 ml-8">
+                  <div className="space-y-1.5">
+                    {renderLabel("Basic pay / Grundlön (SEK/hr)", "", true)}
+                    <Input
+                      type="number"
+                      value={hourlyBasic}
+                      onChange={(e) => { setHourlyBasic(e.target.value); }}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "hourly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    {renderLabel("Premium pay / Premielön (SEK/hr)", "", false)}
+                    <Input
+                      type="number"
+                      value={hourlyPremium}
+                      onChange={(e) => setHourlyPremium(e.target.value)}
+                      className="h-11 text-sm font-medium"
+                      placeholder="0"
+                      disabled={salaryType !== "hourly"}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Monthly Salary — Optional */}
               <div
                 className={cn(
                   "rounded-xl border p-4 cursor-pointer transition-colors",
@@ -1580,11 +1635,11 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "monthly" ? "border-primary" : "border-muted-foreground/40")}>
                     {salaryType === "monthly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-bold uppercase tracking-wider">Monthly Salary / Månadslön</span>
+                  <span className="text-sm font-bold uppercase tracking-wider">Monthly Salary / Månadslön **</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 ml-8">
                   <div className="space-y-1.5">
-                    {renderLabel("Basic / Grund (SEK)", "", true)}
+                    {renderLabel("Basic salary / Grundlön (SEK/mån)", "", true)}
                     <Input
                       type="number"
                       value={monthlyBasic}
@@ -1596,7 +1651,7 @@ export function ContractDetailsStep({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    {renderLabel("Premium / Premie (SEK)", "", false)}
+                    {renderLabel("Premium salary / Premielön (SEK/mån)", "", false)}
                     <Input
                       type="number"
                       value={monthlyPremium}
@@ -1610,47 +1665,94 @@ export function ContractDetailsStep({
                 </div>
               </div>
 
-              {/* Hourly Pay */}
+              {/* Piece-work pay */}
               <div
                 className={cn(
                   "rounded-xl border p-4 cursor-pointer transition-colors",
-                  salaryType === "hourly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                  pieceWorkPay ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setSalaryType("hourly")}
+                onClick={() => setPieceWorkPay(!pieceWorkPay)}
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "hourly" ? "border-primary" : "border-muted-foreground/40")}>
-                    {salaryType === "hourly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
+                    pieceWorkPay ? "border-primary bg-primary" : "border-muted-foreground/40"
+                  )}>
+                    {pieceWorkPay && <Check className="w-3 h-3 text-primary-foreground" />}
                   </div>
-                  <span className="text-sm font-bold uppercase tracking-wider">Hourly Pay / Timlön</span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 ml-8">
-                  <div className="space-y-1.5">
-                    {renderLabel("Basic / Grund (SEK)", "", true)}
-                    <Input
-                      type="number"
-                      value={hourlyBasic}
-                      onChange={(e) => { setHourlyBasic(e.target.value); }}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "hourly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    {renderLabel("Premium / Premie (SEK)", "", false)}
-                    <Input
-                      type="number"
-                      value={hourlyPremium}
-                      onChange={(e) => setHourlyPremium(e.target.value)}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "hourly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
+                  <span className={cn("text-sm font-semibold", !pieceWorkPay && "text-muted-foreground")}>
+                    Piece-work pay / Ackordslön * <span className="font-normal text-xs">(specified in "Other" below / specificeras under "Övrigt")</span>
+                  </span>
                 </div>
               </div>
+
+              {/* Other salary benefits */}
+              <div
+                className={cn(
+                  "rounded-xl border p-4 cursor-pointer transition-colors",
+                  otherSalaryBenefits ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
+                )}
+                onClick={() => setOtherSalaryBenefits(!otherSalaryBenefits)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
+                    otherSalaryBenefits ? "border-primary bg-primary" : "border-muted-foreground/40"
+                  )}>
+                    {otherSalaryBenefits && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <span className={cn("text-sm font-semibold", !otherSalaryBenefits && "text-muted-foreground")}>
+                    Other salary benefits by separate agreement / Andra löneförmåner enligt separat avtal
+                  </span>
+                </div>
+              </div>
+
+              {/* Reference notes */}
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-xs text-muted-foreground">
+                <p>** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.</p>
+                <p>* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.</p>
+                <p>Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.</p>
+              </div>
+
+              {/* Payment method */}
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">
+                    Payment Method / Utbetalningssätt
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-4">
+                    <div
+                      className={cn(
+                        "flex-1 rounded-lg border p-3 cursor-pointer transition-colors flex items-center gap-3",
+                        paymentMethod === "account" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                      )}
+                      onClick={() => setPaymentMethod("account")}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", paymentMethod === "account" ? "border-primary" : "border-muted-foreground/40")}>
+                        {paymentMethod === "account" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className="text-sm font-medium">Into the specified account / Till angivet konto</span>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex-1 rounded-lg border p-3 cursor-pointer transition-colors flex items-center gap-3",
+                        paymentMethod === "cash" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                      )}
+                      onClick={() => setPaymentMethod("cash")}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", paymentMethod === "cash" ? "border-primary" : "border-muted-foreground/40")}>
+                        {paymentMethod === "cash" && <div className="w-2 h-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className="text-sm font-medium">In cash / Kontant</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </CollapsibleContent>
         </Collapsible>
@@ -1665,6 +1767,55 @@ export function ContractDetailsStep({
             onClick={onNext}
             disabled={!rateApplied || (salaryType === "hourly" ? !hourlyBasic : !monthlyBasic)}
           >
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+        </>}
+
+        {/* === Section 9: Training (activeSection === "section-9") === */}
+        {activeSection === "section-9" && <>
+        <Collapsible open={section9Open} onOpenChange={setSection9Open}>
+          <CollapsibleTrigger asChild>
+            <SectionHeader
+              number="9"
+              titleEn="Training"
+              titleSv="Utbildning"
+              open={section9Open}
+              onToggle={() => setSection9Open(!section9Open)}
+            />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-4 pb-2 px-2 space-y-4">
+              <Card className="border border-border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📚</span>
+                    Mandatory Training / Obligatorisk utbildning
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Mandatory training (if appropriate) to which the employee is entitled: / Obligatorisk utbildning (om tillämpligt) som den anställde har rätt till:
+                  </p>
+                  <textarea
+                    value={mandatoryTraining}
+                    onChange={(e) => setMandatoryTraining(e.target.value)}
+                    className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Enter mandatory training details here... / Ange obligatoriska utbildningsdetaljer här..."
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-between pt-4">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={onNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
