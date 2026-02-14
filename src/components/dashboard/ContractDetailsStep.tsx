@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import {
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb } from "lucide-react";
@@ -578,21 +577,24 @@ export function ContractDetailsStep({
     />
   );
 
-  const SectionHeader = React.forwardRef<
-    HTMLDivElement,
-    {
-      number: string;
-      titleEn: string;
-      titleSv: string;
-      open: boolean;
-      onToggle: () => void;
-    }
-  >(({ number, titleEn, titleSv, open, onToggle, ...props }, ref) => {
+  const SectionHeader = ({
+    number,
+    titleEn,
+    titleSv,
+    open,
+    onToggle,
+  }: {
+    number: string;
+    titleEn: string;
+    titleSv: string;
+    open: boolean;
+    onToggle: () => void;
+  }) => {
     const missing = sectionWarnings[number] || [];
     const hasWarning = missing.length > 0;
 
     return (
-      <div className="space-y-1" ref={ref} {...props}>
+      <div className="space-y-1">
         <button
           onClick={onToggle}
           className={cn(
@@ -622,7 +624,7 @@ export function ContractDetailsStep({
         )}
       </div>
     );
-  });
+  };
 
   // Birthday date range: 16-80 years old
   const today = new Date();
@@ -734,15 +736,13 @@ export function ContractDetailsStep({
         {/* === Employee Details sections (activeSection === "employee") === */}
         {activeSection === "employee" && <>{/* Section 1: Employer Information */}
         <Collapsible open={section1Open} onOpenChange={setSection1Open}>
-          <CollapsibleTrigger asChild>
-            <SectionHeader
+          <SectionHeader
               number="1"
               titleEn="Employer Information"
               titleSv="Arbetsgivarinformation"
               open={section1Open}
               onToggle={() => setSection1Open(!section1Open)}
             />
-          </CollapsibleTrigger>
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="grid grid-cols-2 gap-4">
@@ -785,7 +785,7 @@ export function ContractDetailsStep({
 
         {/* Section 2.1: Name and Address Information */}
         <Collapsible open={section21Open} onOpenChange={setSection21Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="2.1"
               titleEn="Name and Address Information"
@@ -793,7 +793,7 @@ export function ContractDetailsStep({
               open={section21Open}
               onToggle={() => setSection21Open(!section21Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="grid grid-cols-2 gap-4">
@@ -863,7 +863,7 @@ export function ContractDetailsStep({
 
         {/* Section 2.2: Birth and Contact Information */}
         <Collapsible open={section22Open} onOpenChange={setSection22Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="2.2"
               titleEn="Birth and Contact Information"
@@ -871,7 +871,7 @@ export function ContractDetailsStep({
               open={section22Open}
               onToggle={() => setSection22Open(!section22Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="space-y-1.5">
@@ -948,7 +948,7 @@ export function ContractDetailsStep({
 
         {/* Section 2.3: Emergency Contact Information */}
         <Collapsible open={section23Open} onOpenChange={setSection23Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="2.3"
               titleEn="Emergency Contact Information"
@@ -956,7 +956,7 @@ export function ContractDetailsStep({
               open={section23Open}
               onToggle={() => setSection23Open(!section23Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               <div className="space-y-1.5">
@@ -991,7 +991,7 @@ export function ContractDetailsStep({
         {activeSection === "section-3" && <>
         {/* Section 3: Employment Details */}
         <Collapsible open={section3Open} onOpenChange={setSection3Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="3"
               titleEn="Employment Details"
@@ -999,7 +999,7 @@ export function ContractDetailsStep({
               open={section3Open}
               onToggle={() => setSection3Open(!section3Open)}
             />
-          </CollapsibleTrigger>
+          
            <CollapsibleContent>
             <div className="pt-4 pb-2 space-y-4 px-2">
               {/* Employed as / main duties */}
@@ -1177,7 +1177,7 @@ export function ContractDetailsStep({
         {activeSection === "section-4" && <>
         {/* Section 4: Collective Agreement */}
         <Collapsible open={section4Open} onOpenChange={setSection4Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="4"
               titleEn="Collective Agreement"
@@ -1185,7 +1185,7 @@ export function ContractDetailsStep({
               open={section4Open}
               onToggle={() => setSection4Open(!section4Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2">
               <div className="rounded-xl border border-border bg-muted/20 p-5">
@@ -1214,7 +1214,7 @@ export function ContractDetailsStep({
         {activeSection === "section-5" && <>
         {/* Section 5: Form of Employment */}
         <Collapsible open={section5Open} onOpenChange={setSection5Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="5"
               titleEn="Form of Employment"
@@ -1222,7 +1222,7 @@ export function ContractDetailsStep({
               open={section5Open}
               onToggle={() => setSection5Open(!section5Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-3">
               {/* 1. Permanent Employment */}
@@ -1490,7 +1490,7 @@ export function ContractDetailsStep({
         {activeSection === "section-6" && <>
         {/* Section 6: Working Time & Organisation */}
         <Collapsible open={section6Open} onOpenChange={setSection6Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="6"
               titleEn="Working Time & Organisation"
@@ -1498,7 +1498,7 @@ export function ContractDetailsStep({
               open={section6Open}
               onToggle={() => setSection6Open(!section6Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-3">
               {/* Full time */}
@@ -1592,7 +1592,7 @@ export function ContractDetailsStep({
         {activeSection === "section-7" && <>
         {/* Section 7: Holidays */}
         <Collapsible open={section7Open} onOpenChange={setSection7Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="7"
               titleEn="Holidays"
@@ -1600,7 +1600,7 @@ export function ContractDetailsStep({
               open={section7Open}
               onToggle={() => setSection7Open(!section7Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -1644,7 +1644,7 @@ export function ContractDetailsStep({
         {/* === Section 8: Salary (activeSection === "section-8") === */}
         {activeSection === "section-8" && <>
         <Collapsible open={section8Open} onOpenChange={setSection8Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="8"
               titleEn="Salary"
@@ -1652,7 +1652,7 @@ export function ContractDetailsStep({
               open={section8Open}
               onToggle={() => setSection8Open(!section8Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-5">
               {/* Official Rate Lookup */}
@@ -1894,7 +1894,7 @@ export function ContractDetailsStep({
         {/* === Section 9: Training (activeSection === "section-9") === */}
         {activeSection === "section-9" && <>
         <Collapsible open={section9Open} onOpenChange={setSection9Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="9"
               titleEn="Training"
@@ -1902,7 +1902,7 @@ export function ContractDetailsStep({
               open={section9Open}
               onToggle={() => setSection9Open(!section9Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -2021,7 +2021,7 @@ export function ContractDetailsStep({
         {/* === Section 10: Social Security (activeSection === "section-10") === */}
         {activeSection === "section-10" && <>
         <Collapsible open={section10Open} onOpenChange={setSection10Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="10"
               titleEn="Social Security"
@@ -2029,7 +2029,7 @@ export function ContractDetailsStep({
               open={section10Open}
               onToggle={() => setSection10Open(!section10Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -2083,7 +2083,7 @@ export function ContractDetailsStep({
         {/* === Section 11: Miscellaneous (activeSection === "section-11") === */}
         {activeSection === "section-11" && <>
         <Collapsible open={section11Open} onOpenChange={setSection11Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="11"
               titleEn="Miscellaneous"
@@ -2091,7 +2091,7 @@ export function ContractDetailsStep({
               open={section11Open}
               onToggle={() => setSection11Open(!section11Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -2132,7 +2132,7 @@ export function ContractDetailsStep({
         {/* === Section 12: Notes (activeSection === "section-12") === */}
         {activeSection === "section-12" && <>
         <Collapsible open={true}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="12"
               titleEn="Notes"
@@ -2140,7 +2140,7 @@ export function ContractDetailsStep({
               open={true}
               onToggle={() => {}}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -2227,7 +2227,7 @@ export function ContractDetailsStep({
         {/* === Section 13: Salary Deductions (activeSection === "section-13") === */}
         {activeSection === "section-13" && <>
         <Collapsible open={section13Open} onOpenChange={setSection13Open}>
-          <CollapsibleTrigger asChild>
+          
             <SectionHeader
               number="13"
               titleEn="Salary Deductions"
@@ -2235,7 +2235,7 @@ export function ContractDetailsStep({
               open={section13Open}
               onToggle={() => setSection13Open(!section13Open)}
             />
-          </CollapsibleTrigger>
+          
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-4">
               <Card className="border border-border shadow-sm">
@@ -2410,139 +2410,135 @@ export function ContractDetailsStep({
         </div>
         </>}
 
-        {/* === Section 14: Signing (activeSection === "section-14") === */}
+        {/* === Signing (activeSection === "section-14") === */}
         {activeSection === "section-14" && <>
-        <Collapsible open={true}>
-          <CollapsibleTrigger asChild>
-            <SectionHeader
-              number="14"
-              titleEn="Signing"
-              titleSv="Underskrift"
-              open={true}
-              onToggle={() => {}}
-            />
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="pt-4 pb-2 px-2 space-y-4">
-              <Card className="border border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">✍️</span>
-                    E-Signing / E-signering
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <p className="text-sm text-muted-foreground">
-                    Send this contract for electronic signing. The employee signs first, then it is returned to the employer for final signature. / 
-                    Skicka detta avtal för elektronisk signering. Den anställde signerar först, sedan returneras det till arbetsgivaren för slutgiltig underskrift.
-                  </p>
+        <div className="space-y-1 mb-4">
+          <div className={cn(
+            "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold",
+            "border-primary bg-primary/5 text-primary"
+          )}>
+            <span>Signing / Underskrift</span>
+          </div>
+        </div>
 
-                  {/* Signing Layout Preview */}
-                  <div className="rounded-lg border border-border bg-muted/30 p-6">
-                    <div className="grid grid-cols-2 gap-8">
-                      {/* Employer Side */}
-                      <div className="space-y-6">
-                        <div className="space-y-1">
-                          <div className="border-b border-foreground/30 pb-1 h-8" />
-                          <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="border-b border-foreground/30 pb-1 h-8">
-                            <span className="text-sm">{company.name}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">Company / Företag</p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
-                            {signingStatus === "employer_signed" && employerSignatureUrl && (
-                              <img src={employerSignatureUrl} alt="Employer signature" className="h-7 object-contain" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Employer's signature / Arbetsgivarens underskrift</p>
-                        </div>
-                      </div>
+        <div className="space-y-4">
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">✍️</span>
+                E-Signing / E-signering
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Send this contract for electronic signing. The employee signs first, then it is returned to the employer for final signature. / 
+                Skicka detta avtal för elektronisk signering. Den anställde signerar först, sedan returneras det till arbetsgivaren för slutgiltig underskrift.
+              </p>
 
-                      {/* Employee Side */}
-                      <div className="space-y-6">
-                        <div className="space-y-1">
-                          <div className="border-b border-foreground/30 pb-1 h-8" />
-                          <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
-                        </div>
-                        <div className="space-y-1">
-                          <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
-                            {signingStatus !== "not_sent" && employeeSignatureUrl && (
-                              <img src={employeeSignatureUrl} alt="Employee signature" className="h-7 object-contain" />
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">Employee's signature / Arbetstagarens underskrift</p>
-                        </div>
+              {/* Signing Layout Preview */}
+              <div className="rounded-lg border border-border bg-muted/30 p-6">
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Employer Side */}
+                  <div className="space-y-6">
+                    <div className="space-y-1">
+                      <div className="border-b border-foreground/30 pb-1 h-8" />
+                      <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="border-b border-foreground/30 pb-1 h-8">
+                        <span className="text-sm">{company.name}</span>
                       </div>
+                      <p className="text-xs text-muted-foreground">Company / Företag</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
+                        {signingStatus === "employer_signed" && employerSignatureUrl && (
+                          <img src={employerSignatureUrl} alt="Employer signature" className="h-7 object-contain" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Employer's signature / Arbetsgivarens underskrift</p>
                     </div>
                   </div>
 
-                  {/* Status & Actions */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-3 h-3 rounded-full",
-                        signingStatus === "not_sent" ? "bg-muted-foreground/40" :
-                        signingStatus === "sent_to_employee" ? "bg-yellow-500 animate-pulse" :
-                        signingStatus === "employee_signed" ? "bg-blue-500" :
-                        "bg-green-500"
-                      )} />
-                      <span className="text-sm font-medium">
-                        {signingStatus === "not_sent" && "Not yet sent for signing / Ännu ej skickat för signering"}
-                        {signingStatus === "sent_to_employee" && "Awaiting employee signature / Väntar på anställds underskrift"}
-                        {signingStatus === "employee_signed" && "Employee signed – awaiting employer signature / Anställd har signerat – väntar på arbetsgivarens underskrift"}
-                        {signingStatus === "employer_signed" && "✅ Fully signed / Fullständigt signerat"}
-                      </span>
+                  {/* Employee Side */}
+                  <div className="space-y-6">
+                    <div className="space-y-1">
+                      <div className="border-b border-foreground/30 pb-1 h-8" />
+                      <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
                     </div>
-
-                    {signingStatus === "not_sent" && (
-                      <Button
-                        className="w-full"
-                        onClick={handleSendForSigning}
-                        disabled={sendingForSigning}
-                      >
-                        {sendingForSigning ? (
-                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
-                        ) : (
-                          "Send for E-Signing / Skicka för e-signering"
+                    <div className="space-y-1">
+                      <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
+                        {signingStatus !== "not_sent" && employeeSignatureUrl && (
+                          <img src={employeeSignatureUrl} alt="Employee signature" className="h-7 object-contain" />
                         )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Employee's signature / Arbetstagarens underskrift</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Actions */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-3 h-3 rounded-full",
+                    signingStatus === "not_sent" ? "bg-muted-foreground/40" :
+                    signingStatus === "sent_to_employee" ? "bg-warning animate-pulse" :
+                    signingStatus === "employee_signed" ? "bg-primary" :
+                    "bg-green-500"
+                  )} />
+                  <span className="text-sm font-medium">
+                    {signingStatus === "not_sent" && "Not yet sent for signing / Ännu ej skickat för signering"}
+                    {signingStatus === "sent_to_employee" && "Awaiting employee signature / Väntar på anställds underskrift"}
+                    {signingStatus === "employee_signed" && "Employee signed – awaiting employer signature / Anställd har signerat – väntar på arbetsgivarens underskrift"}
+                    {signingStatus === "employer_signed" && "✅ Fully signed / Fullständigt signerat"}
+                  </span>
+                </div>
+
+                {signingStatus === "not_sent" && (
+                  <Button
+                    className="w-full"
+                    onClick={handleSendForSigning}
+                    disabled={sendingForSigning}
+                  >
+                    {sendingForSigning ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                    ) : (
+                      "Send for E-Signing / Skicka för e-signering"
+                    )}
+                  </Button>
+                )}
+
+                {signingStatus === "sent_to_employee" && signingLink && (
+                  <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
+                    <p className="text-xs font-medium">Signing link (share with employee) / Signeringslänk:</p>
+                    <div className="flex gap-2">
+                      <Input value={signingLink} readOnly className="h-8 text-xs" />
+                      <Button size="sm" variant="outline" onClick={() => {
+                        navigator.clipboard.writeText(signingLink);
+                      }}>
+                        Copy
                       </Button>
-                    )}
+                    </div>
+                  </div>
+                )}
 
-                    {signingStatus === "sent_to_employee" && signingLink && (
-                      <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
-                        <p className="text-xs font-medium">Signing link (share with employee) / Signeringslänk:</p>
-                        <div className="flex gap-2">
-                          <Input value={signingLink} readOnly className="h-8 text-xs" />
-                          <Button size="sm" variant="outline" onClick={() => {
-                            navigator.clipboard.writeText(signingLink);
-                          }}>
-                            Copy
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {signingStatus === "employee_signed" && (
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium">Employer Signature / Arbetsgivarens underskrift</p>
-                        <SignatureCanvas onSave={handleEmployerSign} disabled={submittingEmployerSig} />
-                        {submittingEmployerSig && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="w-4 h-4 animate-spin" /> Saving...
-                          </div>
-                        )}
+                {signingStatus === "employee_signed" && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Employer Signature / Arbetsgivarens underskrift</p>
+                    <SignatureCanvas onSave={handleEmployerSign} disabled={submittingEmployerSig} />
+                    {submittingEmployerSig && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="flex justify-between pt-4">
           <Button variant="outline" onClick={onBack}>
