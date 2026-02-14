@@ -112,15 +112,15 @@ export default function ContractSigning() {
   const fd = data.form_data || {};
 
   return (
-    <div className="min-h-screen bg-muted/30 p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
+      <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <img src={logoImg} alt="Logo" className="h-12 mx-auto" />
+        <div className="text-center space-y-2 pt-2">
+          <img src={logoImg} alt="Logo" className="h-10 sm:h-12 mx-auto" />
         </div>
 
         {/* Full Contract Document */}
-        <Card className="shadow-md">
+        <Card className="shadow-md overflow-hidden">
           <CardContent className="p-0">
             <ContractDocument
               companyName={data.company_name}

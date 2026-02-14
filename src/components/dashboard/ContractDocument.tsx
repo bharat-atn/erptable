@@ -391,10 +391,10 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
               <tbody>
                 {fd.salaryDeductions.map((d: any, i: number) => (
                   <tr key={i}>
-                    <td>{d.label || d.type}</td>
-                    <td>{d.amount ? `${d.amount} SEK` : "—"}</td>
-                    <td>{d.frequency || "—"}</td>
-                    <td>{d.note || "—"}</td>
+                    <td data-label="Type / Typ">{d.label || d.type}</td>
+                    <td data-label="Amount / Belopp">{d.amount ? `${d.amount} SEK` : "—"}</td>
+                    <td data-label="Frequency / Frekvens">{d.frequency || "—"}</td>
+                    <td data-label="Note / Anteckning">{d.note || "—"}</td>
                   </tr>
                 ))}
               </tbody>
