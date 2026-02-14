@@ -281,7 +281,10 @@ export function ContractDetailsStep({
     // jobType is like "Planting / Plantering" — extract the English part before " / "
     const jobEnglish = jobType.split(" / ")[0].trim();
     const pos = agreementData.positions.find(p => p.label_en === jobEnglish);
-    const sg = agreementData.skillGroups.find(s => s.label_en === experienceLevel);
+    // experienceLevel is like "Senior / Senior (3 years / seasons / 3 år / säsonger)"
+    // DB label_en is like "Senior (3 years / seasons)" — match by extracting name before " / " or "("
+    const expPrefix = experienceLevel.split(" / ")[0].split("(")[0].trim();
+    const sg = agreementData.skillGroups.find(s => s.label_en.split("(")[0].trim().toLowerCase() === expPrefix.toLowerCase());
     if (!pos || !sg) return null;
     const ap = agreementData.agreements.find(a => a.position_id === pos.id && a.skill_group_id === sg.id);
     return ap ? { hourly: Number(ap.hourly_rate), monthly: Number(ap.monthly_rate) } : null;
