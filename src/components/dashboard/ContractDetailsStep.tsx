@@ -17,13 +17,14 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb } from "lucide-react";
+import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb, Printer } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SignatureCanvas } from "./SignatureCanvas";
+import { ContractDocument } from "./ContractDocument";
 
 interface Company {
   id: string;
@@ -240,6 +241,44 @@ export function ContractDetailsStep({
   const [employerSignatureUrl, setEmployerSignatureUrl] = useState("");
   const [sendingForSigning, setSendingForSigning] = useState(false);
   const [submittingEmployerSig, setSubmittingEmployerSig] = useState(false);
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    if (!printContent) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Employment Contract / Anställningsavtal</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #111; background: #fff; padding: 15mm; font-size: 11px; line-height: 1.5; }
+          h1 { font-size: 16px; margin-bottom: 4px; }
+          h3 { font-size: 12px; border-bottom: 2px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 8px; }
+          .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+          .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+          .field-label { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; color: #666; }
+          .field-value { font-size: 11px; margin-top: 1px; }
+          .sig-line { border-bottom: 1px solid #999; height: 28px; margin-bottom: 2px; }
+          .sig-label { font-size: 9px; color: #666; }
+          .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; padding-top: 20px; border-top: 2px solid #999; }
+          .sig-block { display: flex; flex-direction: column; gap: 16px; }
+          .text-center { text-align: center; }
+          .mt-2 { margin-top: 8px; }
+          .deduction-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 3px 0; }
+          @media print { body { padding: 10mm; } }
+        </style>
+      </head>
+      <body>${printContent.innerHTML}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); }, 250);
+  };
 
   // Load signing status from contract
   useEffect(() => {
@@ -2431,6 +2470,40 @@ export function ContractDetailsStep({
         </div>
 
         <div className="space-y-4">
+          {/* Contract Preview for Print */}
+          <Card className="border border-border shadow-sm">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📄</span>
+                Contract Preview / Avtalsförhandsgranskning
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="w-4 h-4 mr-1" />
+                Print / Skriv ut
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 border-t border-border">
+              <div className="max-h-[500px] overflow-y-auto">
+                <ContractDocument
+                  ref={printRef}
+                  companyName={company.name}
+                  companyOrgNumber={company.org_number}
+                  companyAddress={company.address}
+                  companyPostcode={company.postcode}
+                  companyCity={company.city}
+                  contractCode={null}
+                  seasonYear={new Date().getFullYear().toString()}
+                  formData={getFormData()}
+                  employeeSignatureUrl={employeeSignatureUrl || null}
+                  employerSignatureUrl={employerSignatureUrl || null}
+                  employeeSignedAt={null}
+                  employerSignedAt={null}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* E-Signing */}
           <Card className="border border-border shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
@@ -2440,52 +2513,9 @@ export function ContractDetailsStep({
             </CardHeader>
             <CardContent className="space-y-6">
               <p className="text-sm text-muted-foreground">
-                Send this contract for electronic signing. The employee signs first, then it is returned to the employer for final signature. / 
-                Skicka detta avtal för elektronisk signering. Den anställde signerar först, sedan returneras det till arbetsgivaren för slutgiltig underskrift.
+                Send this contract for electronic signing, or use the Print button above to print and sign on paper. / 
+                Skicka detta avtal för elektronisk signering, eller använd knappen Skriv ut ovan för att skriva ut och signera på papper.
               </p>
-
-              {/* Signing Layout Preview */}
-              <div className="rounded-lg border border-border bg-muted/30 p-6">
-                <div className="grid grid-cols-2 gap-8">
-                  {/* Employer Side */}
-                  <div className="space-y-6">
-                    <div className="space-y-1">
-                      <div className="border-b border-foreground/30 pb-1 h-8" />
-                      <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="border-b border-foreground/30 pb-1 h-8">
-                        <span className="text-sm">{company.name}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">Company / Företag</p>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
-                        {signingStatus === "employer_signed" && employerSignatureUrl && (
-                          <img src={employerSignatureUrl} alt="Employer signature" className="h-7 object-contain" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Employer's signature / Arbetsgivarens underskrift</p>
-                    </div>
-                  </div>
-
-                  {/* Employee Side */}
-                  <div className="space-y-6">
-                    <div className="space-y-1">
-                      <div className="border-b border-foreground/30 pb-1 h-8" />
-                      <p className="text-xs text-muted-foreground">Place and date / Plats och datum</p>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="border-b border-foreground/30 pb-1 h-8 flex items-end">
-                        {signingStatus !== "not_sent" && employeeSignatureUrl && (
-                          <img src={employeeSignatureUrl} alt="Employee signature" className="h-7 object-contain" />
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Employee's signature / Arbetstagarens underskrift</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Status & Actions */}
               <div className="space-y-3">
@@ -2495,7 +2525,7 @@ export function ContractDetailsStep({
                     signingStatus === "not_sent" ? "bg-muted-foreground/40" :
                     signingStatus === "sent_to_employee" ? "bg-warning animate-pulse" :
                     signingStatus === "employee_signed" ? "bg-primary" :
-                    "bg-green-500"
+                    "bg-primary"
                   )} />
                   <span className="text-sm font-medium">
                     {signingStatus === "not_sent" && "Not yet sent for signing / Ännu ej skickat för signering"}
