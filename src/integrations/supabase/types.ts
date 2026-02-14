@@ -152,12 +152,19 @@ export type Database = {
           contract_code: string | null
           created_at: string
           employee_id: string
+          employee_signature_url: string | null
+          employee_signed_at: string | null
+          employer_signature_url: string | null
+          employer_signed_at: string | null
           end_date: string | null
           form_data: Json | null
           id: string
           salary: number | null
           season_year: string | null
+          sent_for_signing_at: string | null
           signed_at: string | null
+          signing_status: string
+          signing_token: string | null
           start_date: string | null
           status: string
           updated_at: string
@@ -167,12 +174,19 @@ export type Database = {
           contract_code?: string | null
           created_at?: string
           employee_id: string
+          employee_signature_url?: string | null
+          employee_signed_at?: string | null
+          employer_signature_url?: string | null
+          employer_signed_at?: string | null
           end_date?: string | null
           form_data?: Json | null
           id?: string
           salary?: number | null
           season_year?: string | null
+          sent_for_signing_at?: string | null
           signed_at?: string | null
+          signing_status?: string
+          signing_token?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -182,12 +196,19 @@ export type Database = {
           contract_code?: string | null
           created_at?: string
           employee_id?: string
+          employee_signature_url?: string | null
+          employee_signed_at?: string | null
+          employer_signature_url?: string | null
+          employer_signed_at?: string | null
           end_date?: string | null
           form_data?: Json | null
           id?: string
           salary?: number | null
           season_year?: string | null
+          sent_for_signing_at?: string | null
           signed_at?: string | null
+          signing_status?: string
+          signing_token?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -480,6 +501,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_contract_for_signing: {
+        Args: { _token: string }
+        Returns: {
+          company_name: string
+          contract_code: string
+          contract_id: string
+          employee_first_name: string
+          employee_last_name: string
+          employee_signed_at: string
+          employer_signed_at: string
+          signing_status: string
+        }[]
+      }
       get_invitation_by_token: {
         Args: { _token: string }
         Returns: {
@@ -503,6 +537,10 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      submit_employee_signature: {
+        Args: { _signature_url: string; _token: string }
+        Returns: undefined
+      }
       submit_onboarding: {
         Args: {
           _first_name: string
