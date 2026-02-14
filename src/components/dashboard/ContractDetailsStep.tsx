@@ -54,6 +54,7 @@ interface ContractDetailsStepProps {
   activeSection: "employee" | "section-3" | "section-4" | "section-5" | "section-6" | "section-7" | "section-8" | "section-9" | "section-10" | "section-11" | "section-12" | "section-13" | "section-14";
   onBack: () => void;
   onNext: () => void;
+  onGoToStep?: (step: number) => void;
 }
 
 const COUNTRIES = [
@@ -119,6 +120,7 @@ export function ContractDetailsStep({
   activeSection,
   onBack,
   onNext,
+  onGoToStep,
 }: ContractDetailsStepProps) {
   const [section1Open, setSection1Open] = useState(false);
   const [section21Open, setSection21Open] = useState(true);
@@ -2217,7 +2219,14 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={() => {
+            // Skip Section 13 (Deductions) if no deductions exist — go straight to Signing (step 16)
+            if (salaryDeductions.length === 0 && onGoToStep) {
+              onGoToStep(16);
+            } else {
+              onNext();
+            }
+          }}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2541,7 +2550,14 @@ export function ContractDetailsStep({
         </div>
 
         <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
+          <Button variant="outline" onClick={() => {
+            // Skip Section 13 (Deductions) if no deductions exist — go back to Section 12 (step 14)
+            if (salaryDeductions.length === 0 && onGoToStep) {
+              onGoToStep(14);
+            } else {
+              onBack();
+            }
+          }}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
