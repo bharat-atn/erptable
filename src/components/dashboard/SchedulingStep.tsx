@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,6 +122,20 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
   const [data, setData] = useState<SchedulingData>(initialData);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [saving, setSaving] = useState(false);
+  const [scheduleSaved, setScheduleSaved] = useState(false);
+
+  // Check if schedule already exists in DB (for resumed contracts)
+  useEffect(() => {
+    if (!contractId) return;
+    const checkExisting = async () => {
+      const { count } = await supabase
+        .from("contract_schedules")
+        .select("id", { count: "exact", head: true })
+        .eq("contract_id", contractId);
+      if (count && count > 0) setScheduleSaved(true);
+    };
+    checkExisting();
+  }, [contractId]);
 
   const update = useCallback((partial: Partial<SchedulingData>) => {
     setData(prev => {
@@ -226,6 +240,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
         if (error) throw error;
       }
 
+      setScheduleSaved(true);
       toast.success(`Schedule saved! ${rows.length} days stored for time reporting.`);
     } catch (err: any) {
       console.error("Save schedule error:", err);
@@ -541,7 +556,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back / Tillbaka
         </Button>
-        <Button className="px-8" onClick={onNext}>
+        <Button className="px-8" onClick={onNext} disabled={!scheduleSaved}>
           Next Step / Nästa
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
