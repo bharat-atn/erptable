@@ -14,7 +14,8 @@ import { cn } from "@/lib/utils";
 import { countries, findCountryByName, type Country } from "@/lib/countries";
 import { validatePostcodeFormat, postcodePatterns } from "@/lib/postcode-patterns";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ChevronsUpDown, AlertCircle, CheckCircle2, Loader2, Sparkles, Search, AlertTriangle } from "lucide-react";
+import { Check, ChevronsUpDown, AlertCircle, CheckCircle2, Loader2, Sparkles, Search, AlertTriangle, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // ─── Validation ──────────────────────────────────────────────────
 
@@ -62,11 +63,11 @@ const initialForm: CompanyFormData = {
 
 // ─── Field Error Indicator ───────────────────────────────────────
 
-function FieldMessage({ error, valid, info, loading, autoFilled, source }: { error?: string; valid?: boolean; info?: string; loading?: boolean; autoFilled?: boolean; source?: string }) {
+function FieldMessage({ error, valid, info, loading, autoFilled, source, confidence }: { error?: string; valid?: boolean; info?: string; loading?: boolean; autoFilled?: boolean; source?: string; confidence?: string }) {
   if (loading) {
     return (
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 animate-fade-in">
-        <Loader2 className="w-3 h-3 shrink-0 animate-spin" /> Verifying with AI...
+        <Loader2 className="w-3 h-3 shrink-0 animate-spin" /> Verifying...
       </p>
     );
   }
@@ -84,17 +85,33 @@ function FieldMessage({ error, valid, info, loading, autoFilled, source }: { err
       </p>
     );
   }
+  if (autoFilled && source) {
+    const isVerified = source.includes("allabolag") || source.includes("Bolagsverket") || source.includes("registry") || source.includes("hitta.se") || source.includes("Skatteverket");
+    const isNotFound = source.includes("Not found");
+    return (
+      <div className="mt-1 animate-fade-in space-y-0.5">
+        {isNotFound ? (
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <ShieldX className="w-3 h-3 shrink-0" /> Not found in registry — please fill manually
+          </p>
+        ) : isVerified ? (
+          <p className="flex items-center gap-1 text-[11px] text-success">
+            <ShieldCheck className="w-3 h-3 shrink-0" /> Verified from {source}
+          </p>
+        ) : (
+          <p className="flex items-center gap-1 text-[11px] text-warning">
+            <ShieldAlert className="w-3 h-3 shrink-0" /> Unverified — {source}
+          </p>
+        )}
+      </div>
+    );
+  }
   if (autoFilled) {
     return (
       <div className="mt-1 animate-fade-in">
         <p className="flex items-center gap-1 text-[11px] text-primary">
-          <Sparkles className="w-3 h-3 shrink-0" /> Auto-filled by AI
+          <Sparkles className="w-3 h-3 shrink-0" /> Auto-filled
         </p>
-        {source && (
-          <p className="text-[10px] text-muted-foreground ml-4">
-            Source: {source}
-          </p>
-        )}
       </div>
     );
   }
@@ -279,7 +296,7 @@ export function CompanyFormDialog({
   const [aiLoading, setAiLoading] = useState(false);
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string>; sources?: Record<string, string> } | null>(null);
+  const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string>; sources?: Record<string, string>; verified?: boolean } | null>(null);
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
   const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -302,18 +319,29 @@ export function CompanyFormDialog({
 
       if (data.found) {
         const filled = new Set<string>();
+        const conf = data.confidence || {};
         // Post-process: ensure city uppercase and phone has no leading zero
         const city = data.city ? data.city.toUpperCase() : "";
         const phone = data.phone ? data.phone.replace(/^0+/, "") : "";
         setForm((prev) => {
           const next = { ...prev };
-          if (data.country && !prev.country) { next.country = data.country; filled.add("country"); }
-          if (data.address && !prev.address) { next.address = data.address; filled.add("address"); }
-          if (data.postcode && !prev.postcode) { next.postcode = data.postcode; filled.add("postcode"); }
-          if (city && !prev.city) { next.city = city; filled.add("city"); }
-          if (data.email && !prev.email) { next.email = data.email; filled.add("email"); }
-          if (data.website && !prev.website) { next.website = data.website; filled.add("website"); }
-          if (phone && !prev.phone) { next.phone = phone; filled.add("phone"); }
+          // Only auto-fill fields with high confidence from verified sources
+          const shouldFill = (field: string, value: string) => {
+            if (!value || prev[field as keyof CompanyFormData]) return false;
+            // For verified registry data, always fill. For AI fallback, only fill if high confidence.
+            if (data.verified) return true;
+            return conf[field] === "high";
+          };
+          if (shouldFill("country", data.country)) { next.country = data.country; filled.add("country"); }
+          if (shouldFill("address", data.address)) { next.address = data.address; filled.add("address"); }
+          if (shouldFill("postcode", data.postcode)) { next.postcode = data.postcode; filled.add("postcode"); }
+          if (shouldFill("city", city)) { next.city = city; filled.add("city"); }
+          if (shouldFill("email", data.email)) { next.email = data.email; filled.add("email"); }
+          if (shouldFill("website", data.website)) { next.website = data.website; filled.add("website"); }
+          if (shouldFill("phone", phone)) { next.phone = phone; filled.add("phone"); }
+          if (data.org_number && !prev.org_number && (data.verified || conf.org_number === "high")) {
+            next.org_number = data.org_number; filled.add("org_number");
+          }
           return next;
         });
         if (data.dial_code) {
@@ -325,6 +353,7 @@ export function CompanyFormDialog({
           message: data.message,
           confidence: data.confidence,
           sources: data.sources,
+          verified: data.verified,
         });
       } else {
         setLookupResult({
@@ -573,6 +602,7 @@ export function CompanyFormDialog({
                 valid={isFieldValid("org_number") && !aiValidation.org_number_ai}
                 loading={aiLoading && !!form.org_number && !!form.country}
                 info={!errors.org_number && !aiValidation.org_number_ai && aiValidation.org_number_ok_ai ? aiValidation.org_number_ok_ai : undefined}
+                autoFilled={autoFilled.has("org_number")} source={lookupResult?.sources?.org_number}
               />
             </div>
 
@@ -581,7 +611,7 @@ export function CompanyFormDialog({
               <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50 border border-border animate-fade-in">
                 <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 <p className="text-xs text-muted-foreground">
-                  Looking up company details...
+                  Searching business registry...
                 </p>
               </div>
             )}
@@ -590,8 +620,22 @@ export function CompanyFormDialog({
                 "p-3 rounded-md border animate-fade-in",
                 lookupResult.warnings?.length
                   ? "bg-destructive/5 border-destructive/30"
-                  : "bg-primary/5 border-primary/30"
+                  : lookupResult.verified
+                    ? "bg-success/5 border-success/30"
+                    : "bg-warning/5 border-warning/30"
               )}>
+                {/* Verified / Unverified badge */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  {lookupResult.verified ? (
+                    <Badge variant="success" className="text-[10px] gap-1">
+                      <ShieldCheck className="w-3 h-3" /> Verified Registry Data
+                    </Badge>
+                  ) : lookupResult.verified === false ? (
+                    <Badge variant="warning" className="text-[10px] gap-1">
+                      <ShieldAlert className="w-3 h-3" /> Unverified — AI Knowledge Base
+                    </Badge>
+                  ) : null}
+                </div>
                 {lookupResult.warnings?.length ? (
                   <div className="space-y-1">
                     {lookupResult.warnings.map((w, i) => (
@@ -602,19 +646,13 @@ export function CompanyFormDialog({
                   </div>
                 ) : null}
                 {autoFilled.size > 0 && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1">
-                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                    AI auto-filled {autoFilled.size} field{autoFilled.size > 1 ? "s" : ""}: {Array.from(autoFilled).join(", ")}
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    Auto-filled {autoFilled.size} field{autoFilled.size > 1 ? "s" : ""}: {Array.from(autoFilled).join(", ")}
                   </p>
                 )}
                 {lookupResult.message && !lookupResult.warnings?.length && (
-                  <p className="flex items-center gap-1.5 text-xs text-primary">
-                    <Sparkles className="w-3.5 h-3.5 shrink-0" /> {lookupResult.message}
-                  </p>
-                )}
-                {lookupResult.confidence?.overall && lookupResult.confidence.overall !== "high" && (
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Confidence: {lookupResult.confidence.overall} — please verify auto-filled fields
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                    {lookupResult.message}
                   </p>
                 )}
               </div>
