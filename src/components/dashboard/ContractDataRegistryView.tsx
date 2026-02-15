@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Pen, Trash2, Plus, Save, Download, Upload } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,17 @@ function PositionsTab() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("positions").update({ is_active } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["positions"] });
+    },
+    onError: () => toast.error("Failed to update position status"),
+  });
+
   // Group by type_number
   const grouped = positions.reduce<Record<number, typeof positions>>((acc, p) => {
     (acc[p.type_number] = acc[p.type_number] || []).push(p);
@@ -103,7 +115,8 @@ function PositionsTab() {
       {/* List */}
       <Card>
         <CardContent className="p-0">
-          <div className="grid grid-cols-[1fr_1fr_auto] px-5 py-3 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-[auto_1fr_1fr_auto] px-5 py-3 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span>Active</span>
             <span>English</span>
             <span>Swedish</span>
             <span>Actions</span>
@@ -128,9 +141,13 @@ function PositionsTab() {
                     )}
                   </div>
                   {items.map((pos) => (
-                    <div key={pos.id} className="grid grid-cols-[1fr_1fr_auto] items-center px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+                    <div key={pos.id} className="grid grid-cols-[auto_1fr_1fr_auto] items-center px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors gap-3">
                       {editId === pos.id ? (
                         <>
+                          <Checkbox
+                            checked={(pos as any).is_active !== false}
+                            onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: pos.id, is_active: !!checked })}
+                          />
                           <Input value={editEn} onChange={(e) => setEditEn(e.target.value)} className="h-8" />
                           <Input value={editSv} onChange={(e) => setEditSv(e.target.value)} className="h-8" />
                           <div className="flex gap-1">
@@ -142,8 +159,12 @@ function PositionsTab() {
                         </>
                       ) : (
                         <>
-                          <span className="text-sm">{pos.label_en}</span>
-                          <span className="text-sm text-muted-foreground">{pos.label_sv}</span>
+                          <Checkbox
+                            checked={(pos as any).is_active !== false}
+                            onCheckedChange={(checked) => toggleActiveMutation.mutate({ id: pos.id, is_active: !!checked })}
+                          />
+                          <span className={cn("text-sm", (pos as any).is_active === false && "text-muted-foreground line-through")}>{pos.label_en}</span>
+                          <span className={cn("text-sm text-muted-foreground", (pos as any).is_active === false && "line-through")}>{pos.label_sv}</span>
                           <div className="flex gap-1">
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditId(pos.id); setEditEn(pos.label_en); setEditSv(pos.label_sv); }}>
                               <Pen className="w-3.5 h-3.5" />
