@@ -30,9 +30,9 @@ interface YearCounter {
 
 const separatorOptions = [
   { value: "-", label: "Hyphen ( - )" },
-  { value: "–", label: "En dash ( – )" },
-  { value: "_", label: "Underscore ( _ )" },
   { value: "/", label: "Slash ( / )" },
+  { value: ".", label: "Dot ( . )" },
+  { value: "_", label: "Underscore ( _ )" },
 ];
 
 const paddingOptions = [
