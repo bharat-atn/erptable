@@ -1,61 +1,46 @@
 
 
-# Email Delivery for Onboarding Invitations
+# Add Active/Inactive Toggle to Positions for Contract Selection
 
-## What We're Building
+## Overview
+Add a checkbox to each position in the Contract Data Registry so HR staff can control which positions appear in the contract wizard's job type dropdown. Only "active" positions will show up when building a contract.
 
-When an HR staff member creates an invitation, the system will automatically send a professional email to the candidate with a direct link to their onboarding form. The candidate can open this link on any device (phone, tablet, desktop) and complete the form immediately.
+## Current State
+- The Contract Data Registry (`ContractDataRegistryView.tsx`) manages positions in the `positions` table with columns: `label_en`, `label_sv`, `type_number`, `type_label_en`, `type_label_sv`, `sort_order`.
+- The contract wizard (`ContractDetailsStep.tsx`) uses a **hardcoded** `JOB_TYPES` array (lines 67-108) instead of fetching from the database.
 
-## How It Works
+## Changes Required
 
-1. HR creates an invitation (as they do today)
-2. The system automatically sends a branded email with the onboarding link
-3. The invitation status is updated to "SENT"
-4. The candidate clicks the link in the email and fills out the form on any device
-5. HR can also manually resend or copy the link from the Invitations view
+### 1. Database Migration
+Add an `is_active` boolean column to the `positions` table, defaulting to `true` so all existing positions remain visible.
 
-## Technical Approach
+```sql
+ALTER TABLE public.positions
+  ADD COLUMN is_active boolean NOT NULL DEFAULT true;
+```
 
-### 1. Backend Function for Sending Emails
+### 2. Contract Data Registry UI (`ContractDataRegistryView.tsx`)
+- Add a checkbox to the left of each position row in the Positions tab.
+- Clicking the checkbox toggles `is_active` for that position via a Supabase update.
+- Active positions show a filled checkbox; inactive ones show an empty one.
+- The grid layout changes from `grid-cols-[1fr_1fr_auto]` to `grid-cols-[auto_1fr_1fr_auto]` to accommodate the checkbox column.
 
-We'll create a backend function called `send-invitation-email` that:
-- Accepts an invitation ID and employee email
-- Builds a professional, mobile-friendly HTML email with Ljungan Forestry branding
-- Includes a direct link to the onboarding form (e.g. `https://onboardbuddy-flow.lovable.app/onboard/{token}`)
-- Sends the email using the built-in Lovable Cloud email service (Resend)
-- Updates the invitation status from PENDING to SENT
+### 3. Contract Wizard - Dynamic Positions (`ContractDetailsStep.tsx`)
+- Remove the hardcoded `JOB_TYPES` constant (lines 67-108).
+- Add a `useQuery` hook to fetch positions from the database where `is_active = true`, ordered by `type_number` and `sort_order`.
+- Group the fetched positions by `type_number` / `type_label_en` / `type_label_sv` to replicate the current grouped dropdown structure.
+- The `Select` dropdown for "Job Type and Salary Group" will render these dynamic groups instead of the static array.
 
-**Important**: This requires a **Resend API key** to send emails. You'll be asked to provide one during implementation.
+## Technical Details
 
-### 2. Email Content
+### Files to modify:
+1. **Database**: New migration adding `is_active` column to `positions`
+2. **`src/components/dashboard/ContractDataRegistryView.tsx`**: Add checkbox column in the `PositionsTab` component (around lines 106-158)
+3. **`src/components/dashboard/ContractDetailsStep.tsx`**: Replace hardcoded `JOB_TYPES` with a database query filtered by `is_active = true`
 
-The email will include:
-- Ljungan Forestry header/branding
-- Greeting with the candidate's name
-- Clear call-to-action button linking to the onboarding form
-- Expiration date notice (7 days)
-- Mobile-responsive HTML layout
-
-### 3. Frontend Changes
-
-**CreateInvitationDialog**: After successfully creating the invitation, automatically call the email-sending function. Add a checkbox option "Send email now" (checked by default).
-
-**InvitationsView**: The existing "Mark as Sent" and "Resend" actions will trigger the email function, allowing HR to re-send the email at any time.
-
-### 4. Mobile-Ready Onboarding Form
-
-The existing onboarding portal at `/onboard/{token}` already works on mobile devices since it's built with responsive Tailwind CSS. No changes needed here -- candidates can open the link on their phone and fill out the form immediately.
-
-## Implementation Steps
-
-1. Set up the Resend API key (you'll need to create a free account at resend.com)
-2. Create the `send-invitation-email` backend function with branded HTML template
-3. Update `CreateInvitationDialog` to trigger email sending after invitation creation
-4. Add "Resend Email" action to the Invitations table
-5. Test the full flow end-to-end
-
-## What You'll Need
-
-- A **Resend** account (free tier supports 100 emails/day) -- sign up at [resend.com](https://resend.com)
-- A verified sender domain or use Resend's default `onboarding@resend.dev` for testing
+### Behavior:
+- New positions default to active (`is_active = true`)
+- Toggling a position off removes it from the contract wizard dropdown immediately
+- No data is deleted -- inactive positions remain in the database for historical contracts
+- The checkbox toggle uses an optimistic update pattern for instant UI feedback
 
