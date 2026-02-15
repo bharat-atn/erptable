@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { countries, findCountryByName, type Country } from "@/lib/countries";
 import { validatePostcodeFormat, postcodePatterns } from "@/lib/postcode-patterns";
 import { supabase } from "@/integrations/supabase/client";
-import { Check, ChevronsUpDown, AlertCircle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { Check, ChevronsUpDown, AlertCircle, CheckCircle2, Loader2, Sparkles, Search, AlertTriangle } from "lucide-react";
 
 // ─── Validation ──────────────────────────────────────────────────
 
@@ -62,7 +62,7 @@ const initialForm: CompanyFormData = {
 
 // ─── Field Error Indicator ───────────────────────────────────────
 
-function FieldMessage({ error, valid, info, loading }: { error?: string; valid?: boolean; info?: string; loading?: boolean }) {
+function FieldMessage({ error, valid, info, loading, autoFilled }: { error?: string; valid?: boolean; info?: string; loading?: boolean; autoFilled?: boolean }) {
   if (loading) {
     return (
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 animate-fade-in">
@@ -81,6 +81,13 @@ function FieldMessage({ error, valid, info, loading }: { error?: string; valid?:
     return (
       <p className="flex items-center gap-1 text-[11px] text-primary mt-1 animate-fade-in">
         <Sparkles className="w-3 h-3 shrink-0" /> {info}
+      </p>
+    );
+  }
+  if (autoFilled) {
+    return (
+      <p className="flex items-center gap-1 text-[11px] text-primary mt-1 animate-fade-in">
+        <Sparkles className="w-3 h-3 shrink-0" /> Auto-filled by AI
       </p>
     );
   }
@@ -264,6 +271,68 @@ export function CompanyFormDialog({
   const [aiValidation, setAiValidation] = useState<Record<string, string>>({});
   const [aiLoading, setAiLoading] = useState(false);
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string> } | null>(null);
+  const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
+  const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Company lookup - auto-fill form from AI
+  const runCompanyLookup = useCallback(async (name: string, org_number: string) => {
+    if (!name.trim() || !org_number.trim()) return;
+    // Need at least a reasonable org number (6+ digit chars)
+    const digitCount = org_number.replace(/[\s\-\.]/g, "").length;
+    if (digitCount < 6) return;
+
+    setLookupLoading(true);
+    setLookupResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lookup-company", {
+        body: { company_name: name, org_number },
+      });
+      if (error) throw error;
+
+      if (data.found) {
+        const filled = new Set<string>();
+        setForm((prev) => {
+          const next = { ...prev };
+          if (data.country && !prev.country) { next.country = data.country; filled.add("country"); }
+          if (data.address && !prev.address) { next.address = data.address; filled.add("address"); }
+          if (data.postcode && !prev.postcode) { next.postcode = data.postcode; filled.add("postcode"); }
+          if (data.city && !prev.city) { next.city = data.city; filled.add("city"); }
+          if (data.email && !prev.email) { next.email = data.email; filled.add("email"); }
+          if (data.website && !prev.website) { next.website = data.website; filled.add("website"); }
+          if (data.phone && !prev.phone) { next.phone = data.phone; filled.add("phone"); }
+          return next;
+        });
+        if (data.dial_code) {
+          setDialCode((prev) => prev || data.dial_code);
+        }
+        setAutoFilled(filled);
+        setLookupResult({
+          warnings: data.warnings,
+          message: data.message,
+          confidence: data.confidence,
+        });
+      } else {
+        setLookupResult({
+          warnings: data.warnings || ["Company not found. Please fill in the details manually."],
+          message: data.message || "Could not find company details.",
+        });
+      }
+    } catch (err) {
+      console.error("Company lookup error:", err);
+    } finally {
+      setLookupLoading(false);
+    }
+  }, []);
+
+  // Debounced auto-lookup when both name and org_number are filled
+  const scheduleLookup = useCallback((name: string, org_number: string) => {
+    if (lookupTimeoutRef.current) clearTimeout(lookupTimeoutRef.current);
+    lookupTimeoutRef.current = setTimeout(() => {
+      runCompanyLookup(name, org_number);
+    }, 1200);
+  }, [runCompanyLookup]);
 
   // AI address validation - debounced
   const runAiValidation = useCallback((country: string, postcode: string, city: string, address: string, phone: string, currentDialCode: string, org_number: string) => {
@@ -348,6 +417,8 @@ export function CompanyFormDialog({
     setErrors({});
     setTouched(new Set());
     setAiValidation({});
+    setLookupResult(null);
+    setAutoFilled(new Set());
   }, [initialData, open]);
 
   const triggerAi = useCallback((nextForm: CompanyFormData, currentDialCode: string) => {
@@ -357,6 +428,10 @@ export function CompanyFormDialog({
   }, [runAiValidation]);
 
   const set = (key: keyof CompanyFormData, value: string) => {
+    // Clear auto-filled status when user manually edits
+    if (autoFilled.has(key)) {
+      setAutoFilled((prev) => { const n = new Set(prev); n.delete(key); return n; });
+    }
     setForm((prev) => {
       const next = { ...prev, [key]: value };
       // Client-side postcode format check
@@ -371,6 +446,12 @@ export function CompanyFormDialog({
       // Trigger AI validation for any relevant field change
       if (["postcode", "city", "country", "address", "phone", "org_number"].includes(key)) {
         triggerAi(next, dialCode);
+      }
+      // Trigger company lookup when name or org_number changes
+      if (key === "name" || key === "org_number") {
+        const name = key === "name" ? value : next.name;
+        const org = key === "org_number" ? value : next.org_number;
+        scheduleLookup(name, org);
       }
       return next;
     });
@@ -482,13 +563,57 @@ export function CompanyFormDialog({
               />
             </div>
 
+            {/* AI Lookup Status Banner */}
+            {lookupLoading && (
+              <div className="flex items-center gap-2 p-3 rounded-md bg-muted/50 border border-border animate-fade-in">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  Looking up company details...
+                </p>
+              </div>
+            )}
+            {lookupResult && !lookupLoading && (
+              <div className={cn(
+                "p-3 rounded-md border animate-fade-in",
+                lookupResult.warnings?.length
+                  ? "bg-destructive/5 border-destructive/30"
+                  : "bg-primary/5 border-primary/30"
+              )}>
+                {lookupResult.warnings?.length ? (
+                  <div className="space-y-1">
+                    {lookupResult.warnings.map((w, i) => (
+                      <p key={i} className="flex items-start gap-1.5 text-xs text-destructive">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {w}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+                {autoFilled.size > 0 && (
+                  <p className="flex items-center gap-1.5 text-xs text-primary mt-1">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                    AI auto-filled {autoFilled.size} field{autoFilled.size > 1 ? "s" : ""}: {Array.from(autoFilled).join(", ")}
+                  </p>
+                )}
+                {lookupResult.message && !lookupResult.warnings?.length && (
+                  <p className="flex items-center gap-1.5 text-xs text-primary">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" /> {lookupResult.message}
+                  </p>
+                )}
+                {lookupResult.confidence?.overall && lookupResult.confidence.overall !== "high" && (
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Confidence: {lookupResult.confidence.overall} — please verify auto-filled fields
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Country first - enables smart validation for postcode/city */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wide">
                 Country / Land
               </Label>
               <CountryCombobox value={form.country} onChange={(v) => { set("country", v); markTouched("country"); }} />
-              <FieldMessage valid={isFieldValid("country")} />
+              <FieldMessage valid={isFieldValid("country")} autoFilled={autoFilled.has("country")} />
             </div>
 
             <div className="space-y-1.5">
@@ -509,6 +634,7 @@ export function CompanyFormDialog({
                 valid={isFieldValid("address") && !aiValidation.address_ai}
                 loading={aiLoading && !!form.address}
                 info={!errors.address && !aiValidation.address_ai && aiValidation.address_ok_ai && form.address ? aiValidation.address_ok_ai : undefined}
+                autoFilled={autoFilled.has("address")}
               />
             </div>
 
@@ -537,6 +663,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("postcode") && !aiValidation.postcode_ai}
                   loading={aiLoading && !!form.postcode}
                   info={!errors.postcode && !aiValidation.postcode_ai && aiValidation.address_ok && form.postcode ? aiValidation.address_ok : undefined}
+                  autoFilled={autoFilled.has("postcode")}
                 />
               </div>
               <div className="space-y-1.5">
@@ -557,6 +684,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("city") && !aiValidation.city_ai}
                   loading={aiLoading && !!form.city}
                   info={aiValidation.match_ai || undefined}
+                  autoFilled={autoFilled.has("city")}
                 />
               </div>
             </div>
@@ -585,6 +713,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("phone") && !aiValidation.phone_ai}
                   loading={aiLoading && !!form.phone}
                   info={!errors.phone && !aiValidation.phone_ai && aiValidation.phone_ok_ai && form.phone ? aiValidation.phone_ok_ai : undefined}
+                  autoFilled={autoFilled.has("phone")}
                 />
               </div>
             </div>
@@ -601,7 +730,7 @@ export function CompanyFormDialog({
                 placeholder="company@example.com"
                 className={cn(errors.email && touched.has("email") && "border-destructive focus-visible:ring-destructive")}
               />
-              <FieldMessage error={touched.has("email") ? errors.email : undefined} valid={isFieldValid("email")} />
+              <FieldMessage error={touched.has("email") ? errors.email : undefined} valid={isFieldValid("email")} autoFilled={autoFilled.has("email")} />
             </div>
 
             <div className="space-y-1.5">
@@ -615,7 +744,7 @@ export function CompanyFormDialog({
                 placeholder="www.example.com"
                 className={cn(errors.website && touched.has("website") && "border-destructive focus-visible:ring-destructive")}
               />
-              <FieldMessage error={touched.has("website") ? errors.website : undefined} valid={isFieldValid("website")} />
+              <FieldMessage error={touched.has("website") ? errors.website : undefined} valid={isFieldValid("website")} autoFilled={autoFilled.has("website")} />
             </div>
           </form>
         </ScrollArea>
