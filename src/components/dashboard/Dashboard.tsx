@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar, screenSizes, type ScreenSizeOption } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
 import { EmployeeRegisterView } from "./EmployeeRegisterView";
@@ -23,11 +23,21 @@ interface DashboardProps {
   onBackToLauncher?: () => void;
 }
 
+const TABLET_THRESHOLD = 1100;
+
 export function Dashboard({ onBackToLauncher }: DashboardProps) {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Auto-collapse sidebar when simulated screen is tablet-sized or smaller
+  useEffect(() => {
+    if (screenSize.width !== null && screenSize.width <= TABLET_THRESHOLD) {
+      setSidebarCollapsed(true);
+    }
+  }, [screenSize]);
 
   const handleContinueContract = (contractId: string) => {
     setResumeContractId(contractId);
@@ -75,6 +85,8 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
           activeScreenSize={screenSize}
           onScreenSizeChange={setScreenSize}
           onBackToLauncher={onBackToLauncher}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
           <div className="mx-auto" style={{ maxWidth: isConstrained ? undefined : "80rem" }}>

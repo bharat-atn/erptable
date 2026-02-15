@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,9 +15,12 @@ import {
   Monitor,
   LayoutGrid,
   Shield,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface ScreenSizeOption {
   label: string;
@@ -39,6 +42,8 @@ interface SidebarProps {
   activeScreenSize: ScreenSizeOption;
   onScreenSizeChange: (size: ScreenSizeOption) => void;
   onBackToLauncher?: () => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 interface MenuItem {
@@ -96,12 +101,14 @@ function DraggableGroup({
   activeView,
   onViewChange,
   onReorder,
+  collapsed,
 }: {
   items: MenuItem[];
   groupKey: string;
   activeView: string;
   onViewChange: (view: string) => void;
   onReorder: (items: MenuItem[]) => void;
+  collapsed?: boolean;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -176,31 +183,52 @@ function DraggableGroup({
             ),
           )}
         >
-          <button
-            onClick={() => onViewChange(item.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-              activeView === item.id
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-            )}
-          >
-            <item.icon className="w-4 h-4 shrink-0" />
-            <span className="flex-1 text-left">{item.label}</span>
-            <span
-              data-grip
-              className="opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing p-0.5"
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onViewChange(item.id)}
+                  className={cn(
+                    "w-full flex items-center justify-center p-2 rounded-lg transition-colors",
+                    activeView === item.id
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  )}
+                >
+                  <item.icon className="w-4 h-4 shrink-0" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {item.label}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={() => onViewChange(item.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                activeView === item.id
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+              )}
             >
-              <GripVertical className="w-3.5 h-3.5" />
-            </span>
-          </button>
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span className="flex-1 text-left truncate">{item.label}</span>
+              <span
+                data-grip
+                className="opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing p-0.5"
+              >
+                <GripVertical className="w-3.5 h-3.5" />
+              </span>
+            </button>
+          )}
         </div>
       ))}
     </div>
   );
 }
 
-export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange }: SidebarProps) {
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
@@ -225,103 +253,177 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   }, []);
 
   return (
-    <aside className="w-44 lg:w-52 xl:w-56 h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300">
-      {/* Logo */}
-      <div className="p-4 flex items-center gap-2 shrink-0">
-        <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center">
-          <Layers className="w-4 h-4 text-sidebar-primary-foreground" />
-        </div>
-        <span className="font-semibold text-sidebar-primary-foreground">OnboardFlow</span>
-      </div>
-
-      {/* Navigation */}
-      <ScrollArea className="flex-1">
-        <nav className="px-3 py-4 space-y-1">
-          <DraggableGroup
-            items={menuItems}
-            groupKey="menu"
-            activeView={activeView}
-            onViewChange={onViewChange}
-            onReorder={handleMenuReorder}
-          />
-
-          <div className="pt-4 pb-1 px-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Settings
-            </span>
+    <TooltipProvider delayDuration={0}>
+      <aside className={cn(
+        "h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300",
+        collapsed ? "w-14" : "w-44 lg:w-52 xl:w-56"
+      )}>
+        {/* Logo + Collapse Toggle */}
+        <div className={cn("p-3 flex items-center shrink-0", collapsed ? "justify-center" : "gap-2 px-4")}>
+          <div className="w-8 h-8 bg-sidebar-primary rounded-lg flex items-center justify-center shrink-0">
+            <Layers className="w-4 h-4 text-sidebar-primary-foreground" />
           </div>
-          <DraggableGroup
-            items={settingsItems}
-            groupKey="settings"
-            activeView={activeView}
-            onViewChange={onViewChange}
-            onReorder={handleSettingsReorder}
-          />
-
-          <div className="pt-4 pb-1 px-3">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Configuration
-            </span>
-          </div>
-          <DraggableGroup
-            items={configItems}
-            groupKey="config"
-            activeView={activeView}
-            onViewChange={onViewChange}
-            onReorder={handleConfigReorder}
-          />
-        </nav>
-      </ScrollArea>
-
-      {/* Screen Size Picker */}
-      <div className="px-3 pt-3 pb-1 border-t border-sidebar-border shrink-0">
-        <div className="flex items-center gap-1.5 px-1 pb-2">
-          <Monitor className="w-3.5 h-3.5 text-sidebar-foreground/60" />
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">Screen</span>
+          {!collapsed && <span className="font-semibold text-sidebar-primary-foreground truncate">OnboardFlow</span>}
         </div>
-        <div className="flex gap-0.5 bg-sidebar-accent/50 rounded-lg p-0.5">
-          {screenSizes.map((size) => (
-            <Button
-              key={size.label}
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "flex-1 h-6 px-0 text-[10px] font-medium rounded-md transition-all",
-                activeScreenSize.label === size.label
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              )}
-              onClick={() => onScreenSizeChange(size)}
+
+        {/* Collapse Toggle Button */}
+        <div className={cn("px-2 pb-1 shrink-0", collapsed ? "flex justify-center" : "flex justify-end")}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => onCollapsedChange?.(!collapsed)}
+                className="p-1.5 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              >
+                {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8}>
+              {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1">
+          <nav className={cn("py-4 space-y-1", collapsed ? "px-1.5" : "px-3")}>
+            <DraggableGroup
+              items={menuItems}
+              groupKey="menu"
+              activeView={activeView}
+              onViewChange={onViewChange}
+              onReorder={handleMenuReorder}
+              collapsed={collapsed}
+            />
+
+            {!collapsed && (
+              <div className="pt-4 pb-1 px-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Settings
+                </span>
+              </div>
+            )}
+            {collapsed && <div className="my-2 mx-1 border-t border-sidebar-border" />}
+            <DraggableGroup
+              items={settingsItems}
+              groupKey="settings"
+              activeView={activeView}
+              onViewChange={onViewChange}
+              onReorder={handleSettingsReorder}
+              collapsed={collapsed}
+            />
+
+            {!collapsed && (
+              <div className="pt-4 pb-1 px-3">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Configuration
+                </span>
+              </div>
+            )}
+            {collapsed && <div className="my-2 mx-1 border-t border-sidebar-border" />}
+            <DraggableGroup
+              items={configItems}
+              groupKey="config"
+              activeView={activeView}
+              onViewChange={onViewChange}
+              onReorder={handleConfigReorder}
+              collapsed={collapsed}
+            />
+          </nav>
+        </ScrollArea>
+
+        {/* Screen Size Picker */}
+        {!collapsed ? (
+          <div className="px-3 pt-3 pb-1 border-t border-sidebar-border shrink-0">
+            <div className="flex items-center gap-1.5 px-1 pb-2">
+              <Monitor className="w-3.5 h-3.5 text-sidebar-foreground/60" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">Screen</span>
+            </div>
+            <div className="flex gap-0.5 bg-sidebar-accent/50 rounded-lg p-0.5">
+              {screenSizes.map((size) => (
+                <Button
+                  key={size.label}
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex-1 h-6 px-0 text-[10px] font-medium rounded-md transition-all",
+                    activeScreenSize.label === size.label
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                  onClick={() => onScreenSizeChange(size)}
+                >
+                  {size.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="px-1.5 pt-2 pb-1 border-t border-sidebar-border shrink-0 flex justify-center">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="p-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors">
+                  <Monitor className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                Screen: {activeScreenSize.label}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* Back to Launcher */}
+        {onBackToLauncher && (
+          <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "px-1.5 pt-2" : "px-3 pt-3")}>
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onBackToLauncher}
+                    className="w-full flex items-center justify-center p-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>All Apps</TooltipContent>
+              </Tooltip>
+            ) : (
+              <button
+                onClick={onBackToLauncher}
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>All Apps</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Sign Out */}
+        <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "p-1.5" : "p-3")}>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>Sign Out</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
-              {size.label}
-            </Button>
-          ))}
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          )}
         </div>
-      </div>
-
-      {/* Back to Launcher */}
-      {onBackToLauncher && (
-        <div className="px-3 pt-3 border-t border-sidebar-border shrink-0">
-          <button
-            onClick={onBackToLauncher}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>All Apps</span>
-          </button>
-        </div>
-      )}
-
-      {/* Sign Out */}
-      <div className="p-3 border-t border-sidebar-border shrink-0">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out</span>
-        </button>
-      </div>
-    </aside>
+      </aside>
+    </TooltipProvider>
   );
 }
