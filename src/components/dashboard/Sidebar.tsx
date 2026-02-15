@@ -25,6 +25,7 @@ export interface ScreenSizeOption {
 }
 
 export const screenSizes: ScreenSizeOption[] = [
+  { label: "iPad", width: 1024 },
   { label: "14\"", width: 1366 },
   { label: "16\"", width: 1536 },
   { label: "24\"", width: 1920 },
