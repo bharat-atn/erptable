@@ -37,6 +37,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
+  const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
 
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
@@ -80,6 +81,8 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       toast.success(`${ids.length} contract(s) deleted successfully`);
       setBulkDeleteIds(null);
+      clearSelectionFn?.();
+      setClearSelectionFn(null);
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete contracts: ${error.message}`);
@@ -152,7 +155,10 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
             variant="destructive"
             size="sm"
             className="gap-1.5"
-            onClick={() => setBulkDeleteIds(selectedKeys)}
+            onClick={() => {
+              setBulkDeleteIds(selectedKeys);
+              setClearSelectionFn(() => clearSelection);
+            }}
           >
             <Trash2 className="w-3.5 h-3.5" /> Delete {selectedKeys.length}
           </Button>
