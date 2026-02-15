@@ -49,10 +49,12 @@ import {
   Mail,
   MapPin,
   Package,
+  LogOut,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
+import { supabase } from "@/integrations/supabase/client";
 // Icon registry for serialization
 const ICON_MAP: Record<string, LucideIcon> = {
   Users,
@@ -469,6 +471,27 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
             >
               <Settings2 className="w-4 h-4" />
               {editMode ? "Done" : "Customize"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open("https://scandi-forest-zen.lovable.app", "_blank")}
+              className="gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Home
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                toast({ title: "Signed out successfully" });
+              }}
+              className="gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Log Out
             </Button>
           </div>
         </div>
