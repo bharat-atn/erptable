@@ -64,48 +64,7 @@ const COUNTRIES = [
   "Estonia", "Germany", "Spain", "France", "Thailand",
 ];
 
-const JOB_TYPES = [
-  {
-    group: "Type 1: General Forestry Work",
-    items: [
-      "Planting / Plantering",
-      "Brush clearing / Motormanuell röjning",
-      "Chainsaw felling / Motormanuell huggning",
-    ],
-  },
-  {
-    group: "Type 2: Nursery Work",
-    items: [
-      "Nursery worker type 1 / Plantskolearbetare typ 1",
-      "Nursery worker type 2 / Plantskolearbetare typ 2",
-      "Nursery worker type 3 / Plantskolearbetare typ 3",
-    ],
-  },
-  {
-    group: "Type 3: Machine Work",
-    items: [
-      "Forwarder operator / Skotarförare",
-      "Harvester operator / Skördarförare",
-      "Combined operator / Både skotar- + skördarförare",
-    ],
-  },
-  {
-    group: "Type 4: Machine Repair Work",
-    items: [
-      "Machine repair LG2 / Maskinreparation LG2",
-      "Machine repair LG3 / Maskinreparation LG3",
-    ],
-  },
-  {
-    group: "Type 5: Special Forestry Work",
-    items: [
-      "Data collection / Enklare datainsamling",
-      "Qualified tasks / Kvalificerade uppgifter",
-      "Conservation planning / Naturvårdsplanläggning",
-      "Team leader / Lagbas",
-    ],
-  },
-];
+// JOB_TYPES now fetched dynamically from the positions table
 
 const EXPERIENCE_LEVELS = [
   "Entry Level / Nybörjare (0 years / < 1 season / 0 år / < 1 säsong)",
@@ -124,6 +83,33 @@ export function ContractDetailsStep({
   onNext,
   onGoToStep,
 }: ContractDetailsStepProps) {
+  // Fetch active positions from DB
+  const { data: activePositions = [] } = useQuery({
+    queryKey: ["positions-active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("positions")
+        .select("*")
+        .order("type_number")
+        .order("sort_order");
+      if (error) throw error;
+      // Filter active positions (is_active defaults to true)
+      return (data || []).filter((p: any) => p.is_active !== false);
+    },
+  });
+
+  // Group active positions by type for the dropdown
+  const jobTypeGroups = activePositions.reduce<Array<{ group: string; items: Array<{ label: string; value: string }> }>>((acc, pos: any) => {
+    const groupLabel = `Type ${pos.type_number}: ${pos.type_label_en}${pos.type_label_sv ? ` / ${pos.type_label_sv}` : ''}`;
+    let group = acc.find(g => g.group === groupLabel);
+    if (!group) {
+      group = { group: groupLabel, items: [] };
+      acc.push(group);
+    }
+    group.items.push({ label: `${pos.label_en} / ${pos.label_sv}`, value: `${pos.label_en} / ${pos.label_sv}` });
+    return acc;
+  }, []);
+
   const [section1Open, setSection1Open] = useState(false);
   const [section21Open, setSection21Open] = useState(true);
   const [section22Open, setSection22Open] = useState(true);
@@ -1161,14 +1147,14 @@ export function ContractDetailsStep({
                     <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {JOB_TYPES.map((group) => (
+                    {jobTypeGroups.map((group) => (
                       <SelectGroup key={group.group}>
                         <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                           {group.group}
                         </SelectLabel>
                         {group.items.map((item) => (
-                          <SelectItem key={item} value={item}>
-                            {item}
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
                           </SelectItem>
                         ))}
                       </SelectGroup>
