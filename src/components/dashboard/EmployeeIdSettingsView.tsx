@@ -5,9 +5,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Hash } from "lucide-react";
 import { toast } from "sonner";
+
+const separatorOptions = [
+  { value: "-", label: "Hyphen ( - )" },
+  { value: "/", label: "Slash ( / )" },
+  { value: ".", label: "Dot ( . )" },
+  { value: "_", label: "Underscore ( _ )" },
+];
+
+const paddingOptions = [
+  { value: 3, label: "3 digits (001)" },
+  { value: 4, label: "4 digits (0001)" },
+  { value: 5, label: "5 digits (00001)" },
+];
 
 interface EmployeeIdConfig {
   id: string;
@@ -108,26 +121,36 @@ export function EmployeeIdSettingsView() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="separator">Separator / Separator</Label>
-                <Input
-                  id="separator"
+                <Label htmlFor="separator">Separator</Label>
+                <Select
                   value={form.separator}
-                  onChange={(e) => setForm((p) => ({ ...p, separator: e.target.value }))}
-                  placeholder="-"
-                  required
-                />
+                  onValueChange={(v) => setForm((p) => ({ ...p, separator: v }))}
+                >
+                  <SelectTrigger id="separator">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {separatorOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="padding">Number Padding / Siffror</Label>
-                <Input
-                  id="padding"
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={form.padding}
-                  onChange={(e) => setForm((p) => ({ ...p, padding: Number(e.target.value) }))}
-                  required
-                />
+                <Label htmlFor="padding">Number Padding</Label>
+                <Select
+                  value={String(form.padding)}
+                  onValueChange={(v) => setForm((p) => ({ ...p, padding: Number(v) }))}
+                >
+                  <SelectTrigger id="padding">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {paddingOptions.map((o) => (
+                      <SelectItem key={o.value} value={String(o.value)}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="next_number">Next Number / Nästa nummer</Label>
@@ -146,11 +169,9 @@ export function EmployeeIdSettingsView() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border border-border">
-              <span className="text-sm text-muted-foreground">Preview:</span>
-              <Badge variant="secondary" className="text-sm font-mono">
-                {preview}
-              </Badge>
+            <div className="p-3 rounded-md bg-muted/50 border border-border">
+              <p className="text-xs text-muted-foreground mb-1">Preview — next employee number:</p>
+              <p className="text-lg font-semibold font-mono">{preview}</p>
             </div>
 
             <Button type="submit" disabled={mutation.isPending}>
