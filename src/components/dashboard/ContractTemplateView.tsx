@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Building2, Check, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase, CalendarDays } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
 import { ContractDetailsStep } from "./ContractDetailsStep";
+import { CodeOfConductStep } from "./CodeOfConductStep";
 interface Company {
   id: string;
   name: string;
@@ -112,6 +113,11 @@ const steps = [{
   icon: CalendarDays
 }, {
   id: 17,
+  label: "Code of Conduct",
+  labelSv: "Uppförandekod",
+  icon: Briefcase
+}, {
+  id: 18,
   label: "Signing",
   labelSv: "Underskrift",
   icon: Briefcase
@@ -130,6 +136,8 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
   const [selectedLanguage, setSelectedLanguage] = useState("EN/SE");
   const [contractId, setContractId] = useState<string | null>(null);
   const [resumeLoaded, setResumeLoaded] = useState(false);
+  const [cocLanguage, setCocLanguage] = useState<string | null>(null);
+  const [cocReviewed, setCocReviewed] = useState(false);
   const {
     data: companies = []
   } = useQuery({
@@ -188,8 +196,13 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
       const formData = (data.form_data as Record<string, any>) || {};
       let resumeStep = 4; // default to employee details
 
+      // Load COC state if saved
+      if (formData.cocLanguage) setCocLanguage(formData.cocLanguage);
+      if (formData.cocReviewed) setCocReviewed(formData.cocReviewed);
+
       // Determine furthest completed step from form_data
-      if (formData.schedulingData) resumeStep = 16; // scheduling
+      if (formData.cocReviewed) resumeStep = 17; // code of conduct done
+      else if (formData.schedulingData) resumeStep = 16; // scheduling
       else if (formData.salaryDeductions) resumeStep = 15; // deductions
       else if (formData.miscellaneousText !== undefined) resumeStep = 14; // notes
       else if (formData.trainingSkotselskolan !== undefined) resumeStep = 13; // misc
@@ -212,13 +225,9 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
     if (stepId === 1) return !!selectedCompanyId;
     if (stepId === 2) return !!selectedEmployee;
     if (stepId === 3) return !!selectedLanguage;
-    if (stepId === 4) return activeStep > 4;
-    if (stepId === 5) return activeStep > 5;
-    if (stepId === 6) return activeStep > 6;
-    if (stepId === 7) return activeStep > 7;
-    if (stepId === 8) return activeStep > 8;
-    if (stepId === 9) return activeStep > 9;
-    if (stepId === 10) return activeStep > 10;
+    if (stepId >= 4 && stepId <= 16) return activeStep > stepId;
+    if (stepId === 17) return cocReviewed;
+    if (stepId === 18) return false;
     return false;
   };
   const filteredEmployees = employees.filter(e => {
@@ -419,7 +428,17 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
               setActiveStep(4);
             }} />}
 
-          {activeStep >= 4 && activeStep <= 17 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : activeStep === 16 ? "section-scheduling" : "section-14"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} onGoToStep={(step: number) => setActiveStep(step)} />}
+          {activeStep >= 4 && activeStep <= 16 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : "section-scheduling"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} onGoToStep={(step: number) => setActiveStep(step)} />}
+
+          {activeStep === 17 && selectedCompany && selectedEmployee && contractId && <CodeOfConductStep selectedLanguage={cocLanguage} onSelectLanguage={setCocLanguage} reviewed={cocReviewed} onSetReviewed={setCocReviewed} onBack={() => setActiveStep(16)} onNext={async () => {
+            // Persist COC data to form_data
+            const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
+            const fd = (existing?.form_data as Record<string, any>) || {};
+            await supabase.from("contracts").update({ form_data: { ...fd, cocLanguage, cocReviewed: true } }).eq("id", contractId);
+            setActiveStep(18);
+          }} />}
+
+          {activeStep === 18 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection="section-14" onBack={() => setActiveStep(17)} onNext={() => {}} onGoToStep={(step: number) => setActiveStep(step)} />}
         </div>
       </div>
 
