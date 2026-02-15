@@ -61,7 +61,7 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
   const isConstrained = screenSize.width !== null;
 
   return (
-    <div className="flex justify-center min-h-screen bg-muted/30">
+    <div className={cn("flex min-h-screen", isConstrained ? "justify-center bg-muted/30" : "")}>
       <div
         className={cn(
           "flex min-h-screen bg-background transition-all duration-300 ease-out",
