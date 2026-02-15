@@ -266,9 +266,9 @@ export function CompanyFormDialog({
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // AI address validation - debounced
-  const runAiValidation = useCallback((country: string, postcode: string, city: string, address: string, phone: string, currentDialCode: string) => {
+  const runAiValidation = useCallback((country: string, postcode: string, city: string, address: string, phone: string, currentDialCode: string, org_number: string) => {
     if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
-    if (!country || (!postcode && !city && !address && !phone)) {
+    if (!country || (!postcode && !city && !address && !phone && !org_number)) {
       setAiValidation({});
       return;
     }
@@ -277,10 +277,16 @@ export function CompanyFormDialog({
       setAiValidation({});
       try {
         const { data, error } = await supabase.functions.invoke("validate-address", {
-          body: { country, postcode, city, address, phone, dialCode: currentDialCode },
+          body: { country, postcode, city, address, phone, dialCode: currentDialCode, org_number },
         });
         if (error) throw error;
         const messages: Record<string, string> = {};
+        if (data.org_number_valid === false && data.org_number_message) {
+          messages.org_number_ai = data.org_number_message;
+        }
+        if (data.org_number_valid === true && org_number) {
+          messages.org_number_ok_ai = data.org_number_message || "AI verified: valid organization number";
+        }
         if (data.postcode_valid === false && data.postcode_message) {
           messages.postcode_ai = data.postcode_message;
         }
@@ -345,8 +351,8 @@ export function CompanyFormDialog({
   }, [initialData, open]);
 
   const triggerAi = useCallback((nextForm: CompanyFormData, currentDialCode: string) => {
-    if (nextForm.country && (nextForm.postcode || nextForm.city || nextForm.address || nextForm.phone)) {
-      runAiValidation(nextForm.country, nextForm.postcode, nextForm.city, nextForm.address, nextForm.phone, currentDialCode);
+    if (nextForm.country && (nextForm.postcode || nextForm.city || nextForm.address || nextForm.phone || nextForm.org_number)) {
+      runAiValidation(nextForm.country, nextForm.postcode, nextForm.city, nextForm.address, nextForm.phone, currentDialCode, nextForm.org_number);
     }
   }, [runAiValidation]);
 
@@ -363,7 +369,7 @@ export function CompanyFormDialog({
         }
       }
       // Trigger AI validation for any relevant field change
-      if (["postcode", "city", "country", "address", "phone"].includes(key)) {
+      if (["postcode", "city", "country", "address", "phone", "org_number"].includes(key)) {
         triggerAi(next, dialCode);
       }
       return next;
@@ -377,7 +383,7 @@ export function CompanyFormDialog({
     setDialCode(newDialCode);
     // Re-trigger AI validation with new dial code
     if (form.country && form.phone) {
-      runAiValidation(form.country, form.postcode, form.city, form.address, form.phone, newDialCode);
+      runAiValidation(form.country, form.postcode, form.city, form.address, form.phone, newDialCode, form.org_number);
     }
   };
 
@@ -463,9 +469,17 @@ export function CompanyFormDialog({
                 onChange={(e) => set("org_number", e.target.value)}
                 onBlur={() => markTouched("org_number")}
                 placeholder="e.g. 556677-8899"
-                className={cn(errors.org_number && touched.has("org_number") && "border-destructive focus-visible:ring-destructive")}
+                className={cn(
+                  (errors.org_number && touched.has("org_number")) && "border-destructive focus-visible:ring-destructive",
+                  aiValidation.org_number_ai && "border-destructive focus-visible:ring-destructive"
+                )}
               />
-              <FieldMessage error={touched.has("org_number") ? errors.org_number : undefined} valid={isFieldValid("org_number")} />
+              <FieldMessage
+                error={touched.has("org_number") ? (errors.org_number || aiValidation.org_number_ai) : undefined}
+                valid={isFieldValid("org_number") && !aiValidation.org_number_ai}
+                loading={aiLoading && !!form.org_number && !!form.country}
+                info={!errors.org_number && !aiValidation.org_number_ai && aiValidation.org_number_ok_ai ? aiValidation.org_number_ok_ai : undefined}
+              />
             </div>
 
             {/* Country first - enables smart validation for postcode/city */}
