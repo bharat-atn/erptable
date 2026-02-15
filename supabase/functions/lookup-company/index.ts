@@ -54,6 +54,7 @@ CRITICAL RULES:
 - For the address: extract ONLY the "Besöksadress" (visiting address) that belongs to "${companyName}", not addresses of other companies.
 - Set confidence to "high" ONLY for data directly found in the text next to/about "${companyName}".
 - Set confidence to "none" for any field where you return an empty string.
+- Extract ALL available business data: board members, CEO (VD), bankgiro, plusgiro, SNI codes, revenue, number of employees, F-skatt status, VAT registration.
 
 Company we are looking for: "${companyName}"
 
@@ -66,7 +67,7 @@ Respond ONLY with valid JSON (no markdown, no backticks):
 {
   "found": true/false,
   "registered_name": "official company name with correct capitalization, or empty string",
-  "org_number": "organization number as shown in text or empty string",
+  "org_number": "organization number as shown in text (e.g. 556830-5360) or empty string",
   "country": "Sweden",
   "address": "street address from Besöksadress section or empty string",
   "postcode": "postal code or empty string",
@@ -76,6 +77,17 @@ Respond ONLY with valid JSON (no markdown, no backticks):
   "email": "email or empty string",
   "website": "website URL or empty string",
   "company_type": "e.g. Aktiebolag, or empty string",
+  "bankgiro": "bankgiro number or empty string",
+  "plusgiro": "plusgiro number or empty string",
+  "ceo_name": "VD / CEO name or empty string",
+  "board_members": ["array of board member names or empty array"],
+  "sni_codes": ["array of SNI codes with descriptions, e.g. '62100 Dataprogrammering'"],
+  "revenue_sek": "latest revenue in SEK or empty string",
+  "num_employees": "number of employees or empty string",
+  "f_skatt": "Ja/Nej or empty string",
+  "vat_registered": "Ja/Nej or empty string",
+  "vat_number": "VAT/moms number or empty string",
+  "registration_date": "company registration date or empty string",
   "confidence": {
     "overall": "high/medium/low/none",
     "org_number": "high/none",
@@ -84,7 +96,9 @@ Respond ONLY with valid JSON (no markdown, no backticks):
     "city": "high/none",
     "phone": "high/none",
     "email": "high/none",
-    "website": "high/none"
+    "website": "high/none",
+    "bankgiro": "high/none",
+    "ceo_name": "high/none"
   },
   "warnings": [],
   "message": "brief summary"
@@ -227,7 +241,21 @@ serve(async (req) => {
       const searchUrl = `https://www.hitta.se/sök?vad=${encodeURIComponent(company_name)}`;
       scrapedMarkdown = await firecrawlScrape(searchUrl, FIRECRAWL_API_KEY);
 
-      // If org number is provided, also try the företagsinformation page directly
+      // If we got search results with an org number, also scrape the företagsinformation page for richer data
+      if (scrapedMarkdown && scrapedMarkdown.length > 100) {
+        // Try to find the org number link in the scraped content to get the detailed page
+        const orgMatch = scrapedMarkdown.match(/företagsinformation\/[^/]+\/(\d{10})/);
+        if (orgMatch) {
+          const detailUrl = `https://www.hitta.se/företagsinformation/${orgMatch[0].split('/')[1]}/${orgMatch[1]}`;
+          const detailMarkdown = await firecrawlScrape(detailUrl, FIRECRAWL_API_KEY);
+          if (detailMarkdown && detailMarkdown.length > 100) {
+            // Combine both pages for maximum data extraction
+            scrapedMarkdown = scrapedMarkdown + "\n\n--- DETAILED COMPANY PAGE ---\n\n" + detailMarkdown;
+          }
+        }
+      }
+
+      // If org number is provided but no results, try the företagsinformation page directly
       if ((!scrapedMarkdown || scrapedMarkdown.length < 100) && org_number) {
         const cleanOrg = org_number.replace(/\D/g, "");
         if (cleanOrg.length >= 6) {
@@ -249,7 +277,8 @@ serve(async (req) => {
           const source = "hitta.se (Bolagsverket / Skatteverket registry data)";
           result.sources = {};
           result.verified = true;
-          for (const field of ["org_number", "address", "postcode", "city", "phone", "email", "website"]) {
+          const allFields = ["org_number", "address", "postcode", "city", "phone", "email", "website", "bankgiro", "ceo_name", "company_type"];
+          for (const field of allFields) {
             if (result[field]) {
               result.sources[field] = source;
             } else {

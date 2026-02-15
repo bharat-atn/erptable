@@ -25,6 +25,9 @@ interface Company {
   email: string | null;
   country: string | null;
   website: string | null;
+  bankgiro: string | null;
+  ceo_name: string | null;
+  company_type: string | null;
 }
 
 const columns: ColumnDef<Company>[] = [
@@ -133,7 +136,7 @@ export function CompanyRegisterView() {
         open={dialogOpen}
         onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingCompany(null); }}
         onSubmit={(data) => upsertMutation.mutate(editingCompany ? { ...data, id: editingCompany.id } : data)}
-        initialData={editingCompany}
+        initialData={editingCompany ? { ...editingCompany, bankgiro: (editingCompany as any).bankgiro || "", ceo_name: (editingCompany as any).ceo_name || "", company_type: (editingCompany as any).company_type || "" } : null}
       />
 
       <DeleteConfirmDialog
