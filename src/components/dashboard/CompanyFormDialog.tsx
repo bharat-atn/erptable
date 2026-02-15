@@ -62,7 +62,7 @@ const initialForm: CompanyFormData = {
 
 // ─── Field Error Indicator ───────────────────────────────────────
 
-function FieldMessage({ error, valid, info, loading, autoFilled }: { error?: string; valid?: boolean; info?: string; loading?: boolean; autoFilled?: boolean }) {
+function FieldMessage({ error, valid, info, loading, autoFilled, source }: { error?: string; valid?: boolean; info?: string; loading?: boolean; autoFilled?: boolean; source?: string }) {
   if (loading) {
     return (
       <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 animate-fade-in">
@@ -86,9 +86,16 @@ function FieldMessage({ error, valid, info, loading, autoFilled }: { error?: str
   }
   if (autoFilled) {
     return (
-      <p className="flex items-center gap-1 text-[11px] text-primary mt-1 animate-fade-in">
-        <Sparkles className="w-3 h-3 shrink-0" /> Auto-filled by AI
-      </p>
+      <div className="mt-1 animate-fade-in">
+        <p className="flex items-center gap-1 text-[11px] text-primary">
+          <Sparkles className="w-3 h-3 shrink-0" /> Auto-filled by AI
+        </p>
+        {source && (
+          <p className="text-[10px] text-muted-foreground ml-4">
+            Source: {source}
+          </p>
+        )}
+      </div>
     );
   }
   if (valid) {
@@ -272,16 +279,18 @@ export function CompanyFormDialog({
   const [aiLoading, setAiLoading] = useState(false);
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string> } | null>(null);
+  const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string>; sources?: Record<string, string> } | null>(null);
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
   const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Company lookup - auto-fill form from AI
   const runCompanyLookup = useCallback(async (name: string, org_number: string) => {
-    if (!name.trim() || !org_number.trim()) return;
-    // Need at least a reasonable org number (6+ digit chars)
-    const digitCount = org_number.replace(/[\s\-\.]/g, "").length;
-    if (digitCount < 6) return;
+    if (!name.trim()) return;
+    // If org number is provided, need at least 6 digit chars
+    if (org_number.trim()) {
+      const digitCount = org_number.replace(/[\s\-\.]/g, "").length;
+      if (digitCount < 6) return;
+    }
 
     setLookupLoading(true);
     setLookupResult(null);
@@ -293,15 +302,18 @@ export function CompanyFormDialog({
 
       if (data.found) {
         const filled = new Set<string>();
+        // Post-process: ensure city uppercase and phone has no leading zero
+        const city = data.city ? data.city.toUpperCase() : "";
+        const phone = data.phone ? data.phone.replace(/^0+/, "") : "";
         setForm((prev) => {
           const next = { ...prev };
           if (data.country && !prev.country) { next.country = data.country; filled.add("country"); }
           if (data.address && !prev.address) { next.address = data.address; filled.add("address"); }
           if (data.postcode && !prev.postcode) { next.postcode = data.postcode; filled.add("postcode"); }
-          if (data.city && !prev.city) { next.city = data.city; filled.add("city"); }
+          if (city && !prev.city) { next.city = city; filled.add("city"); }
           if (data.email && !prev.email) { next.email = data.email; filled.add("email"); }
           if (data.website && !prev.website) { next.website = data.website; filled.add("website"); }
-          if (data.phone && !prev.phone) { next.phone = data.phone; filled.add("phone"); }
+          if (phone && !prev.phone) { next.phone = phone; filled.add("phone"); }
           return next;
         });
         if (data.dial_code) {
@@ -312,6 +324,7 @@ export function CompanyFormDialog({
           warnings: data.warnings,
           message: data.message,
           confidence: data.confidence,
+          sources: data.sources,
         });
       } else {
         setLookupResult({
@@ -613,7 +626,7 @@ export function CompanyFormDialog({
                 Country / Land
               </Label>
               <CountryCombobox value={form.country} onChange={(v) => { set("country", v); markTouched("country"); }} />
-              <FieldMessage valid={isFieldValid("country")} autoFilled={autoFilled.has("country")} />
+              <FieldMessage valid={isFieldValid("country")} autoFilled={autoFilled.has("country")} source={lookupResult?.sources?.country} />
             </div>
 
             <div className="space-y-1.5">
@@ -634,7 +647,7 @@ export function CompanyFormDialog({
                 valid={isFieldValid("address") && !aiValidation.address_ai}
                 loading={aiLoading && !!form.address}
                 info={!errors.address && !aiValidation.address_ai && aiValidation.address_ok_ai && form.address ? aiValidation.address_ok_ai : undefined}
-                autoFilled={autoFilled.has("address")}
+                autoFilled={autoFilled.has("address")} source={lookupResult?.sources?.address}
               />
             </div>
 
@@ -663,7 +676,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("postcode") && !aiValidation.postcode_ai}
                   loading={aiLoading && !!form.postcode}
                   info={!errors.postcode && !aiValidation.postcode_ai && aiValidation.address_ok && form.postcode ? aiValidation.address_ok : undefined}
-                  autoFilled={autoFilled.has("postcode")}
+                  autoFilled={autoFilled.has("postcode")} source={lookupResult?.sources?.postcode}
                 />
               </div>
               <div className="space-y-1.5">
@@ -684,7 +697,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("city") && !aiValidation.city_ai}
                   loading={aiLoading && !!form.city}
                   info={aiValidation.match_ai || undefined}
-                  autoFilled={autoFilled.has("city")}
+                  autoFilled={autoFilled.has("city")} source={lookupResult?.sources?.city}
                 />
               </div>
             </div>
@@ -713,7 +726,7 @@ export function CompanyFormDialog({
                   valid={isFieldValid("phone") && !aiValidation.phone_ai}
                   loading={aiLoading && !!form.phone}
                   info={!errors.phone && !aiValidation.phone_ai && aiValidation.phone_ok_ai && form.phone ? aiValidation.phone_ok_ai : undefined}
-                  autoFilled={autoFilled.has("phone")}
+                  autoFilled={autoFilled.has("phone")} source={lookupResult?.sources?.phone}
                 />
               </div>
             </div>
@@ -730,7 +743,7 @@ export function CompanyFormDialog({
                 placeholder="company@example.com"
                 className={cn(errors.email && touched.has("email") && "border-destructive focus-visible:ring-destructive")}
               />
-              <FieldMessage error={touched.has("email") ? errors.email : undefined} valid={isFieldValid("email")} autoFilled={autoFilled.has("email")} />
+              <FieldMessage error={touched.has("email") ? errors.email : undefined} valid={isFieldValid("email")} autoFilled={autoFilled.has("email")} source={lookupResult?.sources?.email} />
             </div>
 
             <div className="space-y-1.5">
@@ -744,7 +757,7 @@ export function CompanyFormDialog({
                 placeholder="www.example.com"
                 className={cn(errors.website && touched.has("website") && "border-destructive focus-visible:ring-destructive")}
               />
-              <FieldMessage error={touched.has("website") ? errors.website : undefined} valid={isFieldValid("website")} autoFilled={autoFilled.has("website")} />
+              <FieldMessage error={touched.has("website") ? errors.website : undefined} valid={isFieldValid("website")} autoFilled={autoFilled.has("website")} source={lookupResult?.sources?.website} />
             </div>
           </form>
         </ScrollArea>
