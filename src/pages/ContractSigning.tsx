@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
-import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink } from "lucide-react";
+import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
 
@@ -49,6 +49,7 @@ export default function ContractSigning() {
   const [cocReviewed, setCocReviewed] = useState(false);
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
+  const [scheduleReviewed, setScheduleReviewed] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -127,7 +128,8 @@ export default function ContractSigning() {
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const fd = data.form_data || {};
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const canSign = cocReviewed && cocConfirmed && contractConfirmed;
+  const schedData = fd.schedulingData as Record<string, any> | undefined;
+  const canSign = cocReviewed && cocConfirmed && contractConfirmed && (scheduleReviewed || !schedData);
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
@@ -195,7 +197,7 @@ export default function ContractSigning() {
                 ))}
               </div>
 
-              {/* PDF viewer */}
+              {/* PDF download card instead of iframe */}
               {selectedCocLang && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -209,12 +211,16 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-                    <iframe
-                      src={selectedCocLang.file}
-                      className="w-full h-[400px] sm:h-[500px]"
-                      title={`Code of Conduct - ${selectedCocLang.labelEn}`}
-                    />
+                  <div className="rounded-lg border border-border bg-muted/20 p-6 flex flex-col items-center gap-3">
+                    <div className="w-14 h-14 rounded-lg bg-accent flex items-center justify-center">
+                      <span className="text-3xl">📄</span>
+                    </div>
+                    <p className="text-sm font-medium text-center">
+                      Code of Conduct — {selectedCocLang.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {selectedCocLang.file.split('/').pop()}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Button
@@ -224,7 +230,7 @@ export default function ContractSigning() {
                       className="gap-2"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Open in new tab / Öppna i ny flik
+                      Open & Review / Öppna & granska
                     </Button>
                     {!cocReviewed && (
                       <Button
@@ -240,6 +246,55 @@ export default function ContractSigning() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Schedule Appendix Review */}
+        {!alreadySigned && !signed && schedData && (
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                Schedule Appendix / Schemabilaga
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <span className="text-muted-foreground">Contract period / Avtalsperiod:</span>
+                  <span className="font-medium">{schedData.contractStartDate || "—"} → {schedData.contractEndDate || "—"}</span>
+                  <span className="text-muted-foreground">Work period / Arbetsperiod:</span>
+                  <span className="font-medium">{schedData.workStartDate || "—"} → {schedData.workEndDate || "—"}</span>
+                  <span className="text-muted-foreground">Weekly hours / Veckotimmar:</span>
+                  <span className="font-medium">{schedData.weeklyHours || 40}h</span>
+                  <span className="text-muted-foreground">Daily hours / Dagliga timmar:</span>
+                  <span className="font-medium">{schedData.startTime || "06:30"} – {schedData.endTime || "17:00"}</span>
+                  {schedData.vacationEnabled && (
+                    <>
+                      <span className="text-muted-foreground">Vacation / Semester:</span>
+                      <span className="font-medium">{schedData.vacationStartDate || "—"} → {schedData.vacationEndDate || "—"}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                {scheduleReviewed ? (
+                  <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                    <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
+                  </span>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setScheduleReviewed(true)}
+                    className="gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    Mark as reviewed / Markera som granskad
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -279,8 +334,8 @@ export default function ContractSigning() {
                       {contractConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
                     </div>
                     <span className="text-sm">
-                      I have read and agree to the terms of this employment contract. /
-                      <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal.</span>
+                      I have read and agree to the terms of this employment contract and schedule. /
+                      <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
                     </span>
                   </label>
                   <label
