@@ -6,6 +6,191 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ─── Firecrawl scrape helper ─────────────────────────────────────
+async function firecrawlScrape(url: string, apiKey: string): Promise<string | null> {
+  try {
+    console.log("Firecrawl scraping:", url);
+    const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        formats: ["markdown"],
+        onlyMainContent: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Firecrawl error [${response.status}]:`, errText);
+      return null;
+    }
+
+    const data = await response.json();
+    const markdown = data?.data?.markdown || data?.markdown || null;
+    console.log("Firecrawl scraped", markdown ? markdown.length : 0, "chars");
+    return markdown;
+  } catch (err) {
+    console.error("Firecrawl scrape failed:", err);
+    return null;
+  }
+}
+
+// ─── Parse scraped content with AI ───────────────────────────────
+async function parseWithAI(scrapedContent: string, companyName: string, lovableApiKey: string) {
+  const prompt = `You are a strict data extraction tool. You MUST extract ONLY information that is explicitly present in the text below. 
+
+RULES:
+- If a piece of information is NOT found in the text, return an EMPTY STRING for that field.
+- Do NOT guess, infer, fabricate, or make up ANY information.
+- Only return data you can directly quote or reference from the text.
+- City names MUST be in UPPERCASE.
+- Phone numbers: strip any leading zero after the country code.
+- Set confidence to "high" ONLY for data directly found in the text.
+- Set confidence to "none" for any field where you return an empty string.
+
+Company we are looking for: "${companyName}"
+
+TEXT TO EXTRACT FROM:
+---
+${scrapedContent}
+---
+
+Respond ONLY with valid JSON (no markdown, no backticks):
+{
+  "found": true/false,
+  "org_number": "organization number as shown in text or empty string",
+  "country": "Sweden",
+  "address": "street address or empty string",
+  "postcode": "postal code or empty string",
+  "city": "CITY IN UPPERCASE or empty string",
+  "phone": "phone number without leading zero, without dial code, or empty string",
+  "dial_code": "+46",
+  "email": "email or empty string",
+  "website": "website URL or empty string",
+  "company_type": "e.g. Aktiebolag, or empty string",
+  "confidence": {
+    "overall": "high/medium/low/none",
+    "org_number": "high/none",
+    "address": "high/none",
+    "postcode": "high/none",
+    "city": "high/none",
+    "phone": "high/none",
+    "email": "high/none",
+    "website": "high/none"
+  },
+  "warnings": [],
+  "message": "brief summary"
+}`;
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0,
+      max_tokens: 800,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`AI gateway error [${response.status}]: ${errText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Could not parse AI response");
+  return JSON.parse(jsonMatch[0]);
+}
+
+// ─── AI fallback for non-Swedish companies ───────────────────────
+async function aiFallbackLookup(companyName: string, orgNumber: string, lovableApiKey: string) {
+  const prompt = `You are a business registry lookup assistant. Given the company information below, provide what you know.
+
+Company name: "${companyName}"
+${orgNumber ? `Organization number: "${orgNumber}"` : ""}
+
+IMPORTANT: Be honest about your confidence. Mark all fields as source "AI knowledge base" since this is from training data, not a verified registry. If you are not confident about a field, return an empty string instead of guessing.
+
+City names MUST be in UPPERCASE.
+Phone numbers: after the country dial code, strip any leading zero.
+
+Respond ONLY with valid JSON (no markdown):
+{
+  "found": true/false,
+  "org_number": "${orgNumber || ""}",
+  "country": "country or empty string",
+  "address": "address or empty string",
+  "postcode": "postcode or empty string",
+  "city": "CITY IN UPPERCASE or empty string",
+  "phone": "phone without leading zero, without dial code, or empty string",
+  "dial_code": "dial code or empty string",
+  "email": "email or empty string",
+  "website": "website or empty string",
+  "company_type": "type or empty string",
+  "confidence": {
+    "overall": "low",
+    "org_number": "low",
+    "address": "low",
+    "postcode": "low",
+    "city": "low",
+    "phone": "low",
+    "email": "low",
+    "website": "low"
+  },
+  "warnings": ["Data from AI knowledge base — not verified against official registry. Please verify all fields."],
+  "message": "Data from AI training data — not verified"
+}`;
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.1,
+      max_tokens: 800,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`AI gateway error [${response.status}]: ${errText}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Could not parse AI response");
+  
+  const result = JSON.parse(jsonMatch[0]);
+  // Mark all sources as AI knowledge base
+  result.sources = {
+    org_number: "AI knowledge base (unverified)",
+    address: "AI knowledge base (unverified)",
+    postcode: "AI knowledge base (unverified)",
+    city: "AI knowledge base (unverified)",
+    phone: "AI knowledge base (unverified)",
+    email: "AI knowledge base (unverified)",
+    website: "AI knowledge base (unverified)",
+  };
+  result.verified = false;
+  return result;
+}
+
+// ─── Main handler ────────────────────────────────────────────────
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,6 +204,8 @@ serve(async (req) => {
     });
   }
 
+  const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
+
   try {
     const { company_name, org_number } = await req.json();
 
@@ -28,135 +215,85 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `You are a business registry lookup expert. Given the following company information, provide all known details about this company.
+    // ─── Strategy 1: Scrape hitta.se (Swedish business directory, sourced from Bolagsverket/Skatteverket) ───
+    if (FIRECRAWL_API_KEY) {
+      let scrapedMarkdown: string | null = null;
 
-Company name: "${company_name}"
-${org_number ? `Organization number: "${org_number}"` : "Organization number: (not provided)"}
+      // Search by company name on hitta.se
+      const searchUrl = `https://www.hitta.se/sök?vad=${encodeURIComponent(company_name)}`;
+      scrapedMarkdown = await firecrawlScrape(searchUrl, FIRECRAWL_API_KEY);
 
-Instructions:
-1. First, determine which country this company belongs to based on the name and/or org number format:
-   - Swedish org numbers: 10 digits (NNNNNN-NNNN), companies often start with 556xxx
-   - Norwegian org numbers: 9 digits
-   - Finnish: 7 digits + check digit (NNNNNNN-C)
-   - Danish CVR: 8 digits
-   - For other formats, try to identify the country
-
-2. Based on the company name, org number (if provided), and identified country, provide all the details you know or can reasonably infer about this company:
-   - Registered address (street, postcode, city)
-   - Country
-   - Phone number (with international dial code)
-   - Email address
-   - Website URL
-
-3. CRITICAL RULES FOR FORMATTING:
-   - CITY must ALWAYS be in UPPERCASE (e.g. "STOCKHOLM", "GÖTEBORG", "LJUNGAVERK")
-   - Phone numbers: After the country dial code, NEVER include a leading zero. 
-     Example: Swedish number 070-123 45 67 should become "70-123 45 67" with dial_code "+46"
-     NOT "070-123 45 67" — the zero is dropped when using international format.
-   - Postcode must follow the country's standard format (e.g. Swedish: "XXX XX" with space)
-
-4. For EACH field you provide, you MUST state the source where you found or inferred the information. Sources can be:
-   - "Swedish Companies Registration Office (Bolagsverket)" for Swedish company registry data
-   - "Norwegian Brønnøysund Register Centre" for Norwegian companies
-   - "Public business directory" for general directory lookups
-   - "Company website" if found from their website
-   - "Inferred from company name/location" if you're guessing
-   - "AI knowledge base" if from your training data
-   - Be specific and honest about the source.
-
-5. Rate your confidence for each field: "high" (very likely correct), "medium" (reasonable guess), "low" (uncertain), or "none" (no data).
-
-6. If the org number format is invalid for any known country, or if the company name doesn't match what you'd expect for that org number, flag that.
-
-Respond ONLY with valid JSON (no markdown):
-{
-  "found": true/false,
-  "country": "country name or empty string",
-  "address": "street address or empty string",
-  "postcode": "postal code in correct format or empty string",
-  "city": "CITY NAME IN UPPERCASE or empty string",
-  "phone": "phone number WITHOUT leading zero, WITHOUT dial code, or empty string",
-  "dial_code": "international dial code like +46 or empty string",
-  "email": "email address or empty string",
-  "website": "website URL or empty string",
-  "company_type": "e.g. Aktiebolag (AB), Sole Proprietor, etc. or empty string",
-  "sources": {
-    "address": "source description",
-    "postcode": "source description",
-    "city": "source description",
-    "phone": "source description",
-    "email": "source description",
-    "website": "source description"
-  },
-  "confidence": {
-    "overall": "high/medium/low/none",
-    "address": "high/medium/low/none",
-    "postcode": "high/medium/low/none",
-    "city": "high/medium/low/none",
-    "phone": "high/medium/low/none",
-    "email": "high/medium/low/none",
-    "website": "high/medium/low/none"
-  },
-  "warnings": ["array of warning strings if any issues found"],
-  "message": "brief summary of what was found"
-}`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.1,
-        max_tokens: 800,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // If org number is provided, also try the företagsinformation page directly
+      if ((!scrapedMarkdown || scrapedMarkdown.length < 100) && org_number) {
+        const cleanOrg = org_number.replace(/\D/g, "");
+        if (cleanOrg.length >= 6) {
+          const nameSlug = company_name.toLowerCase().replace(/[^a-zåäö0-9]+/g, "+");
+          const directUrl = `https://www.hitta.se/företagsinformation/${nameSlug}/${cleanOrg}`;
+          scrapedMarkdown = await firecrawlScrape(directUrl, FIRECRAWL_API_KEY);
+        }
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+
+      if (scrapedMarkdown && scrapedMarkdown.length > 100) {
+        try {
+          const result = await parseWithAI(scrapedMarkdown, company_name, LOVABLE_API_KEY);
+          
+          // Post-process
+          if (result.city) result.city = result.city.toUpperCase();
+          if (result.phone) result.phone = result.phone.replace(/^0+/, "");
+
+          // Add verified source attribution for all fields that have data
+          const source = "hitta.se (Bolagsverket / Skatteverket registry data)";
+          result.sources = {};
+          result.verified = true;
+          for (const field of ["org_number", "address", "postcode", "city", "phone", "email", "website"]) {
+            if (result[field]) {
+              result.sources[field] = source;
+            } else {
+              result.sources[field] = "Not found in registry";
+            }
+          }
+
+          return new Response(JSON.stringify(result), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        } catch (parseError) {
+          console.error("AI parsing of scraped content failed:", parseError);
+          // Fall through to AI fallback
+        }
+      } else {
+        console.log("No usable content scraped from hitta.se, falling back to AI");
       }
-      const errText = await response.text();
-      throw new Error(`AI gateway error [${response.status}]: ${errText}`);
+    } else {
+      console.log("FIRECRAWL_API_KEY not set, using AI fallback");
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse AI response");
-    }
-
-    const result = JSON.parse(jsonMatch[0]);
-
-    // Post-process: ensure city is uppercase
-    if (result.city) {
-      result.city = result.city.toUpperCase();
-    }
-
-    // Post-process: strip leading zero from phone
-    if (result.phone) {
-      result.phone = result.phone.replace(/^0+/, "");
-    }
+    // ─── Strategy 2: AI fallback (non-Swedish or Firecrawl unavailable) ───
+    const result = await aiFallbackLookup(company_name, org_number || "", LOVABLE_API_KEY);
+    
+    // Post-process
+    if (result.city) result.city = result.city.toUpperCase();
+    if (result.phone) result.phone = result.phone.replace(/^0+/, "");
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error) {
     console.error("Company lookup error:", error);
+
+    if (error instanceof Error && error.message.includes("429")) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (error instanceof Error && error.message.includes("402")) {
+      return new Response(JSON.stringify({ error: "Payment required." }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: errorMessage, found: false }), {
       status: 500,
