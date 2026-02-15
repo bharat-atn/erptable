@@ -41,15 +41,18 @@ async function firecrawlScrape(url: string, apiKey: string): Promise<string | nu
 
 // ─── Parse scraped content with AI ───────────────────────────────
 async function parseWithAI(scrapedContent: string, companyName: string, lovableApiKey: string) {
-  const prompt = `You are a strict data extraction tool. You MUST extract ONLY information that is explicitly present in the text below. 
+  const prompt = `You are a strict data extraction tool. You MUST extract ONLY information for the company named "${companyName}".
 
-RULES:
-- If a piece of information is NOT found in the text, return an EMPTY STRING for that field.
-- Do NOT guess, infer, fabricate, or make up ANY information.
-- Only return data you can directly quote or reference from the text.
+CRITICAL RULES:
+- The document may mention MULTIPLE companies (e.g. in search results, recommendations, ads). You MUST identify and extract data ONLY for "${companyName}".
+- If "${companyName}" appears in the document, extract ONLY the data that belongs to that specific company listing — NOT data from other companies on the page.
+- If "${companyName}" is NOT found in the document at all, set "found" to false and return empty strings for all fields.
+- Do NOT guess, infer, fabricate, or make up ANY information. Only extract what is explicitly written in the text.
+- Return the company's official registered name exactly as shown in the document (with correct capitalization) in the "registered_name" field.
 - City names MUST be in UPPERCASE.
 - Phone numbers: strip any leading zero after the country code.
-- Set confidence to "high" ONLY for data directly found in the text.
+- For the address: extract ONLY the "Besöksadress" (visiting address) that belongs to "${companyName}", not addresses of other companies.
+- Set confidence to "high" ONLY for data directly found in the text next to/about "${companyName}".
 - Set confidence to "none" for any field where you return an empty string.
 
 Company we are looking for: "${companyName}"
@@ -62,9 +65,10 @@ ${scrapedContent}
 Respond ONLY with valid JSON (no markdown, no backticks):
 {
   "found": true/false,
+  "registered_name": "official company name with correct capitalization, or empty string",
   "org_number": "organization number as shown in text or empty string",
   "country": "Sweden",
-  "address": "street address or empty string",
+  "address": "street address from Besöksadress section or empty string",
   "postcode": "postal code or empty string",
   "city": "CITY IN UPPERCASE or empty string",
   "phone": "phone number without leading zero, without dial code, or empty string",

@@ -328,10 +328,14 @@ export function CompanyFormDialog({
           // Only auto-fill fields with high confidence from verified sources
           const shouldFill = (field: string, value: string) => {
             if (!value || prev[field as keyof CompanyFormData]) return false;
-            // For verified registry data, always fill. For AI fallback, only fill if high confidence.
             if (data.verified) return true;
             return conf[field] === "high";
           };
+          // Correct the company name to the official registered name
+          if (data.registered_name && data.verified) {
+            next.name = data.registered_name;
+            filled.add("name");
+          }
           if (shouldFill("country", data.country)) { next.country = data.country; filled.add("country"); }
           if (shouldFill("address", data.address)) { next.address = data.address; filled.add("address"); }
           if (shouldFill("postcode", data.postcode)) { next.postcode = data.postcode; filled.add("postcode"); }
