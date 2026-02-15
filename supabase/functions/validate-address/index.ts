@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { country, postcode, city, address, phone, dialCode } = await req.json();
+    const { country, postcode, city, address, phone, dialCode, org_number } = await req.json();
 
     if (!country) {
       return new Response(JSON.stringify({ valid: true, message: "" }), {
@@ -28,25 +28,33 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `You are an address and contact validation expert. Validate the following fields for the country "${country}".
+    const prompt = `You are an expert in international business registration, address formats, and telecom standards. Validate ALL of the following fields for the country "${country}".
 
+${org_number ? `Organization number: "${org_number}"` : "Organization number: (not provided)"}
 ${postcode ? `Postcode: "${postcode}"` : "Postcode: (not provided)"}
 ${city ? `City: "${city}"` : "City: (not provided)"}
 ${address ? `Street address: "${address}"` : "Street address: (not provided)"}
 ${phone ? `Phone number: "${dialCode || ""}${phone}" (dial code: ${dialCode || "unknown"})` : "Phone: (not provided)"}
 
 Rules:
-1. If a postcode is provided, check if it matches the postal code format for ${country}. 
-2. If a city is provided, check if it's a real city/town/municipality in ${country}.
-3. If both postcode and city are provided, check if the postcode could correspond to that city area.
-4. If a street address is provided, check if it looks like a plausible street address for ${country} (correct format, naming conventions like "vägen", "gatan" for Sweden, "Street", "Road" for English-speaking countries, etc.). Minor issues are OK.
-5. If a phone number is provided with dial code, check if:
-   - The dial code matches the selected country
-   - The phone number has the correct length for that country
-   - The format looks valid (e.g. Swedish mobile numbers start with 7 and are 9 digits after country code)
+1. ORGANIZATION NUMBER: If provided, validate against the EXACT rules for "${country}":
+   - Sweden: 10 digits (NNNNNN-NNNN), digit 3 must be ≥2 for companies. Check Luhn algorithm on all 10 digits. AB (Aktiebolag) orgs start with 5564-5599 in first 4 digits typically. Sole proprietors use personal numbers (start with birth date). Accept with or without hyphen.
+   - Norway: 9 digits, check MOD 11. 
+   - Finland: 7 digits + check digit (FI format: NNNNNNN-C).
+   - Denmark: 8 digits (CVR number).
+   - For other countries, validate against known business registration formats.
+   Explain what type of entity the number suggests (e.g. "Valid Swedish AB (limited company)" or "This looks like a sole proprietor personal number").
+
+2. POSTCODE: Check format matches ${country}'s postal system.
+3. CITY: Check if it's a real city/town/municipality in ${country}.
+4. POSTCODE+CITY: If both provided, check if they match geographically.
+5. ADDRESS: Check if it follows local street naming conventions.
+6. PHONE: Check dial code matches country, length is correct, format is valid.
 
 Respond ONLY with valid JSON (no markdown):
 {
+  "org_number_valid": true/false/null,
+  "org_number_message": "detailed explanation (entity type, format issues) or empty string",
   "postcode_valid": true/false/null,
   "postcode_message": "brief explanation or empty string",
   "city_valid": true/false/null, 
@@ -59,7 +67,7 @@ Respond ONLY with valid JSON (no markdown):
   "phone_message": "brief explanation or empty string"
 }
 
-Use null if the field was not provided. Be concise. Only flag clear errors, not minor formatting differences.`;
+Use null if the field was not provided. Be concise but specific about org number validation.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -68,10 +76,10 @@ Use null if the field was not provided. Be concise. Only flag clear errors, not 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
+        model: "google/gemini-2.5-flash",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.1,
-        max_tokens: 300,
+        max_tokens: 500,
       }),
     });
 
