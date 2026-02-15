@@ -2,11 +2,21 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
-import { CheckCircle, Loader2, AlertTriangle } from "lucide-react";
+import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
 
+const COC_LANGUAGES = [
+  { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
+  { code: "en", label: "English", labelEn: "English", file: "/documents/code-of-conduct-en.pdf" },
+  { code: "ro", label: "Română", labelEn: "Romanian", file: "/documents/code-of-conduct-ro.pdf" },
+  { code: "th", label: "ไทย", labelEn: "Thai", file: "/documents/code-of-conduct-th.pdf" },
+];
+
+// ... keep existing code (SigningData interface)
 interface SigningData {
   contract_id: string;
   contract_code: string;
@@ -33,6 +43,12 @@ export default function ContractSigning() {
   const [data, setData] = useState<SigningData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
+
+  // Code of Conduct state
+  const [cocLanguage, setCocLanguage] = useState<string | null>(null);
+  const [cocReviewed, setCocReviewed] = useState(false);
+  const [cocConfirmed, setCocConfirmed] = useState(false);
+  const [contractConfirmed, setContractConfirmed] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -110,6 +126,8 @@ export default function ContractSigning() {
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const fd = data.form_data || {};
+  const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
+  const canSign = cocReviewed && cocConfirmed && contractConfirmed;
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
@@ -137,6 +155,95 @@ export default function ContractSigning() {
           </CardContent>
         </Card>
 
+        {/* Code of Conduct Review */}
+        {!alreadySigned && !signed && (
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Code of Conduct
+                <span className="text-muted-foreground font-normal text-sm">/ Uppförandekod</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <p className="text-sm text-muted-foreground">
+                Please review the Code of Conduct before signing. Select your preferred language. /
+                <span className="italic"> Vänligen granska uppförandekoden innan du signerar. Välj önskat språk.</span>
+              </p>
+
+              {/* Language selection */}
+              <div className="grid grid-cols-2 gap-3">
+                {COC_LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setCocLanguage(lang.code); setCocReviewed(false); setCocConfirmed(false); }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
+                      cocLanguage === lang.code
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-primary/30 hover:bg-muted/40"
+                    )}
+                  >
+                    <div>
+                      <p className="font-semibold text-sm">{lang.label}</p>
+                      <p className="text-xs text-muted-foreground">{lang.labelEn}</p>
+                    </div>
+                    {cocLanguage === lang.code && (
+                      <Check className="w-4 h-4 text-primary ml-auto" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* PDF viewer */}
+              {selectedCocLang && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                      Document / Dokument
+                    </label>
+                    {cocReviewed && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                        <Check className="w-3.5 h-3.5" />
+                        Reviewed / Granskad
+                      </span>
+                    )}
+                  </div>
+                  <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
+                    <iframe
+                      src={selectedCocLang.file}
+                      className="w-full h-[400px] sm:h-[500px]"
+                      title={`Code of Conduct - ${selectedCocLang.labelEn}`}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { window.open(selectedCocLang.file, "_blank"); setCocReviewed(true); }}
+                      className="gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open in new tab / Öppna i ny flik
+                    </Button>
+                    {!cocReviewed && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setCocReviewed(true)}
+                        className="gap-2"
+                      >
+                        <Check className="w-4 h-4" />
+                        Mark as reviewed / Markera som granskad
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Signing Area */}
         <Card className="shadow-md">
           <CardHeader>
@@ -156,15 +263,70 @@ export default function ContractSigning() {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  By signing below, you confirm that you have read and agree to the terms of this employment contract. / 
-                  Genom att signera nedan bekräftar du att du har läst och godkänner villkoren i detta anställningsavtal.
-                </p>
-                <SignatureCanvas onSave={handleSign} disabled={submitting} />
-                {submitting && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Submitting signature...
+                {/* Confirmation checkboxes */}
+                <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2">
+                    Confirmations / Bekräftelser
+                  </p>
+                  <label
+                    className="flex items-start gap-3 cursor-pointer"
+                    onClick={() => setContractConfirmed(!contractConfirmed)}
+                  >
+                    <div className={cn(
+                      "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                      contractConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
+                    )}>
+                      {contractConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <span className="text-sm">
+                      I have read and agree to the terms of this employment contract. /
+                      <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal.</span>
+                    </span>
+                  </label>
+                  <label
+                    className="flex items-start gap-3 cursor-pointer"
+                    onClick={() => cocReviewed ? setCocConfirmed(!cocConfirmed) : null}
+                  >
+                    <div className={cn(
+                      "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                      cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40",
+                      !cocReviewed && "opacity-50 cursor-not-allowed"
+                    )}>
+                      {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <span className={cn("text-sm", !cocReviewed && "opacity-50")}>
+                      I have read and understood the Code of Conduct. /
+                      <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                      {!cocReviewed && (
+                        <span className="block text-xs text-destructive mt-1">
+                          Please review the Code of Conduct above first. / Vänligen granska uppförandekoden ovan först.
+                        </span>
+                      )}
+                    </span>
+                  </label>
+                </div>
+
+                {/* Signature canvas - only enabled when both confirmations are checked */}
+                {canSign ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Draw your signature below to sign the contract. /
+                      <span className="italic"> Rita din namnteckning nedan för att signera avtalet.</span>
+                    </p>
+                    <SignatureCanvas onSave={handleSign} disabled={submitting} />
+                    {submitting && (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Submitting signature...
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Please review the Code of Conduct and confirm both checkboxes above to enable signing. /
+                      <span className="italic"> Granska uppförandekoden och bekräfta båda kryssrutorna ovan för att aktivera signering.</span>
+                    </p>
                   </div>
                 )}
               </div>
