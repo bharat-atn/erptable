@@ -2,3 +2,9 @@ project_id = "nssppfuaxhijqbmsquhd"
 
 [functions.send-signing-email]
 verify_jwt = false
+
+[functions.lookup-company]
+verify_jwt = false
+
+[functions.validate-address]
+verify_jwt = false
