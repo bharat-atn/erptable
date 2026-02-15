@@ -2,13 +2,12 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Building2, Check, ChevronDown, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase, CalendarDays } from "lucide-react";
+import { Building2, Check, Circle, Users, Search, X, Mail, Phone, Globe, ArrowLeft, User, Briefcase, CalendarDays } from "lucide-react";
 import { LanguageSelectionStep } from "./LanguageSelectionStep";
 import { ContractDetailsStep } from "./ContractDetailsStep";
 interface Company {
@@ -124,7 +123,7 @@ interface ContractTemplateViewProps {
 export function ContractTemplateView({ resumeContractId }: ContractTemplateViewProps) {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
-  const [companyOpen, setCompanyOpen] = useState(true);
+  
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -157,6 +156,13 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
       return data as Employee[];
     }
   });
+  // Auto-select the first (only) company
+  useEffect(() => {
+    if (companies.length > 0 && !selectedCompanyId) {
+      setSelectedCompanyId(companies[0].id);
+    }
+  }, [companies, selectedCompanyId]);
+
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
 
   // Resume draft contract - load existing data
@@ -274,29 +280,14 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
-                  <SelectTrigger className="h-11 text-sm font-medium">
-                    <SelectValue placeholder="Choose a company..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {companies.map(c => <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>)}
-                  </SelectContent>
-                </Select>
-
-                {selectedCompany && <Collapsible open={companyOpen} onOpenChange={setCompanyOpen}>
+                {selectedCompany && <>
                     <Card className="border-2 border-border shadow-sm">
-                      <CollapsibleTrigger className="w-full">
-                        <CardHeader className="py-4 px-5 flex flex-row items-center justify-between cursor-pointer hover:bg-muted/30 transition-colors">
+                        <CardHeader className="py-4 px-5">
                           <CardTitle className="text-sm font-semibold uppercase tracking-wide flex items-center gap-2">
                             <Building2 className="w-4 h-4 text-primary" />
                             Company Details / Företagsuppgifter
                           </CardTitle>
-                          <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform duration-200", companyOpen && "rotate-180")} />
                         </CardHeader>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
                         <CardContent className="px-5 pb-5 pt-0">
                           <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -345,9 +336,8 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
                             </div>
                           </div>
                         </CardContent>
-                      </CollapsibleContent>
                     </Card>
-                  </Collapsible>}
+                </>}
 
                 {/* Next button */}
                 {selectedCompanyId && <div className="flex justify-end pt-2">
