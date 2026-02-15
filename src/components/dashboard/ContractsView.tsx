@@ -8,7 +8,6 @@ import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "sonner";
-
 interface ContractsViewProps {
   onContinueContract?: (contractId: string) => void;
 }
@@ -37,6 +36,7 @@ const statusFilterOptions = [
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
 
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
@@ -65,6 +65,24 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete contract: ${error.message}`);
+    },
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase
+        .from("contracts")
+        .delete()
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success(`${ids.length} contract(s) deleted successfully`);
+      setBulkDeleteIds(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete contracts: ${error.message}`);
     },
   });
 
@@ -126,8 +144,19 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         enableColumnToggle
         enableDenseToggle
         enableHighlight
+        enableSelection
         stickyHeader
         filters={[{ key: "_statusLabel", label: "Status", options: statusFilterOptions }]}
+        bulkActions={(selectedKeys, clearSelection) => (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setBulkDeleteIds(selectedKeys)}
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete {selectedKeys.length}
+          </Button>
+        )}
         rowActions={(contract) => (
           <div className="flex items-center gap-1">
             {onContinueContract && contract.status === "draft" && (
@@ -147,7 +176,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         )}
       />
 
-      {/* Delete confirmation */}
+      {/* Single delete confirmation */}
       <DeleteConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
@@ -160,6 +189,18 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         }
         onConfirm={() => deleteTarget && deleteContract.mutate(deleteTarget)}
         isLoading={deleteContract.isPending}
+        requireTypedConfirmation
+      />
+
+      {/* Bulk delete confirmation */}
+      <DeleteConfirmDialog
+        open={!!bulkDeleteIds}
+        onOpenChange={(open) => !open && setBulkDeleteIds(null)}
+        title="Delete Multiple Contracts"
+        itemName={`${bulkDeleteIds?.length ?? 0} contracts`}
+        description="All selected contracts and their associated contract IDs will be released. This action cannot be undone."
+        onConfirm={() => bulkDeleteIds && bulkDelete.mutate(bulkDeleteIds)}
+        isLoading={bulkDelete.isPending}
         requireTypedConfirmation
       />
     </div>
