@@ -84,6 +84,20 @@ function PositionsTab() {
     onError: () => toast.error("Failed to update position status"),
   });
 
+  const bulkToggleMutation = useMutation({
+    mutationFn: async (is_active: boolean) => {
+      const ids = positions.map((p) => p.id);
+      if (ids.length === 0) return;
+      const { error } = await supabase.from("positions").update({ is_active } as any).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["positions"] });
+      toast.success("All positions updated");
+    },
+    onError: () => toast.error("Failed to update positions"),
+  });
+
   // Group by type_number
   const grouped = positions.reduce<Record<number, typeof positions>>((acc, p) => {
     (acc[p.type_number] = acc[p.type_number] || []).push(p);
@@ -115,7 +129,23 @@ function PositionsTab() {
       {/* List */}
       <Card>
         <CardContent className="p-0">
-          <div className="grid grid-cols-[auto_1fr_1fr_auto] px-5 py-3 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div className="flex gap-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>Active</span>
+              <span>English</span>
+              <span>Swedish</span>
+              <span>Actions</span>
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => bulkToggleMutation.mutate(true)} disabled={bulkToggleMutation.isPending}>
+                Select All
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => bulkToggleMutation.mutate(false)} disabled={bulkToggleMutation.isPending}>
+                Deselect All
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-[auto_1fr_1fr_auto] px-5 py-2 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <span>Active</span>
             <span>English</span>
             <span>Swedish</span>
