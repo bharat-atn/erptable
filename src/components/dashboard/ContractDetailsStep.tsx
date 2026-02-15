@@ -195,7 +195,7 @@ export function ContractDetailsStep({
   const [hourlyPremium, setHourlyPremium] = useState("");
   const [monthlyBasic, setMonthlyBasic] = useState("");
   const [monthlyPremium, setMonthlyPremium] = useState("");
-  const [pieceWorkPay, setPieceWorkPay] = useState(false);
+  const [pieceWorkPay, setPieceWorkPay] = useState(true);
   const [otherSalaryBenefits, setOtherSalaryBenefits] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"account" | "cash">("account");
   const [rateApplied, setRateApplied] = useState(false);
