@@ -89,7 +89,7 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
           onCollapsedChange={setSidebarCollapsed}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
-          <div className="mx-auto" style={{ maxWidth: isConstrained ? undefined : "80rem" }}>
+          <div className={cn("mx-auto", isConstrained && "max-w-full")}>
             {renderView()}
           </div>
         </main>
