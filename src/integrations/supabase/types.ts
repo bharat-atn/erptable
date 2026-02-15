@@ -146,6 +146,33 @@ export type Database = {
         }
         Relationships: []
       }
+      contract_id_year_counters: {
+        Row: {
+          created_at: string
+          id: string
+          issued_count: number
+          next_number: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issued_count?: number
+          next_number?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issued_count?: number
+          next_number?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       contract_schedules: {
         Row: {
           contract_id: string
