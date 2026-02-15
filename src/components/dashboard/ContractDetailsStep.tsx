@@ -252,7 +252,32 @@ export function ContractDetailsStep({
     attachToContract: false,
   });
 
-  // Section 14: Signing
+  // Sync Section 5 employment dates into scheduling duration
+  useEffect(() => {
+    let startDate: string | null = null;
+    let endDate: string | null = null;
+
+    if (employmentForm === "seasonal" && seasonalFromDate) {
+      startDate = format(seasonalFromDate, "yyyy-MM-dd");
+      if (seasonalEndAround) endDate = format(seasonalEndAround, "yyyy-MM-dd");
+    } else if (employmentForm === "fixed_term" && fixedTermFromDate) {
+      startDate = format(fixedTermFromDate, "yyyy-MM-dd");
+      if (fixedTermUntilDate) endDate = format(fixedTermUntilDate, "yyyy-MM-dd");
+    } else if (employmentForm === "age69" && age69FromDate) {
+      startDate = format(age69FromDate, "yyyy-MM-dd");
+      if (age69UntilDate) endDate = format(age69UntilDate, "yyyy-MM-dd");
+    }
+
+    if (startDate || endDate) {
+      setSchedulingData(prev => ({
+        ...prev,
+        ...(startDate ? { contractStartDate: startDate } : {}),
+        ...(endDate ? { contractEndDate: endDate } : {}),
+      }));
+    }
+  }, [employmentForm, seasonalFromDate, seasonalEndAround, fixedTermFromDate, fixedTermUntilDate, age69FromDate, age69UntilDate]);
+
+
   const [signingStatus, setSigningStatus] = useState("not_sent");
   const [signingLink, setSigningLink] = useState("");
   const [employeeSignatureUrl, setEmployeeSignatureUrl] = useState("");
