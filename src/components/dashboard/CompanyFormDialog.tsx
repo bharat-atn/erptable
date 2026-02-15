@@ -1,11 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { z } from "zod";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +12,9 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { countries, findCountryByName, type Country } from "@/lib/countries";
-import { Check, ChevronsUpDown, AlertCircle, CheckCircle2 } from "lucide-react";
+import { validatePostcodeFormat, postcodePatterns } from "@/lib/postcode-patterns";
+import { supabase } from "@/integrations/supabase/client";
+import { Check, ChevronsUpDown, AlertCircle, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 
 // ─── Validation ──────────────────────────────────────────────────
 
@@ -64,11 +62,25 @@ const initialForm: CompanyFormData = {
 
 // ─── Field Error Indicator ───────────────────────────────────────
 
-function FieldMessage({ error, valid }: { error?: string; valid?: boolean }) {
+function FieldMessage({ error, valid, info, loading }: { error?: string; valid?: boolean; info?: string; loading?: boolean }) {
+  if (loading) {
+    return (
+      <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 animate-fade-in">
+        <Loader2 className="w-3 h-3 shrink-0 animate-spin" /> Verifying with AI...
+      </p>
+    );
+  }
   if (error) {
     return (
       <p className="flex items-center gap-1 text-[11px] text-destructive mt-1 animate-fade-in">
         <AlertCircle className="w-3 h-3 shrink-0" /> {error}
+      </p>
+    );
+  }
+  if (info) {
+    return (
+      <p className="flex items-center gap-1 text-[11px] text-primary mt-1 animate-fade-in">
+        <Sparkles className="w-3 h-3 shrink-0" /> {info}
       </p>
     );
   }
@@ -246,13 +258,52 @@ export function CompanyFormDialog({
   open, onOpenChange, onSubmit, initialData,
 }: CompanyFormDialogProps) {
   const [form, setForm] = useState<CompanyFormData>(initialForm);
-  const [dialCode, setDialCode] = useState("+46"); // Default Sweden
+  const [dialCode, setDialCode] = useState("+46");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [aiValidation, setAiValidation] = useState<Record<string, string>>({});
+  const [aiLoading, setAiLoading] = useState(false);
+  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // AI address validation - debounced
+  const runAiValidation = useCallback((country: string, postcode: string, city: string) => {
+    if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+    if (!country || (!postcode && !city)) {
+      setAiValidation({});
+      return;
+    }
+    aiTimeoutRef.current = setTimeout(async () => {
+      setAiLoading(true);
+      setAiValidation({});
+      try {
+        const { data, error } = await supabase.functions.invoke("validate-address", {
+          body: { country, postcode, city },
+        });
+        if (error) throw error;
+        const messages: Record<string, string> = {};
+        if (data.postcode_valid === false && data.postcode_message) {
+          messages.postcode_ai = data.postcode_message;
+        }
+        if (data.city_valid === false && data.city_message) {
+          messages.city_ai = data.city_message;
+        }
+        if (data.match_valid === false && data.match_message) {
+          messages.match_ai = data.match_message;
+        }
+        if (data.postcode_valid === true && data.city_valid === true) {
+          messages.address_ok = "AI verified: address looks correct";
+        }
+        setAiValidation(messages);
+      } catch (err) {
+        console.error("AI validation error:", err);
+      } finally {
+        setAiLoading(false);
+      }
+    }, 800);
+  }, []);
 
   useEffect(() => {
     if (initialData) {
-      // Extract dial code from existing phone if present
       let existingDial = "+46";
       let phoneNum = initialData.phone || "";
       const matchedCountry = countries.find((c) => phoneNum.startsWith(c.dialCode));
@@ -278,11 +329,33 @@ export function CompanyFormDialog({
     }
     setErrors({});
     setTouched(new Set());
+    setAiValidation({});
   }, [initialData, open]);
 
   const set = (key: keyof CompanyFormData, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    // Validate single field on change if already touched
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      // Trigger AI validation when address fields change with a country selected
+      if (["postcode", "city", "country"].includes(key)) {
+        const country = key === "country" ? value : next.country;
+        const postcode = key === "postcode" ? value : next.postcode;
+        const city = key === "city" ? value : next.city;
+        // Client-side postcode format check
+        if (key === "postcode" && country && value) {
+          const formatResult = validatePostcodeFormat(country, value);
+          if (formatResult && !formatResult.valid) {
+            setErrors((prev) => ({ ...prev, postcode: formatResult.message }));
+          } else if (formatResult && formatResult.valid) {
+            setErrors((prev) => { const n = { ...prev }; delete n.postcode; return n; });
+          }
+        }
+        // Trigger AI validation
+        if (country && (postcode || city)) {
+          runAiValidation(country, postcode, city);
+        }
+      }
+      return next;
+    });
     if (touched.has(key)) {
       validateField(key, value);
     }
@@ -375,6 +448,15 @@ export function CompanyFormDialog({
               <FieldMessage error={touched.has("org_number") ? errors.org_number : undefined} valid={isFieldValid("org_number")} />
             </div>
 
+            {/* Country first - enables smart validation for postcode/city */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide">
+                Country / Land
+              </Label>
+              <CountryCombobox value={form.country} onChange={(v) => { set("country", v); markTouched("country"); }} />
+              <FieldMessage valid={isFieldValid("country")} />
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wide">
                 Address / Adress
@@ -392,14 +474,28 @@ export function CompanyFormDialog({
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wide">
                   Postcode / Postnummer
+                  {form.country && postcodePatterns[form.country] && (
+                    <span className="ml-1.5 font-normal normal-case text-muted-foreground">
+                      ({postcodePatterns[form.country].label})
+                    </span>
+                  )}
                 </Label>
                 <Input
                   value={form.postcode}
                   onChange={(e) => set("postcode", e.target.value)}
                   onBlur={() => markTouched("postcode")}
-                  className={cn(errors.postcode && touched.has("postcode") && "border-destructive focus-visible:ring-destructive")}
+                  placeholder={form.country && postcodePatterns[form.country] ? `e.g. ${postcodePatterns[form.country].example}` : ""}
+                  className={cn(
+                    (errors.postcode && touched.has("postcode")) && "border-destructive focus-visible:ring-destructive",
+                    aiValidation.postcode_ai && "border-destructive focus-visible:ring-destructive"
+                  )}
                 />
-                <FieldMessage error={touched.has("postcode") ? errors.postcode : undefined} valid={isFieldValid("postcode")} />
+                <FieldMessage
+                  error={touched.has("postcode") ? (errors.postcode || aiValidation.postcode_ai) : undefined}
+                  valid={isFieldValid("postcode") && !aiValidation.postcode_ai}
+                  loading={aiLoading && !!form.postcode}
+                  info={!errors.postcode && !aiValidation.postcode_ai && aiValidation.address_ok && form.postcode ? aiValidation.address_ok : undefined}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wide">
@@ -409,9 +505,17 @@ export function CompanyFormDialog({
                   value={form.city}
                   onChange={(e) => set("city", e.target.value)}
                   onBlur={() => markTouched("city")}
-                  className={cn(errors.city && touched.has("city") && "border-destructive focus-visible:ring-destructive")}
+                  className={cn(
+                    (errors.city && touched.has("city")) && "border-destructive focus-visible:ring-destructive",
+                    aiValidation.city_ai && "border-destructive focus-visible:ring-destructive"
+                  )}
                 />
-                <FieldMessage error={touched.has("city") ? errors.city : undefined} valid={isFieldValid("city")} />
+                <FieldMessage
+                  error={touched.has("city") ? (errors.city || aiValidation.city_ai) : undefined}
+                  valid={isFieldValid("city") && !aiValidation.city_ai}
+                  loading={aiLoading && !!form.city}
+                  info={aiValidation.match_ai || undefined}
+                />
               </div>
             </div>
 
@@ -420,14 +524,6 @@ export function CompanyFormDialog({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 Additional Information (Register Only)
               </p>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wide">
-                Country / Land
-              </Label>
-              <CountryCombobox value={form.country} onChange={(v) => { set("country", v); markTouched("country"); }} />
-              <FieldMessage valid={isFieldValid("country")} />
             </div>
 
             <div className="space-y-1.5">
