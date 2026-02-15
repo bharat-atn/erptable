@@ -266,9 +266,9 @@ export function CompanyFormDialog({
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // AI address validation - debounced
-  const runAiValidation = useCallback((country: string, postcode: string, city: string) => {
+  const runAiValidation = useCallback((country: string, postcode: string, city: string, address: string, phone: string, currentDialCode: string) => {
     if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
-    if (!country || (!postcode && !city)) {
+    if (!country || (!postcode && !city && !address && !phone)) {
       setAiValidation({});
       return;
     }
@@ -277,7 +277,7 @@ export function CompanyFormDialog({
       setAiValidation({});
       try {
         const { data, error } = await supabase.functions.invoke("validate-address", {
-          body: { country, postcode, city },
+          body: { country, postcode, city, address, phone, dialCode: currentDialCode },
         });
         if (error) throw error;
         const messages: Record<string, string> = {};
@@ -289,6 +289,18 @@ export function CompanyFormDialog({
         }
         if (data.match_valid === false && data.match_message) {
           messages.match_ai = data.match_message;
+        }
+        if (data.address_valid === false && data.address_message) {
+          messages.address_ai = data.address_message;
+        }
+        if (data.address_valid === true && address) {
+          messages.address_ok_ai = "AI verified: address looks correct";
+        }
+        if (data.phone_valid === false && data.phone_message) {
+          messages.phone_ai = data.phone_message;
+        }
+        if (data.phone_valid === true && phone) {
+          messages.phone_ok_ai = "AI verified: phone number looks correct";
         }
         if (data.postcode_valid === true && data.city_valid === true) {
           messages.address_ok = "AI verified: address looks correct";
@@ -332,32 +344,40 @@ export function CompanyFormDialog({
     setAiValidation({});
   }, [initialData, open]);
 
+  const triggerAi = useCallback((nextForm: CompanyFormData, currentDialCode: string) => {
+    if (nextForm.country && (nextForm.postcode || nextForm.city || nextForm.address || nextForm.phone)) {
+      runAiValidation(nextForm.country, nextForm.postcode, nextForm.city, nextForm.address, nextForm.phone, currentDialCode);
+    }
+  }, [runAiValidation]);
+
   const set = (key: keyof CompanyFormData, value: string) => {
     setForm((prev) => {
       const next = { ...prev, [key]: value };
-      // Trigger AI validation when address fields change with a country selected
-      if (["postcode", "city", "country"].includes(key)) {
-        const country = key === "country" ? value : next.country;
-        const postcode = key === "postcode" ? value : next.postcode;
-        const city = key === "city" ? value : next.city;
-        // Client-side postcode format check
-        if (key === "postcode" && country && value) {
-          const formatResult = validatePostcodeFormat(country, value);
-          if (formatResult && !formatResult.valid) {
-            setErrors((prev) => ({ ...prev, postcode: formatResult.message }));
-          } else if (formatResult && formatResult.valid) {
-            setErrors((prev) => { const n = { ...prev }; delete n.postcode; return n; });
-          }
+      // Client-side postcode format check
+      if (key === "postcode" && next.country && value) {
+        const formatResult = validatePostcodeFormat(next.country, value);
+        if (formatResult && !formatResult.valid) {
+          setErrors((prev) => ({ ...prev, postcode: formatResult.message }));
+        } else if (formatResult && formatResult.valid) {
+          setErrors((prev) => { const n = { ...prev }; delete n.postcode; return n; });
         }
-        // Trigger AI validation
-        if (country && (postcode || city)) {
-          runAiValidation(country, postcode, city);
-        }
+      }
+      // Trigger AI validation for any relevant field change
+      if (["postcode", "city", "country", "address", "phone"].includes(key)) {
+        triggerAi(next, dialCode);
       }
       return next;
     });
     if (touched.has(key)) {
       validateField(key, value);
+    }
+  };
+
+  const handleDialCodeChange = (newDialCode: string) => {
+    setDialCode(newDialCode);
+    // Re-trigger AI validation with new dial code
+    if (form.country && form.phone) {
+      runAiValidation(form.country, form.postcode, form.city, form.address, form.phone, newDialCode);
     }
   };
 
@@ -465,9 +485,17 @@ export function CompanyFormDialog({
                 value={form.address}
                 onChange={(e) => set("address", e.target.value)}
                 onBlur={() => markTouched("address")}
-                className={cn(errors.address && touched.has("address") && "border-destructive focus-visible:ring-destructive")}
+                className={cn(
+                  (errors.address && touched.has("address")) && "border-destructive focus-visible:ring-destructive",
+                  aiValidation.address_ai && "border-destructive focus-visible:ring-destructive"
+                )}
               />
-              <FieldMessage error={touched.has("address") ? errors.address : undefined} valid={isFieldValid("address")} />
+              <FieldMessage
+                error={touched.has("address") ? (errors.address || aiValidation.address_ai) : undefined}
+                valid={isFieldValid("address") && !aiValidation.address_ai}
+                loading={aiLoading && !!form.address}
+                info={!errors.address && !aiValidation.address_ai && aiValidation.address_ok_ai && form.address ? aiValidation.address_ok_ai : undefined}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -534,11 +562,16 @@ export function CompanyFormDialog({
                 value={form.phone}
                 onChange={(v) => set("phone", v)}
                 dialCode={dialCode}
-                onDialCodeChange={setDialCode}
+                onDialCodeChange={handleDialCodeChange}
               />
               {/* Validate on blur of the phone input area */}
               <div onBlur={() => markTouched("phone")}>
-                <FieldMessage error={touched.has("phone") ? errors.phone : undefined} valid={isFieldValid("phone")} />
+                <FieldMessage
+                  error={touched.has("phone") ? (errors.phone || aiValidation.phone_ai) : undefined}
+                  valid={isFieldValid("phone") && !aiValidation.phone_ai}
+                  loading={aiLoading && !!form.phone}
+                  info={!errors.phone && !aiValidation.phone_ai && aiValidation.phone_ok_ai && form.phone ? aiValidation.phone_ok_ai : undefined}
+                />
               </div>
             </div>
 

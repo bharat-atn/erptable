@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { country, postcode, city } = await req.json();
+    const { country, postcode, city, address, phone, dialCode } = await req.json();
 
     if (!country) {
       return new Response(JSON.stringify({ valid: true, message: "" }), {
@@ -28,15 +28,22 @@ serve(async (req) => {
       });
     }
 
-    const prompt = `You are an address validation expert. Validate the following address fields for the country "${country}".
+    const prompt = `You are an address and contact validation expert. Validate the following fields for the country "${country}".
 
 ${postcode ? `Postcode: "${postcode}"` : "Postcode: (not provided)"}
 ${city ? `City: "${city}"` : "City: (not provided)"}
+${address ? `Street address: "${address}"` : "Street address: (not provided)"}
+${phone ? `Phone number: "${dialCode || ""}${phone}" (dial code: ${dialCode || "unknown"})` : "Phone: (not provided)"}
 
 Rules:
 1. If a postcode is provided, check if it matches the postal code format for ${country}. 
 2. If a city is provided, check if it's a real city/town/municipality in ${country}.
-3. If both are provided, check if the postcode could correspond to that city area.
+3. If both postcode and city are provided, check if the postcode could correspond to that city area.
+4. If a street address is provided, check if it looks like a plausible street address for ${country} (correct format, naming conventions like "vägen", "gatan" for Sweden, "Street", "Road" for English-speaking countries, etc.). Minor issues are OK.
+5. If a phone number is provided with dial code, check if:
+   - The dial code matches the selected country
+   - The phone number has the correct length for that country
+   - The format looks valid (e.g. Swedish mobile numbers start with 7 and are 9 digits after country code)
 
 Respond ONLY with valid JSON (no markdown):
 {
@@ -45,7 +52,11 @@ Respond ONLY with valid JSON (no markdown):
   "city_valid": true/false/null, 
   "city_message": "brief explanation or empty string",
   "match_valid": true/false/null,
-  "match_message": "brief explanation if postcode and city don't match, or empty string"
+  "match_message": "brief explanation if postcode and city don't match, or empty string",
+  "address_valid": true/false/null,
+  "address_message": "brief explanation or empty string",
+  "phone_valid": true/false/null,
+  "phone_message": "brief explanation or empty string"
 }
 
 Use null if the field was not provided. Be concise. Only flag clear errors, not minor formatting differences.`;
