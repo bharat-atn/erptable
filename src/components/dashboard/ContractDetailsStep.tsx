@@ -271,13 +271,7 @@ export function ContractDetailsStep({
   const [employerSignatureUrl, setEmployerSignatureUrl] = useState("");
   const [sendingForSigning, setSendingForSigning] = useState(false);
   const [submittingEmployerSig, setSubmittingEmployerSig] = useState(false);
-  const [signingSimulation, setSigningSimulation] = useState(false);
-  const [simCocLanguage, setSimCocLanguage] = useState<string | null>(null);
-  const [simCocReviewed, setSimCocReviewed] = useState(false);
-  const [simCocConfirmed, setSimCocConfirmed] = useState(false);
-  const [simContractConfirmed, setSimContractConfirmed] = useState(false);
-  const [simScheduleReviewed, setSimScheduleReviewed] = useState(false);
-  const [simSubmitting, setSimSubmitting] = useState(false);
+  
   const [contractCode, setContractCode] = useState<string | null>(null);
   const [seasonYear, setSeasonYear] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -401,13 +395,8 @@ export function ContractDetailsStep({
         const link = `${window.location.origin}/sign/${data.signingToken}`;
         setSigningLink(link);
         setSigningStatus("sent_to_employee");
-        // Enter simulation mode
-        setSigningSimulation(true);
-        setSimCocLanguage(null);
-        setSimCocReviewed(false);
-        setSimCocConfirmed(false);
-        setSimContractConfirmed(false);
-        setSimScheduleReviewed(false);
+        // Open simulation in new tab
+        window.open(`${window.location.origin}/sign-simulation/${contractId}`, "_blank");
       }
     } catch (err) {
       console.error("Failed to send for signing:", err);
@@ -451,47 +440,7 @@ export function ContractDetailsStep({
     }
   };
 
-  const SIM_COC_LANGUAGES = [
-    { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
-    { code: "en", label: "English", labelEn: "English", file: "/documents/code-of-conduct-en.pdf" },
-    { code: "ro", label: "Română", labelEn: "Romanian", file: "/documents/code-of-conduct-ro.pdf" },
-    { code: "th", label: "ไทย", labelEn: "Thai", file: "/documents/code-of-conduct-th.pdf" },
-  ];
 
-  const handleSimEmployeeSign = async (dataUrl: string) => {
-    if (!signingLink) return;
-    setSimSubmitting(true);
-    try {
-      // Extract token from signing link
-      const token = signingLink.split("/sign/")[1];
-      if (!token) throw new Error("No signing token");
-
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const filePath = `employee/${contractId}.png`;
-
-      const { error: uploadErr } = await supabase.storage
-        .from("signatures")
-        .upload(filePath, blob, { upsert: true, contentType: "image/png" });
-      if (uploadErr) throw uploadErr;
-
-      const { data: urlData } = supabase.storage.from("signatures").getPublicUrl(filePath);
-
-      const { error: rpcErr } = await supabase.rpc("submit_employee_signature", {
-        _token: token,
-        _signature_url: urlData.publicUrl,
-      });
-      if (rpcErr) throw rpcErr;
-
-      setEmployeeSignatureUrl(urlData.publicUrl);
-      setSigningStatus("employee_signed");
-      setSigningSimulation(false);
-    } catch (err: any) {
-      console.error("Simulation signing failed:", err);
-    } finally {
-      setSimSubmitting(false);
-    }
-  };
 
   // Load saved form_data from the contract on mount
   const [initialLoaded, setInitialLoaded] = useState(false);
@@ -2778,179 +2727,8 @@ export function ContractDetailsStep({
                   </Button>
                 )}
 
-                {/* Step 2: Employee signing simulation */}
-                {signingStatus === "sent_to_employee" && signingSimulation && (
-                  <div className="space-y-4 rounded-xl border-2 border-primary/20 bg-primary/5 p-4 sm:p-5">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                      <Users className="w-4 h-4" />
-                      Employee Signing Simulation / Anställds signeringssimulering
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      This simulates what the employee would see when signing the contract. Review the contract above, then review the Code of Conduct below and sign. /
-                      <span className="italic"> Detta simulerar vad den anställde ser vid signering. Granska avtalet ovan, granska sedan uppförandekoden nedan och signera.</span>
-                    </p>
-
-                    {/* Code of Conduct in simulation */}
-                    <Card className="border border-border shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                          <span className="w-6 h-6 rounded bg-accent flex items-center justify-center text-xs">📋</span>
-                          Code of Conduct / Uppförandekod
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-xs text-muted-foreground">
-                          Select a language and review the Code of Conduct. / Välj språk och granska uppförandekoden.
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {SIM_COC_LANGUAGES.map((lang) => (
-                            <button
-                              key={lang.code}
-                              onClick={() => { setSimCocLanguage(lang.code); setSimCocReviewed(false); setSimCocConfirmed(false); }}
-                              className={cn(
-                                "flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-all text-sm",
-                                simCocLanguage === lang.code
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border hover:border-primary/30"
-                              )}
-                            >
-                              <div>
-                                <p className="font-medium text-sm">{lang.label}</p>
-                                <p className="text-xs text-muted-foreground">{lang.labelEn}</p>
-                              </div>
-                              {simCocLanguage === lang.code && <Check className="w-4 h-4 text-primary ml-auto" />}
-                            </button>
-                          ))}
-                        </div>
-
-                         {simCocLanguage && (() => {
-                          const selectedLang = SIM_COC_LANGUAGES.find(l => l.code === simCocLanguage);
-                          if (!selectedLang) return null;
-                          return (
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold uppercase tracking-wider text-foreground/70">Document / Dokument</span>
-                                {simCocReviewed && (
-                                  <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                                    <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
-                                  </span>
-                                )}
-                              </div>
-                              <div className="rounded-lg border border-border bg-muted/20 p-4 flex flex-col items-center gap-3">
-                                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center">
-                                  <span className="text-2xl">📄</span>
-                                </div>
-                                <p className="text-sm font-medium text-center">
-                                  Code of Conduct — {selectedLang.label}
-                                </p>
-                                <p className="text-xs text-muted-foreground text-center">
-                                  {selectedLang.file.split('/').pop()}
-                                </p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" onClick={() => { window.open(selectedLang.file, "_blank"); setSimCocReviewed(true); }} className="gap-1 text-xs">
-                                  Open & Review / Öppna & granska
-                                </Button>
-                                {!simCocReviewed && (
-                                  <Button variant="secondary" size="sm" onClick={() => setSimCocReviewed(true)} className="gap-1 text-xs">
-                                    <Check className="w-3 h-3" /> Mark as reviewed / Markera som granskad
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </CardContent>
-                    </Card>
-
-                    {/* Schedule Appendix Review */}
-                    <Card className="border border-border shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
-                          <span className="w-6 h-6 rounded bg-accent flex items-center justify-center text-xs">📅</span>
-                          Schedule Appendix / Schemabilaga
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                            <span className="text-muted-foreground">Contract period:</span>
-                            <span className="font-medium">{schedulingData.contractStartDate || "—"} → {schedulingData.contractEndDate || "—"}</span>
-                            <span className="text-muted-foreground">Work period:</span>
-                            <span className="font-medium">{schedulingData.workStartDate || "—"} → {schedulingData.workEndDate || "—"}</span>
-                            <span className="text-muted-foreground">Weekly hours:</span>
-                            <span className="font-medium">{schedulingData.weeklyHours}h</span>
-                            <span className="text-muted-foreground">Daily hours:</span>
-                            <span className="font-medium">{schedulingData.startTime} – {schedulingData.endTime}</span>
-                            {schedulingData.vacationEnabled && (
-                              <>
-                                <span className="text-muted-foreground">Vacation:</span>
-                                <span className="font-medium">{schedulingData.vacationStartDate || "—"} → {schedulingData.vacationEndDate || "—"}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          {simScheduleReviewed ? (
-                            <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                              <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
-                            </span>
-                          ) : (
-                            <Button variant="secondary" size="sm" onClick={() => setSimScheduleReviewed(true)} className="gap-1 text-xs">
-                              <Check className="w-3 h-3" /> Mark as reviewed / Markera som granskad
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Confirmation checkboxes */}
-                    <div className="space-y-3 rounded-lg border border-border bg-background p-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">Confirmations / Bekräftelser</p>
-                      <label className="flex items-start gap-3 cursor-pointer" onClick={() => setSimContractConfirmed(!simContractConfirmed)}>
-                        <div className={cn("mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0", simContractConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40")}>
-                          {simContractConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                        </div>
-                        <span className="text-sm">
-                          I have read and agree to the terms of this employment contract and schedule. /
-                          <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
-                        </span>
-                      </label>
-                      <label className="flex items-start gap-3 cursor-pointer" onClick={() => simCocReviewed ? setSimCocConfirmed(!simCocConfirmed) : null}>
-                        <div className={cn("mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0", simCocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40", !simCocReviewed && "opacity-50")}>
-                          {simCocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                        </div>
-                        <span className={cn("text-sm", !simCocReviewed && "opacity-50")}>
-                          I have read and understood the Code of Conduct. /
-                          <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                          {!simCocReviewed && <span className="block text-xs text-destructive mt-1">Please review the Code of Conduct first. / Granska uppförandekoden först.</span>}
-                        </span>
-                      </label>
-                    </div>
-
-                    {/* Employee signature */}
-                    {simCocReviewed && simCocConfirmed && simContractConfirmed && simScheduleReviewed ? (
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium">Employee Signature / Anställds underskrift</p>
-                        <SignatureCanvas onSave={handleSimEmployeeSign} disabled={simSubmitting} />
-                        {simSubmitting && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Loader2 className="w-4 h-4 animate-spin" /> Submitting signature...
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-6 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          Review the Code of Conduct and confirm both checkboxes to enable signing.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Signing link (when not in simulation) */}
-                {signingStatus === "sent_to_employee" && !signingSimulation && signingLink && (
+                {/* Step 2: Employee signing - open simulation in new tab */}
+                {signingStatus === "sent_to_employee" && (
                   <div className="space-y-3">
                     <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
                       <p className="text-xs font-medium">Signing link / Signeringslänk:</p>
@@ -2959,9 +2737,17 @@ export function ContractDetailsStep({
                         <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(signingLink)}>Copy</Button>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setSigningSimulation(true)}>
-                      Open Signing Simulation / Öppna signeringssimulering
+                    <Button
+                      className="w-full gap-2"
+                      variant="outline"
+                      onClick={() => window.open(`${window.location.origin}/sign-simulation/${contractId}`, "_blank")}
+                    >
+                      <Users className="w-4 h-4" />
+                      Open Employee Signing View / Öppna anställds signeringsvy
                     </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Opens in a new tab to simulate the employee's experience. / Öppnas i en ny flik för att simulera den anställdes upplevelse.
+                    </p>
                   </div>
                 )}
 

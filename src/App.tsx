@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import OnboardingPortal from "./pages/OnboardingPortal";
 import ContractSigning from "./pages/ContractSigning";
+import SigningSimulation from "./pages/SigningSimulation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/onboard/:token" element={<OnboardingPortal />} />
           <Route path="/sign/:token" element={<ContractSigning />} />
+          <Route path="/sign-simulation/:contractId" element={<SigningSimulation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
