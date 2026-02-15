@@ -12,6 +12,7 @@ import { Briefcase, Pen, Trash2, Plus, Save, Download, Upload } from "lucide-rea
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 // ─── Positions Tab ───────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ function PositionsTab() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editEn, setEditEn] = useState("");
   const [editSv, setEditSv] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
 
   const { data: positions = [], isLoading } = useQuery({
     queryKey: ["positions"],
@@ -199,7 +201,7 @@ function PositionsTab() {
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditId(pos.id); setEditEn(pos.label_en); setEditSv(pos.label_sv); }}>
                               <Pen className="w-3.5 h-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(pos.id)}>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: pos.id, label: pos.label_en })}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -212,6 +214,15 @@ function PositionsTab() {
           )}
         </CardContent>
       </Card>
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Position"
+        itemName={deleteTarget?.label || ""}
+        description="This position will be removed. Any agreement periods referencing it may be affected."
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -225,6 +236,7 @@ function SkillGroupsTab() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editEn, setEditEn] = useState("");
   const [editSv, setEditSv] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
 
   const { data: groups = [], isLoading } = useQuery({
     queryKey: ["skill-groups"],
@@ -326,7 +338,7 @@ function SkillGroupsTab() {
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { setEditId(g.id); setEditEn(g.label_en); setEditSv(g.label_sv); }}>
                         <Pen className="w-3.5 h-3.5" />
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(g.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: g.id, label: g.label_en })}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
@@ -337,6 +349,15 @@ function SkillGroupsTab() {
           )}
         </CardContent>
       </Card>
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Skill Group"
+        itemName={deleteTarget?.label || ""}
+        description="This skill group will be removed. Any agreement periods referencing it may be affected."
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }
@@ -352,6 +373,7 @@ function SalariesPeriodsTab() {
   const [hourlyRate, setHourlyRate] = useState("0");
   const [startDate, setStartDate] = useState("2026-04-01");
   const [endDate, setEndDate] = useState("2027-03-31");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
 
   const { data: positions = [] } = useQuery({
     queryKey: ["positions"],
@@ -543,7 +565,7 @@ function SalariesPeriodsTab() {
                 <span className="text-sm font-medium">{a.monthly_rate} <span className="text-muted-foreground text-xs">SEK</span></span>
                 <span className="text-sm font-medium">{a.hourly_rate} <span className="text-muted-foreground text-xs">SEK</span></span>
                 <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate(a.id)}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: a.id, label: `${(a as any).positions?.label_en || "—"} / ${(a as any).skill_groups?.label_en || "—"}` })}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
@@ -552,6 +574,15 @@ function SalariesPeriodsTab() {
           )}
         </CardContent>
       </Card>
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Agreement Period"
+        itemName={deleteTarget?.label || ""}
+        description="This salary/period mapping will be permanently removed."
+        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

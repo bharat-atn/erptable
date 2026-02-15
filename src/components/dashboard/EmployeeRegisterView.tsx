@@ -121,6 +121,8 @@ export function EmployeeRegisterView() {
   const [formOpen, setFormOpen] = useState(false);
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
+  const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const queryClient = useQueryClient();
 
   const addDummyEmployee = useMutation({
@@ -185,10 +187,20 @@ export function EmployeeRegisterView() {
     toast.success(`Exported ${employees.length} employees`);
   };
 
-  const handleBulkDelete = (ids: string[], clearSelection: () => void) => {
-    // For now just show count — could wire to a bulk delete mutation
-    toast.info(`${ids.length} employees selected for action`);
-  };
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("employees").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: (_data, ids) => {
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      toast.success(`${ids.length} employee(s) deleted successfully`);
+      setBulkDeleteIds(null);
+      clearSelectionFn?.();
+      setClearSelectionFn(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -238,9 +250,17 @@ export function EmployeeRegisterView() {
         filters={[
           { key: "status", label: "Status", options: statusFilterOptions },
         ]}
-        bulkActions={(ids, clear) => (
-          <Button variant="outline" size="sm" className="gap-1.5 text-destructive h-7" onClick={() => handleBulkDelete(ids, clear)}>
-            <Trash2 className="w-3.5 h-3.5" /> Delete Selected
+        bulkActions={(ids, clearSelection) => (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => {
+              setBulkDeleteIds(ids);
+              setClearSelectionFn(() => clearSelection);
+            }}
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Delete {ids.length}
           </Button>
         )}
         onRowClick={(employee) => { setEditEmployee(employee); setFormOpen(true); }}
@@ -285,6 +305,18 @@ export function EmployeeRegisterView() {
         description="This will remove the employee record, including all personal information stored in the system."
         onConfirm={() => { if (deleteEmployee) deleteEmployeeMutation.mutate(deleteEmployee.id); }}
         isLoading={deleteEmployeeMutation.isPending}
+      />
+
+      {/* Bulk delete confirmation */}
+      <DeleteConfirmDialog
+        open={!!bulkDeleteIds}
+        onOpenChange={(open) => { if (!open) setBulkDeleteIds(null); }}
+        title="Delete Multiple Employees"
+        itemName={`${bulkDeleteIds?.length ?? 0} employees`}
+        description="All selected employee records and their personal information will be permanently removed. Any contracts referencing these employees may be affected."
+        onConfirm={() => bulkDeleteIds && bulkDeleteMutation.mutate(bulkDeleteIds)}
+        isLoading={bulkDeleteMutation.isPending}
+        requireTypedConfirmation
       />
 
       <CsvImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["register-employees"] })} />
