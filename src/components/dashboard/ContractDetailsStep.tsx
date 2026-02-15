@@ -246,7 +246,7 @@ export function ContractDetailsStep({
     endTime: "17:00",
     workStartDate: `${defaultSeasonYear}-03-01`,
     workEndDate: `${defaultSeasonYear}-10-31`,
-    vacationEnabled: true,
+    vacationEnabled: false,
     vacationStartDate: `${defaultSeasonYear}-07-01`,
     vacationEndDate: `${defaultSeasonYear}-07-31`,
     attachToContract: false,
