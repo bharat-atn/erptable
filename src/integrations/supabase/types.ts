@@ -71,7 +71,10 @@ export type Database = {
       companies: {
         Row: {
           address: string | null
+          bankgiro: string | null
+          ceo_name: string | null
           city: string | null
+          company_type: string | null
           country: string | null
           created_at: string
           email: string | null
@@ -85,7 +88,10 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          bankgiro?: string | null
+          ceo_name?: string | null
           city?: string | null
+          company_type?: string | null
           country?: string | null
           created_at?: string
           email?: string | null
@@ -99,7 +105,10 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          bankgiro?: string | null
+          ceo_name?: string | null
           city?: string | null
+          company_type?: string | null
           country?: string | null
           created_at?: string
           email?: string | null

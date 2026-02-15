@@ -47,6 +47,21 @@ export interface CompanyFormData {
   email: string;
   country: string;
   website: string;
+  bankgiro: string;
+  ceo_name: string;
+  company_type: string;
+}
+
+interface LookupExtraData {
+  board_members?: string[];
+  sni_codes?: string[];
+  revenue_sek?: string;
+  num_employees?: string;
+  f_skatt?: string;
+  vat_registered?: string;
+  vat_number?: string;
+  plusgiro?: string;
+  registration_date?: string;
 }
 
 interface CompanyFormDialogProps {
@@ -59,6 +74,7 @@ interface CompanyFormDialogProps {
 const initialForm: CompanyFormData = {
   name: "", org_number: "", address: "", postcode: "",
   city: "", phone: "", email: "", country: "", website: "",
+  bankgiro: "", ceo_name: "", company_type: "",
 };
 
 // ─── Field Error Indicator ───────────────────────────────────────
@@ -297,6 +313,7 @@ export function CompanyFormDialog({
   const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupResult, setLookupResult] = useState<{ warnings?: string[]; message?: string; confidence?: Record<string, string>; sources?: Record<string, string>; verified?: boolean } | null>(null);
+  const [lookupExtra, setLookupExtra] = useState<LookupExtraData | null>(null);
   const [autoFilled, setAutoFilled] = useState<Set<string>>(new Set());
   const lookupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -346,12 +363,28 @@ export function CompanyFormDialog({
           if (data.org_number && !prev.org_number && (data.verified || conf.org_number === "high")) {
             next.org_number = data.org_number; filled.add("org_number");
           }
+          // New stored fields
+          if (shouldFill("bankgiro", data.bankgiro || "")) { next.bankgiro = data.bankgiro; filled.add("bankgiro"); }
+          if (shouldFill("ceo_name", data.ceo_name || "")) { next.ceo_name = data.ceo_name; filled.add("ceo_name"); }
+          if (shouldFill("company_type", data.company_type || "")) { next.company_type = data.company_type; filled.add("company_type"); }
           return next;
         });
         if (data.dial_code) {
           setDialCode((prev) => prev || data.dial_code);
         }
         setAutoFilled(filled);
+        // Store read-only extra data
+        setLookupExtra({
+          board_members: data.board_members,
+          sni_codes: data.sni_codes,
+          revenue_sek: data.revenue_sek,
+          num_employees: data.num_employees,
+          f_skatt: data.f_skatt,
+          vat_registered: data.vat_registered,
+          vat_number: data.vat_number,
+          plusgiro: data.plusgiro,
+          registration_date: data.registration_date,
+        });
         setLookupResult({
           warnings: data.warnings,
           message: data.message,
@@ -455,6 +488,9 @@ export function CompanyFormDialog({
         email: initialData.email || "",
         country: initialData.country || "",
         website: initialData.website || "",
+        bankgiro: (initialData as any).bankgiro || "",
+        ceo_name: (initialData as any).ceo_name || "",
+        company_type: (initialData as any).company_type || "",
       });
     } else {
       setForm(initialForm);
@@ -464,6 +500,7 @@ export function CompanyFormDialog({
     setTouched(new Set());
     setAiValidation({});
     setLookupResult(null);
+    setLookupExtra(null);
     setAutoFilled(new Set());
   }, [initialData, open]);
 
@@ -801,6 +838,101 @@ export function CompanyFormDialog({
               />
               <FieldMessage error={touched.has("website") ? errors.website : undefined} valid={isFieldValid("website")} autoFilled={autoFilled.has("website")} source={lookupResult?.sources?.website} />
             </div>
+
+            {/* Stored business fields */}
+            <div className="border-t border-border pt-4 mt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                Business Details
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide">
+                  Company Type / Bolagsform
+                </Label>
+                <Input
+                  value={form.company_type}
+                  onChange={(e) => set("company_type", e.target.value)}
+                  placeholder="e.g. Aktiebolag"
+                />
+                <FieldMessage autoFilled={autoFilled.has("company_type")} source={lookupResult?.sources?.company_type} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wide">
+                  Bankgiro
+                </Label>
+                <Input
+                  value={form.bankgiro}
+                  onChange={(e) => set("bankgiro", e.target.value)}
+                  placeholder="e.g. 123-4567"
+                />
+                <FieldMessage autoFilled={autoFilled.has("bankgiro")} source={lookupResult?.sources?.bankgiro} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase tracking-wide">
+                CEO / VD
+              </Label>
+              <Input
+                value={form.ceo_name}
+                onChange={(e) => set("ceo_name", e.target.value)}
+                placeholder="CEO name"
+              />
+              <FieldMessage autoFilled={autoFilled.has("ceo_name")} source={lookupResult?.sources?.ceo_name} />
+            </div>
+
+            {/* Read-only registry info panel */}
+            {lookupExtra && (lookupExtra.board_members?.length || lookupExtra.sni_codes?.length || lookupExtra.revenue_sek || lookupExtra.num_employees) && (
+              <div className="border-t border-border pt-4 mt-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Registry Information (Read Only)
+                </p>
+                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2 text-xs">
+                  {lookupExtra.board_members && lookupExtra.board_members.length > 0 && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">Board Members:</span>
+                      <p className="mt-0.5">{lookupExtra.board_members.join(", ")}</p>
+                    </div>
+                  )}
+                  {lookupExtra.sni_codes && lookupExtra.sni_codes.length > 0 && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">SNI Codes:</span>
+                      <p className="mt-0.5">{lookupExtra.sni_codes.join(" · ")}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    {lookupExtra.revenue_sek && (
+                      <div><span className="font-medium text-muted-foreground">Revenue:</span> {lookupExtra.revenue_sek}</div>
+                    )}
+                    {lookupExtra.num_employees && (
+                      <div><span className="font-medium text-muted-foreground">Employees:</span> {lookupExtra.num_employees}</div>
+                    )}
+                    {lookupExtra.f_skatt && (
+                      <div><span className="font-medium text-muted-foreground">F-skatt:</span> {lookupExtra.f_skatt}</div>
+                    )}
+                    {lookupExtra.vat_registered && (
+                      <div><span className="font-medium text-muted-foreground">VAT reg:</span> {lookupExtra.vat_registered}</div>
+                    )}
+                    {lookupExtra.vat_number && (
+                      <div><span className="font-medium text-muted-foreground">VAT nr:</span> {lookupExtra.vat_number}</div>
+                    )}
+                    {lookupExtra.plusgiro && (
+                      <div><span className="font-medium text-muted-foreground">Plusgiro:</span> {lookupExtra.plusgiro}</div>
+                    )}
+                    {lookupExtra.registration_date && (
+                      <div><span className="font-medium text-muted-foreground">Registered:</span> {lookupExtra.registration_date}</div>
+                    )}
+                  </div>
+                  {lookupResult?.verified && (
+                    <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-success" /> Data from hitta.se (Bolagsverket / Skatteverket)
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </ScrollArea>
         <DialogFooter className="px-6 pb-6 pt-2">
