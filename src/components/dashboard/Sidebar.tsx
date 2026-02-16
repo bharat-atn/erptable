@@ -142,10 +142,10 @@ function SidebarItem({
     <button
       onClick={() => onViewChange(item.id)}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all relative",
+        "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all relative",
         isActive
-          ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium"
-          : "text-foreground/70 font-medium hover:bg-sidebar-accent"
+          ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
+          : "text-foreground/80 hover:bg-sidebar-accent"
       )}
     >
       {isActive && (
@@ -274,7 +274,7 @@ function GroupLabel({ label, collapsed }: { label: string; collapsed: boolean })
   }
   return (
     <div className="pt-5 pb-1.5 px-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/60">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-primary/60">
         {label}
       </span>
     </div>
@@ -301,10 +301,10 @@ function SidebarHeader({ collapsed }: { collapsed: boolean }) {
           <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">OnboardFlow</p>
-          <p className="text-[11px] text-sidebar-foreground truncate">HR Management</p>
+          <p className="text-[13px] font-bold text-foreground truncate">OnboardFlow</p>
+          <p className="text-[11px] text-muted-foreground truncate">HR Management</p>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-sidebar-foreground shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       </div>
     </div>
   );
@@ -330,7 +330,7 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="px-2 py-2 flex justify-center">
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-primary-foreground uppercase">
+            <div className="w-8 h-8 rounded-full bg-sidebar-primary/15 flex items-center justify-center text-xs font-semibold text-sidebar-primary uppercase">
               {userName?.[0] ?? "U"}
             </div>
           </div>
@@ -346,14 +346,14 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="p-3">
       <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
-        <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground uppercase shrink-0">
+        <div className="w-8 h-8 rounded-full bg-sidebar-primary/15 flex items-center justify-center text-xs font-semibold text-sidebar-primary uppercase shrink-0">
           {userName?.[0] ?? "U"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate">{userName ?? "User"}</p>
-          <p className="text-[11px] text-sidebar-foreground truncate">{userEmail}</p>
+          <p className="text-[13px] font-semibold text-foreground truncate">{userName ?? "User"}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
         </div>
-        <ChevronRight className="w-3.5 h-3.5 text-sidebar-foreground shrink-0" />
+        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
       </div>
     </div>
   );
