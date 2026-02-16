@@ -433,7 +433,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   return (
     <TooltipProvider delayDuration={0}>
       <aside className={cn(
-        "h-screen sticky top-0 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300",
+        "h-screen sticky top-0 z-30 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300",
         collapsed ? "w-14" : "w-48 lg:w-56 xl:w-60"
       )}>
         {/* Header Card */}
