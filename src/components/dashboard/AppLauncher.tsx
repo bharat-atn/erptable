@@ -149,7 +149,7 @@ function getColor(colorIndex: number) {
 /** Returns true when running on the published production domain */
 function isPublishedEnvironment(): boolean {
   const host = window.location.hostname;
-  return host === "erptable.lovable.app" || host === "scandi-forest-zen.lovable.app";
+  return host === "erptable.lovable.app" || host === "ljungaverkforestry.lovable.app";
 }
 
 // ─── Add/Edit Dialog ────────────────────────────────────────────────
@@ -433,7 +433,7 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open("https://scandi-forest-zen.lovable.app", "_blank")}
+                  onClick={() => window.open("https://ljungaverkforestry.lovable.app", "_blank")}
                   className="gap-2"
                 >
                   <ExternalLink className="w-4 h-4" />
@@ -446,7 +446,7 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
               size="sm"
               onClick={async () => {
                 await supabase.auth.signOut();
-                window.location.href = "https://scandi-forest-zen.lovable.app";
+                window.location.href = "https://ljungaverkforestry.lovable.app";
               }}
               className="gap-2"
             >

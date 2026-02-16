@@ -439,7 +439,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "https://scandi-forest-zen.lovable.app";
+    window.location.href = "https://ljungaverkforestry.lovable.app";
   };
 
   const handleMenuReorder = useCallback((items: MenuItem[]) => {
