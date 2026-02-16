@@ -21,6 +21,8 @@ import {
   ChevronDown,
   Settings,
   HeadphonesIcon,
+  BadgeCheck,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -126,7 +128,7 @@ function SidebarItem({
             )}
           >
             {isActive && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-primary rounded-r-full" />
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
             )}
             <item.icon className="w-4 h-4 shrink-0" />
           </button>
@@ -145,11 +147,11 @@ function SidebarItem({
         "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all relative",
         isActive
           ? "bg-sidebar-primary text-sidebar-primary-foreground font-semibold"
-          : "text-foreground/80 hover:bg-sidebar-accent"
+          : "text-sidebar-foreground font-medium hover:bg-sidebar-accent"
       )}
     >
       {isActive && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-sidebar-primary rounded-r-full" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
       )}
       <item.icon className="w-4 h-4 shrink-0" />
       <span className="flex-1 text-left truncate">{item.label}</span>
@@ -274,7 +276,7 @@ function GroupLabel({ label, collapsed }: { label: string; collapsed: boolean })
   }
   return (
     <div className="pt-5 pb-1.5 px-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-primary/60">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-sidebar-accent-foreground/50">
         {label}
       </span>
     </div>
@@ -287,7 +289,7 @@ function SidebarHeader({ collapsed }: { collapsed: boolean }) {
   if (collapsed) {
     return (
       <div className="p-2 flex justify-center shrink-0">
-        <div className="w-9 h-9 rounded-xl overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
           <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
         </div>
       </div>
@@ -297,14 +299,53 @@ function SidebarHeader({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="p-3 shrink-0">
       <div className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
-        <div className="w-9 h-9 rounded-xl overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
           <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-bold text-foreground truncate">OnboardFlow</p>
+          <p className="text-[13px] font-bold text-sidebar-foreground truncate">OnboardFlow</p>
           <p className="text-[11px] text-muted-foreground truncate">HR Management</p>
         </div>
         <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Need Support Card ─────────────────────────────────────────── */
+
+function NeedSupportCard({ collapsed }: { collapsed: boolean }) {
+  const [dismissed, setDismissed] = useState(() => {
+    return localStorage.getItem("sidebar-support-dismissed") === "true";
+  });
+
+  if (dismissed || collapsed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem("sidebar-support-dismissed", "true");
+  };
+
+  return (
+    <div className="px-3 pb-2 shrink-0">
+      <div className="relative rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3">
+        <button
+          onClick={handleDismiss}
+          className="absolute top-2 right-2 p-0.5 rounded-md text-muted-foreground hover:text-sidebar-foreground transition-colors"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+        <div className="flex items-start gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-sidebar-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+            <HeadphonesIcon className="w-4 h-4 text-sidebar-accent-foreground" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[12px] font-semibold text-sidebar-foreground">Need Support</p>
+            <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
+              Contact with one of our experts to get support.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -330,7 +371,7 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="px-2 py-2 flex justify-center">
-            <div className="w-8 h-8 rounded-full bg-sidebar-primary/15 flex items-center justify-center text-xs font-semibold text-sidebar-primary uppercase">
+            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground uppercase">
               {userName?.[0] ?? "U"}
             </div>
           </div>
@@ -346,11 +387,14 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="p-3">
       <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
-        <div className="w-8 h-8 rounded-full bg-sidebar-primary/15 flex items-center justify-center text-xs font-semibold text-sidebar-primary uppercase shrink-0">
+        <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground uppercase shrink-0">
           {userName?.[0] ?? "U"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-foreground truncate">{userName ?? "User"}</p>
+          <div className="flex items-center gap-1">
+            <p className="text-[13px] font-semibold text-sidebar-foreground truncate">{userName ?? "User"}</p>
+            <BadgeCheck className="w-3.5 h-3.5 text-sidebar-primary shrink-0" />
+          </div>
           <p className="text-[11px] text-muted-foreground truncate">{userEmail}</p>
         </div>
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -539,6 +583,9 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
             </button>
           )}
         </div>
+
+        {/* Need Support Card */}
+        <NeedSupportCard collapsed={collapsed} />
 
         {/* User Profile Footer */}
         <UserProfileCard collapsed={collapsed} />
