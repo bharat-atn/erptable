@@ -70,6 +70,18 @@ export function ContractIdSettingsView() {
     },
   });
 
+  // Query actual contracts to get real counts per year
+  const { data: contracts } = useQuery({
+    queryKey: ["contracts-for-id-display"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("contract_code, season_year");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const [form, setForm] = useState({
     prefix: "EC",
     separator: "-",
@@ -121,7 +133,16 @@ export function ContractIdSettingsView() {
   });
 
   const currentYear = new Date().getFullYear();
-  const previewNext = yearCounters?.find((c) => c.year === currentYear)?.next_number ?? 1;
+
+  // Count actual contracts per year from contracts table
+  const contractCountsByYear = (contracts ?? []).reduce<Record<number, number>>((acc, c) => {
+    const year = c.season_year ? parseInt(c.season_year, 10) : null;
+    if (year) acc[year] = (acc[year] || 0) + 1;
+    return acc;
+  }, {});
+
+  const currentYearContractCount = contractCountsByYear[currentYear] ?? 0;
+  const previewNext = currentYearContractCount + 1;
   const preview = form.include_year
     ? `${form.prefix}${form.separator}${currentYear}${form.separator}${String(previewNext).padStart(form.padding, "0")}`
     : `${form.prefix}${form.separator}${String(previewNext).padStart(form.padding, "0")}`;
@@ -254,13 +275,19 @@ export function ContractIdSettingsView() {
                       </Button>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {counter.issued_count} contract{counter.issued_count !== 1 ? "s" : ""} issued → next:{" "}
-                    <span className="font-mono">
-                      {form.prefix}{form.separator}{counter.year}{form.separator}
-                      {String(counter.next_number).padStart(form.padding, "0")}
-                    </span>
-                  </p>
+                  {(() => {
+                    const actualCount = contractCountsByYear[counter.year] ?? 0;
+                    const nextNum = actualCount + 1;
+                    return (
+                      <p className="text-sm text-muted-foreground">
+                        {actualCount} contract{actualCount !== 1 ? "s" : ""} issued → next:{" "}
+                        <span className="font-mono">
+                          {form.prefix}{form.separator}{counter.year}{form.separator}
+                          {String(nextNum).padStart(form.padding, "0")}
+                        </span>
+                      </p>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
