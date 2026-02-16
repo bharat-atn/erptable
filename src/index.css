@@ -48,15 +48,15 @@
 
     --radius: 0.5rem;
 
-    /* Sidebar - Dark Blue */
-    --sidebar-background: 217 91% 15%;
-    --sidebar-foreground: 210 40% 80%;
-    --sidebar-primary: 217 91% 60%;
+    /* Sidebar - White / Light */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 250 75% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 80% 22%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 217 80% 22%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 250 40% 96%;
+    --sidebar-accent-foreground: 250 75% 60%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 250 75% 60%;
 
     /* Chart colors */
     --chart-1: 217 91% 53%;
