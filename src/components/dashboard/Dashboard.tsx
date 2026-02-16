@@ -46,7 +46,7 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
 
   const renderView = () => {
     switch (activeView) {
-      case "dashboard": return <DashboardView />;
+      case "dashboard": return <DashboardView onNavigate={setActiveView} />;
       case "operations": return <OperationsView />;
       case "employee-register": return <EmployeeRegisterView />;
       case "invitations": return <InvitationsView />;

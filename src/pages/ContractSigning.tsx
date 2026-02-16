@@ -278,23 +278,31 @@ export default function ContractSigning() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                {scheduleReviewed ? (
-                  <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                    <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
-                  </span>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setScheduleReviewed(true)}
-                    className="gap-2"
-                  >
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.open(`/schedule-view/${data.contract_id}`, "_blank");
+                    setScheduleReviewed(true);
+                  }}
+                  className="gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Open Full Schedule / Öppna fullständigt schema
+                </Button>
+                {!scheduleReviewed && (
+                  <Button variant="secondary" size="sm" onClick={() => setScheduleReviewed(true)} className="gap-2">
                     <Check className="w-4 h-4" />
                     Mark as reviewed / Markera som granskad
                   </Button>
                 )}
               </div>
+              {scheduleReviewed && (
+                <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
+                </span>
+              )}
             </CardContent>
           </Card>
         )}

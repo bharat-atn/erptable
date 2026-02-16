@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,11 +109,13 @@ function SidebarItem({
   isActive,
   collapsed,
   onViewChange,
+  badge,
 }: {
   item: MenuItem;
   isActive: boolean;
   collapsed?: boolean;
   onViewChange: (view: string) => void;
+  badge?: number;
 }) {
   if (collapsed) {
     return (
@@ -131,6 +134,11 @@ function SidebarItem({
               <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
             )}
             <item.icon className="w-4 h-4 shrink-0" />
+            {badge && badge > 0 ? (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-[9px] font-bold text-white flex items-center justify-center">
+                {badge}
+              </span>
+            ) : null}
           </button>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8}>
@@ -155,7 +163,11 @@ function SidebarItem({
       )}
       <item.icon className="w-4 h-4 shrink-0" />
       <span className="flex-1 text-left truncate">{item.label}</span>
-      {isActive && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" />}
+      {badge && badge > 0 ? (
+        <span className="w-5 h-5 rounded-full bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center shrink-0">
+          {badge}
+        </span>
+      ) : isActive ? <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-70" /> : null}
     </button>
   );
 }
@@ -169,6 +181,7 @@ function DraggableGroup({
   onViewChange,
   onReorder,
   collapsed,
+  badges,
 }: {
   items: MenuItem[];
   groupKey: string;
@@ -176,6 +189,7 @@ function DraggableGroup({
   onViewChange: (view: string) => void;
   onReorder: (items: MenuItem[]) => void;
   collapsed?: boolean;
+  badges?: Record<string, number>;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -248,11 +262,11 @@ function DraggableGroup({
           )}
         >
           {collapsed ? (
-            <SidebarItem item={item} isActive={activeView === item.id} collapsed onViewChange={onViewChange} />
+            <SidebarItem item={item} isActive={activeView === item.id} collapsed onViewChange={onViewChange} badge={badges?.[item.id]} />
           ) : (
             <div className="relative flex items-center">
               <div className="flex-1">
-                <SidebarItem item={item} isActive={activeView === item.id} onViewChange={onViewChange} />
+                <SidebarItem item={item} isActive={activeView === item.id} onViewChange={onViewChange} badge={badges?.[item.id]} />
               </div>
               <span
                 data-grip
@@ -410,6 +424,19 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
 
+  const { data: pendingCount } = useQuery({
+    queryKey: ["pending-signatures-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("contracts")
+        .select("id", { count: "exact", head: true })
+        .eq("signing_status", "employee_signed");
+      if (error) return 0;
+      return count || 0;
+    },
+    refetchInterval: 30000,
+  });
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "https://scandi-forest-zen.lovable.app";
@@ -467,6 +494,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
               onViewChange={onViewChange}
               onReorder={handleMenuReorder}
               collapsed={collapsed}
+              badges={{ contracts: pendingCount || 0 }}
             />
 
             <GroupLabel label="Settings" collapsed={collapsed} />
