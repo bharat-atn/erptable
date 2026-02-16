@@ -61,15 +61,20 @@ export default function SigningSimulation() {
 
   useEffect(() => {
     if (!contractId) return;
-    const load = async () => {
-      // Load contract
+    const load = async (retries = 2): Promise<void> => {
+      // Load contract (use maybeSingle to avoid error when RLS blocks temporarily)
       const { data: c, error: cErr } = await supabase
         .from("contracts")
         .select("id, contract_code, season_year, signing_status, signing_token, employee_signature_url, employer_signature_url, form_data, company_id")
         .eq("id", contractId)
-        .single();
+        .maybeSingle();
 
       if (cErr || !c) {
+        // Retry once after a delay (session may not be ready in new tab)
+        if (retries > 0) {
+          await new Promise((r) => setTimeout(r, 1000));
+          return load(retries - 1);
+        }
         setError("Contract not found.");
         setLoading(false);
         return;
@@ -82,7 +87,7 @@ export default function SigningSimulation() {
           .from("companies")
           .select("name, org_number, address, postcode, city")
           .eq("id", c.company_id)
-          .single();
+          .maybeSingle();
         if (comp) setCompany(comp);
       }
 
