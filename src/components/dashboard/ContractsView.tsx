@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { EmployerSigningDialog } from "./EmployerSigningDialog";
+import { ContractPreviewDialog } from "./ContractPreviewDialog";
 import { toast } from "sonner";
 interface ContractsViewProps {
   onContinueContract?: (contractId: string) => void;
@@ -45,7 +46,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const [signingContractId, setSigningContractId] = useState<string | null>(null);
-
+  const [previewContractId, setPreviewContractId] = useState<string | null>(null);
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
     queryFn: async () => {
@@ -174,6 +175,11 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         )}
         rowActions={(contract) => (
           <div className="flex items-center gap-1">
+            {(contract.signing_status === "employer_signed" || contract.signing_status === "signed") && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => setPreviewContractId(contract.id)}>
+                <Eye className="w-3 h-3" /> View
+              </Button>
+            )}
             {contract.signing_status === "employee_signed" && (
               <Button variant="default" size="sm" className="gap-1" onClick={() => setSigningContractId(contract.id)}>
                 <PenTool className="w-3 h-3" /> Review & Sign
@@ -229,6 +235,12 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         contractId={signingContractId}
         open={!!signingContractId}
         onOpenChange={(open) => !open && setSigningContractId(null)}
+      />
+      {/* Contract preview/print/email dialog */}
+      <ContractPreviewDialog
+        contractId={previewContractId}
+        open={!!previewContractId}
+        onOpenChange={(open) => !open && setPreviewContractId(null)}
       />
     </div>
   );
