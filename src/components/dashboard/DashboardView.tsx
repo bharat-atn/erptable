@@ -28,12 +28,26 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
         return i.status === "SENT" && daysUntilExpiry <= 3 && daysUntilExpiry > 0;
       }).length || 0;
 
+      const totalEmployees = employees.data?.length || 0;
+      const activeEmployees = employees.data?.filter((e) => e.status === "ACTIVE").length || 0;
+      const pendingInvites = invitations.data?.filter((i) => i.status === "PENDING" || i.status === "SENT").length || 0;
+      const completedOnboarding = invitations.data?.filter((i) => i.status === "ACCEPTED").length || 0;
+      const failedExpired = invitations.data?.filter((i) => i.status === "EXPIRED").length || 0;
+
+      // Fetch signed contracts count
+      const { count: signedContracts } = await supabase
+        .from("contracts")
+        .select("id", { count: "exact", head: true })
+        .in("signing_status", ["employer_signed", "signed"]);
+
       return {
-        totalEmployees: employees.data?.filter((e) => e.status === "ACTIVE").length || 0,
-        pendingInvites: invitations.data?.filter((i) => i.status === "PENDING" || i.status === "SENT").length || 0,
-        completedOnboarding: invitations.data?.filter((i) => i.status === "ACCEPTED").length || 0,
-        failedExpired: invitations.data?.filter((i) => i.status === "EXPIRED").length || 0,
+        totalEmployees,
+        activeEmployees,
+        pendingInvites,
+        completedOnboarding: (completedOnboarding || 0) + (signedContracts || 0),
+        failedExpired,
         expiringSoon,
+        signedContracts: signedContracts || 0,
       };
     },
   });
@@ -96,10 +110,10 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Total Active Employees"
+          title="Total Employees"
           value={stats?.totalEmployees || 0}
-          subtitle="+12% from last month"
-          subtitleColor="green"
+          subtitle={`${stats?.activeEmployees || 0} active`}
+          subtitleColor={stats?.activeEmployees ? "green" : "default"}
           icon={Users}
           iconColor="blue"
         />
@@ -111,10 +125,10 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
           iconColor="yellow"
         />
         <StatsCard
-          title="Completed Onboarding"
-          value={stats?.completedOnboarding || 0}
-          subtitle="+4 this week"
-          subtitleColor="green"
+          title="Signed Contracts"
+          value={stats?.signedContracts || 0}
+          subtitle={stats?.signedContracts ? `${stats.signedContracts} completed` : "No contracts signed yet"}
+          subtitleColor={stats?.signedContracts ? "green" : "default"}
           icon={FileCheck}
           iconColor="green"
         />

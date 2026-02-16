@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -8,19 +10,46 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
-
-const weekData = [
-  { day: "Mon", value: 4 },
-  { day: "Tue", value: 3 },
-  { day: "Wed", value: 5 },
-  { day: "Thu", value: 7 },
-  { day: "Fri", value: 6 },
-  { day: "Sat", value: 8 },
-  { day: "Sun", value: 2 },
-];
+import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
 
 export function OnboardingActivityChart() {
   const [period, setPeriod] = useState("7days");
+
+  const days = period === "7days" ? 7 : period === "30days" ? 30 : 90;
+
+  const { data: chartData } = useQuery({
+    queryKey: ["onboarding-activity", period],
+    queryFn: async () => {
+      const since = subDays(new Date(), days).toISOString();
+
+      // Fetch invitations and employees created in the period
+      const [invRes, empRes] = await Promise.all([
+        supabase.from("invitations").select("created_at").gte("created_at", since),
+        supabase.from("employees").select("created_at").gte("created_at", since),
+      ]);
+
+      const interval = eachDayOfInterval({
+        start: subDays(new Date(), days - 1),
+        end: new Date(),
+      });
+
+      const counts: Record<string, number> = {};
+      interval.forEach((d) => {
+        counts[startOfDay(d).toISOString()] = 0;
+      });
+
+      // Count activity per day (invitations + new employees)
+      [...(invRes.data || []), ...(empRes.data || [])].forEach((row) => {
+        const key = startOfDay(new Date(row.created_at)).toISOString();
+        if (key in counts) counts[key]++;
+      });
+
+      return interval.map((d) => ({
+        label: days <= 7 ? format(d, "EEE") : format(d, "MMM d"),
+        value: counts[startOfDay(d).toISOString()] || 0,
+      }));
+    },
+  });
 
   return (
     <Card className="flex-1">
@@ -40,7 +69,7 @@ export function OnboardingActivityChart() {
       <CardContent>
         <div className="h-[200px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={weekData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={chartData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.3} />
@@ -48,7 +77,7 @@ export function OnboardingActivityChart() {
                 </linearGradient>
               </defs>
               <XAxis 
-                dataKey="day" 
+                dataKey="label" 
                 axisLine={false} 
                 tickLine={false} 
                 tick={{ fontSize: 12, fill: 'hsl(215, 16%, 47%)' }}
@@ -57,7 +86,8 @@ export function OnboardingActivityChart() {
                 axisLine={false} 
                 tickLine={false} 
                 tick={{ fontSize: 12, fill: 'hsl(215, 16%, 47%)' }}
-                domain={[0, 'dataMax + 2']}
+                allowDecimals={false}
+                domain={[0, 'dataMax + 1']}
               />
               <Tooltip 
                 contentStyle={{ 
