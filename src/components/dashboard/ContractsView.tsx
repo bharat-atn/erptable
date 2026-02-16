@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -40,6 +40,27 @@ const signingStatusOptions = [
   { value: "employer_signed", label: "Fully Signed", dot: "bg-emerald-500" },
 ];
 
+/** Check if a contract's form_data has critical missing fields */
+function getContractMissingFields(fd: Record<string, any> | null): string[] {
+  if (!fd) return ["All fields missing"];
+  const missing: string[] = [];
+  if (!fd.firstName) missing.push("First Name");
+  if (!fd.lastName) missing.push("Last Name");
+  if (!fd.address) missing.push("Address");
+  if (!fd.city) missing.push("City");
+  if (!fd.country) missing.push("Country");
+  if (!fd.birthday) missing.push("Birthday");
+  if (!fd.citizenship) missing.push("Citizenship");
+  if (!fd.mobile) missing.push("Mobile");
+  if (!fd.email) missing.push("Email");
+  if (!fd.mainDuties) missing.push("Main Duties");
+  if (!fd.jobType) missing.push("Job Type");
+  if (!fd.postingLocation) missing.push("Posting Location");
+  if (fd.salaryType === "hourly" && !fd.hourlyBasic) missing.push("Hourly Rate");
+  if (fd.salaryType === "monthly" && !fd.monthlyBasic) missing.push("Monthly Rate");
+  return missing;
+}
+
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const queryClient = useQueryClient();
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
@@ -55,7 +76,10 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         .select(`*, employees (email, first_name, last_name), companies (name)`)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as ContractRow[];
+      return (data as any[]).map(c => ({
+        ...c,
+        _missingFields: getContractMissingFields(c.form_data as Record<string, any> | null),
+      }));
     },
   });
 
@@ -129,12 +153,23 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     { key: "salary", header: "Salary", accessor: (c) => c.salary, render: (c) => <span className="text-sm">{c.salary ? `$${Number(c.salary).toLocaleString()}` : "—"}</span> },
     {
       key: "_signingStatus", header: "Signing Status", accessor: (c) => c._signingStatus,
-      render: (c) => {
+      render: (c: any) => {
         const s = c.signing_status;
-        if (s === "employer_signed") return <Badge variant="success"><CheckCircle className="w-3 h-3 mr-1" /> Signed</Badge>;
-        if (s === "employee_signed") return <Badge variant="pending" className="bg-amber-100 text-amber-800 border-amber-200"><PenTool className="w-3 h-3 mr-1" /> Awaiting Employer</Badge>;
-        if (s === "sent_to_employee") return <Badge variant="pending" className="bg-blue-100 text-blue-800 border-blue-200"><Send className="w-3 h-3 mr-1" /> Sent</Badge>;
-        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Draft</Badge>;
+        const missing = c._missingFields || [];
+        const hasWarning = missing.length > 0;
+        return (
+          <div className="flex items-center gap-1.5">
+            {s === "employer_signed" ? <Badge variant="success"><CheckCircle className="w-3 h-3 mr-1" /> Signed</Badge>
+              : s === "employee_signed" ? <Badge variant="pending" className="bg-amber-100 text-amber-800 border-amber-200"><PenTool className="w-3 h-3 mr-1" /> Awaiting Employer</Badge>
+              : s === "sent_to_employee" ? <Badge variant="pending" className="bg-blue-100 text-blue-800 border-blue-200"><Send className="w-3 h-3 mr-1" /> Sent</Badge>
+              : <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Draft</Badge>}
+            {hasWarning && (
+              <span title={`Missing: ${missing.join(", ")}`}>
+                <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+              </span>
+            )}
+          </div>
+        );
       },
     },
   ];
