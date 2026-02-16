@@ -83,8 +83,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .sig-column { display: flex; flex-direction: column; gap: 12px; }
   .sig-field { display: flex; flex-direction: column; }
-  .sig-line { border-bottom: 1px solid #333; min-height: 24px; display: flex; align-items: flex-end; padding-bottom: 2px; }
-  .sig-line-tall { min-height: 50px; }
+  .sig-line { border-bottom: 1px solid #333; min-height: 24px; display: flex; align-items: flex-end; padding-bottom: 2px; overflow: visible; }
+  .sig-line-tall { min-height: 50px; overflow: visible; }
   .sig-prefill { font-size: 11px; color: #333; }
   .sig-label { font-size: 7px; text-transform: uppercase; color: #aaa; margin-top: 2px; font-weight: 400; }
   .sig-date { font-size: 7px; color: #999; margin-top: 1px; }
