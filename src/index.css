@@ -146,7 +146,7 @@
 .contract-doc .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; }
 .contract-doc .field-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px 16px; margin-bottom: 6px; }
 .contract-doc .field { padding: 4px 0; border-bottom: 1px solid hsl(var(--border)); }
-.contract-doc .field-label { display: block; font-family: Arial, Helvetica, sans-serif; font-size: 0.6rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: hsl(var(--muted-foreground) / 0.7); margin-bottom: 1px; }
+.contract-doc .field-label { display: block; font-family: Arial, Helvetica, sans-serif; font-size: 0.5rem; font-weight: 400; text-transform: uppercase; letter-spacing: 0.3px; color: hsl(var(--muted-foreground) / 0.6); margin-bottom: 1px; }
 .contract-doc .field-value { display: block; font-size: 0.8rem; font-weight: 600; min-height: 16px; word-break: break-word; color: hsl(var(--foreground)); }
 .contract-doc .subsection-label { font-family: Arial, Helvetica, sans-serif; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: hsl(var(--muted-foreground)); margin-top: 0.75rem; margin-bottom: 0.35rem; }
 .contract-doc .info-block { background: hsl(var(--muted)); border-left: 3px solid hsl(var(--border)); padding: 0.625rem 0.875rem; margin-bottom: 0.5rem; font-size: 0.78rem; line-height: 1.5; border-radius: 0 4px 4px 0; }
@@ -169,12 +169,12 @@
 .contract-doc .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 .contract-doc .sig-column { display: flex; flex-direction: column; gap: 1.25rem; }
 .contract-doc .sig-field { display: flex; flex-direction: column; }
-.contract-doc .sig-line { border-bottom: 1px solid hsl(var(--foreground) / 0.3); height: 28px; display: flex; align-items: flex-end; padding-bottom: 2px; }
-.contract-doc .sig-line-tall { height: 40px; }
+.contract-doc .sig-line { border-bottom: 1px solid hsl(var(--foreground) / 0.3); min-height: 28px; display: flex; align-items: flex-end; padding-bottom: 2px; }
+.contract-doc .sig-line-tall { min-height: 50px; }
 .contract-doc .sig-prefill { font-size: 0.8rem; }
-.contract-doc .sig-label { font-family: Arial, Helvetica, sans-serif; font-size: 0.55rem; color: hsl(var(--muted-foreground)); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
-.contract-doc .sig-date { font-size: 0.55rem; color: hsl(var(--muted-foreground)); }
-.contract-doc .sig-img { height: 30px; object-fit: contain; }
+.contract-doc .sig-label { font-family: Arial, Helvetica, sans-serif; font-size: 0.45rem; color: hsl(var(--muted-foreground) / 0.7); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 400; }
+.contract-doc .sig-date { font-size: 0.5rem; color: hsl(var(--muted-foreground) / 0.7); }
+.contract-doc .sig-img { height: 40px; max-width: 180px; object-fit: contain; display: block; }
 .contract-doc .sig-title { margin-top: 2rem; }
 
 /* ── Mobile-responsive contract document ── */
