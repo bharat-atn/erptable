@@ -39,7 +39,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
   });
 
   const { data: pendingSignatures } = useQuery({
-    queryKey: ["pending-signatures-count"],
+    queryKey: ["pending-signatures-details"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contracts")
