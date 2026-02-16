@@ -45,7 +45,7 @@ export function DeleteConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <AlertDialogContent className="sm:max-w-md">
+      <AlertDialogContent className="sm:max-w-[480px]">
         <AlertDialogHeader className="space-y-4">
           {/* Red warning banner */}
           <div className="flex items-center gap-3 rounded-lg border-2 border-destructive/30 bg-destructive/10 p-4">
