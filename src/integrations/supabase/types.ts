@@ -641,6 +641,10 @@ export type Database = {
         Args: { _signature_url: string; _token: string }
         Returns: undefined
       }
+      submit_employer_signature: {
+        Args: { _contract_id: string; _signature_url: string }
+        Returns: undefined
+      }
       submit_onboarding: {
         Args: {
           _first_name: string

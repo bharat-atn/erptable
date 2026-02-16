@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight, Trash2 } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send } from "lucide-react";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { EmployerSigningDialog } from "./EmployerSigningDialog";
 import { toast } from "sonner";
 interface ContractsViewProps {
   onContinueContract?: (contractId: string) => void;
@@ -23,14 +24,19 @@ type ContractRow = {
   salary: number | null;
   status: string;
   signed_at: string | null;
+  signing_status: string;
+  employee_signed_at: string | null;
+  employer_signed_at: string | null;
   created_at: string;
   employees: { email: string; first_name: string | null; last_name: string | null } | null;
   companies: { name: string } | null;
 };
 
-const statusFilterOptions = [
-  { value: "signed", label: "Signed", dot: "bg-emerald-500" },
-  { value: "pending", label: "Pending", dot: "bg-amber-500" },
+const signingStatusOptions = [
+  { value: "not_sent", label: "Draft", dot: "bg-gray-400" },
+  { value: "sent_to_employee", label: "Sent", dot: "bg-blue-500" },
+  { value: "employee_signed", label: "Awaiting Employer", dot: "bg-amber-500" },
+  { value: "employer_signed", label: "Fully Signed", dot: "bg-emerald-500" },
 ];
 
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
@@ -38,6 +44,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
+  const [signingContractId, setSigningContractId] = useState<string | null>(null);
 
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
@@ -92,7 +99,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   // Add a derived "statusLabel" for filtering
   const dataWithStatus = (contracts ?? []).map((c) => ({
     ...c,
-    _statusLabel: c.signed_at ? "signed" : "pending",
+    _signingStatus: c.signing_status,
   }));
 
   type ContractWithStatus = typeof dataWithStatus[number];
@@ -120,12 +127,14 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     { key: "end_date", header: "End Date", accessor: (c) => c.end_date, defaultVisible: false, render: (c) => <span className="text-sm text-muted-foreground">{c.end_date ? format(new Date(c.end_date), "yyyy-MM-dd") : "—"}</span> },
     { key: "salary", header: "Salary", accessor: (c) => c.salary, render: (c) => <span className="text-sm">{c.salary ? `$${Number(c.salary).toLocaleString()}` : "—"}</span> },
     {
-      key: "_statusLabel", header: "Status", accessor: (c) => c._statusLabel,
-      render: (c) => (
-        <Badge variant={c.signed_at ? "success" : "pending"}>
-          {c.signed_at ? <><CheckCircle className="w-3 h-3 mr-1" /> Signed</> : <><Clock className="w-3 h-3 mr-1" /> Pending</>}
-        </Badge>
-      ),
+      key: "_signingStatus", header: "Signing Status", accessor: (c) => c._signingStatus,
+      render: (c) => {
+        const s = c.signing_status;
+        if (s === "employer_signed") return <Badge variant="success"><CheckCircle className="w-3 h-3 mr-1" /> Signed</Badge>;
+        if (s === "employee_signed") return <Badge variant="pending" className="bg-amber-100 text-amber-800 border-amber-200"><PenTool className="w-3 h-3 mr-1" /> Awaiting Employer</Badge>;
+        if (s === "sent_to_employee") return <Badge variant="pending" className="bg-blue-100 text-blue-800 border-blue-200"><Send className="w-3 h-3 mr-1" /> Sent</Badge>;
+        return <Badge variant="outline"><Clock className="w-3 h-3 mr-1" /> Draft</Badge>;
+      },
     },
   ];
 
@@ -149,7 +158,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         enableHighlight
         enableSelection
         stickyHeader
-        filters={[{ key: "_statusLabel", label: "Status", options: statusFilterOptions }]}
+        filters={[{ key: "_signingStatus", label: "Signing Status", options: signingStatusOptions }]}
         bulkActions={(selectedKeys, clearSelection) => (
           <Button
             variant="destructive"
@@ -165,6 +174,11 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         )}
         rowActions={(contract) => (
           <div className="flex items-center gap-1">
+            {contract.signing_status === "employee_signed" && (
+              <Button variant="default" size="sm" className="gap-1" onClick={() => setSigningContractId(contract.id)}>
+                <PenTool className="w-3 h-3" /> Review & Sign
+              </Button>
+            )}
             {onContinueContract && contract.status === "draft" && (
               <Button variant="outline" size="sm" className="gap-1" onClick={() => onContinueContract(contract.id)}>
                 Continue <ArrowRight className="w-3 h-3" />
@@ -208,6 +222,13 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         onConfirm={() => bulkDeleteIds && bulkDelete.mutate(bulkDeleteIds)}
         isLoading={bulkDelete.isPending}
         requireTypedConfirmation
+      />
+
+      {/* Employer signing dialog */}
+      <EmployerSigningDialog
+        contractId={signingContractId}
+        open={!!signingContractId}
+        onOpenChange={(open) => !open && setSigningContractId(null)}
       />
     </div>
   );

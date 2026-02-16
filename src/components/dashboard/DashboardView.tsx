@@ -5,9 +5,14 @@ import { OnboardingActivityChart } from "./OnboardingActivityChart";
 import { OnboardingStatusChart } from "./OnboardingStatusChart";
 import { RecentInvitationsTable } from "./RecentInvitationsTable";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { Users, Mail, FileCheck, AlertCircle } from "lucide-react";
+import { Users, Mail, FileCheck, AlertCircle, PenTool } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function DashboardView() {
+interface DashboardViewProps {
+  onNavigate?: (view: string) => void;
+}
+
+export function DashboardView({ onNavigate }: DashboardViewProps) {
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
@@ -33,6 +38,18 @@ export function DashboardView() {
     },
   });
 
+  const { data: pendingSignatures } = useQuery({
+    queryKey: ["pending-signatures-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contracts")
+        .select("id, contract_code, employees(first_name, last_name)")
+        .eq("signing_status", "employee_signed");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -45,6 +62,36 @@ export function DashboardView() {
         </div>
         <CreateInvitationDialog />
       </div>
+
+      {/* Pending Employer Signatures Banner */}
+      {pendingSignatures && pendingSignatures.length > 0 && (
+        <div className="rounded-lg border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+              <PenTool className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                {pendingSignatures.length} contract{pendingSignatures.length > 1 ? "s" : ""} awaiting your signature
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                {pendingSignatures.map((c: any) => {
+                  const name = c.employees?.first_name ? `${c.employees.first_name} ${c.employees.last_name}` : "Unknown";
+                  return `${c.contract_code || "Draft"} (${name})`;
+                }).join(", ")}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200"
+              onClick={() => onNavigate?.("contracts")}
+            >
+              Go to Contracts
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
