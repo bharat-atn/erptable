@@ -62,7 +62,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   .field-grid-2 { grid-template-columns: 1fr 1fr; }
   .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   .field { display: flex; flex-direction: column; }
-  .field-label { font-size: 8px; text-transform: uppercase; color: #aaa; letter-spacing: 0.3px; font-weight: 400; }
+  .field-label { font-size: 7px; text-transform: uppercase; color: #aaa; letter-spacing: 0.3px; font-weight: 400; }
   .field-value { font-size: 11px; font-weight: 700; padding: 2px 0; border-bottom: 1px dotted #ccc; min-height: 16px; color: #1a1a1a; }
   .subsection-label { font-size: 10px; font-weight: 600; margin: 8px 0 4px; color: #444; }
   .info-block { background: #f8f8f8; padding: 8px 10px; border-radius: 3px; margin-bottom: 8px; font-size: 10px; }
@@ -86,9 +86,9 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   .sig-line { border-bottom: 1px solid #333; min-height: 24px; display: flex; align-items: flex-end; padding-bottom: 2px; }
   .sig-line-tall { min-height: 50px; }
   .sig-prefill { font-size: 11px; color: #333; }
-  .sig-label { font-size: 8px; text-transform: uppercase; color: #888; margin-top: 2px; }
-  .sig-date { font-size: 8px; color: #666; margin-top: 1px; }
-  .sig-img { max-height: 45px; max-width: 180px; object-fit: contain; }
+  .sig-label { font-size: 7px; text-transform: uppercase; color: #aaa; margin-top: 2px; font-weight: 400; }
+  .sig-date { font-size: 7px; color: #999; margin-top: 1px; }
+  .sig-img { max-height: 50px; max-width: 180px; object-fit: contain; display: block; }
   .page-break-avoid { page-break-inside: avoid; }
 </style>
 </head><body>${printRef.current.innerHTML}</body></html>`);
