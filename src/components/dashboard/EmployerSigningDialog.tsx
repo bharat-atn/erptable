@@ -77,6 +77,7 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
       toast.success("Contract signed successfully!");
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
       queryClient.invalidateQueries({ queryKey: ["pending-signatures-count"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-signatures-details"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     } catch (err: any) {
       toast.error(err.message || "Failed to submit signature");
