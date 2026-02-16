@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -692,6 +693,46 @@ export function ContractDetailsStep({
     "8": section8Missing,
   };
 
+  // Map activeSection to the relevant validation keys
+  const getValidationKeysForSection = (section: string): string[] => {
+    switch (section) {
+      case "employee": return ["2.1", "2.2", "2.3"];
+      case "section-3": return ["3"];
+      case "section-5": return ["5"];
+      case "section-6": return ["6"];
+      case "section-7": return ["7"];
+      case "section-8": return ["8"];
+      default: return [];
+    }
+  };
+
+  const getMissingFieldsForSection = (section: string): string[] => {
+    const keys = getValidationKeysForSection(section);
+    return keys.flatMap(k => sectionWarnings[k] || []);
+  };
+
+  // All missing fields across all sections (for final signing gate)
+  const allMissingFields = useMemo(() => {
+    return Object.entries(sectionWarnings).flatMap(([key, fields]) =>
+      fields.map(f => `§${key}: ${f}`)
+    );
+  }, [
+    section21Missing.length, section22Missing.length, section23Missing.length,
+    section3Missing.length, section5Missing.length, section6Missing.length,
+    section7Missing.length, section8Missing.length
+  ]);
+
+  const handleValidatedNext = () => {
+    const missing = getMissingFieldsForSection(activeSection);
+    if (missing.length > 0) {
+      toast.error(`Please complete required fields before proceeding: ${missing.join(", ")}`, {
+        duration: 5000,
+      });
+      return;
+    }
+    onNext();
+  };
+
   const renderLabel = (en: string, sv: string, required = true) => (
     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
       {en} / {sv}
@@ -1112,7 +1153,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -1298,7 +1339,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -1335,7 +1376,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -1611,7 +1652,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -1713,7 +1754,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -1766,7 +1807,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2217,7 +2258,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2279,7 +2320,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2328,7 +2369,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2617,7 +2658,7 @@ export function ContractDetailsStep({
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back / Tillbaka
           </Button>
-          <Button className="px-8" onClick={onNext}>
+          <Button className="px-8" onClick={handleValidatedNext}>
             Next Step / Nästa
             <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
@@ -2714,17 +2755,32 @@ export function ContractDetailsStep({
 
                 {/* Step 1: Send for signing */}
                 {signingStatus === "not_sent" && (
-                  <Button
-                    className="w-full"
-                    onClick={handleSendForSigning}
-                    disabled={sendingForSigning}
-                  >
-                    {sendingForSigning ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparing signing...</>
-                    ) : (
-                      "Send for E-Signing / Skicka för e-signering"
+                  <div className="space-y-3">
+                    {allMissingFields.length > 0 && (
+                      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+                        <p className="text-sm font-medium text-destructive flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          Contract has {allMissingFields.length} missing required field(s)
+                        </p>
+                        <ul className="text-xs text-destructive/80 list-disc pl-5 space-y-0.5">
+                          {allMissingFields.slice(0, 8).map((f, i) => <li key={i}>{f}</li>)}
+                          {allMissingFields.length > 8 && <li>...and {allMissingFields.length - 8} more</li>}
+                        </ul>
+                        <p className="text-xs text-muted-foreground">Please go back and complete all required sections before sending for signing.</p>
+                      </div>
                     )}
-                  </Button>
+                    <Button
+                      className="w-full"
+                      onClick={handleSendForSigning}
+                      disabled={sendingForSigning || allMissingFields.length > 0}
+                    >
+                      {sendingForSigning ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparing signing...</>
+                      ) : (
+                        "Send for E-Signing / Skicka för e-signering"
+                      )}
+                    </Button>
+                  </div>
                 )}
 
                 {/* Step 2: Employee signing - open simulation in new tab */}
