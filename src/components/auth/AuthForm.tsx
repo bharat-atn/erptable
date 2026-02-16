@@ -115,7 +115,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
               )}
             </Button>
           </form>
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-3">
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
@@ -125,6 +125,33 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                 ? "Already have an account? Sign in"
                 : "Need an account? Sign up"}
             </button>
+            <div className="pt-2 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                disabled={isLoading}
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    const { error } = await supabase.auth.signInWithPassword({
+                      email: "bharat@algoware.in",
+                      password: "123456",
+                    });
+                    if (error) throw error;
+                    toast.success("Dev login successful!");
+                    onSuccess();
+                  } catch (error: any) {
+                    toast.error(error.message);
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                ⚡ Dev Login
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
