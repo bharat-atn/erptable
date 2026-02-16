@@ -1,122 +1,73 @@
 
 
-# Rebuild Company Lookup with Real Data Sources
+# Sidebar Redesign: Pixel-Perfect Match to Arbor Pro Figma Template
 
-## Problem
+## What's Changing
 
-The current company lookup uses an AI model (Gemini) to **guess** company information from its training data. This produces fabricated addresses, postcodes, phone numbers, and organization numbers -- none verified against actual business registries. This is unacceptable for a professional HR system.
+Based on the Figma screenshot, the current sidebar needs several specific fixes to match the design system:
 
-## Solution
+### 1. Color & Contrast Fixes
+- The active item pill should be a vibrant **blue-violet** (closer to `hsl(255, 80%, 55%)` or a true indigo-blue), not a muted purple
+- The left border indicator on active items should be a **darker/contrasting blue** (not the same color as the pill)
+- Inactive text should be **dark gray/near-black** (like `hsl(220, 15%, 30%)`), not faded -- the Figma shows clearly readable dark text
+- Group labels ("MAIN", "OTHERS") should be a **light muted purple/lavender** tint, matching the Figma
 
-Replace the "AI guessing" approach with a **real data scraping** strategy:
+### 2. Typography Fixes
+- Inactive menu items: **medium weight (font-medium)**, dark text, ~14px
+- Active menu item: **semibold**, white text on the blue pill
+- Header "Company Name" (OnboardFlow): **bold**, dark
+- Header subtitle: **regular weight**, muted gray
+- Group labels: **semibold**, small caps, purple-tinted
 
-1. **Scrape real business directories** (e.g. allabolag.se for Swedish companies) using the Firecrawl connector to get verified registry data
-2. **Use AI only to parse and structure** the scraped content -- never to invent data
-3. **Show clear source attribution** and confidence for every field
-4. **Flag fields with no verified source** so users know what to double-check
+### 3. Active Item Styling (from Figma component breakdown)
+- Blue/indigo rounded pill background filling the full width
+- White text + white icon inside the pill
+- A **short vertical bar** on the left edge (darker blue, outside the pill)
+- A **chevron-right** icon on the right side inside the pill
+- The icon on the far right (grid icon) appears to be outside the pill in some variants
 
-## Architecture
+### 4. Header Card
+- Logo in a **circular blue/gradient container** (the Figma shows a teal/blue circle with a leaf icon)
+- For our app: keep the Ljungan logo in the rounded container
+- Company name bold, subtitle below in muted text, chevron-down on right
+- Subtle hover state
 
-The new `lookup-company` edge function will follow this flow:
+### 5. "Need Support" Card (New Addition)
+- A card near the bottom with a support icon, "Need Support" title, dismiss (X) button
+- Subtitle: "Contact with one of our experts to get support."
+- Light background card with subtle border
 
-```text
-User enters company name
-        |
-        v
-Edge Function receives name + optional org number
-        |
-        v
-Step 1: Scrape allabolag.se search results via Firecrawl
-        |
-        v
-Step 2: Scrape the company detail page for full info
-        |
-        v
-Step 3: Use AI (Gemini) ONLY to parse the scraped
-        markdown into structured JSON fields
-        |
-        v
-Step 4: Return structured data with source = 
-        "allabolag.se (Bolagsverket registry data)"
-```
-
-## Implementation Steps
-
-### Step 1 -- Connect Firecrawl
-
-Enable the Firecrawl connector so the edge function can scrape business directory websites. Firecrawl handles JavaScript rendering, anti-bot measures, and returns clean markdown.
-
-### Step 2 -- Rewrite `lookup-company` Edge Function
-
-**File:** `supabase/functions/lookup-company/index.ts`
-
-The new logic:
-
-1. **Search phase**: Use Firecrawl to scrape `https://www.allabolag.se/sok?q={company_name}` (URL-encoded). This returns a search results page with matching companies.
-
-2. **Detail phase**: Parse the search results to find the best match. Then scrape the individual company page (e.g. `https://www.allabolag.se/5590360795`) to get full details including:
-   - Organization number
-   - Registered address (street, postcode, city)
-   - Phone number
-   - Website
-   - Company type (AB, HB, etc.)
-
-3. **Parse phase**: Use AI (Gemini) to extract structured JSON from the scraped markdown. The AI prompt will be strictly limited to parsing -- it must ONLY extract data present in the scraped text, never invent anything.
-
-4. **Source attribution**: Every field will carry `source: "allabolag.se (Swedish Companies Registration Office)"` since allabolag.se sources its data from Bolagsverket.
-
-5. **Fallback for non-Swedish companies**: If the company doesn't appear to be Swedish (based on name or org number format), fall back to the current AI-based approach but clearly mark all fields as `source: "AI knowledge base"` with `confidence: "low"`.
-
-### Step 3 -- Update Confidence Display in `CompanyFormDialog.tsx`
-
-**File:** `src/components/dashboard/CompanyFormDialog.tsx`
-
-- Show confidence badges: **Verified** (green, from real registry), **Unverified** (yellow, AI-inferred), **Not found** (gray)
-- For fields from real registry sources, show a checkmark with "Verified from [source]"
-- For fields the AI could not find in scraped data, show "Not found -- please fill manually" instead of fabricating data
-- When a field has low confidence, do NOT auto-fill it -- leave it empty and show a note
-
-### Step 4 -- Handle Edge Cases
-
-- **Company not found on allabolag.se**: Return `found: false` with a clear message. Do not fabricate data.
-- **Multiple matches**: Return the top match but include a warning that multiple companies matched
-- **Firecrawl errors or rate limits**: Fall back gracefully with a message explaining the lookup service is temporarily unavailable
-- **Organization number provided**: Use it to search directly on allabolag.se for exact match (e.g. `https://www.allabolag.se/{org_number_no_hyphens}`)
+### 6. User Profile Footer
+- User avatar (photo or initials circle)
+- Name in **semibold** with a small verified/blue badge icon
+- Email below in muted text
+- Chevron-right on the right
 
 ## Technical Details
 
-### Edge Function Changes
+### Files to modify:
 
-The rewritten `lookup-company/index.ts` will:
+**`src/index.css`** -- Update sidebar CSS variables:
+- `--sidebar-primary`: shift to `250 80% 58%` (more vibrant blue-violet)
+- `--sidebar-foreground`: darken to `220 15% 30%` (near-black for readable text)
+- `--sidebar-accent`: keep light purple for hover states
 
-1. Check for `FIRECRAWL_API_KEY` environment variable
-2. Construct search URL: `https://www.allabolag.se/sok?q=${encodeURIComponent(company_name)}`
-3. If org number is provided, also try direct URL: `https://www.allabolag.se/${orgNumber.replace(/\D/g, '')}`
-4. Call Firecrawl scrape API with `formats: ['markdown']` and `onlyMainContent: true`
-5. Send scraped markdown to Gemini with a **parsing-only prompt** that says: "Extract ONLY the data present in this text. If a field is not found in the text, return empty string. Do NOT guess or infer."
-6. Post-process: uppercase city, strip leading zero from phone
-7. Return with proper source attribution for each field
+**`src/components/dashboard/Sidebar.tsx`** -- Multiple component updates:
 
-### New AI Prompt (Parsing Only)
+1. **SidebarItem**: 
+   - Active: `bg-sidebar-primary text-white font-semibold` with left bar indicator outside/overlapping
+   - Inactive: `text-foreground font-medium` (no opacity reduction)
+   - The left bar should use a slightly darker shade or contrasting color
 
-The key difference is the prompt will include the actual scraped content and instruct the AI:
+2. **GroupLabel**: Purple-tinted label matching Figma exactly
 
-- "You are a data extraction tool. Extract ONLY information explicitly present in the following text."
-- "If a piece of information is not found in the text, return an empty string for that field."
-- "Do NOT guess, infer, or make up any information."
-- "Set confidence to 'high' only for data directly found in the text."
+3. **SidebarHeader**: Ensure logo container matches the circular blue style from Figma
 
-### Frontend Changes
+4. **New "Need Support" card component**: Add between navigation and user profile, with dismiss functionality (stored in localStorage)
 
-- Update `FieldMessage` to show "Verified" vs "Unverified" badges
-- Only auto-fill fields that have `confidence: "high"` from verified sources
-- Fields with no data should remain empty rather than being filled with guesses
-- Show a clear banner when data comes from a verified registry vs AI inference
+5. **UserProfileCard**: Add a small blue verified badge icon next to the user name
 
-## What This Achieves
+### Sequencing:
+1. Update CSS variables in `index.css`
+2. Update `Sidebar.tsx` -- fix item styling, add support card, refine header/footer
 
-- **Real data**: Company details come from actual business registries, not AI hallucinations
-- **Transparency**: Every field shows exactly where the data came from
-- **Trust**: Users can see verified vs unverified labels
-- **Honesty**: Fields without verified data are left empty instead of fabricated
-- **Swedish standard**: allabolag.se already provides data in Swedish format (uppercase cities, proper postcodes)
