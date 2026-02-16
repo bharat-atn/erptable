@@ -136,7 +136,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                   setIsLoading(true);
                   try {
                     const { error } = await supabase.auth.signInWithPassword({
-                      email: "bharat@algoware.in",
+                      email: "ove.eriksson@dahai.se",
                       password: "123456",
                     });
                     if (error) throw error;
