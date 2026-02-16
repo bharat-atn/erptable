@@ -169,12 +169,12 @@
 .contract-doc .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
 .contract-doc .sig-column { display: flex; flex-direction: column; gap: 1.25rem; }
 .contract-doc .sig-field { display: flex; flex-direction: column; }
-.contract-doc .sig-line { border-bottom: 1px solid hsl(var(--foreground) / 0.3); min-height: 28px; display: flex; align-items: flex-end; padding-bottom: 2px; }
-.contract-doc .sig-line-tall { min-height: 50px; }
+.contract-doc .sig-line { border-bottom: 1px solid hsl(var(--foreground) / 0.3); min-height: 28px; display: flex; align-items: flex-end; padding-bottom: 2px; overflow: visible; }
+.contract-doc .sig-line-tall { min-height: 60px; overflow: visible; }
 .contract-doc .sig-prefill { font-size: 0.8rem; }
 .contract-doc .sig-label { font-family: Arial, Helvetica, sans-serif; font-size: 0.45rem; color: hsl(var(--muted-foreground) / 0.7); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 400; }
 .contract-doc .sig-date { font-size: 0.5rem; color: hsl(var(--muted-foreground) / 0.7); }
-.contract-doc .sig-img { height: 40px; max-width: 180px; object-fit: contain; display: block; }
+.contract-doc .sig-img { max-height: 55px; max-width: 200px; object-fit: contain; display: block; }
 .contract-doc .sig-title { margin-top: 2rem; }
 
 /* ── Mobile-responsive contract document ── */
