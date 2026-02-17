@@ -1,66 +1,232 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Check, Bell } from "lucide-react";
+import {
+  Check,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Users,
+  BarChart3,
+  Wrench,
+  Calendar,
+  DollarSign,
+  FileText,
+  Globe,
+  Calculator,
+  Smartphone,
+  Clock,
+  MessageSquare,
+  Shield,
+  Send,
+  Fingerprint,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { type AppDefinition, getIcon, getColor } from "./AppLauncher";
 
+/* ── page structure ─────────────────────────────────────────── */
+
+interface FeatureHighlight {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+interface TeaserPage {
+  headline: string;
+  subtitle?: string;
+  highlights: FeatureHighlight[];
+}
+
 interface TeaserContent {
+  tagline: string;
   intro: string;
-  features: string[];
+  pages: TeaserPage[];
   timeline: string;
 }
 
-const TEASER_CONTENT: Record<string, TeaserContent> = {
+/* ── content per app ────────────────────────────────────────── */
+
+const TEASER: Record<string, TeaserContent> = {
   "forestry-project": {
+    tagline: "Plan · Track · Deliver",
     intro:
-      "A comprehensive project management tool designed specifically for forestry operations — from initial clearing to planting and ongoing maintenance.",
-    features: [
-      "Project planning and tracking for clearing and planting operations",
-      "Team assignment and crew management across multiple sites",
-      "GPS-based area mapping and progress visualization",
-      "Financial planning with cost tracking per project phase",
-      "Equipment and machinery allocation",
-      "Weather-dependent scheduling and calendar integration",
-      "Reporting dashboards for project status and profitability",
+      "A purpose-built project management platform for forestry operations — from initial land clearing through planting, maintenance, and financial close-out.",
+    pages: [
+      {
+        headline: "Planning & Operations",
+        subtitle: "Full lifecycle project management for every site",
+        highlights: [
+          {
+            icon: MapPin,
+            title: "GPS Area Mapping",
+            description:
+              "Define work zones on a map, measure hectares, and visualize real-time progress with satellite overlays.",
+          },
+          {
+            icon: Calendar,
+            title: "Weather-Aware Scheduling",
+            description:
+              "Automatically reschedule tasks when weather conditions fall outside defined thresholds.",
+          },
+          {
+            icon: Wrench,
+            title: "Equipment Allocation",
+            description:
+              "Assign machinery to projects, track utilization rates, and schedule preventive maintenance windows.",
+          },
+        ],
+      },
+      {
+        headline: "Teams & Reporting",
+        subtitle: "Keep crews aligned and stakeholders informed",
+        highlights: [
+          {
+            icon: Users,
+            title: "Crew Management",
+            description:
+              "Assign teams across multiple sites, manage certifications, and handle shift rotations.",
+          },
+          {
+            icon: BarChart3,
+            title: "Live Dashboards",
+            description:
+              "Monitor project status, budget burn-rate, and profitability with real-time visual reports.",
+          },
+          {
+            icon: DollarSign,
+            title: "Financial Tracking",
+            description:
+              "Track costs per project phase — labour, materials, equipment — against planned budgets.",
+          },
+        ],
+      },
     ],
     timeline: "Expected availability: Q3 2026",
   },
+
   payroll: {
+    tagline: "Calculate · Comply · Pay",
     intro:
-      "Streamline your entire payroll process with automated calculations, tax handling, and seamless integration with your HR contracts.",
-    features: [
-      "Automated salary calculation based on hourly, monthly, or piece-work rates",
-      "Integration with HR contracts for seamless rate importing",
-      "Tax deduction and social contribution handling",
-      "Payslip generation and distribution",
-      "Overtime and premium pay calculations",
-      "Multi-currency support for international workforce",
-      "Export to accounting systems",
+      "Streamline your entire payroll cycle — from contract-driven rate imports and automated calculations through to payslip distribution and accounting exports.",
+    pages: [
+      {
+        headline: "Salary & Calculations",
+        subtitle: "Every rate model, handled automatically",
+        highlights: [
+          {
+            icon: Calculator,
+            title: "Flexible Rate Engine",
+            description:
+              "Support hourly, monthly, and piece-work rates with automatic overtime and premium calculations.",
+          },
+          {
+            icon: FileText,
+            title: "HR Contract Integration",
+            description:
+              "Import salary data directly from signed employment contracts — no duplicate entry required.",
+          },
+          {
+            icon: Globe,
+            title: "Multi-Currency Support",
+            description:
+              "Handle international workforces with automatic exchange-rate conversion and local compliance.",
+          },
+        ],
+      },
+      {
+        headline: "Compliance & Distribution",
+        subtitle: "Stay compliant and keep employees informed",
+        highlights: [
+          {
+            icon: Shield,
+            title: "Tax & Contributions",
+            description:
+              "Automatic deductions for income tax, social contributions, and pension according to local rules.",
+          },
+          {
+            icon: Send,
+            title: "Payslip Generation",
+            description:
+              "Generate, preview, and distribute digital payslips to employees via email or the Employee Hub.",
+          },
+          {
+            icon: BarChart3,
+            title: "Accounting Export",
+            description:
+              "One-click export to SIE, Fortnox, or other accounting systems with full audit trail.",
+          },
+        ],
+      },
     ],
     timeline: "Expected availability: Q4 2026",
   },
+
   "employee-hub": {
+    tagline: "Connect · Sign · Report",
     intro:
-      "A mobile-first portal where employees can manage their information, sign documents, report attendance, and stay connected with HR.",
-    features: [
-      "Personal profile and document management",
-      "View and digitally sign employment contracts",
-      "Daily attendance and time reporting",
-      "Leave requests and approval tracking",
-      "Push notifications for important updates",
-      "Access to company policies and Code of Conduct",
-      "Direct messaging with HR department",
+      "A mobile-first portal that puts employees in control of their personal data, contracts, time reporting, and direct communication with HR.",
+    pages: [
+      {
+        headline: "Documents & Contracts",
+        subtitle: "Everything in one pocket-sized portal",
+        highlights: [
+          {
+            icon: Fingerprint,
+            title: "Digital Contract Signing",
+            description:
+              "View, review, and sign employment contracts directly from your phone with legally binding e-signatures.",
+          },
+          {
+            icon: FileText,
+            title: "Document Vault",
+            description:
+              "Access payslips, company policies, Code of Conduct, and personal documents anytime.",
+          },
+          {
+            icon: Smartphone,
+            title: "Profile Management",
+            description:
+              "Update personal details, emergency contacts, and bank information securely on the go.",
+          },
+        ],
+      },
+      {
+        headline: "Time & Communication",
+        subtitle: "Stay connected and report effortlessly",
+        highlights: [
+          {
+            icon: Clock,
+            title: "Attendance & Time Reporting",
+            description:
+              "Clock in/out, log hours per project, and submit timesheets with a single tap.",
+          },
+          {
+            icon: Calendar,
+            title: "Leave Management",
+            description:
+              "Request vacation, sick leave, or parental leave and track approval status in real time.",
+          },
+          {
+            icon: MessageSquare,
+            title: "HR Messaging",
+            description:
+              "Direct, secure messaging channel with HR for questions, requests, and important updates.",
+          },
+        ],
+      },
     ],
     timeline: "Expected availability: Q1 2027",
   },
 };
+
+/* ── component ──────────────────────────────────────────────── */
 
 interface TeaserDialogProps {
   app: AppDefinition | null;
@@ -69,70 +235,151 @@ interface TeaserDialogProps {
 }
 
 export function TeaserDialog({ app, open, onClose }: TeaserDialogProps) {
+  const [pageIndex, setPageIndex] = useState(0);
+
   if (!app) return null;
-  const content = TEASER_CONTENT[app.id];
+  const content = TEASER[app.id];
   if (!content) return null;
 
   const Icon = getIcon(app.iconName);
   const color = getColor(app.colorIndex);
+  const page = content.pages[pageIndex];
+  const totalPages = content.pages.length;
+  const isFirst = pageIndex === 0;
+  const isLast = pageIndex === totalPages - 1;
+
+  const handleClose = () => {
+    setPageIndex(0);
+    onClose();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-1">
-            <div
-              className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
-                color.bg
-              )}
-            >
-              <Icon className={cn("w-5 h-5", color.text)} />
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) handleClose();
+      }}
+    >
+      <DialogContent className="sm:max-w-xl p-0 overflow-hidden gap-0 border-0 shadow-2xl">
+        {/* ── Hero banner ── */}
+        <div
+          className={cn(
+            "relative px-8 pt-8 pb-6",
+            color.bg
+          )}
+        >
+          {/* decorative circles */}
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 rounded-full bg-white/10 translate-y-1/2 -translate-x-1/4" />
+
+          <div className="relative flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 rounded-xl bg-white/90 flex items-center justify-center shadow-sm">
+              <Icon className={cn("w-6 h-6", color.text)} />
             </div>
-            <DialogTitle className="text-xl">{app.name}</DialogTitle>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">{app.name}</h2>
+              <p className={cn("text-sm font-semibold tracking-wide", color.text)}>
+                {content.tagline}
+              </p>
+            </div>
           </div>
-        </DialogHeader>
-
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {content.intro}
-        </p>
-
-        <div className="space-y-2 py-2">
-          <p className="text-sm font-semibold text-foreground">
-            Planned Features
+          <p className="relative text-sm text-foreground/80 leading-relaxed">
+            {content.intro}
           </p>
-          <ul className="space-y-2">
-            {content.features.map((f, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm">
-                <Check className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-                <span className="text-muted-foreground">{f}</span>
-              </li>
-            ))}
-          </ul>
         </div>
 
-        <p className="text-xs text-muted-foreground/70 italic">
-          {content.timeline}
-        </p>
+        {/* ── Page content ── */}
+        <div className="px-8 py-6 space-y-5">
+          {/* page header */}
+          <div>
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-foreground">{page.headline}</h3>
+              <span className="text-xs text-muted-foreground font-medium tabular-nums">
+                {pageIndex + 1} / {totalPages}
+              </span>
+            </div>
+            {page.subtitle && (
+              <p className="text-sm text-muted-foreground mt-0.5">{page.subtitle}</p>
+            )}
+          </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              toast({
-                title: "You'll be notified!",
-                description: `We'll let you know when ${app.name} becomes available.`,
-              });
-              onClose();
-            }}
-          >
-            <Bell className="w-4 h-4" />
-            Notify Me
-          </Button>
-        </DialogFooter>
+          {/* feature cards */}
+          <div className="space-y-4">
+            {page.highlights.map((h, i) => {
+              const HIcon = h.icon;
+              return (
+                <div
+                  key={i}
+                  className="flex gap-4 p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 transition-colors"
+                >
+                  <div
+                    className={cn(
+                      "w-10 h-10 shrink-0 rounded-lg flex items-center justify-center",
+                      color.bg
+                    )}
+                  >
+                    <HIcon className={cn("w-5 h-5", color.text)} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{h.title}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">
+                      {h.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-8 pb-6 pt-2 flex items-center justify-between border-t border-border">
+          <p className="text-xs text-muted-foreground/70 italic">{content.timeline}</p>
+
+          <div className="flex items-center gap-2">
+            {/* pagination */}
+            {totalPages > 1 && (
+              <div className="flex gap-1 mr-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={isFirst}
+                  onClick={() => setPageIndex((p) => p - 1)}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={isLast}
+                  onClick={() => setPageIndex((p) => p + 1)}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            <Button variant="outline" size="sm" onClick={handleClose}>
+              Close
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                toast({
+                  title: "You'll be notified!",
+                  description: `We'll let you know when ${app.name} becomes available.`,
+                });
+                handleClose();
+              }}
+            >
+              <Bell className="w-4 h-4" />
+              Notify Me
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
