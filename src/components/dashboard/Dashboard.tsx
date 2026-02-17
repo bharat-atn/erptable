@@ -19,13 +19,18 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { type AppDefinition } from "./AppLauncher";
+
 interface DashboardProps {
   onBackToLauncher?: () => void;
+  appId?: string | null;
+  apps?: AppDefinition[];
+  onSwitchApp?: (appId: string) => void;
 }
 
 const TABLET_THRESHOLD = 1100;
 
-export function Dashboard({ onBackToLauncher }: DashboardProps) {
+export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp }: DashboardProps) {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
@@ -87,6 +92,9 @@ export function Dashboard({ onBackToLauncher }: DashboardProps) {
           onBackToLauncher={onBackToLauncher}
           collapsed={sidebarCollapsed}
           onCollapsedChange={setSidebarCollapsed}
+          appId={appId}
+          apps={apps}
+          onSwitchApp={onSwitchApp}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
           <div className={cn("mx-auto", isConstrained && "max-w-full")}>
