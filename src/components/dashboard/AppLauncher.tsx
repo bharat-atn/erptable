@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { TeaserDialog } from "./TeaserDialog";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Users, DollarSign, TreePine, Smartphone, FileText, BarChart3, CalendarDays,
@@ -304,6 +305,7 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
   const [editingApp, setEditingApp] = useState<AppDefinition | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingApp, setDeletingApp] = useState<AppDefinition | null>(null);
+  const [teaserApp, setTeaserApp] = useState<AppDefinition | null>(null);
 
   const isProduction = isPublishedEnvironment();
   const visibleApps = editMode ? apps : apps.filter((a) => a.enabled);
@@ -343,7 +345,7 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
   const handleLaunch = (app: AppDefinition) => {
     if (editMode) return;
     if (!app.available) {
-      toast({ title: `${app.name} is coming soon`, description: "This application is not yet available." });
+      setTeaserApp(app);
       return;
     }
     onLaunchApp(app.id);
@@ -565,6 +567,13 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
           onConfirm={handleDeleteApp}
         />
       )}
+
+      {/* Teaser Dialog */}
+      <TeaserDialog
+        app={teaserApp}
+        open={!!teaserApp}
+        onClose={() => setTeaserApp(null)}
+      />
     </div>
   );
 }
