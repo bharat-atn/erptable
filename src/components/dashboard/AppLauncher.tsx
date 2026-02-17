@@ -124,7 +124,7 @@ const defaultApps: AppDefinition[] = [
   },
 ];
 
-function loadApps(): AppDefinition[] {
+export function loadApps(): AppDefinition[] {
   try {
     const saved = localStorage.getItem("app-launcher-apps");
     if (!saved) return defaultApps;
@@ -138,13 +138,15 @@ function saveApps(apps: AppDefinition[]) {
   localStorage.setItem("app-launcher-apps", JSON.stringify(apps));
 }
 
-function getIcon(iconName: string): LucideIcon {
+export function getIcon(iconName: string): LucideIcon {
   return ICON_MAP[iconName] || Layers;
 }
 
-function getColor(colorIndex: number) {
+export function getColor(colorIndex: number) {
   return COLOR_OPTIONS[colorIndex % COLOR_OPTIONS.length];
 }
+
+export { COLOR_OPTIONS };
 
 /** Returns true when running on the published production domain */
 function isPublishedEnvironment(): boolean {

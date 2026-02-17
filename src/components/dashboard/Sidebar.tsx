@@ -24,10 +24,15 @@ import {
   HeadphonesIcon,
   BadgeCheck,
   X,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { type AppDefinition, getIcon, getColor } from "./AppLauncher";
+import { toast } from "sonner";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 
 export interface ScreenSizeOption {
@@ -52,6 +57,9 @@ interface SidebarProps {
   onBackToLauncher?: () => void;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  appId?: string | null;
+  apps?: AppDefinition[];
+  onSwitchApp?: (appId: string) => void;
 }
 
 interface MenuItem {
@@ -299,29 +307,162 @@ function GroupLabel({ label, collapsed }: { label: string; collapsed: boolean })
 
 /* ─── Sidebar Header Card ───────────────────────────────────────── */
 
-function SidebarHeader({ collapsed }: { collapsed: boolean }) {
+function AppSwitcherHeader({
+  collapsed,
+  appId,
+  apps,
+  onSwitchApp,
+  onBackToLauncher,
+}: {
+  collapsed: boolean;
+  appId?: string | null;
+  apps?: AppDefinition[];
+  onSwitchApp?: (appId: string) => void;
+  onBackToLauncher?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const currentApp = apps?.find((a) => a.id === appId);
+  const enabledApps = apps?.filter((a) => a.enabled) ?? [];
+
+  const CurrentIcon = currentApp ? getIcon(currentApp.iconName) : null;
+  const currentColor = currentApp ? getColor(currentApp.colorIndex) : null;
+
+  const handleSelect = (app: AppDefinition) => {
+    if (app.id === appId) {
+      setOpen(false);
+      return;
+    }
+    if (!app.available) {
+      toast.info(`${app.name} is coming soon`);
+      setOpen(false);
+      return;
+    }
+    onSwitchApp?.(app.id);
+    setOpen(false);
+  };
+
   if (collapsed) {
     return (
       <div className="p-2 flex justify-center shrink-0">
-        <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
-          <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
-        </div>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:bg-sidebar-accent">
+              {CurrentIcon && currentColor ? (
+                <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", currentColor.bg)}>
+                  <CurrentIcon className={cn("w-5 h-5", currentColor.text)} />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center">
+                  <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
+                </div>
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="right" align="start" sideOffset={8} className="w-64 p-2">
+            <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">Switch Application</p>
+            <div className="space-y-0.5">
+              {enabledApps.map((app) => {
+                const Icon = getIcon(app.iconName);
+                const color = getColor(app.colorIndex);
+                return (
+                  <button
+                    key={app.id}
+                    onClick={() => handleSelect(app)}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-colors",
+                      app.id === appId ? "bg-sidebar-accent font-medium" : "hover:bg-sidebar-accent/50",
+                      !app.available && "opacity-60"
+                    )}
+                  >
+                    <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", color.bg)}>
+                      <Icon className={cn("w-4 h-4", color.text)} />
+                    </div>
+                    <span className="truncate text-sidebar-foreground">{app.name}</span>
+                    {app.id === appId && <Check className="w-3.5 h-3.5 ml-auto text-sidebar-primary shrink-0" />}
+                    {!app.available && <span className="ml-auto text-[10px] text-muted-foreground">Soon</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {onBackToLauncher && (
+              <>
+                <div className="my-1.5 border-t border-border" />
+                <button
+                  onClick={() => { onBackToLauncher(); setOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  <span>Back to All Apps</span>
+                </button>
+              </>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
     );
   }
 
   return (
     <div className="p-3 shrink-0">
-      <div className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
-        <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
-          <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-bold text-sidebar-foreground truncate">OnboardFlow</p>
-          <p className="text-[11px] text-muted-foreground truncate">HR Management</p>
-        </div>
-        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button className="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
+            {CurrentIcon && currentColor ? (
+              <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", currentColor.bg)}>
+                <CurrentIcon className={cn("w-5 h-5", currentColor.text)} />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-full overflow-hidden bg-sidebar-primary flex items-center justify-center shrink-0">
+                <img src={ljunganLogo} alt="Ljungan" className="w-6 h-6 object-contain" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-sidebar-foreground truncate">{currentApp?.name ?? "OnboardFlow"}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{currentApp?.description?.split(",")[0] ?? "HR Management"}</p>
+            </div>
+            <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[var(--radix-popover-trigger-width)] p-2">
+          <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">Switch Application</p>
+          <div className="space-y-0.5">
+            {enabledApps.map((app) => {
+              const Icon = getIcon(app.iconName);
+              const color = getColor(app.colorIndex);
+              return (
+                <button
+                  key={app.id}
+                  onClick={() => handleSelect(app)}
+                  className={cn(
+                    "w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-colors",
+                    app.id === appId ? "bg-sidebar-accent font-medium" : "hover:bg-sidebar-accent/50",
+                    !app.available && "opacity-60"
+                  )}
+                >
+                  <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", color.bg)}>
+                    <Icon className={cn("w-4 h-4", color.text)} />
+                  </div>
+                  <span className="truncate text-sidebar-foreground">{app.name}</span>
+                  {app.id === appId && <Check className="w-3.5 h-3.5 ml-auto text-sidebar-primary shrink-0" />}
+                  {!app.available && <span className="ml-auto text-[10px] text-muted-foreground">Soon</span>}
+                </button>
+              );
+            })}
+          </div>
+          {onBackToLauncher && (
+            <>
+              <div className="my-1.5 border-t border-border" />
+              <button
+                onClick={() => { onBackToLauncher(); setOpen(false); }}
+                className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span>Back to All Apps</span>
+              </button>
+            </>
+          )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
@@ -419,7 +560,7 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
 
 /* ─── Main Sidebar ──────────────────────────────────────────────── */
 
-export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange, appId, apps, onSwitchApp }: SidebarProps) {
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
@@ -463,8 +604,8 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         "h-screen sticky top-0 z-30 bg-sidebar border-r border-sidebar-border flex flex-col shrink-0 transition-all duration-300",
         collapsed ? "w-14" : "w-48 lg:w-56 xl:w-60"
       )}>
-        {/* Header Card */}
-        <SidebarHeader collapsed={collapsed} />
+        {/* Header Card – App Switcher */}
+        <AppSwitcherHeader collapsed={collapsed} appId={appId} apps={apps} onSwitchApp={onSwitchApp} onBackToLauncher={onBackToLauncher} />
 
         {/* Collapse Toggle */}
         <div className={cn("px-2 pb-1 shrink-0", collapsed ? "flex justify-center" : "flex justify-end")}>
