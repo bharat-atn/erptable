@@ -1,73 +1,39 @@
 
 
-# Sidebar Redesign: Pixel-Perfect Match to Arbor Pro Figma Template
+## Sidebar Header App Switcher
 
-## What's Changing
+### What changes
+The top section of the sidebar (currently showing "OnboardFlow / HR Management") will become a dynamic app switcher that:
 
-Based on the Figma screenshot, the current sidebar needs several specific fixes to match the design system:
+1. Displays the **currently active application's name, subtitle, and icon** (matching what's shown in the App Launcher cards)
+2. Clicking the header opens a **dropdown popover** listing all enabled applications from the App Launcher
+3. Selecting a different app from the dropdown switches to that application (or shows "Coming Soon" for unavailable apps)
+4. The "Back to All Apps" button in the dropdown provides quick access to the full App Launcher
 
-### 1. Color & Contrast Fixes
-- The active item pill should be a vibrant **blue-violet** (closer to `hsl(255, 80%, 55%)` or a true indigo-blue), not a muted purple
-- The left border indicator on active items should be a **darker/contrasting blue** (not the same color as the pill)
-- Inactive text should be **dark gray/near-black** (like `hsl(220, 15%, 30%)`), not faded -- the Figma shows clearly readable dark text
-- Group labels ("MAIN", "OTHERS") should be a **light muted purple/lavender** tint, matching the Figma
+### How it will look
+- **Expanded sidebar**: Shows the app icon (colored, matching the launcher card), the app name (e.g., "HR Management System"), and a chevron dropdown indicator. Clicking opens a popover with all available apps.
+- **Collapsed sidebar**: Shows just the app icon. Clicking opens the same popover to switch apps.
 
-### 2. Typography Fixes
-- Inactive menu items: **medium weight (font-medium)**, dark text, ~14px
-- Active menu item: **semibold**, white text on the blue pill
-- Header "Company Name" (OnboardFlow): **bold**, dark
-- Header subtitle: **regular weight**, muted gray
-- Group labels: **semibold**, small caps, purple-tinted
+### Technical Details
 
-### 3. Active Item Styling (from Figma component breakdown)
-- Blue/indigo rounded pill background filling the full width
-- White text + white icon inside the pill
-- A **short vertical bar** on the left edge (darker blue, outside the pill)
-- A **chevron-right** icon on the right side inside the pill
-- The icon on the far right (grid icon) appears to be outside the pill in some variants
+**Files to modify:**
 
-### 4. Header Card
-- Logo in a **circular blue/gradient container** (the Figma shows a teal/blue circle with a leaf icon)
-- For our app: keep the Ljungan logo in the rounded container
-- Company name bold, subtitle below in muted text, chevron-down on right
-- Subtle hover state
+1. **`src/components/dashboard/Sidebar.tsx`**
+   - Update `SidebarProps` to receive the current `appId` and the list of `AppDefinition[]` from the launcher
+   - Replace the static `SidebarHeader` component with a new `AppSwitcherHeader` that:
+     - Reads the current app's icon, name, and color from the apps list
+     - Uses a Radix `Popover` to show a dropdown of all enabled apps
+     - Calls `onSwitchApp(appId)` when a different app is selected
+     - Shows a "Coming Soon" toast for unavailable apps
 
-### 5. "Need Support" Card (New Addition)
-- A card near the bottom with a support icon, "Need Support" title, dismiss (X) button
-- Subtitle: "Contact with one of our experts to get support."
-- Light background card with subtle border
+2. **`src/components/dashboard/Dashboard.tsx`**
+   - Pass `appId` and `apps` list down to `Sidebar`
+   - Add an `onSwitchApp` callback that changes the active app (via the parent)
 
-### 6. User Profile Footer
-- User avatar (photo or initials circle)
-- Name in **semibold** with a small verified/blue badge icon
-- Email below in muted text
-- Chevron-right on the right
+3. **`src/pages/Index.tsx`**
+   - Pass the `activeApp` id and a shared `apps` list to `Dashboard`
+   - Handle app switching from Dashboard level (same as launcher's `onLaunchApp`)
 
-## Technical Details
-
-### Files to modify:
-
-**`src/index.css`** -- Update sidebar CSS variables:
-- `--sidebar-primary`: shift to `250 80% 58%` (more vibrant blue-violet)
-- `--sidebar-foreground`: darken to `220 15% 30%` (near-black for readable text)
-- `--sidebar-accent`: keep light purple for hover states
-
-**`src/components/dashboard/Sidebar.tsx`** -- Multiple component updates:
-
-1. **SidebarItem**: 
-   - Active: `bg-sidebar-primary text-white font-semibold` with left bar indicator outside/overlapping
-   - Inactive: `text-foreground font-medium` (no opacity reduction)
-   - The left bar should use a slightly darker shade or contrasting color
-
-2. **GroupLabel**: Purple-tinted label matching Figma exactly
-
-3. **SidebarHeader**: Ensure logo container matches the circular blue style from Figma
-
-4. **New "Need Support" card component**: Add between navigation and user profile, with dismiss functionality (stored in localStorage)
-
-5. **UserProfileCard**: Add a small blue verified badge icon next to the user name
-
-### Sequencing:
-1. Update CSS variables in `index.css`
-2. Update `Sidebar.tsx` -- fix item styling, add support card, refine header/footer
+4. **`src/components/dashboard/AppLauncher.tsx`**
+   - Export `loadApps`, `getIcon`, `getColor`, and `COLOR_OPTIONS` so the Sidebar can reuse them without duplicating the app definitions
 
