@@ -1,39 +1,55 @@
 
 
-## Sidebar Header App Switcher
+## "Coming Soon" Teaser Dialogs for Upcoming Applications
 
-### What changes
-The top section of the sidebar (currently showing "OnboardFlow / HR Management") will become a dynamic app switcher that:
+When a user clicks on a "Coming Soon" app card, instead of just showing a brief toast notification, a rich teaser dialog will open with feature highlights and a roadmap preview for that application.
 
-1. Displays the **currently active application's name, subtitle, and icon** (matching what's shown in the App Launcher cards)
-2. Clicking the header opens a **dropdown popover** listing all enabled applications from the App Launcher
-3. Selecting a different app from the dropdown switches to that application (or shows "Coming Soon" for unavailable apps)
-4. The "Back to All Apps" button in the dropdown provides quick access to the full App Launcher
+### Teaser Content
 
-### How it will look
-- **Expanded sidebar**: Shows the app icon (colored, matching the launcher card), the app name (e.g., "HR Management System"), and a chevron dropdown indicator. Clicking opens a popover with all available apps.
-- **Collapsed sidebar**: Shows just the app icon. Clicking opens the same popover to switch apps.
+**Forestry Project Manager**
+- Project planning and tracking for clearing and planting operations
+- Team assignment and crew management across multiple sites
+- GPS-based area mapping and progress visualization
+- Financial planning with cost tracking per project phase
+- Equipment and machinery allocation
+- Weather-dependent scheduling and calendar integration
+- Reporting dashboards for project status and profitability
+
+**Payroll Management**
+- Automated salary calculation based on hourly, monthly, or piece-work rates
+- Integration with HR contracts for seamless rate importing
+- Tax deduction and social contribution handling
+- Payslip generation and distribution
+- Overtime and premium pay calculations
+- Multi-currency support for international workforce
+- Export to accounting systems
+
+**Employee Hub (Mobile App)**
+- Personal profile and document management
+- View and digitally sign employment contracts
+- Daily attendance and time reporting
+- Leave requests and approval tracking
+- Push notifications for important updates
+- Access to company policies and Code of Conduct
+- Direct messaging with HR department
+
+### UI Design
+
+Each teaser opens as a Dialog containing:
+- The app's icon and name at the top (matching launcher card colors)
+- A short intro paragraph
+- A list of planned features shown as checkmark bullet points
+- A subtle "Expected availability" note at the bottom
+- A "Notify Me" button (visual only for now) and a "Close" button
 
 ### Technical Details
 
-**Files to modify:**
+**File to modify: `src/components/dashboard/AppLauncher.tsx`**
 
-1. **`src/components/dashboard/Sidebar.tsx`**
-   - Update `SidebarProps` to receive the current `appId` and the list of `AppDefinition[]` from the launcher
-   - Replace the static `SidebarHeader` component with a new `AppSwitcherHeader` that:
-     - Reads the current app's icon, name, and color from the apps list
-     - Uses a Radix `Popover` to show a dropdown of all enabled apps
-     - Calls `onSwitchApp(appId)` when a different app is selected
-     - Shows a "Coming Soon" toast for unavailable apps
+1. Add a `TEASER_CONTENT` map keyed by app id, containing the intro text, feature list, and expected timeline for each upcoming app
+2. Create a `TeaserDialog` component that renders the teaser content in a styled Dialog
+3. Update `handleLaunch` so that clicking a "Coming Soon" card opens the teaser dialog instead of firing a toast
+4. Add state variables `teaserOpen` and `teaserAppId` to control which teaser is shown
 
-2. **`src/components/dashboard/Dashboard.tsx`**
-   - Pass `appId` and `apps` list down to `Sidebar`
-   - Add an `onSwitchApp` callback that changes the active app (via the parent)
-
-3. **`src/pages/Index.tsx`**
-   - Pass the `activeApp` id and a shared `apps` list to `Dashboard`
-   - Handle app switching from Dashboard level (same as launcher's `onLaunchApp`)
-
-4. **`src/components/dashboard/AppLauncher.tsx`**
-   - Export `loadApps`, `getIcon`, `getColor`, and `COLOR_OPTIONS` so the Sidebar can reuse them without duplicating the app definitions
+No other files need changes -- this is self-contained within the App Launcher.
 
