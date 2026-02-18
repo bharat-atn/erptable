@@ -88,6 +88,7 @@ const defaultSettingsItems: MenuItem[] = [
 
 const defaultConfigItems: MenuItem[] = [
   { id: "process-guide", label: "Process Guide", icon: BookOpen },
+  { id: "audit-log", label: "Audit Log", icon: Shield },
 ];
 
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
