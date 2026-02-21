@@ -155,7 +155,7 @@ export function InvitationTemplateView() {
 
   const hasChanges = editedFields.size > 0;
 
-  const sections = Object.keys(SECTION_LABELS);
+  const sections = ["2.1", "2.2", "2.3", "3", "4"];
   const fieldsBySection = sections.map((sectionKey) => ({
     key: sectionKey,
     ...SECTION_LABELS[sectionKey],
