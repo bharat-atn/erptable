@@ -9,6 +9,7 @@ import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { EmployerSigningDialog } from "./EmployerSigningDialog";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
+import { RedoConfirmDialog } from "./RedoConfirmDialog";
 import { toast } from "sonner";
 interface ContractsViewProps {
   onContinueContract?: (contractId: string) => void;
@@ -323,15 +324,13 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
       />
 
       {/* Reset / Redo confirmation */}
-      <DeleteConfirmDialog
+      <RedoConfirmDialog
         open={!!resetTarget}
         onOpenChange={(open) => !open && setResetTarget(null)}
-        title="Reset Contract for Re-signing"
         itemName={resetTarget ? getContractLabel(resetTarget) : ""}
-        description="This will clear all signatures and reset the contract to draft status. You can then edit it, re-send for employee signing, and counter-sign again. This action cannot be undone."
+        description="This will clear all signatures and reset the contract to draft status. You can then edit it, re-send for employee signing, and counter-sign again."
         onConfirm={() => resetTarget && resetContract.mutate(resetTarget)}
         isLoading={resetContract.isPending}
-        requireTypedConfirmation
       />
     </div>
   );
