@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -171,6 +172,7 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
   const [iconName, setIconName] = useState(initial?.iconName ?? "Layers");
   const [colorIndex, setColorIndex] = useState(initial?.colorIndex ?? 0);
   const [launchUrl, setLaunchUrl] = useState(initial?.launchUrl ?? "");
+  const [available, setAvailable] = useState(initial?.available ?? false);
 
   const isEdit = !!initial;
 
@@ -187,7 +189,7 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
       iconName,
       colorIndex,
       enabled: initial?.enabled ?? true,
-      available: initial?.available ?? false,
+      available: available,
       launchUrl: launchUrl.trim() || undefined,
     });
     onClose();
@@ -250,6 +252,13 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <div>
+              <Label className="mb-0">Available for launch</Label>
+              <p className="text-xs text-muted-foreground">Toggle between "Coming Soon" and "Launch App"</p>
+            </div>
+            <Switch checked={available} onCheckedChange={setAvailable} />
           </div>
           <div>
             <Label>Launch URL (optional)</Label>
