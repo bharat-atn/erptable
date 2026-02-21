@@ -84,6 +84,7 @@ export interface AppDefinition {
   colorIndex: number;
   enabled: boolean;
   available: boolean;
+  launchUrl?: string;
 }
 
 const defaultApps: AppDefinition[] = [
@@ -169,6 +170,7 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [iconName, setIconName] = useState(initial?.iconName ?? "Layers");
   const [colorIndex, setColorIndex] = useState(initial?.colorIndex ?? 0);
+  const [launchUrl, setLaunchUrl] = useState(initial?.launchUrl ?? "");
 
   const isEdit = !!initial;
 
@@ -186,6 +188,7 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
       colorIndex,
       enabled: initial?.enabled ?? true,
       available: initial?.available ?? false,
+      launchUrl: launchUrl.trim() || undefined,
     });
     onClose();
   };
@@ -247,6 +250,16 @@ function AppFormDialog({ open, onClose, onSave, initial }: AppFormDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label>Launch URL (optional)</Label>
+            <Input
+              value={launchUrl}
+              onChange={(e) => setLaunchUrl(e.target.value)}
+              placeholder="https://example.com"
+              type="url"
+            />
+            <p className="text-xs text-muted-foreground mt-1">If set, launching this app will open this URL instead.</p>
           </div>
         </div>
         <DialogFooter>
@@ -344,6 +357,10 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
 
   const handleLaunch = (app: AppDefinition) => {
     if (editMode) return;
+    if (app.launchUrl) {
+      window.open(app.launchUrl, "_blank");
+      return;
+    }
     if (!app.available) {
       setTeaserApp(app);
       return;
