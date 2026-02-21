@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -68,6 +68,35 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const [signingContractId, setSigningContractId] = useState<string | null>(null);
   const [previewContractId, setPreviewContractId] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<ContractRow | null>(null);
+
+  const resetContract = useMutation({
+    mutationFn: async (contract: ContractRow) => {
+      const { error } = await supabase
+        .from("contracts")
+        .update({
+          signing_status: "not_sent",
+          status: "draft",
+          signing_token: null,
+          employee_signature_url: null,
+          employee_signed_at: null,
+          employer_signature_url: null,
+          employer_signed_at: null,
+          signed_at: null,
+          sent_for_signing_at: null,
+        })
+        .eq("id", contract.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      toast.success("Contract reset to draft — ready for re-signing");
+      setResetTarget(null);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to reset contract: ${error.message}`);
+    },
+  });
   const { data: contracts, isLoading } = useQuery({
     queryKey: ["contracts"],
     queryFn: async () => {
@@ -211,13 +240,28 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         rowActions={(contract) => (
           <div className="flex items-center gap-1">
             {(contract.signing_status === "employer_signed" || contract.signing_status === "signed") && (
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => setPreviewContractId(contract.id)}>
-                <Eye className="w-3 h-3" /> View
-              </Button>
+              <>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => setPreviewContractId(contract.id)}>
+                  <Eye className="w-3 h-3" /> View
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => setResetTarget(contract)}>
+                  <RotateCcw className="w-3 h-3" /> Redo
+                </Button>
+              </>
             )}
             {contract.signing_status === "employee_signed" && (
-              <Button variant="default" size="sm" className="gap-1" onClick={() => setSigningContractId(contract.id)}>
-                <PenTool className="w-3 h-3" /> Review & Sign
+              <>
+                <Button variant="default" size="sm" className="gap-1" onClick={() => setSigningContractId(contract.id)}>
+                  <PenTool className="w-3 h-3" /> Review & Sign
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => setResetTarget(contract)}>
+                  <RotateCcw className="w-3 h-3" /> Redo
+                </Button>
+              </>
+            )}
+            {contract.signing_status === "sent_to_employee" && (
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => setResetTarget(contract)}>
+                <RotateCcw className="w-3 h-3" /> Redo
               </Button>
             )}
             {onContinueContract && contract.status === "draft" && (
@@ -276,6 +320,18 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
         contractId={previewContractId}
         open={!!previewContractId}
         onOpenChange={(open) => !open && setPreviewContractId(null)}
+      />
+
+      {/* Reset / Redo confirmation */}
+      <DeleteConfirmDialog
+        open={!!resetTarget}
+        onOpenChange={(open) => !open && setResetTarget(null)}
+        title="Reset Contract for Re-signing"
+        itemName={resetTarget ? getContractLabel(resetTarget) : ""}
+        description="This will clear all signatures and reset the contract to draft status. You can then edit it, re-send for employee signing, and counter-sign again. This action cannot be undone."
+        onConfirm={() => resetTarget && resetContract.mutate(resetTarget)}
+        isLoading={resetContract.isPending}
+        requireTypedConfirmation
       />
     </div>
   );
