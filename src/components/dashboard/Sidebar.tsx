@@ -79,6 +79,7 @@ const defaultSettingsItems: MenuItem[] = [
   { id: "contract-template", label: "Contract Template", icon: FileText },
   { id: "invitation-template", label: "Invitation Template", icon: Mail },
   { id: "contract-data", label: "Contract Data", icon: Briefcase },
+  { id: "bank-list", label: "Bank Information", icon: Building2 },
   { id: "employee-register", label: "Employee Register", icon: Users },
   { id: "company-register", label: "Company Register", icon: Building2 },
   { id: "employee-id-settings", label: "Employee ID", icon: Users },

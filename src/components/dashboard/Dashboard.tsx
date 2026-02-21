@@ -16,6 +16,7 @@ import { InvitationTemplateView } from "./InvitationTemplateView";
 import { ContractDataRegistryView } from "./ContractDataRegistryView";
 import { IsoStandardsView } from "./IsoStandardsView";
 import { AuditLogView } from "./AuditLogView";
+import { BankListView } from "./BankListView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp }: Dashbo
       case "contract-id-settings": return <ContractIdSettingsView />;
       case "invitation-template": return <InvitationTemplateView />;
       case "contract-data": return <ContractDataRegistryView />;
+      case "bank-list": return <BankListView />;
       case "iso-standards": return <IsoStandardsView />;
       case "audit-log": return <AuditLogView />;
       default: return <DashboardView />;

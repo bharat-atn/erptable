@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,9 @@ import {
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-const BANKS = [
+const FALLBACK_BANKS = [
   "BANCA TRANSILVANIA S.A.",
   "Banca Comercială Română S.A.",
   "BRD - Groupe Société Générale S.A.",
@@ -198,6 +199,21 @@ export function OnboardingWizard({
   onFileChange,
 }: OnboardingWizardProps) {
   const templateLogo = loadTemplateLogo();
+  const [bankList, setBankList] = useState<string[]>(FALLBACK_BANKS);
+
+  useEffect(() => {
+    supabase
+      .from("banks")
+      .select("name")
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setBankList(data.map((b: any) => b.name));
+        }
+      });
+  }, []);
   const [s1Open, setS1Open] = useState(true);
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);
@@ -550,7 +566,7 @@ export function OnboardingWizard({
                   onValueChange={onBankSelect}
                   className="space-y-2"
                 >
-                  {BANKS.map((bank) => (
+                  {bankList.map((bank) => (
                     <div key={bank} className="flex items-center space-x-2.5 min-h-[44px]">
                       <RadioGroupItem value={bank} id={bank} className="shrink-0" />
                       <Label htmlFor={bank} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
