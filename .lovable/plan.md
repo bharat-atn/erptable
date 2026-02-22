@@ -1,55 +1,24 @@
 
 
-## "Coming Soon" Teaser Dialogs for Upcoming Applications
+## Problem
 
-When a user clicks on a "Coming Soon" app card, instead of just showing a brief toast notification, a rich teaser dialog will open with feature highlights and a roadmap preview for that application.
+When the "All" filter is active, the schedule table starts at the beginning of the contract period (e.g., February 2026). These early days are "Off-season" or "Weekend" types with 0 scheduled hours, so the Hours and Time columns display "---" for every visible row. This makes it appear as though those columns are broken, even though workdays with actual hours exist further down (starting in March).
 
-### Teaser Content
+## Solution
 
-**Forestry Project Manager**
-- Project planning and tracking for clearing and planting operations
-- Team assignment and crew management across multiple sites
-- GPS-based area mapping and progress visualization
-- Financial planning with cost tracking per project phase
-- Equipment and machinery allocation
-- Weather-dependent scheduling and calendar integration
-- Reporting dashboards for project status and profitability
+Make the table more informative in "All" mode so it's immediately clear that Off-season/Weekend days intentionally have no hours, while workdays do:
 
-**Payroll Management**
-- Automated salary calculation based on hourly, monthly, or piece-work rates
-- Integration with HR contracts for seamless rate importing
-- Tax deduction and social contribution handling
-- Payslip generation and distribution
-- Overtime and premium pay calculations
-- Multi-currency support for international workforce
-- Export to accounting systems
+1. **Show "0h" instead of "---" for days with zero hours** -- This makes it explicit that the system calculated zero hours rather than failing to display data. Only truly null/undefined values will show "---".
 
-**Employee Hub (Mobile App)**
-- Personal profile and document management
-- View and digitally sign employment contracts
-- Daily attendance and time reporting
-- Leave requests and approval tracking
-- Push notifications for important updates
-- Access to company policies and Code of Conduct
-- Direct messaging with HR department
+2. **Show the time range for Workday rows and "---" for non-work rows** -- This is already the current behavior (line 520), but combined with fix #1, the table will look more intentional.
 
-### UI Design
+3. **Auto-scroll to the first workday when "All" filter is selected** -- After rendering, scroll the table so the first Workday row is visible. This way users immediately see rows with actual hours and times.
 
-Each teaser opens as a Dialog containing:
-- The app's icon and name at the top (matching launcher card colors)
-- A short intro paragraph
-- A list of planned features shown as checkmark bullet points
-- A subtle "Expected availability" note at the bottom
-- A "Notify Me" button (visual only for now) and a "Close" button
+## Technical Details
 
-### Technical Details
+**File: `src/components/dashboard/SchedulingStep.tsx`**
 
-**File to modify: `src/components/dashboard/AppLauncher.tsx`**
-
-1. Add a `TEASER_CONTENT` map keyed by app id, containing the intro text, feature list, and expected timeline for each upcoming app
-2. Create a `TeaserDialog` component that renders the teaser content in a styled Dialog
-3. Update `handleLaunch` so that clicking a "Coming Soon" card opens the teaser dialog instead of firing a toast
-4. Add state variables `teaserOpen` and `teaserAppId` to control which teaser is shown
-
-No other files need changes -- this is self-contained within the App Launcher.
+- **Line 517**: Change `row.hours > 0 ? row.hours.toFixed(1) : "---"` to always show the numeric value (e.g., `0.0` or `8.5`), using "---" only if `row.hours` is null/undefined.
+- **Add a `useRef`** on the scrollable container (`div.max-h-[400px]`) and a `useEffect` that, when filter is `"all"`, finds the index of the first Workday in `filteredSchedule` and scrolls to bring that row into view.
+- This keeps the full list intact but ensures users land on meaningful data immediately.
 
