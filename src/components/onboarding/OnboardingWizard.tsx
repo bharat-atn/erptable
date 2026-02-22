@@ -211,18 +211,25 @@ export function OnboardingWizard({
   onWorkPermitFileChange,
 }: OnboardingWizardProps) {
   const templateLogo = loadTemplateLogo();
-  const [bankList, setBankList] = useState<string[]>(FALLBACK_BANKS);
+  const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
+  const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
+  const bankList = selectedBankCountry ? (banksByCountry[selectedBankCountry] || []).map((b) => b.name) : [];
 
   useEffect(() => {
     supabase
       .from("banks")
-      .select("name")
+      .select("name, country, bic_code")
       .eq("is_active", true)
-      .order("sort_order")
       .order("name")
       .then(({ data }) => {
         if (data && data.length > 0) {
-          setBankList(data.map((b: any) => b.name));
+          const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
+          for (const b of data) {
+            const c = b.country || "Other";
+            if (!grouped[c]) grouped[c] = [];
+            grouped[c].push({ name: b.name, bic_code: b.bic_code });
+          }
+          setBanksByCountry(grouped);
         }
       });
   }, []);
@@ -264,6 +271,7 @@ export function OnboardingWizard({
   else if (formData.emergencyPhone.length < 10) s3Missing.push("Mobile Phone (min 10 digits)");
 
   const s4Missing: string[] = [];
+  if (!selectedBankCountry) s4Missing.push("Country");
   if (!selectedBank && !isOtherBank) s4Missing.push("Bank Selection");
   if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
@@ -605,11 +613,35 @@ export function OnboardingWizard({
               showValidation={validationAttempted}
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+              {/* Country selector */}
+              <div className="space-y-1.5">
+                <FieldLabel en="Select Country" sv="Välj land" />
+                <Select value={selectedBankCountry} onValueChange={(val) => { setSelectedBankCountry(val); onBankSelect(""); }}>
+                  <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!selectedBankCountry))}>
+                    <SelectValue placeholder="Choose country / Välj land" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(banksByCountry).sort().map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Bank radio list – only shown after country is selected */}
+              {selectedBankCountry && (
               <div className="space-y-3">
                 <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
                 <RadioGroup
                   value={isOtherBank ? "other" : selectedBank}
-                  onValueChange={onBankSelect}
+                  onValueChange={(val) => {
+                    onBankSelect(val);
+                    // Auto-fill BIC code
+                    if (val !== "other") {
+                      const match = (banksByCountry[selectedBankCountry] || []).find((b) => b.name === val);
+                      if (match?.bic_code) updateField("bicCode", match.bic_code);
+                    }
+                  }}
                   className="space-y-2"
                 >
                   {bankList.map((bank) => (
@@ -629,6 +661,7 @@ export function OnboardingWizard({
                   </div>
                 </RadioGroup>
               </div>
+              )}
               {isOtherBank && (
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
