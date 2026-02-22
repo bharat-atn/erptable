@@ -1,0 +1,66 @@
+-- Add Romanian and Thai label columns to invitation_template_fields
+ALTER TABLE public.invitation_template_fields
+  ADD COLUMN label_ro text NOT NULL DEFAULT '',
+  ADD COLUMN label_th text NOT NULL DEFAULT '';
+
+-- Populate Romanian translations
+UPDATE public.invitation_template_fields SET label_ro = CASE field_key
+  WHEN 'first_name' THEN 'Prenume'
+  WHEN 'middle_name' THEN 'Nume mijlociu'
+  WHEN 'last_name' THEN 'Nume de familie'
+  WHEN 'preferred_name' THEN 'Nume preferat'
+  WHEN 'address1' THEN 'Adresa 1'
+  WHEN 'address2' THEN 'Adresa 2'
+  WHEN 'zip_code' THEN 'Cod poștal'
+  WHEN 'city' THEN 'Oraș'
+  WHEN 'state_province' THEN 'Stat / Județ'
+  WHEN 'country' THEN 'Țara'
+  WHEN 'birthday' THEN 'Data nașterii'
+  WHEN 'swedish_coordination_number' THEN 'Număr de coordonare suedez'
+  WHEN 'swedish_personal_number' THEN 'Număr personal suedez'
+  WHEN 'country_of_birth' THEN 'Țara nașterii'
+  WHEN 'citizenship' THEN 'Cetățenie'
+  WHEN 'mobile_phone' THEN 'Telefon mobil'
+  WHEN 'email' THEN 'Email'
+  WHEN 'emergency_first_name' THEN 'Contact de urgență – Prenume'
+  WHEN 'emergency_last_name' THEN 'Contact de urgență – Nume'
+  WHEN 'emergency_phone' THEN 'Contact de urgență – Telefon'
+  WHEN 'bank_country' THEN 'Țara băncii'
+  WHEN 'bank_name' THEN 'Numele băncii'
+  WHEN 'bic_code' THEN 'Cod BIC'
+  WHEN 'bank_account_number' THEN 'Număr de cont bancar'
+  WHEN 'id_passport' THEN 'Document ID / Pașaport'
+  WHEN 'work_permit' THEN 'Permis de muncă'
+  ELSE ''
+END;
+
+-- Populate Thai translations
+UPDATE public.invitation_template_fields SET label_th = CASE field_key
+  WHEN 'first_name' THEN 'ชื่อจริง'
+  WHEN 'middle_name' THEN 'ชื่อกลาง'
+  WHEN 'last_name' THEN 'นามสกุล'
+  WHEN 'preferred_name' THEN 'ชื่อเล่น'
+  WHEN 'address1' THEN 'ที่อยู่ 1'
+  WHEN 'address2' THEN 'ที่อยู่ 2'
+  WHEN 'zip_code' THEN 'รหัสไปรษณีย์'
+  WHEN 'city' THEN 'เมือง'
+  WHEN 'state_province' THEN 'จังหวัด'
+  WHEN 'country' THEN 'ประเทศ'
+  WHEN 'birthday' THEN 'วันเกิด'
+  WHEN 'swedish_coordination_number' THEN 'เลขประสานงานสวีเดน'
+  WHEN 'swedish_personal_number' THEN 'เลขประจำตัวสวีเดน'
+  WHEN 'country_of_birth' THEN 'ประเทศที่เกิด'
+  WHEN 'citizenship' THEN 'สัญชาติ'
+  WHEN 'mobile_phone' THEN 'โทรศัพท์มือถือ'
+  WHEN 'email' THEN 'อีเมล'
+  WHEN 'emergency_first_name' THEN 'ผู้ติดต่อฉุกเฉิน – ชื่อ'
+  WHEN 'emergency_last_name' THEN 'ผู้ติดต่อฉุกเฉิน – นามสกุล'
+  WHEN 'emergency_phone' THEN 'ผู้ติดต่อฉุกเฉิน – โทรศัพท์'
+  WHEN 'bank_country' THEN 'ประเทศของธนาคาร'
+  WHEN 'bank_name' THEN 'ชื่อธนาคาร'
+  WHEN 'bic_code' THEN 'รหัส BIC'
+  WHEN 'bank_account_number' THEN 'หมายเลขบัญชีธนาคาร'
+  WHEN 'id_passport' THEN 'เอกสาร ID / หนังสือเดินทาง'
+  WHEN 'work_permit' THEN 'เอกสารใบอนุญาตทำงาน'
+  ELSE ''
+END;
