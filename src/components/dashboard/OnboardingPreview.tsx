@@ -37,6 +37,7 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
   const [selectedBank, setSelectedBank] = useState<string>("BANCA TRANSILVANIA S.A.");
   const [isOtherBank, setIsOtherBank] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [workPermitFile, setWorkPermitFile] = useState<File | null>(null);
 
   const updateField = (field: keyof PersonalInfo, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -55,6 +56,12 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setUploadedFile(e.target.files[0]);
+    }
+  };
+
+  const handleWorkPermitFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setWorkPermitFile(e.target.files[0]);
     }
   };
 
@@ -87,6 +94,8 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
         onBankSelect={handleBankSelect}
         uploadedFile={uploadedFile}
         onFileChange={handleFileChange}
+        workPermitFile={workPermitFile}
+        onWorkPermitFileChange={handleWorkPermitFileChange}
       />
     </div>
   );
