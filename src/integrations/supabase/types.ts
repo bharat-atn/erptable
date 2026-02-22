@@ -475,7 +475,9 @@ export type Database = {
           is_required: boolean
           is_visible: boolean
           label_en: string
+          label_ro: string
           label_sv: string
+          label_th: string
           section: string
           sort_order: number
           updated_at: string
@@ -488,7 +490,9 @@ export type Database = {
           is_required?: boolean
           is_visible?: boolean
           label_en: string
+          label_ro?: string
           label_sv: string
+          label_th?: string
           section: string
           sort_order?: number
           updated_at?: string
@@ -501,7 +505,9 @@ export type Database = {
           is_required?: boolean
           is_visible?: boolean
           label_en?: string
+          label_ro?: string
           label_sv?: string
+          label_th?: string
           section?: string
           sort_order?: number
           updated_at?: string
