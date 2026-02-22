@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,6 +123,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
   const [filter, setFilter] = useState<FilterMode>("all");
   const [saving, setSaving] = useState(false);
   const [scheduleSaved, setScheduleSaved] = useState(false);
+  const scheduleScrollRef = useRef<HTMLDivElement>(null);
 
   // Check if schedule already exists in DB (for resumed contracts)
   useEffect(() => {
@@ -197,7 +198,20 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
     return schedule;
   }, [schedule, filter]);
 
-  // Stats
+  // Auto-scroll to first workday when "All" filter is active
+  useEffect(() => {
+    if (filter === "all" && filteredSchedule.length > 0 && scheduleScrollRef.current) {
+      const firstWorkdayIndex = filteredSchedule.findIndex(d => d.type === "Workday");
+      if (firstWorkdayIndex > 0) {
+        const rows = scheduleScrollRef.current.querySelectorAll("tbody tr");
+        if (rows[firstWorkdayIndex]) {
+          rows[firstWorkdayIndex].scrollIntoView({ block: "start", behavior: "smooth" });
+        }
+      }
+    }
+  }, [filter, filteredSchedule]);
+
+
   const stats = useMemo(() => {
     const totalDays = schedule.length;
     const workDays = schedule.filter(d => d.type === "Workday").length;
@@ -472,7 +486,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
         <CardContent className="p-0">
           {filteredSchedule.length > 0 ? (
             <>
-              <div className="max-h-[400px] overflow-y-auto">
+              <div className="max-h-[400px] overflow-y-auto" ref={scheduleScrollRef}>
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-muted">
                     <tr>
@@ -514,7 +528,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
                             </span>
                           </td>
                           <td className="px-4 py-2 text-center font-mono text-xs">
-                            {row.hours > 0 ? row.hours.toFixed(1) : "—"}
+                            {row.hours != null ? (row.hours > 0 ? row.hours.toFixed(1) : "0h") : "—"}
                           </td>
                           <td className="px-4 py-2 text-xs text-muted-foreground">
                             {row.type === "Workday" ? `${data.startTime} – ${data.endTime}` : "—"}
