@@ -12,6 +12,7 @@ import { Briefcase, Pen, Trash2, Plus, Save, Download, Upload } from "lucide-rea
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format-currency";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 // ─── Positions Tab ───────────────────────────────────────────────
@@ -562,8 +563,8 @@ function SalariesPeriodsTab() {
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground">{(a as any).skill_groups?.label_en || "—"}</span>
-                <span className="text-sm font-medium">{a.monthly_rate} <span className="text-muted-foreground text-xs">SEK</span></span>
-                <span className="text-sm font-medium">{a.hourly_rate} <span className="text-muted-foreground text-xs">SEK</span></span>
+                <span className="text-sm font-medium">{formatCurrency(a.monthly_rate, "SEK", 0)}</span>
+                <span className="text-sm font-medium">{formatCurrency(a.hourly_rate, "SEK", 2)}</span>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: a.id, label: `${(a as any).positions?.label_en || "—"} / ${(a as any).skill_groups?.label_en || "—"}` })}>
                     <Trash2 className="w-3.5 h-3.5" />
