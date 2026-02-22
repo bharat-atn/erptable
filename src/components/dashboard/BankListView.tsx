@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import {
   Dialog,
@@ -222,12 +223,21 @@ export function BankListView() {
       const { data, error } = await supabase
         .from("banks")
         .select("*")
-        .order("sort_order")
         .order("name");
       if (error) throw error;
       return data as Bank[];
     },
   });
+
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+
+  const uniqueCountries = Array.from(
+    new Set(banks.map((b) => b.country).filter(Boolean) as string[])
+  ).sort();
+
+  const filteredBanks = countryFilter === "all"
+    ? banks
+    : banks.filter((b) => b.country === countryFilter);
 
   const addBank = useMutation({
     mutationFn: async (input: { name: string; bic_code: string; country: string }) => {
@@ -396,8 +406,25 @@ export function BankListView() {
         </div>
       </div>
 
+      {uniqueCountries.length > 1 && (
+        <div className="flex items-center gap-2">
+          <Label className="text-sm text-muted-foreground whitespace-nowrap">Country:</Label>
+          <Select value={countryFilter} onValueChange={setCountryFilter}>
+            <SelectTrigger className="w-[200px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All countries</SelectItem>
+              {uniqueCountries.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <EnhancedTable<Bank>
-        data={banks}
+        data={filteredBanks}
         columns={columns}
         rowKey={(b) => b.id}
         defaultSortKey="name"
