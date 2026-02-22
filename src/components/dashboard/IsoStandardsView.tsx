@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Shield, CircleDollarSign, Calendar, Clock, Globe, Flag, Languages, Receipt, Save } from "lucide-react";
+import { Shield, CircleDollarSign, Calendar, Clock, Globe, Flag, Languages, Receipt, Save, Hash } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface IsoSetting {
@@ -96,6 +96,20 @@ const DEFAULT_SETTINGS: IsoSetting[] = [
     options: [
       { value: "639-2", label: "ISO 639-2 (swe, eng, ron)", description: "Three-letter codes (e.g. \"swe\" for Swedish, \"eng\" for English)." },
       { value: "639-1", label: "ISO 639-1 (sv, en, ro)", description: "Two-letter codes (e.g. \"sv\" for Swedish, \"en\" for English)." },
+    ],
+  },
+  {
+    key: "number_format",
+    label: "Number Format",
+    standard: "ISO 80000-1",
+    icon: Hash,
+    value: "sv-SE",
+    description: "Defines thousand separator and decimal mark per ISO 80000-1. Swedish standard uses thin space as thousand separator and comma as decimal mark.",
+    options: [
+      { value: "sv-SE", label: "Swedish (1 234,50)", description: "Thin space as thousand separator, comma as decimal mark (ISO 80000-1 recommended)." },
+      { value: "en-US", label: "US/UK (1,234.50)", description: "Comma as thousand separator, period as decimal mark." },
+      { value: "de-DE", label: "German (1.234,50)", description: "Period as thousand separator, comma as decimal mark." },
+      { value: "fr-FR", label: "French (1 234,50)", description: "Thin space as thousand separator, comma as decimal mark (same as Swedish)." },
     ],
   },
   {
