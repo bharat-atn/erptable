@@ -125,13 +125,26 @@ function CsvImportPreview({
         setError('CSV must have a "name" column');
         return;
       }
-      const cols = lines[0].split(",").map((c) => c.trim().toLowerCase());
+      const cols = lines[0].split(",").map((c) => c.trim().toLowerCase().replace(/['"]/g, ""));
       const nameIdx = cols.indexOf("name");
-      const bicIdx = cols.indexOf("bic_code");
+      const bicIdx = cols.findIndex((c) => c === "bic_code" || c === "bic code" || c === "bic/swift" || c === "swift");
       const countryIdx = cols.indexOf("country");
 
+      const parseCsvLine = (line: string): string[] => {
+        const values: string[] = [];
+        let current = "";
+        let inQuotes = false;
+        for (const char of line) {
+          if (char === '"') { inQuotes = !inQuotes; }
+          else if (char === "," && !inQuotes) { values.push(current.trim()); current = ""; }
+          else { current += char; }
+        }
+        values.push(current.trim());
+        return values;
+      };
+
       const parsed = lines.slice(1).map((line) => {
-        const parts = line.split(",").map((p) => p.trim().replace(/^"|"$/g, ""));
+        const parts = parseCsvLine(line);
         return {
           name: parts[nameIdx] || "",
           bic_code: bicIdx >= 0 ? parts[bicIdx] || "" : "",
