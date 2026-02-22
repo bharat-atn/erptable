@@ -78,6 +78,14 @@ export const personalInfoSchema = z.object({
   emergencyFirstName: z.string().min(1, "Emergency contact first name is required").max(100),
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
   emergencyPhone: z.string().min(10, "Valid phone number required").max(20),
+  swedishCoordinationNumber: z.string().max(12).optional().refine(
+    (val) => !val || /^\d{12}$/.test(val),
+    { message: "Must be exactly 12 digits" }
+  ),
+  swedishPersonalNumber: z.string().max(12).optional().refine(
+    (val) => !val || /^\d{12}$/.test(val),
+    { message: "Must be exactly 12 digits" }
+  ),
 });
 
 export type PersonalInfo = z.infer<typeof personalInfoSchema>;
@@ -454,6 +462,40 @@ export function OnboardingWizard({
                     Age must be between {MIN_AGE} and {MAX_AGE} years old
                   </p>
                 )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                <div className="space-y-1.5">
+                  <FieldLabel en="Swedish Coordination Number" sv="Svenskt samordningsnummer" required={false} />
+                  <Input
+                    value={formData.swedishCoordinationNumber || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      updateField("swedishCoordinationNumber", v);
+                    }}
+                    placeholder="12 digits / 12 siffror"
+                    maxLength={12}
+                    className="h-11 text-sm font-medium"
+                  />
+                  {formData.swedishCoordinationNumber && formData.swedishCoordinationNumber.length > 0 && formData.swedishCoordinationNumber.length !== 12 && (
+                    <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <FieldLabel en="Swedish Personal Number" sv="Svenskt personnummer" required={false} />
+                  <Input
+                    value={formData.swedishPersonalNumber || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      updateField("swedishPersonalNumber", v);
+                    }}
+                    placeholder="12 digits / 12 siffror"
+                    maxLength={12}
+                    className="h-11 text-sm font-medium"
+                  />
+                  {formData.swedishPersonalNumber && formData.swedishPersonalNumber.length > 0 && formData.swedishPersonalNumber.length !== 12 && (
+                    <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">

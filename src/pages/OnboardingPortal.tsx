@@ -60,6 +60,8 @@ export default function OnboardingPortal() {
         bankName: isOtherBank ? validated.otherBankName : validated.bankName,
         bicCode: validated.bicCode,
         bankAccountNumber: validated.bankAccountNumber,
+        swedishCoordinationNumber: validated.swedishCoordinationNumber,
+        swedishPersonalNumber: validated.swedishPersonalNumber,
         emergencyContact: {
           firstName: validated.emergencyFirstName,
           lastName: validated.emergencyLastName,
