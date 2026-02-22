@@ -697,6 +697,7 @@ export type Database = {
           employee_personal_info: Json
           expires_at: string
           id: string
+          language: string
           status: Database["public"]["Enums"]["invitation_status"]
           type: Database["public"]["Enums"]["invitation_type"]
         }[]
