@@ -35,6 +35,14 @@ import { toast } from "sonner";
 import { Plus, Loader2, Mail, ChevronsUpDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const LANGUAGE_OPTIONS = [
+  { value: "sv", label: "Swedish only / Bara svenska" },
+  { value: "en", label: "English only" },
+  { value: "en_sv", label: "English + Swedish / Engelska + Svenska" },
+  { value: "ro_en", label: "Romanian + English / Română + Engleză" },
+  { value: "th_en", label: "Thai + English / ไทย + อังกฤษ" },
+];
+
 export function CreateInvitationDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -42,6 +50,7 @@ export function CreateInvitationDialog() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [type, setType] = useState<"NEW_HIRE" | "CONTRACT_RENEWAL">("NEW_HIRE");
+  const [language, setLanguage] = useState("en_sv");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -107,6 +116,7 @@ export function CreateInvitationDialog() {
           employee_id: employeeId,
           type: type as "NEW_HIRE" | "CONTRACT_RENEWAL",
           status: "PENDING" as const,
+          language,
         }])
         .select()
         .single();
@@ -135,6 +145,7 @@ export function CreateInvitationDialog() {
     setLastName("");
     setEmail("");
     setType("NEW_HIRE");
+    setLanguage("en_sv");
     setSelectedEmployeeId(null);
   };
 
@@ -184,6 +195,24 @@ export function CreateInvitationDialog() {
                 <SelectItem value="CONTRACT_RENEWAL">Contract Renewal</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Language Selection */}
+          <div className="space-y-2">
+            <Label>Onboarding Language</Label>
+            <Select value={language} onValueChange={setLanguage}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Choose the preferred language for the onboarding form
+            </p>
           </div>
 
           {type === "CONTRACT_RENEWAL" ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,6 +106,8 @@ function loadTemplateLogo(): LogoSettings | null {
   } catch { return null; }
 }
 
+export type OnboardingLanguage = "sv" | "en" | "en_sv" | "ro_en" | "th_en";
+
 interface OnboardingWizardProps {
   formData: Partial<PersonalInfo>;
   updateField: (field: keyof PersonalInfo, value: string) => void;
@@ -119,19 +121,97 @@ interface OnboardingWizardProps {
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   workPermitFile?: File | null;
   onWorkPermitFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  language?: OnboardingLanguage;
 }
 
+/* ─── Language label maps ─── */
+const LANG_LABELS: Record<string, Record<string, string>> = {
+  ro: {
+    "First Name": "Prenume", "Middle Name": "Nume mijlociu", "Last Name": "Nume de familie",
+    "Preferred Name": "Nume preferat", "Address 1": "Adresa 1", "Address 2": "Adresa 2",
+    "ZIP / Postal Code": "Cod poștal", "City": "Oraș", "State / Province": "Stat / Județ",
+    "Country": "Țara", "Date of Birth": "Data nașterii", "Country of Birth": "Țara nașterii",
+    "Citizenship": "Cetățenie", "Mobile Phone": "Telefon mobil", "Email": "Email",
+    "Swedish Personal Number": "Număr personal suedez", "Swedish Coordination Number": "Număr de coordonare suedez",
+    "Emergency Contact – First Name": "Contact de urgență – Prenume", "Emergency Contact – Last Name": "Contact de urgență – Nume",
+    "Emergency Contact – Mobile Phone": "Contact de urgență – Telefon",
+    "Select Country": "Selectați țara", "Toggle your Bank": "Alegeți banca",
+    "Bank Name": "Numele băncii", "BIC Code": "Cod BIC", "Bank Account Number": "Număr de cont bancar",
+    "ID / Passport Document": "Document ID / Pașaport", "Work Permit Document": "Permis de muncă",
+  },
+  th: {
+    "First Name": "ชื่อจริง", "Middle Name": "ชื่อกลาง", "Last Name": "นามสกุล",
+    "Preferred Name": "ชื่อเล่น", "Address 1": "ที่อยู่ 1", "Address 2": "ที่อยู่ 2",
+    "ZIP / Postal Code": "รหัสไปรษณีย์", "City": "เมือง", "State / Province": "จังหวัด",
+    "Country": "ประเทศ", "Date of Birth": "วันเกิด", "Country of Birth": "ประเทศที่เกิด",
+    "Citizenship": "สัญชาติ", "Mobile Phone": "โทรศัพท์มือถือ", "Email": "อีเมล",
+    "Swedish Personal Number": "เลขประจำตัวสวีเดน", "Swedish Coordination Number": "เลขประสานงานสวีเดน",
+    "Emergency Contact – First Name": "ผู้ติดต่อฉุกเฉิน – ชื่อ", "Emergency Contact – Last Name": "ผู้ติดต่อฉุกเฉิน – นามสกุล",
+    "Emergency Contact – Mobile Phone": "ผู้ติดต่อฉุกเฉิน – โทรศัพท์",
+    "Select Country": "เลือกประเทศ", "Toggle your Bank": "เลือกธนาคาร",
+    "Bank Name": "ชื่อธนาคาร", "BIC Code": "รหัส BIC", "Bank Account Number": "หมายเลขบัญชีธนาคาร",
+    "ID / Passport Document": "เอกสาร ID / หนังสือเดินทาง", "Work Permit Document": "เอกสารใบอนุญาตทำงาน",
+  },
+  sv: {
+    "First Name": "Förnamn", "Middle Name": "Mellannamn", "Last Name": "Efternamn",
+    "Preferred Name": "Tilltalnamn", "Address 1": "Adress 1", "Address 2": "Adress 2",
+    "ZIP / Postal Code": "Postnummer", "City": "Ort", "State / Province": "Län / Region",
+    "Country": "Land", "Date of Birth": "Födelsedatum", "Country of Birth": "Födelseland",
+    "Citizenship": "Medborgarskap", "Mobile Phone": "Mobiltelefon", "Email": "E-post",
+    "Swedish Personal Number": "Svenskt personnummer", "Swedish Coordination Number": "Samordningsnummer",
+    "Emergency Contact – First Name": "Nödkontakt – Förnamn", "Emergency Contact – Last Name": "Nödkontakt – Efternamn",
+    "Emergency Contact – Mobile Phone": "Nödkontakt – Mobiltelefon",
+    "Select Country": "Välj land", "Toggle your Bank": "Välj din bank",
+    "Bank Name": "Banknamn", "BIC Code": "BIC-kod", "Bank Account Number": "Kontonummer",
+    "ID / Passport Document": "ID / Passhandling", "Work Permit Document": "Arbetstillståndshandling",
+  },
+};
+
+const LanguageContext = createContext<OnboardingLanguage>("en_sv");
+
 /* ─── Reusable label matching contract wizard ─── */
-function FieldLabel({ en, sv, required = true }: { en: string; sv: string; required?: boolean }) {
+function FieldLabel({ en, sv, required = true }: { en: string; sv?: string; required?: boolean }) {
+  const lang = useContext(LanguageContext);
+  let text = "";
+  if (lang === "sv") {
+    text = LANG_LABELS.sv[en] || sv || en;
+  } else if (lang === "en") {
+    text = en;
+  } else if (lang === "ro_en") {
+    const ro = LANG_LABELS.ro[en];
+    text = ro ? `${ro} / ${en}` : en;
+  } else if (lang === "th_en") {
+    const th = LANG_LABELS.th[en];
+    text = th ? `${th} / ${en}` : en;
+  } else {
+    // en_sv default
+    const svLabel = sv || LANG_LABELS.sv[en] || "";
+    text = svLabel ? `${en} / ${svLabel}` : en;
+  }
   return (
     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-      {en} / {sv}
+      {text}
       {required && <span className="text-destructive ml-0.5">*</span>}
     </label>
   );
 }
 
 /* ─── Section header matching contract wizard exactly ─── */
+const SECTION_TITLES_RO: Record<string, string> = {
+  "Name and Address Information": "Informații despre nume și adresă",
+  "Birth and Contact Information": "Informații despre naștere și contact",
+  "Emergency Contact": "Contact de urgență",
+  "Bank Information": "Informații bancare",
+  "ID / Passport & Work Permit Information": "Informații ID / Pașaport și permis de muncă",
+};
+const SECTION_TITLES_TH: Record<string, string> = {
+  "Name and Address Information": "ข้อมูลชื่อและที่อยู่",
+  "Birth and Contact Information": "ข้อมูลวันเกิดและการติดต่อ",
+  "Emergency Contact": "ผู้ติดต่อฉุกเฉิน",
+  "Bank Information": "ข้อมูลธนาคาร",
+  "ID / Passport & Work Permit Information": "ข้อมูล ID / หนังสือเดินทางและใบอนุญาตทำงาน",
+};
+
 function SectionHeader({
   number,
   titleEn,
@@ -149,8 +229,26 @@ function SectionHeader({
   missingFields?: string[];
   showValidation?: boolean;
 }) {
+  const lang = useContext(LanguageContext);
   const hasWarning = showValidation && missingFields.length > 0;
   const isComplete = showValidation && missingFields.length === 0;
+
+  let sectionTitle = "";
+  if (lang === "sv") {
+    sectionTitle = number ? `Sektion ${number}: ${titleSv}` : titleSv;
+  } else if (lang === "en") {
+    sectionTitle = number ? `Section ${number}: ${titleEn}` : titleEn;
+  } else if (lang === "ro_en") {
+    const ro = SECTION_TITLES_RO[titleEn] || titleEn;
+    sectionTitle = number ? `Secțiunea ${number}: ${ro} / Section ${number}: ${titleEn}` : `${ro} / ${titleEn}`;
+  } else if (lang === "th_en") {
+    const th = SECTION_TITLES_TH[titleEn] || titleEn;
+    sectionTitle = number ? `ส่วนที่ ${number}: ${th} / Section ${number}: ${titleEn}` : `${th} / ${titleEn}`;
+  } else {
+    sectionTitle = number
+      ? `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`
+      : `${titleEn} / ${titleSv}`;
+  }
 
   return (
     <div className="space-y-1">
@@ -173,12 +271,7 @@ function SectionHeader({
           {isComplete && (
             <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
           )}
-          <span className="leading-tight">
-            {number
-              ? `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`
-              : `${titleEn} / ${titleSv}`
-            }
-          </span>
+          <span className="leading-tight">{sectionTitle}</span>
         </span>
         <ChevronDown
           className={cn(
@@ -209,6 +302,7 @@ export function OnboardingWizard({
   onFileChange,
   workPermitFile,
   onWorkPermitFileChange,
+  language = "en_sv",
 }: OnboardingWizardProps) {
   const templateLogo = loadTemplateLogo();
   const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
@@ -314,6 +408,7 @@ export function OnboardingWizard({
     validationAttempted && hasError ? "border-destructive focus-visible:ring-destructive/30" : "";
 
   return (
+    <LanguageContext.Provider value={language}>
     <div className="min-h-screen bg-background overflow-y-auto safe-area-top safe-area-bottom">
       <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
         {/* Logo & Header */}
@@ -759,5 +854,6 @@ export function OnboardingWizard({
         </form>
       </div>
     </div>
+    </LanguageContext.Provider>
   );
 }

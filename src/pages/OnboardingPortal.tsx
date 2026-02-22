@@ -146,6 +146,7 @@ export default function OnboardingPortal() {
         onFileChange={handleFileChange}
         workPermitFile={workPermitFile}
         onWorkPermitFileChange={handleWorkPermitFileChange}
+        language="en_sv"
       />
     );
   }
@@ -202,10 +203,11 @@ export default function OnboardingPortal() {
       selectedBank={selectedBank}
       isOtherBank={isOtherBank}
       onBankSelect={handleBankSelect}
-        uploadedFile={uploadedFile}
-        onFileChange={handleFileChange}
-        workPermitFile={workPermitFile}
-        onWorkPermitFileChange={handleWorkPermitFileChange}
-      />
+      uploadedFile={uploadedFile}
+      onFileChange={handleFileChange}
+      workPermitFile={workPermitFile}
+      onWorkPermitFileChange={handleWorkPermitFileChange}
+      language={(invitation as any)?.language || "en_sv"}
+    />
   );
 }
