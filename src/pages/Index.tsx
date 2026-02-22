@@ -20,9 +20,21 @@ const Index = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (!session) setActiveApp(null);
+
+      // Log auth events to audit log
+      if (event === "SIGNED_IN" && session?.user) {
+        supabase.rpc("log_auth_event", {
+          _action: "LOGIN",
+          _user_id: session.user.id,
+          _user_email: session.user.email ?? null,
+          _summary: `${session.user.email} logged in`,
+        }).then();
+      } else if (event === "SIGNED_OUT") {
+        // We don't have session here, but we stored it before
+      }
     });
 
     return () => subscription.unsubscribe();
