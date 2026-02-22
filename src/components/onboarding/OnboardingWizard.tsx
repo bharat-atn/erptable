@@ -109,6 +109,8 @@ interface OnboardingWizardProps {
   onBankSelect: (bank: string) => void;
   uploadedFile: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  workPermitFile?: File | null;
+  onWorkPermitFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 /* ─── Reusable label matching contract wizard ─── */
@@ -197,6 +199,8 @@ export function OnboardingWizard({
   onBankSelect,
   uploadedFile,
   onFileChange,
+  workPermitFile,
+  onWorkPermitFileChange,
 }: OnboardingWizardProps) {
   const templateLogo = loadTemplateLogo();
   const [bankList, setBankList] = useState<string[]>(FALLBACK_BANKS);
@@ -602,17 +606,18 @@ export function OnboardingWizard({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* ═══ Section 4: ID / Passport ═══ */}
+          {/* ═══ Section 4: ID / Passport & Work Permit ═══ */}
           <Collapsible open={s5Open} onOpenChange={setS5Open}>
             <SectionHeader
-              titleEn="ID / Passport Information"
-              titleSv="ID- / Passinformation"
+              titleEn="ID / Passport & Work Permit Information"
+              titleSv="ID- / Pass- och arbetstillståndsinformation"
               open={s5Open}
               onToggle={() => setS5Open(!s5Open)}
               missingFields={s5Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-6">
+              {/* ID / Passport upload (required) */}
               <div className="space-y-3">
                 <FieldLabel en="Please attach your valid EU ID or Passport" sv="Bifoga ditt giltiga EU-ID eller pass" />
                 <div className={cn(
@@ -630,6 +635,31 @@ export function OnboardingWizard({
                     </p>
                     {uploadedFile && (
                       <p className="mt-3 text-sm text-primary font-semibold">{uploadedFile.name}</p>
+                    )}
+                  </label>
+                </div>
+              </div>
+
+              {/* Working Visa / Work Permit upload (optional) */}
+              <div className="space-y-3">
+                <FieldLabel
+                  en="If applicable, please attach your Swedish Work Permit / Working Visa"
+                  sv="Om tillämpligt, bifoga ditt svenska arbetstillstånd / arbetsvisum"
+                  required={false}
+                />
+                <p className="text-xs text-muted-foreground/70 -mt-1">(Optional / Valfritt)</p>
+                <div className="border-2 border-dashed rounded-lg p-6 sm:p-8 text-center hover:border-primary/50 transition-colors cursor-pointer border-muted-foreground/30">
+                  <input type="file" id="work-permit-upload" accept="image/*,.pdf" onChange={onWorkPermitFileChange} className="hidden" />
+                  <label htmlFor="work-permit-upload" className="cursor-pointer block">
+                    <Folder className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Drag & drop a file or <span className="text-primary font-semibold underline">browse</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground/60 mt-1">
+                      Accepted formats: JPG, PNG, PDF
+                    </p>
+                    {workPermitFile && (
+                      <p className="mt-3 text-sm text-primary font-semibold">{workPermitFile.name}</p>
                     )}
                   </label>
                 </div>

@@ -15,6 +15,7 @@ export default function OnboardingPortal() {
   const [selectedBank, setSelectedBank] = useState<string>("");
   const [isOtherBank, setIsOtherBank] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [workPermitFile, setWorkPermitFile] = useState<File | null>(null);
 
   const { data: invitation, isLoading, error } = useQuery({
     queryKey: ["invitation", token],
@@ -121,6 +122,12 @@ export default function OnboardingPortal() {
     }
   };
 
+  const handleWorkPermitFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setWorkPermitFile(e.target.files[0]);
+    }
+  };
+
   // Demo mode
   if (token === "demo") {
     return (
@@ -135,6 +142,8 @@ export default function OnboardingPortal() {
         onBankSelect={handleBankSelect}
         uploadedFile={uploadedFile}
         onFileChange={handleFileChange}
+        workPermitFile={workPermitFile}
+        onWorkPermitFileChange={handleWorkPermitFileChange}
       />
     );
   }
@@ -191,8 +200,10 @@ export default function OnboardingPortal() {
       selectedBank={selectedBank}
       isOtherBank={isOtherBank}
       onBankSelect={handleBankSelect}
-      uploadedFile={uploadedFile}
-      onFileChange={handleFileChange}
-    />
+        uploadedFile={uploadedFile}
+        onFileChange={handleFileChange}
+        workPermitFile={workPermitFile}
+        onWorkPermitFileChange={handleWorkPermitFileChange}
+      />
   );
 }
