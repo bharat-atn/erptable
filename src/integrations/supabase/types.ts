@@ -709,6 +709,15 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      log_auth_event: {
+        Args: {
+          _action: string
+          _summary?: string
+          _user_email: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       submit_employee_signature: {
         Args: { _signature_url: string; _token: string }
         Returns: undefined

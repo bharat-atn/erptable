@@ -475,6 +475,15 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
               variant="outline"
               size="sm"
               onClick={async () => {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                  await supabase.rpc("log_auth_event", {
+                    _action: "LOGOUT",
+                    _user_id: session.user.id,
+                    _user_email: session.user.email ?? null,
+                    _summary: `${session.user.email} logged out`,
+                  });
+                }
                 await supabase.auth.signOut();
                 window.location.href = "https://ljungaverkforestry.lovable.app";
               }}
