@@ -590,31 +590,92 @@ function SalariesPeriodsTab() {
 // ─── Backup & Restore Tab ────────────────────────────────────────
 
 function BackupRestoreTab() {
-  const handleExport = async () => {
+  const [exporting, setExporting] = useState(false);
+
+  const escapeCsvValue = (val: string | number | null | undefined): string => {
+    if (val == null) return "";
+    const str = String(val);
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const handleCsvExport = async () => {
+    setExporting(true);
     try {
       const [positions, skillGroups, agreements] = await Promise.all([
-        supabase.from("positions").select("*"),
-        supabase.from("skill_groups").select("*"),
+        supabase.from("positions").select("*").order("sort_order"),
+        supabase.from("skill_groups").select("*").order("sort_order"),
         supabase.from("agreement_periods").select("*"),
       ]);
 
-      const backup = {
-        exported_at: new Date().toISOString(),
-        positions: positions.data || [],
-        skill_groups: skillGroups.data || [],
-        agreement_periods: agreements.data || [],
-      };
+      const posData = positions.data || [];
+      const sgData = skillGroups.data || [];
+      const apData = agreements.data || [];
 
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+      // Build lookup maps for resolved names
+      const posMap = new Map(posData.map(p => [p.id, p]));
+      const sgMap = new Map(sgData.map(s => [s.id, s]));
+
+      // --- Sheet 1: Positions ---
+      const posHeaders = ["id", "type_number", "label_en", "label_sv", "type_label_en", "type_label_sv", "is_active", "sort_order", "created_at", "updated_at"];
+      const posRows = posData.map(p => posHeaders.map(h => escapeCsvValue(p[h as keyof typeof p] as any)).join(","));
+
+      // --- Sheet 2: Skill Groups ---
+      const sgHeaders = ["id", "label_en", "label_sv", "sort_order", "created_at", "updated_at"];
+      const sgRows = sgData.map(s => sgHeaders.map(h => escapeCsvValue(s[h as keyof typeof s] as any)).join(","));
+
+      // --- Sheet 3: Agreement Periods (with resolved names) ---
+      const apHeaders = ["id", "position_id", "position_label_en", "position_label_sv", "skill_group_id", "skill_group_label_en", "skill_group_label_sv", "period_label", "monthly_rate", "hourly_rate", "start_date", "end_date", "created_at", "updated_at"];
+      const apRows = apData.map(a => {
+        const pos = posMap.get(a.position_id);
+        const sg = sgMap.get(a.skill_group_id);
+        return [
+          escapeCsvValue(a.id),
+          escapeCsvValue(a.position_id),
+          escapeCsvValue(pos?.label_en),
+          escapeCsvValue(pos?.label_sv),
+          escapeCsvValue(a.skill_group_id),
+          escapeCsvValue(sg?.label_en),
+          escapeCsvValue(sg?.label_sv),
+          escapeCsvValue(a.period_label),
+          escapeCsvValue(a.monthly_rate),
+          escapeCsvValue(a.hourly_rate),
+          escapeCsvValue(a.start_date),
+          escapeCsvValue(a.end_date),
+          escapeCsvValue(a.created_at),
+          escapeCsvValue(a.updated_at),
+        ].join(",");
+      });
+
+      // Combine into one CSV with section separators
+      const lines: string[] = [];
+      lines.push("### POSITIONS ###");
+      lines.push(posHeaders.join(","));
+      lines.push(...posRows);
+      lines.push("");
+      lines.push("### SKILL GROUPS ###");
+      lines.push(sgHeaders.join(","));
+      lines.push(...sgRows);
+      lines.push("");
+      lines.push("### AGREEMENT PERIODS ###");
+      lines.push(apHeaders.join(","));
+      lines.push(...apRows);
+
+      const csv = lines.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `contract-data-backup-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `contract-data-backup-${new Date().toISOString().split("T")[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success("Backup exported successfully");
+      toast.success("CSV backup exported successfully");
     } catch {
-      toast.error("Failed to export backup");
+      toast.error("Failed to export CSV backup");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -623,19 +684,14 @@ function BackupRestoreTab() {
       <Card>
         <CardContent className="p-6 space-y-4">
           <div>
-            <h3 className="text-sm font-semibold mb-1">Export Data</h3>
-            <p className="text-xs text-muted-foreground mb-3">Download all contract registry data as a JSON backup file.</p>
-            <Button onClick={handleExport} variant="outline">
-              <Download className="w-4 h-4 mr-2" /> Export Backup
+            <h3 className="text-sm font-semibold mb-1">Export Data (CSV)</h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Download all contract registry data (positions, skill groups, agreement periods) as a single CSV file. 
+              The file includes resolved names for easy use in other systems like Excel.
+            </p>
+            <Button onClick={handleCsvExport} variant="outline" disabled={exporting}>
+              <Download className="w-4 h-4 mr-2" /> {exporting ? "Exporting..." : "Export CSV Backup"}
             </Button>
-          </div>
-          <div className="border-t border-border pt-4">
-            <h3 className="text-sm font-semibold mb-1">Import Data</h3>
-            <p className="text-xs text-muted-foreground mb-3">Restore contract registry data from a previously exported backup file.</p>
-            <Button variant="outline" disabled>
-              <Upload className="w-4 h-4 mr-2" /> Import Backup
-            </Button>
-            <p className="text-xs text-muted-foreground mt-1">Import functionality coming soon.</p>
           </div>
         </CardContent>
       </Card>
