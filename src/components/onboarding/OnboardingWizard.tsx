@@ -437,7 +437,11 @@ export function OnboardingWizard({
         </div>
 
         <p className="text-center text-primary font-semibold text-sm sm:text-base mb-6">
-          Please fill out the following information in full / Vänligen fyll i följande information fullständigt
+          {language === "sv" && "Vänligen fyll i följande information fullständigt"}
+          {language === "en" && "Please fill out the following information in full"}
+          {language === "en_sv" && "Please fill out the following information in full / Vänligen fyll i följande information fullständigt"}
+          {language === "ro_en" && "Vă rugăm să completați toate informațiile de mai jos / Please fill out the following information in full"}
+          {language === "th_en" && "กรุณากรอกข้อมูลต่อไปนี้ให้ครบถ้วน / Please fill out the following information in full"}
         </p>
 
         {isPreview && (
