@@ -121,11 +121,30 @@ export function OperationsView() {
     },
   });
 
-  const total = employees?.length || 0;
+  const { data: contracts } = useQuery({
+    queryKey: ["operations-contracts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contracts").select("id, employee_id, status, signing_status");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const employeesWithContracts = employees?.filter((e) =>
+    contracts?.some((c) => c.employee_id === e.id)
+  ) || [];
+  const total = employeesWithContracts.length;
   const invited = employees?.filter((e) => e.status === "INVITED").length || 0;
   const onboarding = employees?.filter((e) => e.status === "ONBOARDING").length || 0;
   const active = employees?.filter((e) => e.status === "ACTIVE").length || 0;
   const inactive = employees?.filter((e) => e.status === "INACTIVE").length || 0;
+
+  // Contract-aware stats
+  const onboardingEmployees = employees?.filter((e) => e.status === "ONBOARDING") || [];
+  const onboardingWithSignedContracts = onboardingEmployees.filter((e) =>
+    contracts?.some((c) => c.employee_id === e.id && c.signing_status === "signed")
+  ).length;
+  const signedContracts = contracts?.filter((c) => c.signing_status === "signed").length || 0;
 
   const handleFilterClick = (filter: StatusFilter) => {
     setStatusFilter((prev) => (prev === filter ? "ALL" : filter));
@@ -190,8 +209,8 @@ export function OperationsView() {
         <div className="col-span-2 space-y-2">
           <div className="text-center"><Badge variant="outline" className="w-full justify-center bg-amber-50 text-amber-600 border-amber-200 text-xs py-1 font-semibold">Under Season</Badge></div>
           <div className="grid grid-cols-2 gap-2">
-            <Card className={cn("cursor-pointer transition-all", statusFilter === "ONBOARDING" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ONBOARDING")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Onboarding</span></div><p className="text-2xl font-bold">{onboarding}</p><p className="text-[10px] text-muted-foreground">HR Action Required</p></CardContent></Card>
-            <Card className={cn("cursor-pointer transition-all", statusFilter === "ACTIVE" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ACTIVE")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><CheckCircle className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Active Duty</span></div><p className="text-2xl font-bold">{active}</p><p className="text-[10px] text-muted-foreground">Contract Signed</p></CardContent></Card>
+             <Card className={cn("cursor-pointer transition-all", statusFilter === "ONBOARDING" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ONBOARDING")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Onboarding</span></div><p className="text-2xl font-bold">{onboarding}</p><p className="text-[10px] text-muted-foreground">{onboardingWithSignedContracts} of {onboarding} contracts prepared</p></CardContent></Card>
+             <Card className={cn("cursor-pointer transition-all", statusFilter === "ACTIVE" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("ACTIVE")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><CheckCircle className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Active Duty</span></div><p className="text-2xl font-bold">{active}</p><p className="text-[10px] text-muted-foreground">{signedContracts} Contract Signed</p></CardContent></Card>
           </div>
         </div>
         <div className="col-span-2 space-y-2">
