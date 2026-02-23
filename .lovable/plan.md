@@ -1,65 +1,70 @@
 
 
-## User Role System -- 3-Level Access Control
+## Add User Management to the App Launcher
 
-### Overview
+### What's Missing Today
 
-Build a robust role-based access system with three tiers that controls what each user can see and do across the entire application.
+There is no user management anywhere in the system. No way to see who has signed up, approve new users, or assign roles. This needs to exist before going live.
 
-### The Three Roles
+### Where It Will Live
 
-| Level | Role (in DB) | Who | What they can do |
-|-------|-------------|-----|-----------------|
-| Super Admin | `admin` | System owner (you) | Everything -- manage users, assign roles, full system config |
-| Admin (HR Manager) | `hr_admin` / `hr_staff` | HR team | Send invitations, create contracts, manage employees, daily operations |
-| User (Employee) | `user` | Staff / candidates | View their own data, future Employee Hub mobile app |
+A new **"User Management"** app card will be added to the App Launcher -- right alongside HR Management, Payroll, etc. This makes it immediately visible and accessible after login.
 
-### What Will Be Built
+- Only users with the **Super Admin** (`admin`) role will see this card
+- Other users won't see it at all
 
-**1. User Management Page (Super Admin only)**
-- New "User Management" view accessible from the sidebar (only visible to `admin` role)
-- Lists all registered users with their email, name, role, and status
-- Allows the Super Admin to assign/change roles for any user
-- Shows pending users who signed up but haven't been approved yet
+### What Gets Built
 
-**2. Role-Based Sidebar and Navigation**
-- Super Admin: sees everything including User Management and system configuration
-- Admin/HR: sees the operational views (Dashboard, Employees, Invitations, Contracts, Settings, etc.) -- the current experience
-- User: sees only a minimal "Employee Hub" placeholder (for future mobile app features)
+**1. Database Setup**
+- Create a trigger that automatically creates a profile row when someone signs up (so no one falls through the cracks)
+- Assign the `admin` role to your account (`ove.eriksson@dahai.se`) so you become the Super Admin
+- Add RLS policies so admins can view and manage all profiles
 
-**3. Post-Login Role Check**
-- After login, the system checks the user's role in the `user_roles` table
-- If no role is assigned (new signup), show a "Pending Approval" screen explaining that an admin needs to approve their account
-- Super Admin gets notified of pending users via the User Management page
+**2. User Role Hook (`src/hooks/useUserRole.ts`)**
+- A reusable hook that fetches the current user's role from `user_roles`
+- Returns the role (e.g. `admin`, `hr_admin`, `user`) or `null` if pending
+- Used everywhere to gate access
 
-**4. Auto-Create Profile on Signup**
-- A database trigger will automatically create a `profiles` row when a new user signs up
-- New users start with no role (pending state) until a Super Admin assigns one
+**3. Pending Approval Screen (`src/components/auth/PendingApproval.tsx`)**
+- Shown to users who have signed up but haven't been assigned a role yet
+- Clean, informative screen saying "Your account is pending approval"
+- Includes a sign-out button
 
-**5. Secure Sign-Up Flow**
-- Sign-up remains available but new accounts are "locked" until the Super Admin assigns a role
-- This prevents unauthorized access to HR data
+**4. User Management View (`src/components/dashboard/UserManagementView.tsx`)**
+- Table listing all users: email, name, current role, status (pending/approved)
+- Dropdown to assign or change roles (admin, hr_admin, hr_staff, user)
+- Visual indicator for pending users who need approval
+- Uses the typed DELETE confirmation pattern already in the system for removing users
 
-### Technical Details
+**5. User Management as an App in the Launcher**
+- New app card: "User Management" with a Shield icon
+- Only visible to `admin` role users
+- Launches into a dedicated dashboard view with the User Management table
 
-**Database Changes:**
-- Create a trigger on `auth.users` that auto-inserts a row into `profiles` on new user creation
-- The existing `user_roles` table and `app_role` enum are already in place and will be reused
-- Your current user (`ove.eriksson@dahai.se`) already has `hr_admin` -- we will also assign `admin` to make you the Super Admin
+**6. Role Gating Throughout the System**
+- `Index.tsx`: After login, check role -- if no role, show Pending Approval screen
+- `AppLauncher.tsx`: Filter visible apps based on role (User Management only for admins)
+- `Sidebar.tsx`: Filter menu items based on role (HR views hidden from `user` role)
+- `Dashboard.tsx`: Add `user-management` to the view router
 
-**New Files:**
-- `src/components/dashboard/UserManagementView.tsx` -- full user list with role assignment UI
-- `src/components/auth/PendingApproval.tsx` -- screen shown to users without a role
-- `src/hooks/useUserRole.ts` -- reusable hook to fetch and cache the current user's role
+### Files
 
-**Modified Files:**
-- `src/pages/Index.tsx` -- add role check after login, route to correct experience based on role
-- `src/components/dashboard/Sidebar.tsx` -- filter menu items based on user role
-- `src/components/dashboard/Dashboard.tsx` -- add User Management view to the view router
-- `src/components/auth/AuthForm.tsx` -- ensure profile is created on signup
+| File | Action | Purpose |
+|------|--------|---------|
+| Database migration | Create | Auto-profile trigger, admin role assignment, RLS policies |
+| `src/hooks/useUserRole.ts` | Create | Hook to fetch current user's role |
+| `src/components/auth/PendingApproval.tsx` | Create | Screen for unapproved users |
+| `src/components/dashboard/UserManagementView.tsx` | Create | Admin page to manage users and roles |
+| `src/pages/Index.tsx` | Modify | Add role check after login, route based on role |
+| `src/components/dashboard/AppLauncher.tsx` | Modify | Add User Management card, filter by role |
+| `src/components/dashboard/Dashboard.tsx` | Modify | Add user-management view to router |
+| `src/components/dashboard/Sidebar.tsx` | Modify | Filter menu items by role |
 
-**Security:**
-- All role checks use the existing server-side `has_role()` and `is_hr_user()` functions (RLS)
-- Role assignment is protected: only `admin` can manage the `user_roles` table (already enforced by RLS)
-- No client-side role storage -- role is always fetched from the database
+### Security
+
+- Roles stored in separate `user_roles` table (never on profiles)
+- All role checks use the existing server-side `has_role()` function via RLS
+- Only `admin` can modify roles (enforced by existing RLS on `user_roles`)
+- No client-side role storage -- always fetched from the database
+- New signups are locked out until explicitly approved
 
