@@ -1,39 +1,25 @@
 
 
-# Sync Top-Level Employee Fields from Onboarding Data
+# Fix Operations Stat Bar: "Emails Sent" Counter
 
-## The Problem
-When a candidate submits the onboarding form, phone, city, and country are saved inside the `personal_info` JSONB column but the top-level `phone`, `city`, and `country` columns on the `employees` table stay empty. The Operations view reads from the top-level columns, so they show as dashes.
+## What's Working
+The stat bars are mostly correct. The employee counts (Invited, Onboarding, Active, Terminated) all match the actual database state. The "1 completed" under Renewal is also correct.
 
-## The Fix
-Update the `submit_onboarding` database function to extract `phone`, `city`, and `country` from the submitted `personal_info` JSONB and write them to the corresponding top-level columns.
+## What Needs Fixing
 
-## Database Migration
+### 1. "Emails sent" shows 0 instead of 1
+The Invited card shows "0 emails sent" because it only counts invitations currently in `SENT` status. Once a candidate accepts, the status changes to `ACCEPTED`, so the counter drops to 0. It should count all invitations that were ever sent (both `SENT` and `ACCEPTED`).
 
-Update the `submit_onboarding` function so the employee UPDATE also sets:
+**Fix:** Change the subtitle under "Invited" from `invitationStats?.sent` to `invitationStats?.sent + invitationStats?.completed` (i.e., SENT + ACCEPTED = total emails ever sent).
 
-```sql
-phone = _personal_info->>'mobilePhone',
-city = _personal_info->>'city',
-country = _personal_info->>'country'
-```
+### 2. Phone/City/Country dashes (browser cache)
+The database already contains the correct values (phone: 0701820168, city: TABY, country: Sweden). The dashes are caused by browser caching of the old data. A hard refresh (Ctrl+Shift+R) will fix this. No code change needed.
 
-## Backfill Existing Data
+## Technical Details
 
-For the employee who already submitted (Ove Eriksson), run a one-time backfill to populate the top-level columns from the existing `personal_info` data:
+**File:** `src/components/dashboard/OperationsView.tsx`
 
-```sql
-UPDATE employees
-SET phone = personal_info->>'mobilePhone',
-    city = personal_info->>'city',
-    country = personal_info->>'country'
-WHERE personal_info IS NOT NULL
-  AND (phone IS NULL OR phone = '');
-```
+- Around line 168 (the Invited card subtitle): change `{invitationStats?.sent || 0} emails sent` to `{(invitationStats?.sent || 0) + (invitationStats?.completed || 0)} emails sent`
 
-## Files Changed
-- One new database migration (SQL only, no code files changed)
-
-## Result
-After this change, all future onboarding submissions will automatically populate the phone, city, and country columns visible in Operations. The existing employee record will also be fixed by the backfill.
+This is a one-line change.
 
