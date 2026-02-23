@@ -87,6 +87,8 @@ export interface AppDefinition {
   available: boolean;
   launchUrl?: string;
   adminOnly?: boolean;
+  /** Roles that can see this app. If omitted, visible to all roles. */
+  allowedRoles?: string[];
 }
 
 const defaultApps: AppDefinition[] = [
@@ -98,6 +100,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 0,
     enabled: true,
     available: true,
+    allowedRoles: ["admin", "hr_admin", "hr_staff"],
   },
   {
     id: "user-management",
@@ -108,6 +111,7 @@ const defaultApps: AppDefinition[] = [
     enabled: true,
     available: true,
     adminOnly: true,
+    allowedRoles: ["admin"],
   },
   {
     id: "forestry-project",
@@ -117,6 +121,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 2,
     enabled: true,
     available: false,
+    allowedRoles: ["admin", "hr_admin"],
   },
   {
     id: "payroll",
@@ -126,6 +131,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 3,
     enabled: true,
     available: false,
+    allowedRoles: ["admin", "hr_admin"],
   },
   {
     id: "employee-hub",
@@ -135,6 +141,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 4,
     enabled: true,
     available: false,
+    allowedRoles: ["admin", "hr_admin", "hr_staff", "user"],
   },
 ];
 
@@ -143,15 +150,26 @@ export function loadApps(): AppDefinition[] {
     const saved = localStorage.getItem("app-launcher-apps");
     if (!saved) return defaultApps;
     const parsed: AppDefinition[] = JSON.parse(saved);
+    // Sync allowedRoles and adminOnly from defaults into saved apps
+    const defaultMap = new Map(defaultApps.map((d) => [d.id, d]));
+    const synced = parsed.map((app) => {
+      const def = defaultMap.get(app.id);
+      if (def) {
+        return { ...app, allowedRoles: def.allowedRoles, adminOnly: def.adminOnly };
+      }
+      return app;
+    });
     // Merge any new default apps that aren't in the saved list
-    const savedIds = new Set(parsed.map((a) => a.id));
+    const savedIds = new Set(synced.map((a) => a.id));
     const missing = defaultApps.filter((d) => !savedIds.has(d.id));
     if (missing.length > 0) {
-      const merged = [...parsed, ...missing];
+      const merged = [...synced, ...missing];
       localStorage.setItem("app-launcher-apps", JSON.stringify(merged));
       return merged;
     }
-    return parsed;
+    // Save back synced roles
+    localStorage.setItem("app-launcher-apps", JSON.stringify(synced));
+    return synced;
   } catch {
     return defaultApps;
   }
@@ -351,7 +369,17 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
   const [teaserApp, setTeaserApp] = useState<AppDefinition | null>(null);
 
   const isProduction = isPublishedEnvironment();
-  const visibleApps = (editMode ? apps : apps.filter((a) => a.enabled)).filter((a) => !a.adminOnly || userRole === "admin");
+  const visibleApps = (editMode ? apps : apps.filter((a) => a.enabled)).filter((a) => {
+    // In edit mode, show all to admin
+    if (editMode) return true;
+    // adminOnly legacy check
+    if (a.adminOnly && userRole !== "admin") return false;
+    // allowedRoles check
+    if (a.allowedRoles && a.allowedRoles.length > 0 && userRole) {
+      return a.allowedRoles.includes(userRole);
+    }
+    return true;
+  });
 
   const updateApps = (updated: AppDefinition[]) => {
     setApps(updated);
