@@ -367,14 +367,8 @@ function SkillGroupsTab() {
 
 function SalariesPeriodsTab() {
   const queryClient = useQueryClient();
-  const [positionId, setPositionId] = useState("");
-  const [skillGroupId, setSkillGroupId] = useState("");
-  const [periodLabel, setPeriodLabel] = useState("2026/2027");
-  const [monthlyRate, setMonthlyRate] = useState("0");
-  const [hourlyRate, setHourlyRate] = useState("0");
-  const [startDate, setStartDate] = useState("2026-04-01");
-  const [endDate, setEndDate] = useState("2027-03-31");
-  const [ageGroup, setAgeGroup] = useState("19_plus");
+  const [filterPosition, setFilterPosition] = useState("all");
+  const [filterSkillGroup, setFilterSkillGroup] = useState("all");
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [filterAge, setFilterAge] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
@@ -409,27 +403,6 @@ function SalariesPeriodsTab() {
     },
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("agreement_periods").insert({
-        position_id: positionId,
-        skill_group_id: skillGroupId,
-        period_label: periodLabel,
-        monthly_rate: Number(monthlyRate),
-        hourly_rate: Number(hourlyRate),
-        start_date: startDate,
-        end_date: endDate,
-        age_group: ageGroup,
-      } as any);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["agreement-periods"] });
-      toast.success("Agreement mapping saved");
-    },
-    onError: () => toast.error("Failed to save mapping"),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("agreement_periods").delete().eq("id", id);
@@ -446,13 +419,14 @@ function SalariesPeriodsTab() {
       toast.error("No data to export");
       return;
     }
-    const headers = ["Position (EN)", "Position (SV)", "Skill Group (EN)", "Skill Group (SV)", "Period", "Monthly Rate (SEK)", "Hourly Rate (SEK)", "Start Date", "End Date"];
-    const rows = agreements.map((a) => [
+    const headers = ["Position (EN)", "Position (SV)", "Skill Group (EN)", "Skill Group (SV)", "Period", "Age Group", "Monthly Rate (SEK)", "Hourly Rate (SEK)", "Start Date", "End Date"];
+    const rows = filteredAgreements.map((a) => [
       (a as any).positions?.label_en || "",
       (a as any).positions?.label_sv || "",
       (a as any).skill_groups?.label_en || "",
       (a as any).skill_groups?.label_sv || "",
       a.period_label,
+      ageGroupLabel((a as any).age_group || "19_plus"),
       a.monthly_rate,
       a.hourly_rate,
       a.start_date || "",
@@ -483,10 +457,21 @@ function SalariesPeriodsTab() {
   const uniqueAgeGroups = [...new Set(agreements.map((a) => (a as any).age_group || "19_plus"))].sort();
 
   const filteredAgreements = agreements.filter((a) => {
+    if (filterPosition !== "all" && a.position_id !== filterPosition) return false;
+    if (filterSkillGroup !== "all" && a.skill_group_id !== filterSkillGroup) return false;
     if (filterPeriod !== "all" && a.period_label !== filterPeriod) return false;
     if (filterAge !== "all" && ((a as any).age_group || "19_plus") !== filterAge) return false;
     return true;
   });
+
+  const hasActiveFilters = filterPosition !== "all" || filterSkillGroup !== "all" || filterPeriod !== "all" || filterAge !== "all";
+
+  const clearFilters = () => {
+    setFilterPosition("all");
+    setFilterSkillGroup("all");
+    setFilterPeriod("all");
+    setFilterAge("all");
+  };
 
   return (
     <div className="space-y-6">
@@ -510,30 +495,27 @@ function SalariesPeriodsTab() {
         </CardContent>
       </Card>
 
-      {/* Export */}
-      <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-foreground">Export Salary & Period Data</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Download all agreement period mappings as a CSV file for review or editing</p>
-            </div>
-            <Button onClick={handleExportCsv} disabled={agreements.length === 0} className="gap-2 px-6">
-              <Download className="w-4 h-4" /> Export CSV
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
+      {/* Filter Card */}
       <Card>
         <CardContent className="p-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Agreement Period Mapping</p>
-          <div className="grid grid-cols-4 gap-3 mb-3">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Agreement Lookup</p>
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7">
+                  Clear Filters
+                </Button>
+              )}
+              <Badge variant="secondary">{filteredAgreements.length} of {agreements.length} records</Badge>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Position</Label>
-              <Select value={positionId} onValueChange={setPositionId}>
-                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <Select value={filterPosition} onValueChange={setFilterPosition}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Positions</SelectItem>
                   {positions.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.label_en}</SelectItem>
                   ))}
@@ -542,9 +524,10 @@ function SalariesPeriodsTab() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Skill Group</Label>
-              <Select value={skillGroupId} onValueChange={setSkillGroupId}>
-                <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+              <Select value={filterSkillGroup} onValueChange={setFilterSkillGroup}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Skill Groups</SelectItem>
                   {skillGroups.map((g) => (
                     <SelectItem key={g.id} value={g.id}>{g.label_en}</SelectItem>
                   ))}
@@ -552,75 +535,38 @@ function SalariesPeriodsTab() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase">Period Label</Label>
-              <Input value={periodLabel} onChange={(e) => setPeriodLabel(e.target.value)} />
+              <Label className="text-xs font-semibold uppercase">Period</Label>
+              <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Periods</SelectItem>
+                  {uniquePeriods.map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Age Group</Label>
-              <Select value={ageGroup} onValueChange={setAgeGroup}>
+              <Select value={filterAge} onValueChange={setFilterAge}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="19_plus">19+ years</SelectItem>
-                  <SelectItem value="18">Age 18</SelectItem>
-                  <SelectItem value="17">Age 17</SelectItem>
-                  <SelectItem value="16">Age 16</SelectItem>
+                  <SelectItem value="all">All Ages</SelectItem>
+                  {uniqueAgeGroups.map((ag) => (
+                    <SelectItem key={ag} value={ag}>{ageGroupLabel(ag)}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase">Monthly Rate (SEK)</Label>
-              <Input type="number" value={monthlyRate} onChange={(e) => setMonthlyRate(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase">Hourly Rate (SEK)</Label>
-              <Input type="number" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase">Start Date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase">End Date</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-          </div>
-          <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={!positionId || !skillGroupId}>
-            <Save className="w-4 h-4 mr-2" /> Save Agreement Mapping
-          </Button>
         </CardContent>
       </Card>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold uppercase text-muted-foreground">Filter Period</Label>
-          <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Periods</SelectItem>
-              {uniquePeriods.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold uppercase text-muted-foreground">Filter Age Group</Label>
-          <Select value={filterAge} onValueChange={setFilterAge}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ages</SelectItem>
-              {uniqueAgeGroups.map((ag) => (
-                <SelectItem key={ag} value={ag}>{ageGroupLabel(ag)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-end">
-          <Badge variant="secondary" className="mb-1">{filteredAgreements.length} records</Badge>
-        </div>
+      {/* Export */}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={handleExportCsv} disabled={filteredAgreements.length === 0} className="gap-2">
+          <Download className="w-4 h-4" /> Export Filtered CSV
+        </Button>
       </div>
 
       <Card>
