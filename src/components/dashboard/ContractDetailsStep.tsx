@@ -526,7 +526,7 @@ export function ContractDetailsStep({
       const [posRes, sgRes, apRes] = await Promise.all([
         supabase.from("positions").select("id, label_en"),
         supabase.from("skill_groups").select("id, label_en"),
-        supabase.from("agreement_periods").select("position_id, skill_group_id, hourly_rate, monthly_rate"),
+        supabase.from("agreement_periods").select("position_id, skill_group_id, hourly_rate, monthly_rate, period_label, age_group"),
       ]);
       return {
         positions: posRes.data ?? [],
@@ -536,19 +536,84 @@ export function ContractDetailsStep({
     },
   });
 
-  // Look up official rate based on jobType and experienceLevel
+  // Derive age group from employee birthday and employment start date
+  const getDerivedAgeGroup = (): string => {
+    if (!birthday) return "19_plus";
+    // Determine employment start date based on employment form
+    let startDate: Date | undefined;
+    if (employmentForm === "seasonal") startDate = seasonalFromDate;
+    else if (employmentForm === "fixed_term") startDate = fixedTermFromDate;
+    else if (employmentForm === "age69") startDate = age69FromDate;
+    else if (employmentForm === "permanent") startDate = permanentFromDate;
+    else if (employmentForm === "probationary") startDate = probationFromDate;
+    if (!startDate) startDate = new Date(); // fallback to today
+
+    let age = startDate.getFullYear() - birthday.getFullYear();
+    const monthDiff = startDate.getMonth() - birthday.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && startDate.getDate() < birthday.getDate())) {
+      age--;
+    }
+    if (age <= 16) return "16";
+    if (age === 17) return "17";
+    if (age === 18) return "18";
+    return "19_plus";
+  };
+
+  // Derive period label from season year or employment start date
+  const getDerivedPeriodLabel = (): string => {
+    if (schedulingData.seasonYear) {
+      const sy = Number(schedulingData.seasonYear);
+      return `${sy}/${sy + 1}`;
+    }
+    return "2025/2026"; // fallback
+  };
+
+  // Look up official rate based on jobType, experienceLevel, age group, and period
   const getOfficialRate = () => {
     if (!agreementData || !jobType || !experienceLevel) return null;
-    // jobType is like "Planting / Plantering" — extract the English part before " / "
     const jobEnglish = jobType.split(" / ")[0].trim();
     const pos = agreementData.positions.find(p => p.label_en === jobEnglish);
-    // experienceLevel is like "Senior / Senior (3 years / seasons / 3 år / säsonger)"
-    // DB label_en is like "Senior (3 years / seasons)" — match by extracting name before " / " or "("
     const expPrefix = experienceLevel.split(" / ")[0].split("(")[0].trim();
     const sg = agreementData.skillGroups.find(s => s.label_en.split("(")[0].trim().toLowerCase() === expPrefix.toLowerCase());
     if (!pos || !sg) return null;
-    const ap = agreementData.agreements.find(a => a.position_id === pos.id && a.skill_group_id === sg.id);
-    return ap ? { hourly: Number(ap.hourly_rate), monthly: Number(ap.monthly_rate) } : null;
+
+    const ageGroup = getDerivedAgeGroup();
+    const periodLabel = getDerivedPeriodLabel();
+
+    // Try exact match with age group and period first
+    let ap = agreementData.agreements.find(a =>
+      a.position_id === pos.id &&
+      a.skill_group_id === sg.id &&
+      a.age_group === ageGroup &&
+      a.period_label === periodLabel
+    );
+
+    // Fallback: match without period filter
+    if (!ap) {
+      ap = agreementData.agreements.find(a =>
+        a.position_id === pos.id &&
+        a.skill_group_id === sg.id &&
+        a.age_group === ageGroup
+      );
+    }
+
+    // Fallback: match with 19_plus if specific age group not found
+    if (!ap && ageGroup !== "19_plus") {
+      ap = agreementData.agreements.find(a =>
+        a.position_id === pos.id &&
+        a.skill_group_id === sg.id &&
+        a.age_group === "19_plus" &&
+        a.period_label === periodLabel
+      );
+    }
+
+    if (!ap) return null;
+    return {
+      hourly: Number(ap.hourly_rate),
+      monthly: Number(ap.monthly_rate),
+      ageGroup: ap.age_group ?? ageGroup,
+      periodLabel: ap.period_label ?? periodLabel,
+    };
   };
 
   const officialRate = getOfficialRate();
@@ -556,7 +621,11 @@ export function ContractDetailsStep({
   const handleApplyRate = () => {
     if (!officialRate) return;
     setHourlyBasic(officialRate.hourly.toString());
-    setMonthlyBasic(officialRate.monthly.toString());
+    if (officialRate.monthly > 0) {
+      setMonthlyBasic(officialRate.monthly.toString());
+    } else {
+      setMonthlyBasic("");
+    }
     setRateApplied(true);
   };
 
@@ -1851,7 +1920,9 @@ export function ContractDetailsStep({
                           <p className="text-sm text-muted-foreground">
                             {!jobType || !experienceLevel
                               ? "Select Job Type and Experience Level in Section 3 first"
-                              : "No matching rate found in agreement data"}
+                              : !birthday
+                                ? "Set employee birth date in Section 2 first"
+                                : "No matching rate found in agreement data"}
                           </p>
                         )}
                       </div>
@@ -1865,9 +1936,14 @@ export function ContractDetailsStep({
                     </Button>
                   </div>
                   {officialRate && (
-                    <p className="text-xs text-muted-foreground mt-2 ml-[52px]">
-                      Monthly: {officialRate.monthly.toLocaleString()} SEK/month
-                    </p>
+                    <div className="mt-2 ml-[52px] space-y-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        Monthly: {officialRate.monthly > 0 ? `${officialRate.monthly.toLocaleString()} SEK/month` : "N/A (hourly only)"}
+                      </p>
+                      <p className="text-xs font-medium text-primary/80">
+                        Rate for: Age {officialRate.ageGroup === "19_plus" ? "19+" : officialRate.ageGroup} · Period {officialRate.periodLabel}
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
