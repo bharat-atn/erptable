@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { AppLauncher, loadApps, type AppDefinition } from "@/components/dashboard/AppLauncher";
+import { PendingApproval } from "@/components/auth/PendingApproval";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
@@ -11,6 +13,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [apps, setApps] = useState<AppDefinition[]>(loadApps);
+  const { role, loading: roleLoading } = useUserRole();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,7 +27,6 @@ const Index = () => {
       setSession(session);
       if (!session) setActiveApp(null);
 
-      // Log auth events to audit log
       if (event === "SIGNED_IN" && session?.user) {
         supabase.rpc("log_auth_event", {
           _action: "LOGIN",
@@ -32,15 +34,13 @@ const Index = () => {
           _user_email: session.user.email ?? null,
           _summary: `${session.user.email} logged in`,
         }).then();
-      } else if (event === "SIGNED_OUT") {
-        // We don't have session here, but we stored it before
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading) {
+  if (loading || (session && roleLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -52,8 +52,13 @@ const Index = () => {
     return <AuthForm onSuccess={() => {}} />;
   }
 
+  // No role assigned = pending approval
+  if (!role) {
+    return <PendingApproval />;
+  }
+
   if (!activeApp) {
-    return <AppLauncher onLaunchApp={(appId) => setActiveApp(appId)} />;
+    return <AppLauncher onLaunchApp={(appId) => setActiveApp(appId)} userRole={role} />;
   }
 
   return (
@@ -62,6 +67,7 @@ const Index = () => {
       appId={activeApp}
       apps={apps}
       onSwitchApp={(id) => setActiveApp(id)}
+      userRole={role}
     />
   );
 };

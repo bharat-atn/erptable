@@ -86,6 +86,7 @@ export interface AppDefinition {
   enabled: boolean;
   available: boolean;
   launchUrl?: string;
+  adminOnly?: boolean;
 }
 
 const defaultApps: AppDefinition[] = [
@@ -97,6 +98,16 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 0,
     enabled: true,
     available: true,
+  },
+  {
+    id: "user-management",
+    name: "User Management",
+    description: "Manage system users, approve new signups, and assign roles for access control.",
+    iconName: "Shield",
+    colorIndex: 7,
+    enabled: true,
+    available: true,
+    adminOnly: true,
   },
   {
     id: "forestry-project",
@@ -312,9 +323,10 @@ function DeleteAppDialog({ open, appName, onClose, onConfirm }: DeleteDialogProp
 
 interface AppLauncherProps {
   onLaunchApp: (appId: string) => void;
+  userRole?: "admin" | "hr_admin" | "hr_staff" | "user" | null;
 }
 
-export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
+export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
   const [apps, setApps] = useState<AppDefinition[]>(loadApps);
   const [editMode, setEditMode] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -330,7 +342,7 @@ export function AppLauncher({ onLaunchApp }: AppLauncherProps) {
   const [teaserApp, setTeaserApp] = useState<AppDefinition | null>(null);
 
   const isProduction = isPublishedEnvironment();
-  const visibleApps = editMode ? apps : apps.filter((a) => a.enabled);
+  const visibleApps = (editMode ? apps : apps.filter((a) => a.enabled)).filter((a) => !a.adminOnly || userRole === "admin");
 
   const updateApps = (updated: AppDefinition[]) => {
     setApps(updated);
