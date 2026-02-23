@@ -376,7 +376,7 @@ function SalariesPeriodsTab() {
   const { data: positions = [] } = useQuery({
     queryKey: ["positions"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("positions").select("*").order("sort_order");
+      const { data, error } = await supabase.from("positions").select("*").order("label_en");
       if (error) throw error;
       return data;
     },
