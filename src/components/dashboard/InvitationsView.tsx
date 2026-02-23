@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { MoreVertical, Copy, Send, Trash2, Eye } from "lucide-react";
+import { MoreVertical, Copy, Send, Trash2, Eye, RefreshCw, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
@@ -83,12 +83,61 @@ export function InvitationsView() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Marked as sent"); },
   });
 
+  const resendInvitation = useMutation({
+    mutationFn: async (invitation: InvitationRow) => {
+      // Reset expiry to 7 days from now and set status back to SENT
+      const newExpiry = new Date();
+      newExpiry.setDate(newExpiry.getDate() + 7);
+      const { error } = await supabase
+        .from("invitations")
+        .update({ status: "SENT", expires_at: newExpiry.toISOString() })
+        .eq("id", invitation.id);
+      if (error) throw error;
+      // Copy the link to clipboard
+      navigator.clipboard.writeText(`${window.location.origin}/onboard/${invitation.token}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      toast.success("Invitation resent — link copied to clipboard");
+    },
+    onError: (error: Error) => { toast.error(error.message); },
+  });
+
   const deleteInvitation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("invitations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Invitation deleted"); },
+    onError: (error: Error) => { toast.error(error.message); },
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("invitations").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      toast.success("Selected invitations deleted");
+    },
+    onError: (error: Error) => { toast.error(error.message); },
+  });
+
+  const bulkResend = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const newExpiry = new Date();
+      newExpiry.setDate(newExpiry.getDate() + 7);
+      const { error } = await supabase
+        .from("invitations")
+        .update({ status: "SENT", expires_at: newExpiry.toISOString() })
+        .in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      toast.success("Selected invitations resent");
+    },
     onError: (error: Error) => { toast.error(error.message); },
   });
 
@@ -150,8 +199,33 @@ export function InvitationsView() {
         enableColumnToggle
         enableDenseToggle
         enableHighlight
+        enableSelection
         stickyHeader
         filters={[{ key: "status", label: "Status", options: statusFilterOptions }]}
+        bulkActions={(selectedIds) => (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => bulkResend.mutate(selectedIds)}
+              disabled={bulkResend.isPending}
+            >
+              <RefreshCw className="w-4 h-4 mr-1" /> Resend ({selectedIds.length})
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirm(`Delete ${selectedIds.length} invitation(s)? This cannot be undone.`)) {
+                  bulkDelete.mutate(selectedIds);
+                }
+              }}
+              disabled={bulkDelete.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-1" /> Delete ({selectedIds.length})
+            </Button>
+          </div>
+        )}
         rowActions={(invitation) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -162,6 +236,11 @@ export function InvitationsView() {
               <DropdownMenuItem onClick={() => setShowPreview(true)}><Eye className="w-4 h-4 mr-2" /> Preview Form</DropdownMenuItem>
               {invitation.status === "PENDING" && (
                 <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
+              )}
+              {invitation.status !== "ACCEPTED" && (
+                <DropdownMenuItem onClick={() => resendInvitation.mutate(invitation)}>
+                  <RotateCcw className="w-4 h-4 mr-2" /> Resend Invitation
+                </DropdownMenuItem>
               )}
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(invitation)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
             </DropdownMenuContent>
