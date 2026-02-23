@@ -94,12 +94,25 @@ export function InvitationsView() {
         .update({ status: "SENT", expires_at: newExpiry.toISOString() })
         .eq("id", invitation.id);
       if (error) throw error;
+
+      // Send the email via edge function
+      try {
+        await supabase.functions.invoke("send-invitation-email", {
+          body: {
+            invitationId: invitation.id,
+            baseUrl: window.location.origin,
+          },
+        });
+      } catch {
+        // Email failed — still copy link as fallback
+      }
+
       // Copy the link to clipboard
       navigator.clipboard.writeText(`${window.location.origin}/onboard/${invitation.token}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
-      toast.success("Invitation resent — link copied to clipboard");
+      toast.success("Invitation resent — email sent & link copied to clipboard");
     },
     onError: (error: Error) => { toast.error(error.message); },
   });

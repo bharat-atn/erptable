@@ -5,7 +5,7 @@ import { OnboardingActivityChart } from "./OnboardingActivityChart";
 import { OnboardingStatusChart } from "./OnboardingStatusChart";
 import { RecentInvitationsTable } from "./RecentInvitationsTable";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { Users, Mail, FileCheck, AlertCircle, PenTool } from "lucide-react";
+import { Users, Mail, FileCheck, AlertCircle, PenTool, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DashboardViewProps {
@@ -33,6 +33,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       const pendingInvites = invitations.data?.filter((i) => i.status === "PENDING" || i.status === "SENT").length || 0;
       const completedOnboarding = invitations.data?.filter((i) => i.status === "ACCEPTED").length || 0;
       const failedExpired = invitations.data?.filter((i) => i.status === "EXPIRED").length || 0;
+      const emailsSent = invitations.data?.filter((i) => i.status === "SENT" || i.status === "ACCEPTED").length || 0;
 
       // Fetch signed contracts count
       const { count: signedContracts } = await supabase
@@ -48,6 +49,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
         failedExpired,
         expiringSoon,
         signedContracts: signedContracts || 0,
+        emailsSent,
       };
     },
   });
@@ -108,13 +110,21 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
           title="Total Employees"
           value={stats?.totalEmployees || 0}
           subtitle={`${stats?.activeEmployees || 0} active`}
           subtitleColor={stats?.activeEmployees ? "green" : "default"}
           icon={Users}
+          iconColor="blue"
+        />
+        <StatsCard
+          title="Emails Sent"
+          value={stats?.emailsSent || 0}
+          subtitle={`${stats?.pendingInvites || 0} awaiting response`}
+          subtitleColor={stats?.pendingInvites ? "yellow" : "default"}
+          icon={Send}
           iconColor="blue"
         />
         <StatsCard
