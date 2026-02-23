@@ -61,6 +61,7 @@ type InvitationRow = {
 export function InvitationsView() {
   const [showPreview, setShowPreview] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<InvitationRow | null>(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const queryClient = useQueryClient();
 
   const { data: invitations, isLoading } = useQuery({
@@ -215,11 +216,7 @@ export function InvitationsView() {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => {
-                if (confirm(`Delete ${selectedIds.length} invitation(s)? This cannot be undone.`)) {
-                  bulkDelete.mutate(selectedIds);
-                }
-              }}
+              onClick={() => setBulkDeleteIds(selectedIds)}
               disabled={bulkDelete.isPending}
             >
               <Trash2 className="w-4 h-4 mr-1" /> Delete ({selectedIds.length})
@@ -256,6 +253,18 @@ export function InvitationsView() {
         description="The invitation link will become invalid and the candidate will no longer be able to access the onboarding form."
         onConfirm={() => { if (deleteTarget) { deleteInvitation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
         isLoading={deleteInvitation.isPending}
+        requireTypedConfirmation
+      />
+
+      <DeleteConfirmDialog
+        open={!!bulkDeleteIds}
+        onOpenChange={(open) => { if (!open) setBulkDeleteIds(null); }}
+        title="Delete Invitations"
+        itemName={bulkDeleteIds ? `${bulkDeleteIds.length} invitation(s)` : ""}
+        description="All selected invitation links will become invalid and candidates will no longer be able to access their onboarding forms."
+        onConfirm={() => { if (bulkDeleteIds) { bulkDelete.mutate(bulkDeleteIds); setBulkDeleteIds(null); } }}
+        isLoading={bulkDelete.isPending}
+        requireTypedConfirmation
       />
     </div>
   );
