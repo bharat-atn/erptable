@@ -142,7 +142,16 @@ export function loadApps(): AppDefinition[] {
   try {
     const saved = localStorage.getItem("app-launcher-apps");
     if (!saved) return defaultApps;
-    return JSON.parse(saved);
+    const parsed: AppDefinition[] = JSON.parse(saved);
+    // Merge any new default apps that aren't in the saved list
+    const savedIds = new Set(parsed.map((a) => a.id));
+    const missing = defaultApps.filter((d) => !savedIds.has(d.id));
+    if (missing.length > 0) {
+      const merged = [...parsed, ...missing];
+      localStorage.setItem("app-launcher-apps", JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch {
     return defaultApps;
   }
