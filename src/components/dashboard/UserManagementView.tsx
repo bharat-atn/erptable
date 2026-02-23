@@ -4,10 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, Clock, Trash2, RefreshCw } from "lucide-react";
+import { Shield, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -42,11 +45,183 @@ const roleBadge = (role: AppRole | null) => {
   }
 };
 
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const specials = "!@#$%";
+  let pw = "";
+  for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  pw += specials[Math.floor(Math.random() * specials.length)];
+  return pw;
+}
+
+// ─── Invite User Dialog ─────────────────────────────────────────────
+
+interface InviteDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+function InviteUserDialog({ open, onClose, onSuccess }: InviteDialogProps) {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [role, setRole] = useState<AppRole>("user");
+  const [tempPassword] = useState(generateTempPassword);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  const handleInvite = async () => {
+    if (!email.trim()) {
+      toast({ title: "Email is required", variant: "destructive" });
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: { email: email.trim(), full_name: fullName.trim(), role, temp_password: tempPassword },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setResult({ success: true, message: data.message });
+      toast({ title: "User invited successfully" });
+      onSuccess();
+    } catch (err: any) {
+      toast({ title: "Failed to invite user", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyCredentials = () => {
+    const text = `Login Credentials\nEmail: ${email}\nTemporary Password: ${tempPassword}\nPlease sign in and change your password.`;
+    navigator.clipboard.writeText(text);
+    toast({ title: "Credentials copied to clipboard" });
+  };
+
+  const handleClose = () => {
+    setEmail("");
+    setFullName("");
+    setRole("user");
+    setResult(null);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5" />
+            Invite New User
+          </DialogTitle>
+        </DialogHeader>
+
+        {result?.success ? (
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
+              <p className="text-sm font-medium text-foreground">User created successfully!</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Email:</span>
+                  <span className="font-medium">{email}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Temp Password:</span>
+                  <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{tempPassword}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Role:</span>
+                  <span className="font-medium">{ROLE_OPTIONS.find(r => r.value === role)?.label}</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Share these credentials securely with the user. They should change their password after first login, or sign in with Google if available.
+            </p>
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={copyCredentials} className="gap-2">
+                <Copy className="w-4 h-4" /> Copy Credentials
+              </Button>
+              <Button onClick={handleClose}>Done</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="user@company.com"
+                  type="email"
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Full Name (optional)</Label>
+              <Input
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="John Doe"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Assign Role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Temporary Password</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    value={tempPassword}
+                    readOnly
+                    type={showPassword ? "text" : "password"}
+                    className="font-mono text-sm pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Auto-generated. The user should change it after first login.</p>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleInvite} disabled={isLoading} className="gap-2">
+                {isLoading ? "Creating…" : <><UserPlus className="w-4 h-4" /> Invite User</>}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Main View ──────────────────────────────────────────────────────
+
 export function UserManagementView() {
   const queryClient = useQueryClient();
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
-  // Fetch all profiles (admin RLS allows this)
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
@@ -56,7 +231,6 @@ export function UserManagementView() {
     },
   });
 
-  // Fetch all roles
   const { data: roles = [], isLoading: loadingRoles } = useQuery({
     queryKey: ["admin-user-roles"],
     queryFn: async () => {
@@ -70,7 +244,6 @@ export function UserManagementView() {
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
-      // Upsert role
       const existing = roleMap.get(userId);
       if (existing) {
         const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId);
@@ -79,7 +252,6 @@ export function UserManagementView() {
         const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
         if (error) throw error;
       }
-      // Update profile status to approved
       await supabase.from("profiles").update({ role: "approved" }).eq("user_id", userId);
     },
     onSuccess: () => {
@@ -125,18 +297,28 @@ export function UserManagementView() {
             )}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
-            queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-            queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
-          }}
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+              queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+            }}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </Button>
+          <Button
+            size="sm"
+            className="gap-2"
+            onClick={() => setInviteOpen(true)}
+          >
+            <UserPlus className="w-4 h-4" />
+            Invite User
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-border bg-card">
@@ -214,6 +396,15 @@ export function UserManagementView() {
           </TableBody>
         </Table>
       </div>
+
+      <InviteUserDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+          queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
+        }}
+      />
 
       <DeleteConfirmDialog
         open={!!deleteUser}
