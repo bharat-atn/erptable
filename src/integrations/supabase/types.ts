@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       agreement_periods: {
         Row: {
+          age_group: string
           created_at: string
           end_date: string | null
           hourly_rate: number
@@ -28,6 +29,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          age_group?: string
           created_at?: string
           end_date?: string | null
           hourly_rate?: number
@@ -40,6 +42,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          age_group?: string
           created_at?: string
           end_date?: string | null
           hourly_rate?: number
