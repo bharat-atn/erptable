@@ -69,7 +69,7 @@ serve(async (req) => {
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "Contracts <onboarding@resend.dev>",
+        from: "Contracts <contracts@mail.erptable.com>",
         to: [recipientEmail],
         subject: `Employment Contract ${contractCode} — ${companyName}`,
         html: `

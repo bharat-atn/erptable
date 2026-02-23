@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: `${companyName} HR <onboarding@resend.dev>`,
+        from: `${companyName} HR <hr@mail.erptable.com>`,
         to: [recipientEmail],
         subject: `Onboarding Invitation — ${companyName}`,
         html: `
