@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, Pen, Trash2, Plus, Save, Download, Upload } from "lucide-react";
+import { Briefcase, Pen, Trash2, Plus, Save, Download, Upload, FileText, ExternalLink } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -374,6 +374,9 @@ function SalariesPeriodsTab() {
   const [hourlyRate, setHourlyRate] = useState("0");
   const [startDate, setStartDate] = useState("2026-04-01");
   const [endDate, setEndDate] = useState("2027-03-31");
+  const [ageGroup, setAgeGroup] = useState("19_plus");
+  const [filterPeriod, setFilterPeriod] = useState("all");
+  const [filterAge, setFilterAge] = useState("all");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
 
   const { data: positions = [] } = useQuery({
@@ -416,7 +419,8 @@ function SalariesPeriodsTab() {
         hourly_rate: Number(hourlyRate),
         start_date: startDate,
         end_date: endDate,
-      });
+        age_group: ageGroup,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -465,8 +469,48 @@ function SalariesPeriodsTab() {
     toast.success("CSV exported");
   };
 
+  const ageGroupLabel = (ag: string) => {
+    switch (ag) {
+      case "19_plus": return "19+ years";
+      case "18": return "Age 18";
+      case "17": return "Age 17";
+      case "16": return "Age 16";
+      default: return ag;
+    }
+  };
+
+  const uniquePeriods = [...new Set(agreements.map((a) => a.period_label))].sort();
+  const uniqueAgeGroups = [...new Set(agreements.map((a) => (a as any).age_group || "19_plus"))].sort();
+
+  const filteredAgreements = agreements.filter((a) => {
+    if (filterPeriod !== "all" && a.period_label !== filterPeriod) return false;
+    if (filterAge !== "all" && ((a as any).age_group || "19_plus") !== filterAge) return false;
+    return true;
+  });
+
   return (
     <div className="space-y-6">
+      {/* PDF Reference */}
+      <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-amber-600" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Collective Agreement Reference</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Kollektivavtal Skogsbruk — Skogsavtalet Lönedata (2025-04-01 – 2027-03-31)</p>
+              </div>
+            </div>
+            <Button variant="outline" className="gap-2" asChild>
+              <a href="/documents/kollektivavtal-skogsbruk-lonedata-2025-2027.pdf" target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="w-4 h-4" /> View PDF
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Export */}
       <Card className="bg-primary/5 border-primary/20">
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
@@ -484,7 +528,7 @@ function SalariesPeriodsTab() {
       <Card>
         <CardContent className="p-5">
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">Agreement Period Mapping</p>
-          <div className="grid grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-4 gap-3 mb-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase">Position</Label>
               <Select value={positionId} onValueChange={setPositionId}>
@@ -511,6 +555,18 @@ function SalariesPeriodsTab() {
               <Label className="text-xs font-semibold uppercase">Period Label</Label>
               <Input value={periodLabel} onChange={(e) => setPeriodLabel(e.target.value)} />
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold uppercase">Age Group</Label>
+              <Select value={ageGroup} onValueChange={setAgeGroup}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="19_plus">19+ years</SelectItem>
+                  <SelectItem value="18">Age 18</SelectItem>
+                  <SelectItem value="17">Age 17</SelectItem>
+                  <SelectItem value="16">Age 16</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-4 gap-3 mb-4">
             <div className="space-y-1.5">
@@ -536,22 +592,54 @@ function SalariesPeriodsTab() {
         </CardContent>
       </Card>
 
+      {/* Filters */}
+      <div className="flex gap-3">
+        <div className="space-y-1">
+          <Label className="text-xs font-semibold uppercase text-muted-foreground">Filter Period</Label>
+          <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Periods</SelectItem>
+              {uniquePeriods.map((p) => (
+                <SelectItem key={p} value={p}>{p}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs font-semibold uppercase text-muted-foreground">Filter Age Group</Label>
+          <Select value={filterAge} onValueChange={setFilterAge}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Ages</SelectItem>
+              {uniqueAgeGroups.map((ag) => (
+                <SelectItem key={ag} value={ag}>{ageGroupLabel(ag)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-end">
+          <Badge variant="secondary" className="mb-1">{filteredAgreements.length} records</Badge>
+        </div>
+      </div>
+
       <Card>
         <CardContent className="p-0">
-          <div className="grid grid-cols-[1.5fr_1fr_0.7fr_0.7fr_auto] px-5 py-3 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="grid grid-cols-[1.5fr_1fr_0.5fr_0.7fr_0.7fr_auto] px-5 py-3 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <span>Position / Period</span>
             <span>Skill Group</span>
+            <span>Age</span>
             <span>Monthly</span>
             <span>Hourly</span>
             <span>Actions</span>
           </div>
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Loading...</div>
-          ) : agreements.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">No agreement mappings yet</div>
+          ) : filteredAgreements.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">No agreement mappings match the filter</div>
           ) : (
-            agreements.map((a) => (
-              <div key={a.id} className="grid grid-cols-[1.5fr_1fr_0.7fr_0.7fr_auto] items-center px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
+            filteredAgreements.map((a) => (
+              <div key={a.id} className="grid grid-cols-[1.5fr_1fr_0.5fr_0.7fr_0.7fr_auto] items-center px-5 py-3 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                 <div>
                   <p className="text-sm font-medium">
                     {(a as any).positions?.label_en || "—"} / {(a as any).positions?.label_sv || "—"}
@@ -563,7 +651,12 @@ function SalariesPeriodsTab() {
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground">{(a as any).skill_groups?.label_en || "—"}</span>
-                <span className="text-sm font-medium">{formatCurrency(a.monthly_rate, "SEK", 0)}</span>
+                <span className="text-xs">
+                  <Badge variant={(a as any).age_group === "19_plus" || !(a as any).age_group ? "default" : "secondary"} className="text-[10px]">
+                    {ageGroupLabel((a as any).age_group || "19_plus")}
+                  </Badge>
+                </span>
+                <span className="text-sm font-medium">{a.monthly_rate > 0 ? formatCurrency(a.monthly_rate, "SEK", 0) : "—"}</span>
                 <span className="text-sm font-medium">{formatCurrency(a.hourly_rate, "SEK", 2)}</span>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: a.id, label: `${(a as any).positions?.label_en || "—"} / ${(a as any).skill_groups?.label_en || "—"}` })}>
