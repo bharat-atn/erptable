@@ -32,7 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Loader2, Mail, ChevronsUpDown, Check } from "lucide-react";
+import { Plus, Loader2, Mail, ChevronsUpDown, Check, Copy, CheckCircle, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LANGUAGE_OPTIONS = [
@@ -42,6 +42,15 @@ const LANGUAGE_OPTIONS = [
   { value: "ro_en", label: "Romanian + English / Română + Engleză" },
   { value: "th_en", label: "Thai + English / ไทย + อังกฤษ" },
 ];
+
+type EmailResult = {
+  success: boolean;
+  fallback?: boolean;
+  onboardingLink?: string;
+  recipientEmail?: string;
+  employeeName?: string;
+  message?: string;
+};
 
 export function CreateInvitationDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -53,6 +62,8 @@ export function CreateInvitationDialog() {
   const [language, setLanguage] = useState("en_sv");
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
+  const [emailResult, setEmailResult] = useState<EmailResult | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: employees } = useQuery({
@@ -80,7 +91,6 @@ export function CreateInvitationDialog() {
         }
         employeeId = selectedEmployeeId;
       } else {
-        // NEW_HIRE flow
         if (!email.trim()) {
           throw new Error("Please enter an email address");
         }
@@ -122,6 +132,49 @@ export function CreateInvitationDialog() {
         .single();
 
       if (error) throw error;
+
+      // Now send the invitation email
+      try {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke(
+          "send-invitation-email",
+          {
+            body: {
+              invitationId: data.id,
+              baseUrl: window.location.origin,
+            },
+          }
+        );
+
+        if (emailError) {
+          console.error("Email function error:", emailError);
+          // Fallback: show link for manual copy
+          setEmailResult({
+            success: false,
+            fallback: true,
+            onboardingLink: `${window.location.origin}/onboard/${data.token}`,
+            recipientEmail: type === "CONTRACT_RENEWAL" ? selectedEmployee?.email : email,
+            employeeName: type === "CONTRACT_RENEWAL"
+              ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")
+              : [firstName, lastName].filter(Boolean).join(" "),
+            message: "Could not send email. Copy the link below and send it manually.",
+          });
+        } else {
+          setEmailResult(emailData as EmailResult);
+        }
+      } catch {
+        // Edge function unreachable — show fallback
+        setEmailResult({
+          success: false,
+          fallback: true,
+          onboardingLink: `${window.location.origin}/onboard/${data.token}`,
+          recipientEmail: type === "CONTRACT_RENEWAL" ? selectedEmployee?.email : email,
+          employeeName: type === "CONTRACT_RENEWAL"
+            ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")
+            : [firstName, lastName].filter(Boolean).join(" "),
+          message: "Could not reach email service. Copy the link below and send it manually.",
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -130,8 +183,6 @@ export function CreateInvitationDialog() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
       queryClient.invalidateQueries({ queryKey: ["employees-for-renewal"] });
-      toast.success("Invitation created successfully!");
-      resetForm();
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -147,6 +198,8 @@ export function CreateInvitationDialog() {
     setType("NEW_HIRE");
     setLanguage("en_sv");
     setSelectedEmployeeId(null);
+    setEmailResult(null);
+    setLinkCopied(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -168,6 +221,15 @@ export function CreateInvitationDialog() {
     createInvitation.mutate();
   };
 
+  const copyLink = () => {
+    if (emailResult?.onboardingLink) {
+      navigator.clipboard.writeText(emailResult.onboardingLink);
+      setLinkCopied(true);
+      toast.success("Link copied to clipboard");
+      setTimeout(() => setLinkCopied(false), 3000);
+    }
+  };
+
   const isFormValid = type === "CONTRACT_RENEWAL"
     ? !!selectedEmployeeId
     : !!(firstName.trim() && lastName.trim() && email.trim());
@@ -176,6 +238,78 @@ export function CreateInvitationDialog() {
     const name = [emp.first_name, emp.last_name].filter(Boolean).join(" ") || "Unnamed";
     return `${name} (${emp.employee_code || emp.email})`;
   };
+
+  // After email was sent (or fallback), show result screen
+  if (emailResult) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetForm(); else setIsOpen(true); }}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Invitation
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              {emailResult.success ? "Invitation Sent" : "Invitation Created"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {emailResult.success ? (
+              <div className="flex flex-col items-center text-center gap-3 py-4">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle className="w-7 h-7 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Email sent successfully!</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    An onboarding invitation was sent to <strong>{emailResult.recipientEmail}</strong>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center text-center gap-3 py-2">
+                <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle className="w-7 h-7 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{emailResult.message}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Send this link to <strong>{emailResult.recipientEmail}</strong>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Always show the link for reference/copying */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Onboarding Link</Label>
+              <div className="flex gap-2">
+                <Input
+                  readOnly
+                  value={emailResult.onboardingLink || ""}
+                  className="text-xs font-mono bg-muted"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={copyLink}
+                >
+                  {linkCopied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <Button className="w-full" onClick={resetForm}>
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -226,7 +360,6 @@ export function CreateInvitationDialog() {
           </div>
 
           {type === "CONTRACT_RENEWAL" ? (
-            /* Employee Picker for Contract Renewal */
             <div className="space-y-2">
               <Label>Select Employee</Label>
               <Popover open={employeePickerOpen} onOpenChange={setEmployeePickerOpen}>
@@ -281,7 +414,6 @@ export function CreateInvitationDialog() {
               </Popover>
             </div>
           ) : (
-            /* New Hire Fields */
             <>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
@@ -329,7 +461,6 @@ export function CreateInvitationDialog() {
             </>
           )}
 
-          {/* Submit Button */}
           <Button type="submit" className="w-full" disabled={createInvitation.isPending || !isFormValid}>
             {createInvitation.isPending ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
