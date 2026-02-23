@@ -523,6 +523,7 @@ export type Database = {
           employee_id: string | null
           expires_at: string
           id: string
+          language: string
           status: Database["public"]["Enums"]["invitation_status"]
           token: string
           type: Database["public"]["Enums"]["invitation_type"]
@@ -532,6 +533,7 @@ export type Database = {
           employee_id?: string | null
           expires_at?: string
           id?: string
+          language?: string
           status?: Database["public"]["Enums"]["invitation_status"]
           token?: string
           type: Database["public"]["Enums"]["invitation_type"]
@@ -541,6 +543,7 @@ export type Database = {
           employee_id?: string | null
           expires_at?: string
           id?: string
+          language?: string
           status?: Database["public"]["Enums"]["invitation_status"]
           token?: string
           type?: Database["public"]["Enums"]["invitation_type"]

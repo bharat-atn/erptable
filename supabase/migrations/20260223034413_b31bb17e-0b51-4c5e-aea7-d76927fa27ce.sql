@@ -1,0 +1,1 @@
+ALTER TABLE public.invitations ADD COLUMN language text NOT NULL DEFAULT 'en_sv';
