@@ -17,22 +17,27 @@ import { ContractDataRegistryView } from "./ContractDataRegistryView";
 import { IsoStandardsView } from "./IsoStandardsView";
 import { AuditLogView } from "./AuditLogView";
 import { BankListView } from "./BankListView";
+import { UserManagementView } from "./UserManagementView";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { type AppDefinition } from "./AppLauncher";
+import type { Database } from "@/integrations/supabase/types";
+
+type AppRole = Database["public"]["Enums"]["app_role"];
 
 interface DashboardProps {
   onBackToLauncher?: () => void;
   appId?: string | null;
   apps?: AppDefinition[];
   onSwitchApp?: (appId: string) => void;
+  userRole?: AppRole | null;
 }
 
 const TABLET_THRESHOLD = 1100;
 
-export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp }: DashboardProps) {
+export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
@@ -69,6 +74,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp }: Dashbo
       case "bank-list": return <BankListView />;
       case "iso-standards": return <IsoStandardsView />;
       case "audit-log": return <AuditLogView />;
+      case "user-management": return <UserManagementView />;
       default: return <DashboardView />;
     }
   };
@@ -99,6 +105,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp }: Dashbo
           appId={appId}
           apps={apps}
           onSwitchApp={onSwitchApp}
+          userRole={userRole}
         />
         <main className="flex-1 min-w-0 p-6 overflow-auto">
           <div className={cn("mx-auto", isConstrained && "max-w-full")}>

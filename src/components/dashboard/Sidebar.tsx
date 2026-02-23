@@ -60,6 +60,7 @@ interface SidebarProps {
   appId?: string | null;
   apps?: AppDefinition[];
   onSwitchApp?: (appId: string) => void;
+  userRole?: "admin" | "hr_admin" | "hr_staff" | "user" | null;
 }
 
 interface MenuItem {
@@ -562,10 +563,19 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
 
 /* ─── Main Sidebar ──────────────────────────────────────────────── */
 
-export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange, appId, apps, onSwitchApp }: SidebarProps) {
+export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange, appId, apps, onSwitchApp, userRole }: SidebarProps) {
+  const isAdmin = userRole === "admin";
+
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
+  const [configItems, setConfigItems] = useState(() => {
+    const items = loadOrder("config", defaultConfigItems);
+    // Add user-management item for admins
+    if (isAdmin && !items.find((i) => i.id === "user-management")) {
+      return [...items, { id: "user-management", label: "User Management", icon: Shield }];
+    }
+    return items;
+  });
 
   const { data: pendingCount } = useQuery({
     queryKey: ["pending-signatures-count"],
