@@ -151,9 +151,15 @@ export function CreateInvitationDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (type === "NEW_HIRE" && !email.trim()) {
-      toast.error("Please enter an email address");
-      return;
+    if (type === "NEW_HIRE") {
+      const missing: string[] = [];
+      if (!firstName.trim()) missing.push("First Name");
+      if (!lastName.trim()) missing.push("Last Name");
+      if (!email.trim()) missing.push("Email");
+      if (missing.length > 0) {
+        toast.error(`Please fill in: ${missing.join(", ")}`);
+        return;
+      }
     }
     if (type === "CONTRACT_RENEWAL" && !selectedEmployeeId) {
       toast.error("Please select an employee");
@@ -161,6 +167,10 @@ export function CreateInvitationDialog() {
     }
     createInvitation.mutate();
   };
+
+  const isFormValid = type === "CONTRACT_RENEWAL"
+    ? !!selectedEmployeeId
+    : !!(firstName.trim() && lastName.trim() && email.trim());
 
   const getEmployeeLabel = (emp: NonNullable<typeof employees>[number]) => {
     const name = [emp.first_name, emp.last_name].filter(Boolean).join(" ") || "Unnamed";
@@ -275,12 +285,13 @@ export function CreateInvitationDialog() {
             <>
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">First Name <span className="text-destructive">*</span></Label>
                   <Input
                     id="firstName"
                     placeholder="Jane"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -293,18 +304,19 @@ export function CreateInvitationDialog() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name <span className="text-destructive">*</span></Label>
                   <Input
                     id="lastName"
                     placeholder="Doe"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">Email Address <span className="text-destructive">*</span></Label>
                 <Input
                   id="email"
                   type="email"
@@ -318,7 +330,7 @@ export function CreateInvitationDialog() {
           )}
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={createInvitation.isPending}>
+          <Button type="submit" className="w-full" disabled={createInvitation.isPending || !isFormValid}>
             {createInvitation.isPending ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
