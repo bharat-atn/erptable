@@ -140,7 +140,7 @@ export function CreateInvitationDialog() {
           {
             body: {
               invitationId: data.id,
-              baseUrl: window.location.origin,
+              baseUrl: "https://erptable.lovable.app",
             },
           }
         );
@@ -151,7 +151,7 @@ export function CreateInvitationDialog() {
           setEmailResult({
             success: false,
             fallback: true,
-            onboardingLink: `${window.location.origin}/onboard/${data.token}`,
+            onboardingLink: `https://erptable.lovable.app/onboard/${data.token}`,
             recipientEmail: type === "CONTRACT_RENEWAL" ? selectedEmployee?.email : email,
             employeeName: type === "CONTRACT_RENEWAL"
               ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")

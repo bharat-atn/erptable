@@ -100,7 +100,7 @@ export function InvitationsView() {
         await supabase.functions.invoke("send-invitation-email", {
           body: {
             invitationId: invitation.id,
-            baseUrl: window.location.origin,
+            baseUrl: "https://erptable.lovable.app",
           },
         });
       } catch {
@@ -108,7 +108,7 @@ export function InvitationsView() {
       }
 
       // Copy the link to clipboard
-      navigator.clipboard.writeText(`${window.location.origin}/onboard/${invitation.token}`);
+      navigator.clipboard.writeText(`https://erptable.lovable.app/onboard/${invitation.token}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
@@ -156,7 +156,7 @@ export function InvitationsView() {
   });
 
   const copyLink = (token: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/onboard/${token}`);
+    navigator.clipboard.writeText(`https://erptable.lovable.app/onboard/${token}`);
     toast.success("Link copied to clipboard");
   };
 
