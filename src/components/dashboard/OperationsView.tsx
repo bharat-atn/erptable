@@ -112,12 +112,13 @@ export function OperationsView() {
   const { data: invitationStats } = useQuery({
     queryKey: ["operations-invitation-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("invitations").select("id, status");
+      const { data, error } = await supabase.from("invitations").select("id, status, type");
       if (error) throw error;
       const sent = data?.filter((i) => i.status === "SENT").length || 0;
       const completed = data?.filter((i) => i.status === "ACCEPTED").length || 0;
+      const renewalCompleted = data?.filter((i) => i.type === "CONTRACT_RENEWAL" && i.status === "ACCEPTED").length || 0;
       const pending = data?.filter((i) => i.status === "PENDING").length || 0;
-      return { sent, completed, pending, total: sent + completed + pending };
+      return { sent, completed, pending, renewalCompleted, total: sent + completed + pending };
     },
   });
 
@@ -203,7 +204,7 @@ export function OperationsView() {
           <div className="text-center"><Badge variant="outline" className="w-full justify-center bg-orange-50 text-orange-600 border-orange-200 text-xs py-1 font-semibold">Before Season</Badge></div>
           <div className="grid grid-cols-2 gap-2">
             <Card className={cn("cursor-pointer transition-all", statusFilter === "INVITED" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("INVITED")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Clock className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Invited</span></div><p className="text-2xl font-bold">{invited}</p><p className="text-[10px] text-muted-foreground">{(invitationStats?.sent || 0) + (invitationStats?.completed || 0)} emails sent</p></CardContent></Card>
-            <Card className={cn("cursor-pointer transition-all", statusFilter === "RENEWAL" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("RENEWAL")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Star className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Renewal</span></div><p className="text-2xl font-bold">0</p><p className="text-[10px] text-muted-foreground">{invitationStats?.completed || 0} completed</p></CardContent></Card>
+            <Card className={cn("cursor-pointer transition-all", statusFilter === "RENEWAL" ? "border-2 border-primary bg-primary/5" : "hover:border-primary/50")} onClick={() => handleFilterClick("RENEWAL")}><CardContent className="p-4"><div className="flex items-center gap-1.5 mb-1"><Star className="w-3.5 h-3.5 text-muted-foreground" /><span className="text-xs font-medium text-muted-foreground">Renewal</span></div><p className="text-2xl font-bold">0</p><p className="text-[10px] text-muted-foreground">{invitationStats?.renewalCompleted || 0} completed</p></CardContent></Card>
           </div>
         </div>
         <div className="col-span-2 space-y-2">
