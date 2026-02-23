@@ -61,26 +61,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create user with temp password using admin API
-    const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
-      email,
-      password: temp_password,
-      email_confirm: true, // Auto-confirm since admin is creating
-      user_metadata: { full_name: full_name || email },
-    });
+    // Check if user already exists
+    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find((u) => u.email === email);
 
-    if (createError) {
-      return new Response(JSON.stringify({ error: createError.message }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    let userId: string;
+
+    if (existingUser) {
+      // User exists — just update their role
+      userId = existingUser.id;
+    } else {
+      // Create user with temp password using admin API
+      const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
+        email,
+        password: temp_password,
+        email_confirm: true,
+        user_metadata: { full_name: full_name || email },
       });
+
+      if (createError) {
+        return new Response(JSON.stringify({ error: createError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = newUser.user.id;
     }
 
-    // The handle_new_user trigger creates the profile automatically.
-    // Now assign the role
+    // Upsert the role
     const { error: roleError } = await adminClient
       .from("user_roles")
-      .insert({ user_id: newUser.user.id, role });
+      .upsert({ user_id: userId, role }, { onConflict: "user_id" });
 
     if (roleError) {
       return new Response(JSON.stringify({ error: roleError.message }), {
@@ -93,13 +104,14 @@ Deno.serve(async (req) => {
     await adminClient
       .from("profiles")
       .update({ role: "approved", full_name: full_name || email })
-      .eq("user_id", newUser.user.id);
+      .eq("user_id", userId);
 
+    const action = existingUser ? "updated" : "created";
     return new Response(
       JSON.stringify({
         success: true,
-        user_id: newUser.user.id,
-        message: `User ${email} created with role ${role}. They can sign in with the temporary password or use Google if available.`,
+        user_id: userId,
+        message: `User ${email} ${action} with role ${role}.${existingUser ? "" : " They can sign in with the temporary password or use Google if available."}`,
       }),
       {
         status: 200,
