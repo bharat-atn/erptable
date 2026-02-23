@@ -1,45 +1,65 @@
 
 
-## Add Working Visa Upload to Onboarding Form
+## User Role System -- 3-Level Access Control
 
-### What Changes
+### Overview
 
-Add a second file upload field in the "ID / Passport Information" section for candidates who have a Swedish working visa/work permit. This will be optional (not all candidates need one).
+Build a robust role-based access system with three tiers that controls what each user can see and do across the entire application.
 
-### Updated Section Layout
+### The Three Roles
 
-The section will contain:
+| Level | Role (in DB) | Who | What they can do |
+|-------|-------------|-----|-----------------|
+| Super Admin | `admin` | System owner (you) | Everything -- manage users, assign roles, full system config |
+| Admin (HR Manager) | `hr_admin` / `hr_staff` | HR team | Send invitations, create contracts, manage employees, daily operations |
+| User (Employee) | `user` | Staff / candidates | View their own data, future Employee Hub mobile app |
 
-1. **ID / Passport upload** (existing, required) -- no changes
-   - EN: "Please attach your valid EU ID or Passport"
-   - SV: "Bifoga ditt giltiga EU-ID eller pass"
+### What Will Be Built
 
-2. **Working Visa / Work Permit upload** (new, optional)
-   - EN: "If applicable, please attach your Swedish Work Permit / Working Visa"
-   - SV: "Om tillamligt, bifoga ditt svenska arbetstillstand / arbetsvisum"
-   - Same drag-and-drop UI style as the ID upload
-   - Accepted formats: JPG, PNG, PDF
-   - No red validation border since it's optional
+**1. User Management Page (Super Admin only)**
+- New "User Management" view accessible from the sidebar (only visible to `admin` role)
+- Lists all registered users with their email, name, role, and status
+- Allows the Super Admin to assign/change roles for any user
+- Shows pending users who signed up but haven't been approved yet
 
-### Section Header Update
+**2. Role-Based Sidebar and Navigation**
+- Super Admin: sees everything including User Management and system configuration
+- Admin/HR: sees the operational views (Dashboard, Employees, Invitations, Contracts, Settings, etc.) -- the current experience
+- User: sees only a minimal "Employee Hub" placeholder (for future mobile app features)
 
-- EN: "ID / Passport & Work Permit Information"
-- SV: "ID- / Pass- och arbetstillstandsinformation"
+**3. Post-Login Role Check**
+- After login, the system checks the user's role in the `user_roles` table
+- If no role is assigned (new signup), show a "Pending Approval" screen explaining that an admin needs to approve their account
+- Super Admin gets notified of pending users via the User Management page
+
+**4. Auto-Create Profile on Signup**
+- A database trigger will automatically create a `profiles` row when a new user signs up
+- New users start with no role (pending state) until a Super Admin assigns one
+
+**5. Secure Sign-Up Flow**
+- Sign-up remains available but new accounts are "locked" until the Super Admin assigns a role
+- This prevents unauthorized access to HR data
 
 ### Technical Details
 
-**File: `src/components/onboarding/OnboardingWizard.tsx`**
+**Database Changes:**
+- Create a trigger on `auth.users` that auto-inserts a row into `profiles` on new user creation
+- The existing `user_roles` table and `app_role` enum are already in place and will be reused
+- Your current user (`ove.eriksson@dahai.se`) already has `hr_admin` -- we will also assign `admin` to make you the Super Admin
 
-- Add a new `workPermitFile` state prop to `OnboardingWizardProps` and corresponding `onWorkPermitFileChange` handler prop.
-- Add a second file upload block inside the Section 4 `CollapsibleContent`, below the existing ID upload, with an "(Optional)" indicator on the label.
-- The new upload uses its own `<input type="file">` with a distinct `id` (`work-permit-upload`).
+**New Files:**
+- `src/components/dashboard/UserManagementView.tsx` -- full user list with role assignment UI
+- `src/components/auth/PendingApproval.tsx` -- screen shown to users without a role
+- `src/hooks/useUserRole.ts` -- reusable hook to fetch and cache the current user's role
 
-**File: `src/pages/OnboardingPortal.tsx`**
+**Modified Files:**
+- `src/pages/Index.tsx` -- add role check after login, route to correct experience based on role
+- `src/components/dashboard/Sidebar.tsx` -- filter menu items based on user role
+- `src/components/dashboard/Dashboard.tsx` -- add User Management view to the view router
+- `src/components/auth/AuthForm.tsx` -- ensure profile is created on signup
 
-- Add `workPermitFile` state alongside existing `uploadedFile`.
-- Add `handleWorkPermitFileChange` handler.
-- Pass both to `OnboardingWizard`.
+**Security:**
+- All role checks use the existing server-side `has_role()` and `is_hr_user()` functions (RLS)
+- Role assignment is protected: only `admin` can manage the `user_roles` table (already enforced by RLS)
+- No client-side role storage -- role is always fetched from the database
 
-**File: `src/components/dashboard/OnboardingPreview.tsx`**
-
-- Add matching state and handler for the work permit file to keep the preview functional.
