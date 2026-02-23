@@ -111,29 +111,30 @@ export function EmployeeFormDialog({
 
   useEffect(() => {
     if (employee) {
+      const pi = (employee.personal_info as Record<string, any>) || {};
+      const ec = pi.emergencyContact || {};
       setForm({
         first_name: employee.first_name || "",
         last_name: employee.last_name || "",
         middle_name: employee.middle_name || "",
         email: employee.email,
-        phone: employee.phone || "",
-        city: employee.city || "",
-        country: employee.country || "",
+        phone: employee.phone || pi.mobilePhone || "",
+        city: employee.city || pi.city || "",
+        country: employee.country || pi.country || "",
         status: employee.status,
       });
-      const pi = (employee.personal_info as Record<string, any>) || {};
       setInfo({
-        preferred_name: pi.preferred_name || "",
-        address_1: pi.address_1 || "",
-        address_2: pi.address_2 || "",
-        zip: pi.zip || "",
-        state: pi.state || "",
+        preferred_name: pi.preferred_name || pi.preferredName || "",
+        address_1: pi.address_1 || pi.address1 || "",
+        address_2: pi.address_2 || pi.address2 || "",
+        zip: pi.zip || pi.zipCode || "",
+        state: pi.state || pi.stateProvince || "",
         birthday: pi.birthday || "",
-        country_of_birth: pi.country_of_birth || "",
+        country_of_birth: pi.country_of_birth || pi.countryOfBirth || "",
         citizenship: pi.citizenship || "",
-        emergency_first_name: pi.emergency_first_name || "",
-        emergency_last_name: pi.emergency_last_name || "",
-        emergency_phone: pi.emergency_phone || "",
+        emergency_first_name: pi.emergency_first_name || ec.firstName || "",
+        emergency_last_name: pi.emergency_last_name || ec.lastName || "",
+        emergency_phone: pi.emergency_phone || ec.phone || "",
       });
     } else {
       setForm(initialForm);
