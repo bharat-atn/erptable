@@ -5,7 +5,7 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  subtitleColor?: "green" | "red" | "default";
+  subtitleColor?: "green" | "red" | "yellow" | "default";
   icon: LucideIcon;
   iconColor?: "blue" | "yellow" | "green" | "red";
 }
@@ -28,6 +28,7 @@ export function StatsCard({
   const subtitleColors = {
     green: "text-success",
     red: "text-destructive",
+    yellow: "text-warning",
     default: "text-muted-foreground",
   };
 
