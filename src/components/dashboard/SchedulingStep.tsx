@@ -568,35 +568,39 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
 
       {/* Confirmation Dialog */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle className="text-base">Before you continue / Innan du fortsätter</DialogTitle>
+            <DialogTitle className="text-base font-semibold">
+              Before you continue / Innan du fortsätter
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-3 pt-1 pb-2">
             {/* Vacation question */}
-            <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+            <label className="flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/40 transition-colors">
               <Checkbox
                 checked={data.vacationEnabled}
                 onCheckedChange={(v) => update({ vacationEnabled: !!v })}
+                className="mt-0.5 shrink-0"
               />
-              <div>
-                <p className="text-sm font-medium">Have you considered vacation planning?</p>
-                <p className="text-xs text-muted-foreground italic">Har du övervägt semesterplanering?</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium leading-snug">Have you considered vacation planning?</p>
+                <p className="text-xs text-muted-foreground italic leading-snug">Har du övervägt semesterplanering?</p>
               </div>
-            </div>
+            </label>
             {/* Attach question */}
-            <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+            <label className="flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/40 transition-colors">
               <Checkbox
                 checked={data.attachToContract}
                 onCheckedChange={(v) => update({ attachToContract: !!v })}
+                className="mt-0.5 shrink-0"
               />
-              <div>
-                <p className="text-sm font-medium">Do you want to attach this schedule to the contract?</p>
-                <p className="text-xs text-muted-foreground italic">Vill du bifoga detta schema till avtalet?</p>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium leading-snug">Do you want to attach this schedule to the contract?</p>
+                <p className="text-xs text-muted-foreground italic leading-snug">Vill du bifoga detta schema till avtalet?</p>
               </div>
-            </div>
+            </label>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-row justify-between sm:justify-between gap-2">
             <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
               <ArrowLeft className="w-4 h-4 mr-1" />
               Go back / Tillbaka
