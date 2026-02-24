@@ -78,20 +78,20 @@ export function CodeOfConductStep({
         </div>
 
         {/* Open document link */}
-        {selectedLanguage && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const lang = LANGUAGES.find((l) => l.code === selectedLanguage);
-              if (lang) window.open(lang.file, "_blank");
-            }}
-            className="gap-2"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Open document in new tab / Öppna dokument i ny flik
-          </Button>
-        )}
+        {selectedLanguage && (() => {
+          const lang = LANGUAGES.find((l) => l.code === selectedLanguage);
+          return lang ? (
+            <a
+              href={lang.file}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open document in new tab / Öppna dokument i ny flik
+            </a>
+          ) : null;
+        })()}
 
         {/* Navigation */}
         <div className="flex justify-between pt-2">

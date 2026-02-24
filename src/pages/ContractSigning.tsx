@@ -223,15 +223,16 @@ export default function ContractSigning() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => { window.open(selectedCocLang.file, "_blank"); setCocReviewed(true); }}
-                      className="gap-2"
+                    <a
+                      href={selectedCocLang.file}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setCocReviewed(true)}
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Open & Review / Öppna & granska
-                    </Button>
+                    </a>
                     {!cocReviewed && (
                       <Button
                         variant="secondary"
