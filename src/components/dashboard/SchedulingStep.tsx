@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -123,6 +124,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
   const [filter, setFilter] = useState<FilterMode>("all");
   const [saving, setSaving] = useState(false);
   const [scheduleSaved, setScheduleSaved] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const scheduleScrollRef = useRef<HTMLDivElement>(null);
 
   // Check if schedule already exists in DB (for resumed contracts)
@@ -564,13 +566,56 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
         </CardContent>
       </Card>
 
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Before you continue / Innan du fortsätter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Vacation question */}
+            <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+              <Checkbox
+                checked={data.vacationEnabled}
+                onCheckedChange={(v) => update({ vacationEnabled: !!v })}
+              />
+              <div>
+                <p className="text-sm font-medium">Have you considered vacation planning?</p>
+                <p className="text-xs text-muted-foreground italic">Har du övervägt semesterplanering?</p>
+              </div>
+            </div>
+            {/* Attach question */}
+            <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+              <Checkbox
+                checked={data.attachToContract}
+                onCheckedChange={(v) => update({ attachToContract: !!v })}
+              />
+              <div>
+                <p className="text-sm font-medium">Do you want to attach this schedule to the contract?</p>
+                <p className="text-xs text-muted-foreground italic">Vill du bifoga detta schema till avtalet?</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Go back / Tillbaka
+            </Button>
+            <Button onClick={() => { setShowConfirmDialog(false); onNext(); }} className="px-8">
+              Continue / Fortsätt
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Navigation */}
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="w-4 h-4 mr-1" />
           Back / Tillbaka
         </Button>
-        <Button className="px-8" onClick={onNext} disabled={!scheduleSaved}>
+        <Button className="px-8" onClick={() => setShowConfirmDialog(true)} disabled={!scheduleSaved}>
           Next Step / Nästa
           <ArrowRight className="w-4 h-4 ml-1" />
         </Button>
