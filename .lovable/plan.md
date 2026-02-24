@@ -1,25 +1,43 @@
 
 
-# Fix Operations Stat Bar: "Emails Sent" Counter
+# Reorder Section 3: "Number of Job Types" Selector First
 
-## What's Working
-The stat bars are mostly correct. The employee counts (Invited, Onboarding, Active, Terminated) all match the actual database state. The "1 completed" under Renewal is also correct.
+## Summary
+Move the "Number of Job Types" selector to the top of Section 3 (right after "Main Duties"), and make it a gatekeeper: nothing below it (job type inputs, experience levels) appears until a selection is made. This removes confusion about how many job types to fill in.
 
-## What Needs Fixing
+## Changes
 
-### 1. "Emails sent" shows 0 instead of 1
-The Invited card shows "0 emails sent" because it only counts invitations currently in `SENT` status. Once a candidate accepts, the status changes to `ACCEPTED`, so the counter drops to 0. It should count all invitations that were ever sent (both `SENT` and `ACCEPTED`).
+### File: `src/components/dashboard/ContractDetailsStep.tsx`
 
-**Fix:** Change the subtitle under "Invited" from `invitationStats?.sent` to `invitationStats?.sent + invitationStats?.completed` (i.e., SENT + ACCEPTED = total emails ever sent).
+**1. Change default state for `numberOfJobTypes`**
+- Change from `"1"` to `""` (empty string) so no selection is pre-made
+- Update the type from `"1" | "2" | "3"` to `"" | "1" | "2" | "3"`
 
-### 2. Phone/City/Country dashes (browser cache)
-The database already contains the correct values (phone: 0701820168, city: TABY, country: Sweden). The dashes are caused by browser caching of the old data. A hard refresh (Ctrl+Shift+R) will fix this. No code change needed.
+**2. Move the "Number of Job Types" selector block (lines 1322-1343) to right after "Main Duties" (after line 1269)**
+- Place it immediately below the "Employed as / Main Duties" field
+- Add a red validation highlight (same destructive border style) when no selection has been made, prompting the user to choose
+- Keep the bilingual helper text
 
-## Technical Details
+**3. Conditionally show Job Type 1 + Experience Level 1**
+- Wrap the existing Job Type 1 and Experience Level 1 fields (lines 1271-1320) so they only render when `numberOfJobTypes` is `"1"`, `"2"`, or `"3"` (i.e., not empty)
+- This means: pick a number first, then the system reveals the corresponding inputs
 
-**File:** `src/components/dashboard/OperationsView.tsx`
+**4. Job Types 2 and 3 remain conditional as they are**
+- Job Type 2 appears when numberOfJobTypes is "2" or "3"
+- Job Type 3 appears when numberOfJobTypes is "3"
 
-- Around line 168 (the Invited card subtitle): change `{invitationStats?.sent || 0} emails sent` to `{(invitationStats?.sent || 0) + (invitationStats?.completed || 0)} emails sent`
+**5. Update validation logic**
+- Add `numberOfJobTypes` as a required field in `section3Missing` -- if empty, push "Number of Job Types"
+- Keep existing validation for job types 1/2/3 and their experience levels
 
-This is a one-line change.
+**6. Update `getFormData` restoration logic**
+- When restoring from saved `form_data`, if `numberOfJobTypes` is not set but `jobType` exists, default to `"1"` (backward compatibility with existing drafts)
+- Otherwise keep the saved value
+
+## What the user will experience
+1. Open Section 3 -- sees "Main Duties" field, then a red-highlighted "Number of Job Types" selector with no default
+2. Selects "1" -- one pair of Job Type + Experience Level inputs appears
+3. Selects "2" -- two pairs appear
+4. Selects "3" -- three pairs appear
+5. Cannot proceed without making a selection
 
