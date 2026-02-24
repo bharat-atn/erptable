@@ -294,34 +294,60 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
             <span className="field-label">Salary Type / Lönetyp</span>
             <span className="field-value">{fd.salaryType === "hourly" ? "Hourly / Timlön" : fd.salaryType === "monthly" ? "Monthly / Månadslön" : fd.salaryType || "—"}</span>
           </div>
+          {fd.companyPremiumPercent && Number(fd.companyPremiumPercent) > 0 && (
+            <div className="field">
+              <span className="field-label">Company Premium / Företagspremie</span>
+              <span className="field-value">+{fd.companyPremiumPercent}% above official rate</span>
+            </div>
+          )}
         </div>
-        {fd.salaryType === "hourly" && (
-          <div className="field-grid-2">
-            <div className="field">
-              <span className="field-label">Hourly Basic Rate / Grundtimlön</span>
-              <span className="field-value">{fd.hourlyBasic ? `${fd.hourlyBasic} SEK` : "—"}</span>
-            </div>
-            <div className="field">
-              <span className="field-label">Hourly Premium / Tillägg</span>
-              <span className="field-value">{fd.hourlyPremium ? `${fd.hourlyPremium} SEK` : "—"}</span>
-            </div>
+
+        {/* Per-job-type salary display */}
+        {[
+          { idx: 1, jt: fd.jobType, hb: fd.hourlyBasic, hp: fd.hourlyPremium, mb: fd.monthlyBasic, mp: fd.monthlyPremium },
+          ...((fd.numberOfJobTypes === "2" || fd.numberOfJobTypes === "3") ? [{ idx: 2, jt: fd.jobType2, hb: fd.hourlyBasic2, hp: fd.hourlyPremium2, mb: fd.monthlyBasic2, mp: fd.monthlyPremium2 }] : []),
+          ...(fd.numberOfJobTypes === "3" ? [{ idx: 3, jt: fd.jobType3, hb: fd.hourlyBasic3, hp: fd.hourlyPremium3, mb: fd.monthlyBasic3, mp: fd.monthlyPremium3 }] : []),
+        ].map(({ idx, jt, hb, hp, mb, mp }) => (
+          <div key={idx}>
+            <p className="subsection-label">Job Type {idx} / Befattningstyp {idx}: {jt || "—"}</p>
+            {fd.salaryType === "hourly" && (
+              <div className="field-grid-2">
+                <div className="field">
+                  <span className="field-label">Hourly Basic Rate / Grundtimlön</span>
+                  <span className="field-value">{hb ? `${hb} SEK` : "—"}</span>
+                </div>
+                <div className="field">
+                  <span className="field-label">Hourly Premium / Tillägg</span>
+                  <span className="field-value">{hp ? `${hp} SEK` : "—"}</span>
+                </div>
+              </div>
+            )}
+            {fd.salaryType === "monthly" && (
+              <div className="field-grid-2">
+                <div className="field">
+                  <span className="field-label">Monthly Basic Rate / Grundmånadslön</span>
+                  <span className="field-value">{mb ? `${mb} SEK` : "—"}</span>
+                </div>
+                <div className="field">
+                  <span className="field-label">Monthly Premium / Tillägg</span>
+                  <span className="field-value">{mp ? `${mp} SEK` : "—"}</span>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        {fd.salaryType === "monthly" && (
-          <div className="field-grid-2">
-            <div className="field">
-              <span className="field-label">Monthly Basic Rate / Grundmånadslön</span>
-              <span className="field-value">{fd.monthlyBasic ? `${fd.monthlyBasic} SEK` : "—"}</span>
-            </div>
-            <div className="field">
-              <span className="field-label">Monthly Premium / Tillägg</span>
-              <span className="field-value">{fd.monthlyPremium ? `${fd.monthlyPremium} SEK` : "—"}</span>
-            </div>
-          </div>
-        )}
+        ))}
 
         {/* ── §8 SALARY DETAILS ── */}
         <h2 className="section-title page-break-avoid">§8. Salary Details / Löneuppgifter</h2>
+        
+        {/* Overtime clause */}
+        <div className="info-block">
+          <p><strong>Only ordered overtime will be compensated with overtime pay.</strong></p>
+          <p className="info-sv">Endast beordrad övertid ersätts med övertidsersättning.</p>
+          <p className="info-sv">Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</p>
+          <p className="info-sv">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
+        </div>
+
         <div className="field-grid-2">
           <div className="field">
             <span className="field-label">Piece Work Pay / Ackordslön</span>
