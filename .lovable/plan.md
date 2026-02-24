@@ -1,95 +1,72 @@
 
 
-# Audit Log Gap Analysis and Fix Plan
+# Contract Signing Flow Optimization
 
-## Current State
+## Issues Identified
 
-Your audit system is **partially complete**. Here's what it covers today:
+1. **PDF not rendering inline** -- The Code of Conduct iframe (`<iframe src="/documents/code-of-conduct-sv.pdf">`) does not display the PDF content on many browsers/devices (especially mobile). It shows a file icon or blank page instead of the actual document.
 
-### Already Tracked
-- All changes (add/edit/delete) to: Employees, Contracts, Invitations, Companies, User Roles, Banks
-- User login and logout events
+2. **Label styling still too faded/small** -- The `.field-label` is currently `0.55rem` with `0.72` opacity. The user wants labels slightly bigger and less faded.
 
-### What's Missing
+3. **Signing error handling is destructive** -- When signing fails, `setError()` replaces the entire page with an unrecoverable error screen. The user loses all progress (CoC review, checkboxes, etc.) with no way to retry.
 
-There are two categories of gaps:
+## Plan
 
-### 1. Database Tables Without Audit Triggers
-These tables can be changed by HR staff but those changes are invisible in the audit log:
-- **Positions** (job positions)
-- **Skill Groups**
-- **Agreement Periods** (salary data)
-- **Contract Schedules** (work schedules)
-- **Contract ID Settings**
-- **Employee ID Settings**
-- **Invitation Template Fields**
+### 1. Fix PDF Inline Rendering
 
-### 2. Email and Edge Function Actions (Biggest Gap)
-When someone sends an email or triggers a backend action, there is **zero record** in the audit log:
-- Sending an **invitation email** to a new hire
-- Sending a **signing email** with contract link
-- Sending a **signed contract email**
-- **Company lookups** (searching for company data)
-- **Address validations**
+Replace the bare `<iframe src="file.pdf">` with Google Docs Viewer as the primary renderer, which works across all browsers and devices:
 
-These are important because they represent actions taken toward employees — if an HR person sends a signing email, you want to know who did it and when.
+```text
+src = `https://docs.google.com/gview?embedded=true&url=${window.location.origin}${selectedCocLang.file}`
+```
 
----
+This renders the PDF directly in the iframe on all platforms. Keep the "Open in new tab" link as a fallback for users who prefer a full-screen view.
 
-## Implementation Plan
+**File**: `src/pages/ContractSigning.tsx` (lines 216-221)
 
-### Step 1: Add Missing Database Triggers
-Add audit triggers to the 7 tables that currently lack them. This is a single database migration — no code changes needed, the existing `audit_trigger_func()` handles everything automatically.
+### 2. Optimize Label Styling
 
-Tables to add: `positions`, `skill_groups`, `agreement_periods`, `contract_schedules`, `contract_id_settings`, `employee_id_settings`, `invitation_template_fields`
+Adjust the `.field-label` CSS for better readability while maintaining the professional hierarchy:
 
-### Step 2: Add Audit Logging to Edge Functions
-Update each edge function to write an entry to `audit_log` after performing its action:
+- **Desktop**: Increase from `0.55rem` to `0.6rem`, opacity from `0.72` to `0.78`
+- **Mobile**: Increase from `0.62rem` to `0.66rem`
+- **Print**: Keep current `6.5pt` / `#888` (already good for print)
 
-- **send-invitation-email**: Log "EMAIL_SENT" with invitation ID, recipient email, and who triggered it
-- **send-signing-email**: Log "SIGNING_EMAIL_SENT" with contract ID, recipient email, and who triggered it
-- **send-contract-email**: Log "CONTRACT_EMAIL_SENT" with contract ID, recipient email, and who triggered it
-- **invite-user**: Log "USER_INVITED" with the invited email and assigned role
+**File**: `src/index.css` (lines 149, 210-211)
 
-### Step 3: Update Audit Log UI
-Add the new categories and action types to the AuditLogView so they display properly:
-- Add new action types: EMAIL_SENT, SIGNING_EMAIL_SENT, CONTRACT_EMAIL_SENT, USER_INVITED
-- Add filter options for these new categories
-- Add appropriate icons and color coding
+### 3. Fix Error Handling in Signing Flow
 
----
+Replace the destructive `setError()` pattern with a toast notification + inline error state so users can retry without losing progress:
+
+- Add a `signingError` state (separate from the page-level `error`)
+- Show error as an inline alert banner above the signature canvas
+- Allow the user to clear the canvas and try again
+- Only use the full-page error screen for truly unrecoverable errors (invalid token, expired link)
+
+**File**: `src/pages/ContractSigning.tsx` (lines 71-101, 386-408)
+
+### 4. Apply Same PDF Fix to SigningSimulation
+
+Update `SigningSimulation.tsx` to use the same Google Docs Viewer approach for consistency.
+
+**File**: `src/pages/SigningSimulation.tsx`
 
 ## Technical Details
 
-### Database Migration (Step 1)
-```sql
--- Add audit triggers to all remaining tables
-CREATE TRIGGER audit_positions
-  AFTER INSERT OR UPDATE OR DELETE ON public.positions
-  FOR EACH ROW EXECUTE FUNCTION public.audit_trigger_func();
+### PDF Viewer Implementation
+```text
+Before:  <iframe src="/documents/code-of-conduct-sv.pdf" />
+After:   <iframe src="https://docs.google.com/gview?embedded=true&url=https://erptable.lovable.app/documents/code-of-conduct-sv.pdf" />
+```
+The Google Docs Viewer renders PDFs reliably in all browsers. The published domain URL is used since Google needs a publicly accessible URL.
 
--- (same pattern for all 7 tables)
+### Error Handling Change
+```text
+Before: catch (err) { setError(err.message) }  --> replaces entire page
+After:  catch (err) { setSigningError(err.message) }  --> shows inline retry banner
 ```
 
-### Edge Function Logging Pattern (Step 2)
-Each edge function already has a service-role Supabase client. After the main action succeeds, insert into `audit_log`:
-
-```sql
-INSERT INTO audit_log (user_id, user_email, action, table_name, record_id, summary, new_data)
-VALUES (caller_user_id, caller_email, 'EMAIL_SENT', 'invitations', invitation_id, 
-        'Invitation email sent to employee@example.com', '{"recipient": "..."}');
-```
-
-### UI Updates (Step 3)
-- Add new entries to `TABLE_ICONS`, `ACTION_COLORS`, `ACTION_ICONS`, `TABLE_LABELS`
-- Add "Emails" filter option in the category dropdown
-- Add "Email Sent" filter in the action dropdown
-
-### Files to Change
-- 1 new database migration (triggers for 7 tables)
-- `supabase/functions/send-invitation-email/index.ts`
-- `supabase/functions/send-signing-email/index.ts`
-- `supabase/functions/send-contract-email/index.ts`
-- `supabase/functions/invite-user/index.ts`
-- `src/components/dashboard/AuditLogView.tsx`
-
+### Files Modified
+- `src/pages/ContractSigning.tsx` -- PDF viewer fix, error handling improvement
+- `src/pages/SigningSimulation.tsx` -- PDF viewer fix (consistency)
+- `src/index.css` -- Label size/opacity optimization
