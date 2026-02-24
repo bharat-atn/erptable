@@ -154,7 +154,7 @@ export function ContractDetailsStep({
   const [experienceLevel2, setExperienceLevel2] = useState("");
   const [jobType3, setJobType3] = useState("");
   const [experienceLevel3, setExperienceLevel3] = useState("");
-  const [numberOfJobTypes, setNumberOfJobTypes] = useState<"1" | "2" | "3">("1");
+  const [numberOfJobTypes, setNumberOfJobTypes] = useState<"" | "1" | "2" | "3">("");
   const [postingLocation, setPostingLocation] = useState(company.city ?? "");
   const [workplaceVaries, setWorkplaceVaries] = useState<"yes" | "no" | "">("yes"); 
   const [mainWorkplace, setMainWorkplace] = useState("");
@@ -487,6 +487,7 @@ export function ContractDetailsStep({
       if (fd.numberOfJobTypes) setNumberOfJobTypes(fd.numberOfJobTypes);
       else if (fd.jobType3) setNumberOfJobTypes("3");
       else if (fd.jobType2) setNumberOfJobTypes("2");
+      else if (fd.jobType) setNumberOfJobTypes("1");
       if (fd.jobType2) setJobType2(fd.jobType2);
       if (fd.experienceLevel2) setExperienceLevel2(fd.experienceLevel2);
       if (fd.jobType3) setJobType3(fd.jobType3);
@@ -739,8 +740,9 @@ export function ContractDetailsStep({
 
   const section3Missing: string[] = [];
   if (!mainDuties) section3Missing.push("Employed as / Main Duties");
-  if (!jobType) section3Missing.push("Job Type");
-  if (!experienceLevel) section3Missing.push("Experience Level");
+  if (!numberOfJobTypes) section3Missing.push("Number of Job Types");
+  if (numberOfJobTypes && !jobType) section3Missing.push("Job Type");
+  if (numberOfJobTypes && !experienceLevel) section3Missing.push("Experience Level");
   if ((numberOfJobTypes === "2" || numberOfJobTypes === "3") && !jobType2) section3Missing.push("Job Type 2");
   if ((numberOfJobTypes === "2" || numberOfJobTypes === "3") && !experienceLevel2) section3Missing.push("Experience Level 2");
   if (numberOfJobTypes === "3" && !jobType3) section3Missing.push("Job Type 3");
@@ -1268,71 +1270,25 @@ export function ContractDetailsStep({
                 {renderField(mainDuties, setMainDuties)}
               </div>
 
-              {/* Job type and salary group */}
+              {/* How many job types? — GATEKEEPER */}
               <div className="space-y-1.5">
-                {renderLabel("Job Type and Salary Group", "Befattningstyp och lönegrupp")}
-                {!jobType && (
-                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Required – please select a job type / Obligatoriskt – välj en befattningstyp
-                  </p>
-                )}
-                <Select value={jobType} onValueChange={setJobType} required>
-                  <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                    <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jobTypeGroups.map((group) => (
-                      <SelectGroup key={group.group}>
-                        <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                          {group.group}
-                        </SelectLabel>
-                        {group.items.map((item) => (
-                          <SelectItem key={item.value} value={item.value}>
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Experience level */}
-              <div className="space-y-1.5">
-                {renderLabel("Experience Level / Salary Group", "Erfarenhet / Lönegrupp")}
-                {!experienceLevel && (
-                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Required – please select an experience level / Obligatoriskt – välj erfarenhetsnivå
-                  </p>
-                )}
-                <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
-                  <SelectTrigger className={cn("h-11 text-sm font-medium", !experienceLevel && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                    <SelectValue placeholder="Choose the experience level... / Välj erfarenhetsnivå..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EXPERIENCE_LEVELS.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {level}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* How many job types? */}
-              <div className="space-y-1.5 pt-2 border-t border-border/50">
-                {renderLabel("Number of Job Types", "Antal befattningstyper", false)}
+                {renderLabel("Number of Job Types", "Antal befattningstyper")}
                 <p className="text-xs text-muted-foreground -mt-1">
-                  How many different job types will the employee have? (1 is mandatory, 2 and 3 are optional) / Hur många olika befattningstyper ska den anställde ha? (1 är obligatorisk, 2 och 3 är valfria)
+                  How many different job types will the employee have? Select to continue. / Hur många olika befattningstyper ska den anställde ha? Välj för att fortsätta.
                 </p>
+                {!numberOfJobTypes && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Required – please select the number of job types / Obligatoriskt – välj antal befattningstyper
+                  </p>
+                )}
                 <Select value={numberOfJobTypes} onValueChange={(v) => {
-                  const val = v as "1" | "2" | "3";
+                  const val = v as "" | "1" | "2" | "3";
                   setNumberOfJobTypes(val);
                   if (val === "1") { setJobType2(""); setExperienceLevel2(""); setJobType3(""); setExperienceLevel3(""); }
                   if (val === "2") { setJobType3(""); setExperienceLevel3(""); }
                 }}>
-                  <SelectTrigger className="h-11 text-sm font-medium w-full md:w-64">
-                    <SelectValue />
+                  <SelectTrigger className={cn("h-11 text-sm font-medium w-full md:w-64", !numberOfJobTypes && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                    <SelectValue placeholder="Select number of job types... / Välj antal..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">1 – Only one / Bara en</SelectItem>
@@ -1342,108 +1298,163 @@ export function ContractDetailsStep({
                 </Select>
               </div>
 
-              {/* Job Type 2 */}
-              {(numberOfJobTypes === "2" || numberOfJobTypes === "3") && (
-                <div className="pt-2 border-t border-border/50">
-                  <span className="text-sm font-semibold text-muted-foreground">Job Type 2 / Befattningstyp 2</span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                    <div className="space-y-1.5">
-                      {renderLabel("Job Type 2", "Befattningstyp 2")}
-                      <Select value={jobType2} onValueChange={setJobType2}>
-                        <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                          <SelectValue placeholder="Pick job type 2... / Välj befattningstyp 2..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {jobTypeGroups.map((group) => (
-                            <SelectGroup key={group.group}>
-                              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                {group.group}
-                              </SelectLabel>
-                              {group.items.map((item) => (
-                                <SelectItem key={item.value} value={item.value}>
-                                  {item.label}
+              {/* Job type inputs — only shown after numberOfJobTypes is selected */}
+              {numberOfJobTypes !== "" && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {/* Job Type 1 */}
+                  <div className="space-y-1.5">
+                    {renderLabel("Job Type and Salary Group", "Befattningstyp och lönegrupp")}
+                    {!jobType && (
+                      <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Required – please select a job type / Obligatoriskt – välj en befattningstyp
+                      </p>
+                    )}
+                    <Select value={jobType} onValueChange={setJobType} required>
+                      <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                        <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {jobTypeGroups.map((group) => (
+                          <SelectGroup key={group.group}>
+                            <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              {group.group}
+                            </SelectLabel>
+                            {group.items.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                {item.label}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Experience Level 1 */}
+                  <div className="space-y-1.5">
+                    {renderLabel("Experience Level / Salary Group", "Erfarenhet / Lönegrupp")}
+                    {!experienceLevel && (
+                      <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Required – please select an experience level / Obligatoriskt – välj erfarenhetsnivå
+                      </p>
+                    )}
+                    <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
+                      <SelectTrigger className={cn("h-11 text-sm font-medium", !experienceLevel && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                        <SelectValue placeholder="Choose the experience level... / Välj erfarenhetsnivå..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EXPERIENCE_LEVELS.map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {level}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Job Type 2 */}
+                  {(numberOfJobTypes === "2" || numberOfJobTypes === "3") && (
+                    <div className="pt-2 border-t border-border/50">
+                      <span className="text-sm font-semibold text-muted-foreground">Job Type 2 / Befattningstyp 2</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div className="space-y-1.5">
+                          {renderLabel("Job Type 2", "Befattningstyp 2")}
+                          <Select value={jobType2} onValueChange={setJobType2}>
+                            <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                              <SelectValue placeholder="Pick job type 2... / Välj befattningstyp 2..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {jobTypeGroups.map((group) => (
+                                <SelectGroup key={group.group}>
+                                  <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    {group.group}
+                                  </SelectLabel>
+                                  {group.items.map((item) => (
+                                    <SelectItem key={item.value} value={item.value}>
+                                      {item.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          {renderLabel("Experience Level 2", "Erfarenhetsnivå 2")}
+                          {jobType2 && !experienceLevel2 && (
+                            <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                            </p>
+                          )}
+                          <Select value={experienceLevel2} onValueChange={setExperienceLevel2}>
+                            <SelectTrigger className={cn("h-11 text-sm font-medium", jobType2 && !experienceLevel2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                              <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {EXPERIENCE_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {level}
                                 </SelectItem>
                               ))}
-                            </SelectGroup>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      {renderLabel("Experience Level 2", "Erfarenhetsnivå 2")}
-                      {jobType2 && !experienceLevel2 && (
-                        <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
-                        </p>
-                      )}
-                      <Select value={experienceLevel2} onValueChange={setExperienceLevel2}>
-                        <SelectTrigger className={cn("h-11 text-sm font-medium", jobType2 && !experienceLevel2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                          <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {EXPERIENCE_LEVELS.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {/* Job Type 3 */}
-              {numberOfJobTypes === "3" && (
-                <div className="pt-2 border-t border-border/50">
-                  <span className="text-sm font-semibold text-muted-foreground">Job Type 3 / Befattningstyp 3</span>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                    <div className="space-y-1.5">
-                      {renderLabel("Job Type 3", "Befattningstyp 3")}
-                      <Select value={jobType3} onValueChange={setJobType3}>
-                        <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                          <SelectValue placeholder="Pick job type 3... / Välj befattningstyp 3..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {jobTypeGroups.map((group) => (
-                            <SelectGroup key={group.group}>
-                              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                {group.group}
-                              </SelectLabel>
-                              {group.items.map((item) => (
-                                <SelectItem key={item.value} value={item.value}>
-                                  {item.label}
+                  {/* Job Type 3 */}
+                  {numberOfJobTypes === "3" && (
+                    <div className="pt-2 border-t border-border/50">
+                      <span className="text-sm font-semibold text-muted-foreground">Job Type 3 / Befattningstyp 3</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div className="space-y-1.5">
+                          {renderLabel("Job Type 3", "Befattningstyp 3")}
+                          <Select value={jobType3} onValueChange={setJobType3}>
+                            <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                              <SelectValue placeholder="Pick job type 3... / Välj befattningstyp 3..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {jobTypeGroups.map((group) => (
+                                <SelectGroup key={group.group}>
+                                  <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    {group.group}
+                                  </SelectLabel>
+                                  {group.items.map((item) => (
+                                    <SelectItem key={item.value} value={item.value}>
+                                      {item.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          {renderLabel("Experience Level 3", "Erfarenhetsnivå 3")}
+                          {jobType3 && !experienceLevel3 && (
+                            <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                            </p>
+                          )}
+                          <Select value={experienceLevel3} onValueChange={setExperienceLevel3}>
+                            <SelectTrigger className={cn("h-11 text-sm font-medium", jobType3 && !experienceLevel3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
+                              <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {EXPERIENCE_LEVELS.map((level) => (
+                                <SelectItem key={level} value={level}>
+                                  {level}
                                 </SelectItem>
                               ))}
-                            </SelectGroup>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      {renderLabel("Experience Level 3", "Erfarenhetsnivå 3")}
-                      {jobType3 && !experienceLevel3 && (
-                        <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
-                        </p>
-                      )}
-                      <Select value={experienceLevel3} onValueChange={setExperienceLevel3}>
-                        <SelectTrigger className={cn("h-11 text-sm font-medium", jobType3 && !experienceLevel3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                          <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {EXPERIENCE_LEVELS.map((level) => (
-                            <SelectItem key={level} value={level}>
-                              {level}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
-
               {/* Posting location */}
               <div className="space-y-1.5">
                 {renderLabel("Posting Location", "Stationeringsort")}
