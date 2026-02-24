@@ -197,12 +197,12 @@ export default function ContractSigning() {
                 ))}
               </div>
 
-              {/* PDF download card instead of iframe */}
+              {/* PDF viewer embedded */}
               {selectedCocLang && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-                      Document / Dokument
+                      Document / Dokument — {selectedCocLang.label}
                     </label>
                     {cocReviewed && (
                       <span className="flex items-center gap-1 text-xs font-medium text-primary">
@@ -211,27 +211,24 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  <div className="rounded-lg border border-border bg-muted/20 p-6 flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-lg bg-accent flex items-center justify-center">
-                      <span className="text-3xl">📄</span>
-                    </div>
-                    <p className="text-sm font-medium text-center">
-                      Code of Conduct — {selectedCocLang.label}
-                    </p>
-                    <p className="text-xs text-muted-foreground text-center">
-                      {selectedCocLang.file.split('/').pop()}
-                    </p>
+                  {/* Embedded PDF viewer */}
+                  <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
+                    <iframe
+                      src={selectedCocLang.file}
+                      className="w-full h-[400px] sm:h-[500px]"
+                      title={`Code of Conduct - ${selectedCocLang.label}`}
+                      onLoad={() => setCocReviewed(true)}
+                    />
                   </div>
                   <div className="flex items-center gap-3">
                     <a
                       href={selectedCocLang.file}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={() => setCocReviewed(true)}
                       className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Open & Review / Öppna & granska
+                      Open in new tab / Öppna i ny flik
                     </a>
                     {!cocReviewed && (
                       <Button
@@ -279,19 +276,35 @@ export default function ContractSigning() {
                   )}
                 </div>
               </div>
+              {/* Inline schedule summary */}
+              <div className="rounded-lg border border-border overflow-hidden bg-background">
+                <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto p-4">
+                  <p className="text-xs text-muted-foreground mb-3 italic">
+                    Detailed schedule overview based on contracted period. / Detaljerad schemaöversikt baserad på avtalsperioden.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Season Year / Säsongsår</span>
+                      <p className="font-medium">{schedData.seasonYear || data.season_year || "—"}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Weekly Hours / Veckotimmar</span>
+                      <p className="font-medium">{schedData.weeklyHours || 40}h</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Work Hours / Arbetstider</span>
+                      <p className="font-medium">{schedData.startTime || "06:30"} – {schedData.endTime || "17:00"}</p>
+                    </div>
+                    {schedData.vacationEnabled && (
+                      <div>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Vacation / Semester</span>
+                        <p className="font-medium">{schedData.vacationStartDate || "—"} → {schedData.vacationEndDate || "—"}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    window.open(`/schedule-view/${data.contract_id}`, "_blank");
-                    setScheduleReviewed(true);
-                  }}
-                  className="gap-2"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Open Full Schedule / Öppna fullständigt schema
-                </Button>
                 {!scheduleReviewed && (
                   <Button variant="secondary" size="sm" onClick={() => setScheduleReviewed(true)} className="gap-2">
                     <Check className="w-4 h-4" />
