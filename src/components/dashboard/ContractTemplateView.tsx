@@ -211,7 +211,8 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
       const formData = (data.form_data as Record<string, any>) || {};
       let resumeStep = 4; // default to employee details
 
-      // Load COC state if saved
+      // Load saved states
+      if (formData.contractLanguage) setSelectedLanguage(formData.contractLanguage);
       if (formData.cocLanguage) setCocLanguage(formData.cocLanguage);
       if (formData.cocReviewed) setCocReviewed(formData.cocReviewed);
 
@@ -433,12 +434,18 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
                     company_id: selectedCompanyId,
                     season_year: new Date().getFullYear().toString(),
                     status: "draft",
+                    form_data: { contractLanguage: selectedLanguage },
                   })
                   .select("id")
                   .single();
                 if (!error && data) {
                   setContractId(data.id);
                 }
+              } else if (contractId) {
+                // Update language in existing contract's form_data
+                const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
+                const fd = (existing?.form_data as Record<string, any>) || {};
+                await supabase.from("contracts").update({ form_data: { ...fd, contractLanguage: selectedLanguage } }).eq("id", contractId);
               }
               setActiveStep(4);
             }} />}
