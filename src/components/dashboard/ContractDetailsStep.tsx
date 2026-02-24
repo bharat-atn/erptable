@@ -1022,20 +1022,20 @@ export function ContractDetailsStep({
   const maxBirthDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
 
   const progressSteps = [
-    { id: "parties", label: "Parties", icon: Users, sections: ["1", "2.1", "2.2", "2.3"] },
-    { id: "employment", label: "Employment", icon: Briefcase, sections: ["3", "4", "5", "6"] },
-    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["7", "8"] },
-    { id: "others", label: "Others", icon: MoreHorizontal, sections: [] },
-    { id: "review", label: "Review & Sign", icon: CheckCircle, sections: [] },
+    { id: "parties", label: "Parties", icon: Users, sections: ["employee"] },
+    { id: "employment", label: "Employment", icon: Briefcase, sections: ["section-3", "section-4", "section-5", "section-6"] },
+    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["section-7", "section-8"] },
+    { id: "others", label: "Others", icon: MoreHorizontal, sections: ["section-9", "section-10", "section-11", "section-12", "section-13"] },
+    { id: "review", label: "Review & Sign", icon: CheckCircle, sections: ["section-scheduling", "section-14"] },
   ];
 
   // Determine which progress step is active based on activeSection
-  const getActiveProgressIndex = () => {
-    if (activeSection === "section-7" || activeSection === "section-8") return 2;
-    if (activeSection === "section-3" || activeSection === "section-4" || activeSection === "section-5" || activeSection === "section-6") return 1;
+  const activeProgressIdx = useMemo(() => {
+    for (let i = 0; i < progressSteps.length; i++) {
+      if (progressSteps[i].sections.includes(activeSection)) return i;
+    }
     return 0;
-  };
-  const activeProgressIdx = getActiveProgressIndex();
+  }, [activeSection]);
 
   return (
     <div>
