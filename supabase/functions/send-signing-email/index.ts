@@ -14,7 +14,37 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // --- Auth check: require authenticated HR user ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // Check HR role
+    const { data: roleCheck } = await authClient.rpc("is_hr_user");
+    if (!roleCheck) {
+      return new Response(JSON.stringify({ error: "Forbidden: HR role required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Use service role for data operations ---
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { contractId, signingUrl } = await req.json();
@@ -58,11 +88,8 @@ serve(async (req) => {
     const contractCode = contract.contract_code;
 
     // Build signing URL
-    const baseUrl = signingUrl || supabaseUrl.replace("supabase.co", "lovable.app");
     const fullSigningUrl = `${signingUrl}/sign/${signingToken}`;
 
-    // Send email using Supabase's built-in email (via auth admin)
-    // For now, we'll return the signing URL so the frontend can handle it
     return new Response(
       JSON.stringify({
         success: true,
