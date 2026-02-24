@@ -34,6 +34,10 @@ const ACTION_COLORS: Record<string, string> = {
   DELETE: "bg-destructive/10 text-destructive border-destructive/20",
   LOGIN: "bg-blue-500/10 text-blue-700 border-blue-200",
   LOGOUT: "bg-slate-500/10 text-slate-700 border-slate-200",
+  EMAIL_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
+  SIGNING_EMAIL_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
+  CONTRACT_EMAIL_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
+  USER_INVITED: "bg-teal-500/10 text-teal-700 border-teal-200",
 };
 
 const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -42,6 +46,10 @@ const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   DELETE: Trash2,
   LOGIN: LogIn,
   LOGOUT: LogOut,
+  EMAIL_SENT: Mail,
+  SIGNING_EMAIL_SENT: Mail,
+  CONTRACT_EMAIL_SENT: Mail,
+  USER_INVITED: UserPlus,
 };
 
 const TABLE_LABELS: Record<string, string> = {
@@ -280,6 +288,9 @@ export function AuditLogView() {
                 <SelectItem value="positions">Positions</SelectItem>
                 <SelectItem value="skill_groups">Skill Groups</SelectItem>
                 <SelectItem value="agreement_periods">Agreement Periods</SelectItem>
+                <SelectItem value="contract_id_settings">Contract ID Settings</SelectItem>
+                <SelectItem value="employee_id_settings">Employee ID Settings</SelectItem>
+                <SelectItem value="invitation_template_fields">Invitation Template</SelectItem>
               </SelectContent>
             </Select>
             <Select value={actionFilter} onValueChange={setActionFilter}>
@@ -293,6 +304,10 @@ export function AuditLogView() {
                 <SelectItem value="INSERT">Created</SelectItem>
                 <SelectItem value="UPDATE">Updated</SelectItem>
                 <SelectItem value="DELETE">Deleted</SelectItem>
+                <SelectItem value="EMAIL_SENT">Invitation Email</SelectItem>
+                <SelectItem value="SIGNING_EMAIL_SENT">Signing Email</SelectItem>
+                <SelectItem value="CONTRACT_EMAIL_SENT">Contract Email</SelectItem>
+                <SelectItem value="USER_INVITED">User Invited</SelectItem>
               </SelectContent>
             </Select>
           </div>

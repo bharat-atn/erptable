@@ -107,6 +107,22 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     const action = existingUser ? "updated" : "created";
+
+    // Audit log entry
+    try {
+      await adminClient.from("audit_log").insert({
+        user_id: caller.id,
+        user_email: caller.email,
+        action: "USER_INVITED",
+        table_name: "user_roles",
+        record_id: userId,
+        summary: `User ${email} ${action} with role "${role}" by ${caller.email}`,
+        new_data: { email, role, full_name, action },
+      });
+    } catch (auditErr) {
+      console.error("Audit log insert failed:", auditErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

@@ -172,6 +172,29 @@ serve(async (req) => {
       console.log("Resend not configured or no employee email — skipping email delivery");
     }
 
+    // Audit log entry
+    const callerId = claimsData.claims.sub;
+    const { data: callerProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", callerId)
+      .maybeSingle();
+    const callerEmail = callerProfile?.full_name || callerId;
+    
+    try {
+      await supabase.from("audit_log").insert({
+        user_id: callerId,
+        user_email: callerEmail,
+        action: "SIGNING_EMAIL_SENT",
+        table_name: "contracts",
+        record_id: contractId,
+        summary: `Signing email ${emailSent ? "sent" : "attempted"} for contract ${contractCode || "—"} to ${employeeEmail || "unknown"}`,
+        new_data: { recipient: employeeEmail, contractCode, emailSent, signingUrl: fullSigningUrl },
+      });
+    } catch (auditErr) {
+      console.error("Audit log insert failed:", auditErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

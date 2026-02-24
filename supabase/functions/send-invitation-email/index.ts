@@ -178,6 +178,23 @@ Deno.serve(async (req) => {
       .update({ status: "SENT" })
       .eq("id", invitationId);
 
+    // Audit log entry
+    const callerId = claimsData.claims.sub;
+    try {
+      const { data: callerUser } = await supabase.auth.admin.getUserById(callerId);
+      await supabase.from("audit_log").insert({
+        user_id: callerId,
+        user_email: callerUser?.user?.email || callerId,
+        action: "EMAIL_SENT",
+        table_name: "invitations",
+        record_id: invitationId,
+        summary: `Invitation email sent to ${recipientEmail} (${employeeName})`,
+        new_data: { recipient: recipientEmail, employeeName, onboardingLink },
+      });
+    } catch (auditErr) {
+      console.error("Audit log insert failed:", auditErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
