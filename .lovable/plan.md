@@ -1,83 +1,95 @@
 
-# Section 8 (Salary) Enhancements: Multi-Job-Type Rates, Company Premium, and Overtime Clause
 
-## Summary
-Three major changes to Section 8:
-1. Support salary lookup for up to 3 job types (matching Section 3 selections)
-2. Add a company salary premium setting (percentage above official rate, e.g. 5-10%)
-3. Add an overtime clause between Monthly Salary and Piece-work pay
+# Audit Log Gap Analysis and Fix Plan
 
----
+## Current State
 
-## 1. Multi-Job-Type Official Rate Lookup
+Your audit system is **partially complete**. Here's what it covers today:
 
-Currently, the "Official Skogsavtalet Rate" card only looks up rates for Job Type 1. With up to 3 job types selected in Section 3, the salary section needs to show rates for each.
+### Already Tracked
+- All changes (add/edit/delete) to: Employees, Contracts, Invitations, Companies, User Roles, Banks
+- User login and logout events
 
-**What changes:**
-- The single "Official Rate" card becomes a list of rate cards -- one per selected job type (based on `numberOfJobTypes`, `jobType`, `jobType2`, `jobType3`)
-- Each card shows the job type name, its official hourly and monthly rate, age group, and period
-- The "Apply Rate" button on each card fills that specific job type's salary fields
-- State variables expand: instead of single `hourlyBasic`/`monthlyBasic`, we add `hourlyBasic2`, `monthlyBasic2`, `hourlyBasic3`, `monthlyBasic3` (and corresponding premium fields)
-- The Hourly Pay and Monthly Salary input sections repeat per job type, displayed in a clear grouped layout (e.g., "Job Type 1: Planting / Plantering" with its own hourly/monthly inputs)
+### What's Missing
 
-**Validation updates:**
-- `section8Missing` checks each active job type's required salary field
+There are two categories of gaps:
 
----
+### 1. Database Tables Without Audit Triggers
+These tables can be changed by HR staff but those changes are invisible in the audit log:
+- **Positions** (job positions)
+- **Skill Groups**
+- **Agreement Periods** (salary data)
+- **Contract Schedules** (work schedules)
+- **Contract ID Settings**
+- **Employee ID Settings**
+- **Invitation Template Fields**
 
-## 2. Company Salary Premium (Above Official Rate)
+### 2. Email and Edge Function Actions (Biggest Gap)
+When someone sends an email or triggers a backend action, there is **zero record** in the audit log:
+- Sending an **invitation email** to a new hire
+- Sending a **signing email** with contract link
+- Sending a **signed contract email**
+- **Company lookups** (searching for company data)
+- **Address validations**
 
-A new feature allowing companies to set a default premium percentage above the official forestry contract rate.
-
-**What changes:**
-- Add a "Company Premium / Företagspremie" input below the official rate lookup area
-- A percentage input (e.g., 5%, 10%) stored in `form_data` as `companyPremiumPercent`
-- Default value: 0 (no premium)
-- When "Apply Rate" is clicked, the system calculates: `official_rate * (1 + premium/100)` and fills the basic pay field with the adjusted amount
-- Visual feedback shows: "Official rate: 147.90 SEK/hr + 5% premium = 155.30 SEK/hr"
-- A safeguard prevents entering a negative premium (never below official rate)
-- This premium setting persists per contract via `form_data`
+These are important because they represent actions taken toward employees — if an HR person sends a signing email, you want to know who did it and when.
 
 ---
 
-## 3. Overtime Clause Between Monthly Salary and Piece-work Pay
+## Implementation Plan
 
-A new bilingual text block inserted between the Monthly Salary section and the Piece-work Pay checkbox.
+### Step 1: Add Missing Database Triggers
+Add audit triggers to the 7 tables that currently lack them. This is a single database migration — no code changes needed, the existing `audit_trigger_func()` handles everything automatically.
 
-**What changes:**
-- Add a styled info block (similar to the existing reference notes box) with the text:
-  - English: "Only ordered overtime will be compensated with overtime pay."
-  - Swedish: "Endast beordrad övertid ersätts med övertidsersättning."
-  - Romanian: "Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare."
-  - Thai: "เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา"
-- Displayed as a compact, always-visible notice with an info icon
-- Positioned after the Monthly Salary box and before the Piece-work pay checkbox
+Tables to add: `positions`, `skill_groups`, `agreement_periods`, `contract_schedules`, `contract_id_settings`, `employee_id_settings`, `invitation_template_fields`
+
+### Step 2: Add Audit Logging to Edge Functions
+Update each edge function to write an entry to `audit_log` after performing its action:
+
+- **send-invitation-email**: Log "EMAIL_SENT" with invitation ID, recipient email, and who triggered it
+- **send-signing-email**: Log "SIGNING_EMAIL_SENT" with contract ID, recipient email, and who triggered it
+- **send-contract-email**: Log "CONTRACT_EMAIL_SENT" with contract ID, recipient email, and who triggered it
+- **invite-user**: Log "USER_INVITED" with the invited email and assigned role
+
+### Step 3: Update Audit Log UI
+Add the new categories and action types to the AuditLogView so they display properly:
+- Add new action types: EMAIL_SENT, SIGNING_EMAIL_SENT, CONTRACT_EMAIL_SENT, USER_INVITED
+- Add filter options for these new categories
+- Add appropriate icons and color coding
 
 ---
 
 ## Technical Details
 
-### New State Variables (`ContractDetailsStep.tsx`)
-```text
-companyPremiumPercent: string (default "0")
-hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2: string
-hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3: string
+### Database Migration (Step 1)
+```sql
+-- Add audit triggers to all remaining tables
+CREATE TRIGGER audit_positions
+  AFTER INSERT OR UPDATE OR DELETE ON public.positions
+  FOR EACH ROW EXECUTE FUNCTION public.audit_trigger_func();
+
+-- (same pattern for all 7 tables)
 ```
 
-### Modified Functions
-- `getOfficialRate()` -- becomes `getOfficialRateForJob(jobTypeName, expLevel)` to support per-job-type lookups
-- `handleApplyRate()` -- takes a job index parameter, applies premium, fills correct state variables
-- `getFormData()` -- includes all new fields
-- Restoration logic in `useEffect` -- restores new fields from saved `form_data`
-- `section8Missing` validation -- checks all active job types
+### Edge Function Logging Pattern (Step 2)
+Each edge function already has a service-role Supabase client. After the main action succeeds, insert into `audit_log`:
 
-### Auto-save
-All new fields added to `getFormData()` and its dependency array for seamless auto-save.
+```sql
+INSERT INTO audit_log (user_id, user_email, action, table_name, record_id, summary, new_data)
+VALUES (caller_user_id, caller_email, 'EMAIL_SENT', 'invitations', invitation_id, 
+        'Invitation email sent to employee@example.com', '{"recipient": "..."}');
+```
 
-### Contract Document (`ContractDocument.tsx`)
-- Section 8 rendering updated to display salary data for each job type
-- Overtime clause rendered in the document
+### UI Updates (Step 3)
+- Add new entries to `TABLE_ICONS`, `ACTION_COLORS`, `ACTION_ICONS`, `TABLE_LABELS`
+- Add "Emails" filter option in the category dropdown
+- Add "Email Sent" filter in the action dropdown
 
-### File Modified
-- `src/components/dashboard/ContractDetailsStep.tsx` (primary)
-- `src/components/dashboard/ContractDocument.tsx` (contract rendering)
+### Files to Change
+- 1 new database migration (triggers for 7 tables)
+- `supabase/functions/send-invitation-email/index.ts`
+- `supabase/functions/send-signing-email/index.ts`
+- `supabase/functions/send-contract-email/index.ts`
+- `supabase/functions/invite-user/index.ts`
+- `src/components/dashboard/AuditLogView.tsx`
+
