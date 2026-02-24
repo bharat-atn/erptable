@@ -30,7 +30,7 @@ type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
 
 interface OperationsViewProps {
-  onNavigate?: (view: string) => void;
+  onNavigate?: (view: string, employeeId?: string) => void;
 }
 
 const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
@@ -254,7 +254,7 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
                     size="sm"
                     variant="outline"
                     className="gap-1.5 text-xs whitespace-nowrap"
-                    onClick={() => onNavigate("contract-template")}
+                    onClick={() => onNavigate("contract-template", e.id)}
                   >
                     <FilePlus className="w-3.5 h-3.5" />
                     Create Contract
