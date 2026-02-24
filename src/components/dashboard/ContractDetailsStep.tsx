@@ -872,6 +872,32 @@ export function ContractDetailsStep({
     onNext();
   };
 
+  // Dispatch next action based on active section
+  const handleCurrentSectionNext = () => {
+    if (activeSection === "section-8") {
+      if (!pieceWorkPay && !otherSalaryBenefits && !showSalaryPrompt) {
+        setShowSalaryPrompt(true);
+        return;
+      }
+      setShowSalaryPrompt(false);
+      onNext();
+    } else if (activeSection === "section-12") {
+      if (salaryDeductions.length === 0 && onGoToStep) {
+        onGoToStep(16);
+      } else {
+        onNext();
+      }
+    } else {
+      handleValidatedNext();
+    }
+  };
+
+  const isNextDisabled = activeSection === "section-8"
+    ? (!rateApplied || (salaryType === "hourly" ? !hourlyBasic : !monthlyBasic))
+    : false;
+
+  const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
+
   const renderLabel = (en: string, sv: string, required = true) => (
     <label className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground/70">
       {en} / {sv}
@@ -1041,6 +1067,21 @@ export function ContractDetailsStep({
             })}
           </div>
         </div>
+        {/* Navigation buttons — always visible in sticky header */}
+        {activeSection !== "section-scheduling" && (
+          <div className="flex justify-between pt-3">
+            <Button variant="outline" onClick={onBack}>
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back / Tillbaka
+            </Button>
+            {showNextButton && (
+              <Button className="px-8" onClick={handleCurrentSectionNext} disabled={isNextDisabled}>
+                Next Step / Nästa
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            )}
+          </div>
+        )}
       </CardHeader>
       </Card>
       <Card className="shadow-md rounded-t-none border-t-0">
@@ -1287,16 +1328,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Employment Section 3 (activeSection === "employment-3") === */}
@@ -1636,16 +1667,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Employment Sections 4, 5, 6 (activeSection === "employment-456") === */}
@@ -1673,16 +1694,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 5 (activeSection === "section-5") === */}
@@ -1949,16 +1960,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 6 (activeSection === "section-6") === */}
@@ -2051,16 +2052,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 7: Compensation (activeSection === "section-7") === */}
@@ -2104,16 +2095,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 8: Salary (activeSection === "section-8") === */}
@@ -2488,27 +2469,6 @@ export function ContractDetailsStep({
           </Card>
         )}
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button
-            className="px-8"
-            onClick={() => {
-              if (!pieceWorkPay && !otherSalaryBenefits && !showSalaryPrompt) {
-                setShowSalaryPrompt(true);
-                return;
-              }
-              setShowSalaryPrompt(false);
-              onNext();
-            }}
-            disabled={!rateApplied || (salaryType === "hourly" ? !hourlyBasic : !monthlyBasic)}
-          >
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 9: Training (activeSection === "section-9") === */}
@@ -2626,16 +2586,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 10: Social Security (activeSection === "section-10") === */}
@@ -2688,16 +2638,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 11: Miscellaneous (activeSection === "section-11") === */}
@@ -2737,16 +2677,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 12: Notes (activeSection === "section-12") === */}
@@ -2832,23 +2762,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={() => {
-            // Skip Section 13 (Deductions) if no deductions exist — go straight to Signing (step 16)
-            if (salaryDeductions.length === 0 && onGoToStep) {
-              onGoToStep(16);
-            } else {
-              onNext();
-            }
-          }}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Section 13: Salary Deductions (activeSection === "section-13") === */}
@@ -3026,16 +2939,6 @@ export function ContractDetailsStep({
           </CollapsibleContent>
         </Collapsible>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          <Button className="px-8" onClick={handleValidatedNext}>
-            Next Step / Nästa
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
         </>}
 
         {/* === Scheduling (activeSection === "section-scheduling") === */}
@@ -3215,12 +3118,6 @@ export function ContractDetailsStep({
           </Card>
         </div>
 
-        <div className="flex justify-between pt-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-        </div>
         </>}
       </CardContent>
     </Card>

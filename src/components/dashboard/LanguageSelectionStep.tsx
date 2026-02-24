@@ -157,6 +157,18 @@ export function LanguageSelectionStep({
         <p className="text-sm text-muted-foreground">
           Choose the contract language. Click the <Star className="w-3 h-3 inline fill-primary text-primary" /> to add/remove favorites.
         </p>
+        {/* Navigation */}
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back
+          </Button>
+          {onNext && selectedLanguage && (
+            <Button onClick={onNext} className="px-8">
+              Next
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Favorites */}
@@ -197,18 +209,6 @@ export function LanguageSelectionStep({
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="flex justify-between pt-2">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </Button>
-          {onNext && selectedLanguage && (
-            <Button onClick={onNext} className="px-8">
-              Next
-            </Button>
-          )}
-        </div>
       </CardContent>
     </Card>
   );

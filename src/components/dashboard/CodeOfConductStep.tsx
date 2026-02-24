@@ -37,6 +37,19 @@ export function CodeOfConductStep({
             / Uppförandekod
           </span>
         </CardTitle>
+        {/* Navigation */}
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          {selectedLanguage && (
+            <Button onClick={onNext} className="px-8">
+              Next
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-sm text-muted-foreground">
@@ -93,19 +106,6 @@ export function CodeOfConductStep({
           ) : null;
         })()}
 
-        {/* Navigation */}
-        <div className="flex justify-between pt-2">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back / Tillbaka
-          </Button>
-          {selectedLanguage && (
-            <Button onClick={onNext} className="px-8">
-              Next
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          )}
-        </div>
       </CardContent>
     </Card>
   );
