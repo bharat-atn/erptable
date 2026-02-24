@@ -206,6 +206,7 @@ export function ContractDetailsStep({
   const [rateApplied2, setRateApplied2] = useState(false);
   const [rateApplied3, setRateApplied3] = useState(false);
   const [section8Open, setSection8Open] = useState(true);
+  const [showRateWarning, setShowRateWarning] = useState(false);
 
   // Section 9: Training
   const [section9Open, setSection9Open] = useState(true);
@@ -875,6 +876,15 @@ export function ContractDetailsStep({
   // Dispatch next action based on active section
   const handleCurrentSectionNext = () => {
     if (activeSection === "section-8") {
+      // Check if any required rates are not applied
+      const needsRate1 = !rateApplied;
+      const needsRate2 = (numberOfJobTypes === "2" || numberOfJobTypes === "3") && !rateApplied2;
+      const needsRate3 = numberOfJobTypes === "3" && !rateApplied3;
+      if ((needsRate1 || needsRate2 || needsRate3) && !showRateWarning) {
+        setShowRateWarning(true);
+        return;
+      }
+      setShowRateWarning(false);
       if (!pieceWorkPay && !otherSalaryBenefits && !showSalaryPrompt) {
         setShowSalaryPrompt(true);
         return;
@@ -892,9 +902,7 @@ export function ContractDetailsStep({
     }
   };
 
-  const isNextDisabled = activeSection === "section-8"
-    ? (!rateApplied || (salaryType === "hourly" ? !hourlyBasic : !monthlyBasic))
-    : false;
+  const isNextDisabled = false;
 
   const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
 
@@ -2402,6 +2410,42 @@ export function ContractDetailsStep({
             </div>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* Rate not applied warning */}
+        {showRateWarning && (
+          <Card className="border-2 border-destructive/30 bg-destructive/5 shadow-lg animate-fade-in">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold">Official rate not applied / Officiell lön ej tillämpad</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it? /
+                    <span className="italic"> Du har inte tillämpat den officiella kollektivavtalslönen för alla befattningstyper. Är du säker på att du vill fortsätta utan att tillämpa den?</span>
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 ml-8">
+                <Button variant="outline" size="sm" onClick={() => setShowRateWarning(false)}>
+                  Go back / Gå tillbaka
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => {
+                  setShowRateWarning(false);
+                  // Continue to salary prompt or next
+                  if (!pieceWorkPay && !otherSalaryBenefits && !showSalaryPrompt) {
+                    setShowSalaryPrompt(true);
+                  } else {
+                    setShowSalaryPrompt(false);
+                    onNext();
+                  }
+                }}>
+                  Continue anyway / Fortsätt ändå
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Salary options prompt dialog */}
         {showSalaryPrompt && (
