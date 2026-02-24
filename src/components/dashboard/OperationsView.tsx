@@ -24,9 +24,14 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
 import type { Tables } from "@/integrations/supabase/types";
+import { FilePlus } from "lucide-react";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
+
+interface OperationsViewProps {
+  onNavigate?: (view: string) => void;
+}
 
 const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
   INVITED: { label: "Invited", dot: "bg-blue-500" },
@@ -95,7 +100,7 @@ const operationsColumns: ColumnDef<Employee>[] = [
 
 type StatusFilter = "ALL" | "INVITED" | "RENEWAL" | "ONBOARDING" | "ACTIVE" | "SEASONAL" | "INACTIVE";
 
-export function OperationsView() {
+export function OperationsView({ onNavigate }: OperationsViewProps) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
@@ -241,6 +246,23 @@ export function OperationsView() {
             defaultSortKey="employee_code"
             isLoading={isLoading}
             emptyMessage="No employees found"
+            rowActions={(e) => {
+              const hasContract = contracts?.some((c) => c.employee_id === e.id);
+              if (e.status === "ONBOARDING" && !hasContract && onNavigate) {
+                return (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs whitespace-nowrap"
+                    onClick={() => onNavigate("contract-template")}
+                  >
+                    <FilePlus className="w-3.5 h-3.5" />
+                    Create Contract
+                  </Button>
+                );
+              }
+              return null;
+            }}
           />
         </CardContent>
       </Card>
