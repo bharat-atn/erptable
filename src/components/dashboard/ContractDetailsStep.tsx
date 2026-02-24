@@ -1281,21 +1281,37 @@ export function ContractDetailsStep({
                     <AlertTriangle className="w-3 h-3" /> Required – please select the number of job types / Obligatoriskt – välj antal befattningstyper
                   </p>
                 )}
-                <Select value={numberOfJobTypes} onValueChange={(v) => {
-                  const val = v as "" | "1" | "2" | "3";
-                  setNumberOfJobTypes(val);
-                  if (val === "1") { setJobType2(""); setExperienceLevel2(""); setJobType3(""); setExperienceLevel3(""); }
-                  if (val === "2") { setJobType3(""); setExperienceLevel3(""); }
-                }}>
-                  <SelectTrigger className={cn("h-11 text-sm font-medium w-full md:w-64", !numberOfJobTypes && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                    <SelectValue placeholder="Select number of job types... / Välj antal..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 – Only one / Bara en</SelectItem>
-                    <SelectItem value="2">2 – Two job types / Två befattningstyper</SelectItem>
-                    <SelectItem value="3">3 – Three job types / Tre befattningstyper</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Select value={numberOfJobTypes} onValueChange={(v) => {
+                    const val = v as "" | "1" | "2" | "3";
+                    setNumberOfJobTypes(val);
+                    if (val === "1") { setJobType2(""); setExperienceLevel2(""); setJobType3(""); setExperienceLevel3(""); }
+                    if (val === "2") { setJobType3(""); setExperienceLevel3(""); }
+                  }}>
+                    <SelectTrigger className={cn("h-11 text-sm font-medium w-full md:w-64", !numberOfJobTypes && "border-destructive ring-2 ring-destructive/40 bg-destructive/5 shadow-sm shadow-destructive/10")}>
+                      <SelectValue placeholder="⚠ Select number of job types... / Välj antal..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 – Only one / Bara en</SelectItem>
+                      <SelectItem value="2">2 – Two job types / Två befattningstyper</SelectItem>
+                      <SelectItem value="3">3 – Three job types / Tre befattningstyper</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {numberOfJobTypes && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNumberOfJobTypes("");
+                        setJobType(""); setExperienceLevel("");
+                        setJobType2(""); setExperienceLevel2("");
+                        setJobType3(""); setExperienceLevel3("");
+                      }}
+                      className="text-xs text-destructive hover:text-destructive/80 underline whitespace-nowrap"
+                    >
+                      Reset / Återställ
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Job type inputs — only shown after numberOfJobTypes is selected */}
