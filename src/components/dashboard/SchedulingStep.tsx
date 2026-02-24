@@ -300,6 +300,17 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
           <span>Schedule & Timing / Schema & Tidsplanering</span>
           <span className="text-xs text-muted-foreground font-normal">Appendix / Bilaga</span>
         </div>
+        {/* Navigation */}
+        <div className="flex justify-between pt-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back / Tillbaka
+          </Button>
+          <Button className="px-8" onClick={() => setShowConfirmDialog(true)} disabled={!scheduleSaved}>
+            Next Step / Nästa
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -613,17 +624,6 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
         </DialogContent>
       </Dialog>
 
-      {/* Navigation */}
-      <div className="flex justify-between pt-4">
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back / Tillbaka
-        </Button>
-        <Button className="px-8" onClick={() => setShowConfirmDialog(true)} disabled={!scheduleSaved}>
-          Next Step / Nästa
-          <ArrowRight className="w-4 h-4 ml-1" />
-        </Button>
-      </div>
     </div>
   );
 }
