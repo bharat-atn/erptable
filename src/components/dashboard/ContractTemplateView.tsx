@@ -124,9 +124,10 @@ const steps = [{
 }];
 interface ContractTemplateViewProps {
   resumeContractId?: string | null;
+  preselectedEmployeeId?: string | null;
 }
 
-export function ContractTemplateView({ resumeContractId }: ContractTemplateViewProps) {
+export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }: ContractTemplateViewProps) {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   
@@ -170,6 +171,20 @@ export function ContractTemplateView({ resumeContractId }: ContractTemplateViewP
       setSelectedCompanyId(companies[0].id);
     }
   }, [companies, selectedCompanyId]);
+
+  // Auto-select employee and skip to language step when coming from Operations
+  const [preselectionApplied, setPreselectionApplied] = useState(false);
+  useEffect(() => {
+    if (preselectedEmployeeId && !preselectionApplied && employees.length > 0 && companies.length > 0) {
+      const emp = employees.find(e => e.id === preselectedEmployeeId);
+      if (emp) {
+        setSelectedEmployee(emp);
+        setSelectedCompanyId(companies[0].id);
+        setActiveStep(3); // skip to language selection
+        setPreselectionApplied(true);
+      }
+    }
+  }, [preselectedEmployeeId, preselectionApplied, employees, companies]);
 
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
 

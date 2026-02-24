@@ -41,6 +41,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
+  const [preselectedEmployeeId, setPreselectedEmployeeId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -59,12 +60,15 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const renderView = () => {
     switch (activeView) {
       case "dashboard": return <DashboardView onNavigate={setActiveView} />;
-      case "operations": return <OperationsView onNavigate={setActiveView} />;
+      case "operations": return <OperationsView onNavigate={(view, empId) => {
+        if (empId) setPreselectedEmployeeId(empId);
+        setActiveView(view);
+      }} />;
       case "employee-register": return <EmployeeRegisterView />;
       case "invitations": return <InvitationsView />;
       case "contracts": return <ContractsView onContinueContract={handleContinueContract} />;
       case "settings": return <SettingsView />;
-      case "contract-template": return <ContractTemplateView resumeContractId={resumeContractId} />;
+      case "contract-template": return <ContractTemplateView resumeContractId={resumeContractId} preselectedEmployeeId={preselectedEmployeeId} />;
       case "company-register": return <CompanyRegisterView />;
       case "process-guide": return <ProcessGuideView />;
       case "employee-id-settings": return <EmployeeIdSettingsView />;
