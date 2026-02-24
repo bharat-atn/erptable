@@ -215,14 +215,22 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  {/* Embedded PDF viewer via Google Docs */}
+                  {/* Embedded PDF viewer */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-                    <iframe
-                      src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
+                    <object
+                      data={`${selectedCocLang.file}#toolbar=1&navpanes=0`}
+                      type="application/pdf"
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       onLoad={() => setCocReviewed(true)}
-                    />
+                    >
+                      <iframe
+                        src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
+                        className="w-full h-[400px] sm:h-[500px]"
+                        title={`Code of Conduct - ${selectedCocLang.label}`}
+                        onLoad={() => setCocReviewed(true)}
+                      />
+                    </object>
                   </div>
                   <div className="flex items-center gap-3">
                     <a
