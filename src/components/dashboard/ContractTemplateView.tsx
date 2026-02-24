@@ -215,20 +215,20 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
       if (formData.cocLanguage) setCocLanguage(formData.cocLanguage);
       if (formData.cocReviewed) setCocReviewed(formData.cocReviewed);
 
-      // Determine furthest completed step from form_data
-      if (formData.cocReviewed) resumeStep = 17; // code of conduct done
-      else if (formData.schedulingData) resumeStep = 16; // scheduling
-      else if (formData.salaryDeductions) resumeStep = 15; // deductions
-      else if (formData.miscellaneousText !== undefined) resumeStep = 14; // notes
-      else if (formData.trainingSkotselskolan !== undefined) resumeStep = 13; // misc
-      else if (formData.socialSecurityViewed) resumeStep = 12; // social security
-      else if (formData.paymentMethod) resumeStep = 11; // training
-      else if (formData.hourlyRate !== undefined) resumeStep = 10; // salary
-      else if (formData.compensationType) resumeStep = 9; // compensation
-      else if (formData.section6) resumeStep = 9;
-      else if (formData.section5) resumeStep = 8;
-      else if (formData.section4) resumeStep = 7;
-      else if (formData.section3) resumeStep = 6;
+      // Use the explicitly saved step if available
+      if (formData.lastActiveSection) {
+        const sectionToStepMap: Record<string, number> = {
+          "employee": 4, "section-3": 5, "section-4": 6, "section-5": 7,
+          "section-6": 8, "section-7": 9, "section-8": 10, "section-9": 11,
+          "section-10": 12, "section-11": 13, "section-12": 14, "section-13": 15,
+          "section-scheduling": 16, "section-14": 18,
+        };
+        resumeStep = sectionToStepMap[formData.lastActiveSection] ?? 4;
+      } else if (formData.cocReviewed) {
+        resumeStep = 17;
+      } else {
+        resumeStep = 4; // default
+      }
 
       setActiveStep(resumeStep);
       setResumeLoaded(true);

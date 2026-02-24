@@ -659,6 +659,7 @@ export function ContractDetailsStep({
     miscellaneousText,
     salaryDeductions,
     schedulingData: schedulingData as unknown as Record<string, any>,
+    lastActiveSection: activeSection,
   }), [
     firstName, middleName, lastName, preferredName,
     address, address2, zipCode, city, stateProvince, country,
@@ -672,7 +673,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
-    miscellaneousText, salaryDeductions, schedulingData,
+    miscellaneousText, salaryDeductions, schedulingData, activeSection,
   ]);
 
   // Auto-save every 1 second after changes
