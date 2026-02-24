@@ -9,8 +9,11 @@ import {
   CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink,
   Calendar, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
+
+const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
 const COC_LANGUAGES = [
   { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
@@ -50,6 +53,7 @@ export default function SigningSimulation() {
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
+  const [signingError, setSigningError] = useState<string | null>(null);
 
   // Review states
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
@@ -126,7 +130,7 @@ export default function SigningSimulation() {
       if (rpcErr) throw rpcErr;
       setSigned(true);
     } catch (err: any) {
-      setError(err.message || "Failed to submit signature");
+      setSigningError(err.message || "Failed to submit signature");
     } finally {
       setSubmitting(false);
     }
@@ -262,22 +266,25 @@ export default function SigningSimulation() {
                       </span>
                     )}
                   </div>
-                  <div className="rounded-lg border border-border bg-muted/20 p-6 flex flex-col items-center gap-3">
-                    <div className="w-14 h-14 rounded-lg bg-accent flex items-center justify-center">
-                      <span className="text-3xl">📄</span>
-                    </div>
-                    <p className="text-sm font-medium text-center">Code of Conduct — {selectedCocLang.label}</p>
-                    <p className="text-xs text-muted-foreground text-center">{selectedCocLang.file.split("/").pop()}</p>
+                  {/* Embedded PDF viewer via Google Docs */}
+                  <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
+                    <iframe
+                      src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
+                      className="w-full h-[400px] sm:h-[500px]"
+                      title={`Code of Conduct - ${selectedCocLang.label}`}
+                      onLoad={() => setCocReviewed(true)}
+                    />
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline" size="sm"
-                      onClick={() => { window.open(selectedCocLang.file, "_blank"); setCocReviewed(true); }}
-                      className="gap-2"
+                    <a
+                      href={selectedCocLang.file}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Open & Review / Öppna & granska
-                    </Button>
+                      Open in new tab / Öppna i ny flik
+                    </a>
                     {!cocReviewed && (
                       <Button variant="secondary" size="sm" onClick={() => setCocReviewed(true)} className="gap-2">
                         <Check className="w-4 h-4" />
@@ -493,6 +500,18 @@ export default function SigningSimulation() {
                     </span>
                   </label>
                 </div>
+
+                {signingError && (
+                  <Alert variant="destructive" className="mb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>{signingError}</span>
+                      <Button variant="outline" size="sm" onClick={() => setSigningError(null)} className="ml-3 shrink-0">
+                        Dismiss / Stäng
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {canSign ? (
                   <>
