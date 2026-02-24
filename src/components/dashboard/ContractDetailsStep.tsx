@@ -188,11 +188,22 @@ export function ContractDetailsStep({
   const [hourlyPremium, setHourlyPremium] = useState("");
   const [monthlyBasic, setMonthlyBasic] = useState("");
   const [monthlyPremium, setMonthlyPremium] = useState("");
+  const [hourlyBasic2, setHourlyBasic2] = useState("");
+  const [hourlyPremium2, setHourlyPremium2] = useState("");
+  const [monthlyBasic2, setMonthlyBasic2] = useState("");
+  const [monthlyPremium2, setMonthlyPremium2] = useState("");
+  const [hourlyBasic3, setHourlyBasic3] = useState("");
+  const [hourlyPremium3, setHourlyPremium3] = useState("");
+  const [monthlyBasic3, setMonthlyBasic3] = useState("");
+  const [monthlyPremium3, setMonthlyPremium3] = useState("");
+  const [companyPremiumPercent, setCompanyPremiumPercent] = useState("0");
   const [pieceWorkPay, setPieceWorkPay] = useState(false);
   const [otherSalaryBenefits, setOtherSalaryBenefits] = useState(false);
   const [showSalaryPrompt, setShowSalaryPrompt] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"account" | "cash">("account");
   const [rateApplied, setRateApplied] = useState(false);
+  const [rateApplied2, setRateApplied2] = useState(false);
+  const [rateApplied3, setRateApplied3] = useState(false);
   const [section8Open, setSection8Open] = useState(true);
 
   // Section 9: Training
@@ -517,7 +528,18 @@ export function ContractDetailsStep({
       if (fd.hourlyPremium) setHourlyPremium(fd.hourlyPremium);
       if (fd.monthlyBasic) setMonthlyBasic(fd.monthlyBasic);
       if (fd.monthlyPremium) setMonthlyPremium(fd.monthlyPremium);
+      if (fd.hourlyBasic2) setHourlyBasic2(fd.hourlyBasic2);
+      if (fd.hourlyPremium2) setHourlyPremium2(fd.hourlyPremium2);
+      if (fd.monthlyBasic2) setMonthlyBasic2(fd.monthlyBasic2);
+      if (fd.monthlyPremium2) setMonthlyPremium2(fd.monthlyPremium2);
+      if (fd.hourlyBasic3) setHourlyBasic3(fd.hourlyBasic3);
+      if (fd.hourlyPremium3) setHourlyPremium3(fd.hourlyPremium3);
+      if (fd.monthlyBasic3) setMonthlyBasic3(fd.monthlyBasic3);
+      if (fd.monthlyPremium3) setMonthlyPremium3(fd.monthlyPremium3);
+      if (fd.companyPremiumPercent !== undefined) setCompanyPremiumPercent(fd.companyPremiumPercent);
       if (fd.rateApplied) setRateApplied(fd.rateApplied);
+      if (fd.rateApplied2) setRateApplied2(fd.rateApplied2);
+      if (fd.rateApplied3) setRateApplied3(fd.rateApplied3);
       if (fd.pieceWorkPay !== undefined) setPieceWorkPay(fd.pieceWorkPay);
       if (fd.otherSalaryBenefits !== undefined) setOtherSalaryBenefits(fd.otherSalaryBenefits);
       if (fd.paymentMethod) setPaymentMethod(fd.paymentMethod);
@@ -582,45 +604,31 @@ export function ContractDetailsStep({
     return "2025/2026"; // fallback
   };
 
-  // Look up official rate based on jobType, experienceLevel, age group, and period
-  const getOfficialRate = () => {
-    if (!agreementData || !jobType || !experienceLevel) return null;
-    const jobEnglish = jobType.split(" / ")[0].trim();
+  // Look up official rate for a specific job type and experience level
+  const getOfficialRateForJob = (jt: string, exp: string) => {
+    if (!agreementData || !jt || !exp) return null;
+    const jobEnglish = jt.split(" / ")[0].trim();
     const pos = agreementData.positions.find(p => p.label_en === jobEnglish);
-    const expPrefix = experienceLevel.split(" / ")[0].split("(")[0].trim();
+    const expPrefix = exp.split(" / ")[0].split("(")[0].trim();
     const sg = agreementData.skillGroups.find(s => s.label_en.split("(")[0].trim().toLowerCase() === expPrefix.toLowerCase());
     if (!pos || !sg) return null;
 
     const ageGroup = getDerivedAgeGroup();
     const periodLabel = getDerivedPeriodLabel();
 
-    // Try exact match with age group and period first
     let ap = agreementData.agreements.find(a =>
-      a.position_id === pos.id &&
-      a.skill_group_id === sg.id &&
-      a.age_group === ageGroup &&
-      a.period_label === periodLabel
+      a.position_id === pos.id && a.skill_group_id === sg.id && a.age_group === ageGroup && a.period_label === periodLabel
     );
-
-    // Fallback: match without period filter
     if (!ap) {
       ap = agreementData.agreements.find(a =>
-        a.position_id === pos.id &&
-        a.skill_group_id === sg.id &&
-        a.age_group === ageGroup
+        a.position_id === pos.id && a.skill_group_id === sg.id && a.age_group === ageGroup
       );
     }
-
-    // Fallback: match with 19_plus if specific age group not found
     if (!ap && ageGroup !== "19_plus") {
       ap = agreementData.agreements.find(a =>
-        a.position_id === pos.id &&
-        a.skill_group_id === sg.id &&
-        a.age_group === "19_plus" &&
-        a.period_label === periodLabel
+        a.position_id === pos.id && a.skill_group_id === sg.id && a.age_group === "19_plus" && a.period_label === periodLabel
       );
     }
-
     if (!ap) return null;
     return {
       hourly: Number(ap.hourly_rate),
@@ -630,17 +638,35 @@ export function ContractDetailsStep({
     };
   };
 
-  const officialRate = getOfficialRate();
+  // Rates for each active job type
+  const officialRate = getOfficialRateForJob(jobType, experienceLevel);
+  const officialRate2 = (numberOfJobTypes === "2" || numberOfJobTypes === "3") ? getOfficialRateForJob(jobType2, experienceLevel2) : null;
+  const officialRate3 = numberOfJobTypes === "3" ? getOfficialRateForJob(jobType3, experienceLevel3) : null;
 
-  const handleApplyRate = () => {
-    if (!officialRate) return;
-    setHourlyBasic(officialRate.hourly.toString());
-    if (officialRate.monthly > 0) {
-      setMonthlyBasic(officialRate.monthly.toString());
+  // Apply premium to an official rate
+  const applyPremium = (rate: number): number => {
+    const premium = Math.max(0, parseFloat(companyPremiumPercent) || 0);
+    return parseFloat((rate * (1 + premium / 100)).toFixed(2));
+  };
+
+  const handleApplyRate = (jobIndex: 1 | 2 | 3) => {
+    const rate = jobIndex === 1 ? officialRate : jobIndex === 2 ? officialRate2 : officialRate3;
+    if (!rate) return;
+    const adjustedHourly = applyPremium(rate.hourly);
+    const adjustedMonthly = rate.monthly > 0 ? applyPremium(rate.monthly) : 0;
+    if (jobIndex === 1) {
+      setHourlyBasic(adjustedHourly.toString());
+      setMonthlyBasic(adjustedMonthly > 0 ? adjustedMonthly.toString() : "");
+      setRateApplied(true);
+    } else if (jobIndex === 2) {
+      setHourlyBasic2(adjustedHourly.toString());
+      setMonthlyBasic2(adjustedMonthly > 0 ? adjustedMonthly.toString() : "");
+      setRateApplied2(true);
     } else {
-      setMonthlyBasic("");
+      setHourlyBasic3(adjustedHourly.toString());
+      setMonthlyBasic3(adjustedMonthly > 0 ? adjustedMonthly.toString() : "");
+      setRateApplied3(true);
     }
-    setRateApplied(true);
   };
 
   // Auto-save state
@@ -668,6 +694,9 @@ export function ContractDetailsStep({
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
+    hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
+    hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3, rateApplied3,
+    companyPremiumPercent,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText,
@@ -685,6 +714,9 @@ export function ContractDetailsStep({
     seasonalFromDate, seasonalEndAround, age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
+    hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
+    hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3, rateApplied3,
+    companyPremiumPercent,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText, salaryDeductions, schedulingData, activeSection,
@@ -767,9 +799,15 @@ export function ContractDetailsStep({
   if (!annualLeaveDays) section7Missing.push("Annual Leave Days");
 
   const section8Missing: string[] = [];
-  if (!rateApplied) section8Missing.push("Apply Official Rate");
-  if (salaryType === "hourly" && !hourlyBasic) section8Missing.push("Hourly Basic Rate");
-  if (salaryType === "monthly" && !monthlyBasic) section8Missing.push("Monthly Basic Rate");
+  if (!rateApplied) section8Missing.push("Apply Official Rate (Job Type 1)");
+  if (salaryType === "hourly" && !hourlyBasic) section8Missing.push("Hourly Basic Rate (Job Type 1)");
+  if (salaryType === "monthly" && !monthlyBasic) section8Missing.push("Monthly Basic Rate (Job Type 1)");
+  if ((numberOfJobTypes === "2" || numberOfJobTypes === "3") && !rateApplied2) section8Missing.push("Apply Official Rate (Job Type 2)");
+  if ((numberOfJobTypes === "2" || numberOfJobTypes === "3") && salaryType === "hourly" && !hourlyBasic2) section8Missing.push("Hourly Basic Rate (Job Type 2)");
+  if ((numberOfJobTypes === "2" || numberOfJobTypes === "3") && salaryType === "monthly" && !monthlyBasic2) section8Missing.push("Monthly Basic Rate (Job Type 2)");
+  if (numberOfJobTypes === "3" && !rateApplied3) section8Missing.push("Apply Official Rate (Job Type 3)");
+  if (numberOfJobTypes === "3" && salaryType === "hourly" && !hourlyBasic3) section8Missing.push("Hourly Basic Rate (Job Type 3)");
+  if (numberOfJobTypes === "3" && salaryType === "monthly" && !monthlyBasic3) section8Missing.push("Monthly Basic Rate (Job Type 3)");
 
   const sectionWarnings: Record<string, string[]> = {
     "2.1": section21Missing,
@@ -2080,138 +2118,186 @@ export function ContractDetailsStep({
           
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2 space-y-5">
-              {/* Official Rate Lookup */}
-              <Card className={cn(
-                "border-2 shadow-sm",
-                officialRate ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
-              )}>
+
+              {/* Company Premium Setting */}
+              <Card className="border border-border shadow-sm">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Lightbulb className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-                          Official Skogsavtalet Rate
-                        </p>
-                        {officialRate ? (
-                          <p className="text-xl font-bold text-foreground">
-                            {officialRate.hourly.toFixed(2)} SEK/hr
-                          </p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">
-                            {!jobType || !experienceLevel
-                              ? "Select Job Type and Experience Level in Section 3 first"
-                              : !birthday
-                                ? "Set employee birth date in Section 2 first"
-                                : "No matching rate found in agreement data"}
-                          </p>
-                        )}
-                      </div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <DollarSign className="w-4 h-4 text-primary" />
                     </div>
-                    <Button
-                      onClick={handleApplyRate}
-                      disabled={!officialRate || rateApplied}
-                      className="px-6"
-                    >
-                      {rateApplied ? "Applied ✓" : "Apply Rate"}
-                    </Button>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                        Company Premium / Företagspremie
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Percentage above the official Skogsavtalet rate / Procentuellt påslag ovanpå officiella Skogsavtalets lön
+                      </p>
+                    </div>
                   </div>
-                  {officialRate && (
-                    <div className="mt-2 ml-[52px] space-y-0.5">
-                      <p className="text-xs text-muted-foreground">
-                        Monthly: {officialRate.monthly > 0 ? `${officialRate.monthly.toLocaleString()} SEK/month` : "N/A (hourly only)"}
-                      </p>
-                      <p className="text-xs font-medium text-primary/80">
-                        Rate for: Age {officialRate.ageGroup === "19_plus" ? "19+" : officialRate.ageGroup} · Period {officialRate.periodLabel}
-                      </p>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3 ml-11">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={companyPremiumPercent}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setCompanyPremiumPercent(isNaN(val) || val < 0 ? "0" : e.target.value);
+                      }}
+                      className="h-9 w-24 text-sm font-medium"
+                      placeholder="0"
+                    />
+                    <span className="text-sm font-semibold text-muted-foreground">%</span>
+                    {parseFloat(companyPremiumPercent) > 0 && (
+                      <span className="text-xs text-primary font-medium">
+                        +{companyPremiumPercent}% above official rate
+                      </span>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Hourly Pay — PRIMARY */}
-              <div
-                className={cn(
-                  "rounded-xl border-2 p-4 cursor-pointer transition-colors",
-                  salaryType === "hourly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
-                )}
-                onClick={() => setSalaryType("hourly")}
-              >
-                <div className="flex items-center gap-3 mb-3">
+              {/* Official Rate Lookup Cards — one per job type */}
+              {[
+                { idx: 1 as const, jt: jobType, exp: experienceLevel, rate: officialRate, applied: rateApplied },
+                ...(numberOfJobTypes === "2" || numberOfJobTypes === "3" ? [{ idx: 2 as const, jt: jobType2, exp: experienceLevel2, rate: officialRate2, applied: rateApplied2 }] : []),
+                ...(numberOfJobTypes === "3" ? [{ idx: 3 as const, jt: jobType3, exp: experienceLevel3, rate: officialRate3, applied: rateApplied3 }] : []),
+              ].map(({ idx, jt, exp, rate, applied }) => (
+                <Card key={idx} className={cn(
+                  "border-2 shadow-sm",
+                  rate ? "border-primary/30 bg-primary/5" : "border-border bg-muted/30"
+                )}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Lightbulb className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                            Job Type {idx}: Official Rate / Befattningstyp {idx}: Officiell lön
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate max-w-[280px]">
+                            {jt || "Not selected"}
+                          </p>
+                          {rate ? (
+                            <div className="flex items-baseline gap-2 mt-0.5">
+                              <p className="text-lg font-bold text-foreground">
+                                {applyPremium(rate.hourly).toFixed(2)} SEK/hr
+                              </p>
+                              {parseFloat(companyPremiumPercent) > 0 && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  ({rate.hourly.toFixed(2)} + {companyPremiumPercent}%)
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              {!jt || !exp
+                                ? "Select Job Type and Experience Level in Section 3 first"
+                                : !birthday
+                                  ? "Set employee birth date in Section 2 first"
+                                  : "No matching rate found in agreement data"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleApplyRate(idx)}
+                        disabled={!rate || applied}
+                        className="px-6"
+                      >
+                        {applied ? "Applied ✓" : "Apply Rate"}
+                      </Button>
+                    </div>
+                    {rate && (
+                      <div className="mt-2 ml-[52px] space-y-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          Monthly: {rate.monthly > 0 ? `${applyPremium(rate.monthly).toLocaleString()} SEK/month${parseFloat(companyPremiumPercent) > 0 ? ` (${rate.monthly.toLocaleString()} + ${companyPremiumPercent}%)` : ''}` : "N/A (hourly only)"}
+                        </p>
+                        <p className="text-xs font-medium text-primary/80">
+                          Rate for: Age {rate.ageGroup === "19_plus" ? "19+" : rate.ageGroup} · Period {rate.periodLabel}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Salary Type Selection */}
+              <div className="flex gap-4">
+                <div
+                  className={cn(
+                    "flex-1 rounded-lg border-2 p-3 cursor-pointer transition-colors flex items-center gap-3",
+                    salaryType === "hourly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                  )}
+                  onClick={() => setSalaryType("hourly")}
+                >
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "hourly" ? "border-primary" : "border-muted-foreground/40")}>
                     {salaryType === "hourly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
                   <span className="text-sm font-bold uppercase tracking-wider">Hourly Pay / Timlön **</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 ml-8">
-                  <div className="space-y-1.5">
-                    {renderLabel("Basic pay / Grundlön (SEK/hr)", "", true)}
-                    <Input
-                      type="number"
-                      value={hourlyBasic}
-                      onChange={(e) => { setHourlyBasic(e.target.value); }}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "hourly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    {renderLabel("Premium pay / Premielön (SEK/hr)", "", false)}
-                    <Input
-                      type="number"
-                      value={hourlyPremium}
-                      onChange={(e) => setHourlyPremium(e.target.value)}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "hourly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Salary — Optional */}
-              <div
-                className={cn(
-                  "rounded-xl border p-4 cursor-pointer transition-colors",
-                  salaryType === "monthly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
-                )}
-                onClick={() => setSalaryType("monthly")}
-              >
-                <div className="flex items-center gap-3 mb-3">
+                <div
+                  className={cn(
+                    "flex-1 rounded-lg border-2 p-3 cursor-pointer transition-colors flex items-center gap-3",
+                    salaryType === "monthly" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                  )}
+                  onClick={() => setSalaryType("monthly")}
+                >
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "monthly" ? "border-primary" : "border-muted-foreground/40")}>
                     {salaryType === "monthly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
                   <span className="text-sm font-bold uppercase tracking-wider">Monthly Salary / Månadslön **</span>
                 </div>
-                <div className="grid grid-cols-2 gap-4 ml-8">
-                  <div className="space-y-1.5">
-                    {renderLabel("Basic salary / Grundlön (SEK/mån)", "", true)}
-                    <Input
-                      type="number"
-                      value={monthlyBasic}
-                      onChange={(e) => { setMonthlyBasic(e.target.value); }}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "monthly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    {renderLabel("Premium salary / Premielön (SEK/mån)", "", false)}
-                    <Input
-                      type="number"
-                      value={monthlyPremium}
-                      onChange={(e) => setMonthlyPremium(e.target.value)}
-                      className="h-11 text-sm font-medium"
-                      placeholder="0"
-                      disabled={salaryType !== "monthly"}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
+              </div>
+
+              {/* Per-job-type salary inputs */}
+              {[
+                { idx: 1, jt: jobType, hb: hourlyBasic, setHb: setHourlyBasic, hp: hourlyPremium, setHp: setHourlyPremium, mb: monthlyBasic, setMb: setMonthlyBasic, mp: monthlyPremium, setMp: setMonthlyPremium },
+                ...((numberOfJobTypes === "2" || numberOfJobTypes === "3") ? [{ idx: 2, jt: jobType2, hb: hourlyBasic2, setHb: setHourlyBasic2, hp: hourlyPremium2, setHp: setHourlyPremium2, mb: monthlyBasic2, setMb: setMonthlyBasic2, mp: monthlyPremium2, setMp: setMonthlyPremium2 }] : []),
+                ...(numberOfJobTypes === "3" ? [{ idx: 3, jt: jobType3, hb: hourlyBasic3, setHb: setHourlyBasic3, hp: hourlyPremium3, setHp: setHourlyPremium3, mb: monthlyBasic3, setMb: setMonthlyBasic3, mp: monthlyPremium3, setMp: setMonthlyPremium3 }] : []),
+              ].map(({ idx, jt, hb, setHb, hp, setHp, mb, setMb, mp, setMp }) => (
+                <div key={idx} className="rounded-xl border border-border p-4 space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Job Type {idx} / Befattningstyp {idx}: <span className="text-foreground">{jt || "—"}</span>
+                  </p>
+                  {salaryType === "hourly" && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        {renderLabel("Basic pay / Grundlön (SEK/hr)", "", true)}
+                        <Input type="number" value={hb} onChange={(e) => setHb(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
+                      </div>
+                      <div className="space-y-1.5">
+                        {renderLabel("Premium pay / Premielön (SEK/hr)", "", false)}
+                        <Input type="number" value={hp} onChange={(e) => setHp(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
+                      </div>
+                    </div>
+                  )}
+                  {salaryType === "monthly" && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        {renderLabel("Basic salary / Grundlön (SEK/mån)", "", true)}
+                        <Input type="number" value={mb} onChange={(e) => setMb(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
+                      </div>
+                      <div className="space-y-1.5">
+                        {renderLabel("Premium salary / Premielön (SEK/mån)", "", false)}
+                        <Input type="number" value={mp} onChange={(e) => setMp(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Overtime clause */}
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-0.5 text-xs">
+                  <p className="font-semibold text-foreground">Only ordered overtime will be compensated with overtime pay.</p>
+                  <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                  <p className="text-muted-foreground italic">Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</p>
+                  <p className="text-muted-foreground italic">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
                 </div>
               </div>
 
@@ -2381,7 +2467,6 @@ export function ContractDetailsStep({
           <Button
             className="px-8"
             onClick={() => {
-              // If neither piecework nor other benefits selected, prompt user
               if (!pieceWorkPay && !otherSalaryBenefits && !showSalaryPrompt) {
                 setShowSalaryPrompt(true);
                 return;
