@@ -823,7 +823,7 @@ export function ContractDetailsStep({
   };
 
   const renderLabel = (en: string, sv: string, required = true) => (
-    <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+    <label className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground/70">
       {en} / {sv}
       {required && <span className="text-destructive ml-0.5">*</span>}
     </label>
