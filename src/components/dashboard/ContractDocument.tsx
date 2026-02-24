@@ -66,7 +66,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
         <div className="doc-header">
           <h1>EMPLOYMENT CONTRACT / ANSTÄLLNINGSAVTAL</h1>
           <p className="doc-subtitle">
-            {contractCode || "—"} · Season / Säsong: {seasonYear || new Date().getFullYear()}
+            {contractCode || "Draft"} · Season / Säsong: {seasonYear || new Date().getFullYear()}
           </p>
           <p className="doc-legal-lang">The legally binding language of this contract is Swedish. / <span className="info-sv-inline">Det juridiskt bindande språket i detta avtal är svenska.</span></p>
         </div>
