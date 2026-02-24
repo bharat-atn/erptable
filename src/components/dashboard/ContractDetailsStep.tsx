@@ -1394,6 +1394,11 @@ export function ContractDetailsStep({
                               ))}
                             </SelectContent>
                           </Select>
+                          {jobType2 && jobType2 === jobType && (
+                            <p className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-1">
+                              <AlertTriangle className="w-3 h-3" /> Duplicate: same as Job Type 1 – not necessary / Dublett: samma som Befattningstyp 1 – inte nödvändigt
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1.5">
                           {renderLabel("Experience Level 2", "Erfarenhetsnivå 2")}
@@ -1445,6 +1450,11 @@ export function ContractDetailsStep({
                               ))}
                             </SelectContent>
                           </Select>
+                          {jobType3 && (jobType3 === jobType || jobType3 === jobType2) && (
+                            <p className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-1">
+                              <AlertTriangle className="w-3 h-3" /> Duplicate: same as {jobType3 === jobType ? "Job Type 1" : "Job Type 2"} – not necessary / Dublett: samma som {jobType3 === jobType ? "Befattningstyp 1" : "Befattningstyp 2"} – inte nödvändigt
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-1.5">
                           {renderLabel("Experience Level 3", "Erfarenhetsnivå 3")}
