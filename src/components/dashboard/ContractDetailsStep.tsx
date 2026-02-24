@@ -565,22 +565,49 @@ export function ContractDetailsStep({
     load();
   }, [contractId, initialLoaded]);
 
-  // Reset rateApplied flags when job type, experience level, or premium % changes
-  // (skip during initial load to avoid clearing persisted values)
-  useEffect(() => {
-    if (!initialLoaded) return;
-    setRateApplied(false);
-  }, [jobType, experienceLevel, companyPremiumPercent]);
+  // Track previous values so we only reset rateApplied on actual user-driven changes
+  const prevSalaryDeps1 = useRef<string>("");
+  const prevSalaryDeps2 = useRef<string>("");
+  const prevSalaryDeps3 = useRef<string>("");
 
   useEffect(() => {
     if (!initialLoaded) return;
-    setRateApplied2(false);
-  }, [jobType2, experienceLevel2, companyPremiumPercent]);
+    const key = `${jobType}|${experienceLevel}|${companyPremiumPercent}`;
+    if (prevSalaryDeps1.current === "") {
+      prevSalaryDeps1.current = key;
+      return;
+    }
+    if (key !== prevSalaryDeps1.current) {
+      prevSalaryDeps1.current = key;
+      setRateApplied(false);
+    }
+  }, [initialLoaded, jobType, experienceLevel, companyPremiumPercent]);
 
   useEffect(() => {
     if (!initialLoaded) return;
-    setRateApplied3(false);
-  }, [jobType3, experienceLevel3, companyPremiumPercent]);
+    const key = `${jobType2}|${experienceLevel2}|${companyPremiumPercent}`;
+    if (prevSalaryDeps2.current === "") {
+      prevSalaryDeps2.current = key;
+      return;
+    }
+    if (key !== prevSalaryDeps2.current) {
+      prevSalaryDeps2.current = key;
+      setRateApplied2(false);
+    }
+  }, [initialLoaded, jobType2, experienceLevel2, companyPremiumPercent]);
+
+  useEffect(() => {
+    if (!initialLoaded) return;
+    const key = `${jobType3}|${experienceLevel3}|${companyPremiumPercent}`;
+    if (prevSalaryDeps3.current === "") {
+      prevSalaryDeps3.current = key;
+      return;
+    }
+    if (key !== prevSalaryDeps3.current) {
+      prevSalaryDeps3.current = key;
+      setRateApplied3(false);
+    }
+  }, [initialLoaded, jobType3, experienceLevel3, companyPremiumPercent]);
 
   // Fetch agreement periods for salary lookup
   const { data: agreementData } = useQuery({
