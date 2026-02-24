@@ -62,8 +62,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   .field-grid-2 { grid-template-columns: 1fr 1fr; }
   .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   .field { display: flex; flex-direction: column; }
-  .field-label { font-size: 6px; text-transform: uppercase; color: #bbb; letter-spacing: 0.2px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
-  .field-value { font-size: 11px; font-weight: 700; padding: 2px 0; border-bottom: 1px dotted #ccc; min-height: 16px; color: #1a1a1a; }
+  .field-label { font-size: 5.5px; text-transform: uppercase; color: #bbb; letter-spacing: 0.15px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+  .field-value { font-size: 12px; font-weight: 800; padding: 2px 0; border-bottom: 1px dotted #ccc; min-height: 16px; color: #000; }
   .subsection-label { font-size: 10px; font-weight: 600; margin: 8px 0 4px; color: #444; }
   .info-block { background: #f8f8f8; padding: 8px 10px; border-radius: 3px; margin-bottom: 8px; font-size: 10px; }
   .info-sv, .info-sv-inline { color: #666; font-style: italic; }
