@@ -427,19 +427,41 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
           {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={async () => {
               // Create or reuse contract when entering step 4
               if (!contractId && selectedEmployee && selectedCompanyId) {
-                const { data, error } = await supabase
+                // Check for existing draft/active contract for this employee
+                const { data: existing } = await supabase
                   .from("contracts")
-                  .insert({
-                    employee_id: selectedEmployee.id,
-                    company_id: selectedCompanyId,
-                    season_year: new Date().getFullYear().toString(),
-                    status: "draft",
-                    form_data: { contractLanguage: selectedLanguage },
-                  })
                   .select("id")
-                  .single();
-                if (!error && data) {
-                  setContractId(data.id);
+                  .eq("employee_id", selectedEmployee.id)
+                  .in("status", ["draft", "active"])
+                  .in("signing_status", ["not_sent", "sent_to_employee"])
+                  .limit(1)
+                  .maybeSingle();
+
+                if (existing) {
+                  // Reuse the existing draft contract
+                  setContractId(existing.id);
+                  // Update company/language on the existing draft
+                  const { data: ex } = await supabase.from("contracts").select("form_data").eq("id", existing.id).single();
+                  const fd = (ex?.form_data as Record<string, any>) || {};
+                  await supabase.from("contracts").update({
+                    company_id: selectedCompanyId,
+                    form_data: { ...fd, contractLanguage: selectedLanguage },
+                  }).eq("id", existing.id);
+                } else {
+                  const { data, error } = await supabase
+                    .from("contracts")
+                    .insert({
+                      employee_id: selectedEmployee.id,
+                      company_id: selectedCompanyId,
+                      season_year: new Date().getFullYear().toString(),
+                      status: "draft",
+                      form_data: { contractLanguage: selectedLanguage },
+                    })
+                    .select("id")
+                    .single();
+                  if (!error && data) {
+                    setContractId(data.id);
+                  }
                 }
               } else if (contractId) {
                 // Update language in existing contract's form_data
