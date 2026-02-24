@@ -59,7 +59,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const renderView = () => {
     switch (activeView) {
       case "dashboard": return <DashboardView onNavigate={setActiveView} />;
-      case "operations": return <OperationsView />;
+      case "operations": return <OperationsView onNavigate={setActiveView} />;
       case "employee-register": return <EmployeeRegisterView />;
       case "invitations": return <InvitationsView />;
       case "contracts": return <ContractsView onContinueContract={handleContinueContract} />;
