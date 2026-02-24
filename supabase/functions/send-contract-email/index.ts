@@ -146,6 +146,23 @@ serve(async (req) => {
       throw new Error(`Email service error: ${emailResponse.status}`);
     }
 
+    // Audit log entry
+    const callerId = claimsData.claims.sub;
+    try {
+      const { data: callerUser } = await supabase.auth.admin.getUserById(callerId);
+      await supabase.from("audit_log").insert({
+        user_id: callerId,
+        user_email: callerUser?.user?.email || callerId,
+        action: "CONTRACT_EMAIL_SENT",
+        table_name: "contracts",
+        record_id: contractId,
+        summary: `Signed contract email sent for ${contractCode} to ${recipientEmail}`,
+        new_data: { recipient: recipientEmail, contractCode, employeeName },
+      });
+    } catch (auditErr) {
+      console.error("Audit log insert failed:", auditErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true, contractCode, recipientEmail }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
