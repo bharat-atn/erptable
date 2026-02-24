@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -194,7 +195,6 @@ Respond ONLY with valid JSON (no markdown):
   if (!jsonMatch) throw new Error("Could not parse AI response");
   
   const result = JSON.parse(jsonMatch[0]);
-  // Mark all sources as AI knowledge base
   result.sources = {
     org_number: "AI knowledge base (unverified)",
     address: "AI knowledge base (unverified)",
@@ -212,6 +212,35 @@ Respond ONLY with valid JSON (no markdown):
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // --- Auth check: require authenticated HR user ---
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(authHeader.replace("Bearer ", ""));
+  if (claimsError || !claimsData?.claims?.sub) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const { data: roleCheck } = await authClient.rpc("is_hr_user");
+  if (!roleCheck) {
+    return new Response(JSON.stringify({ error: "Forbidden: HR role required" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -233,29 +262,23 @@ serve(async (req) => {
       });
     }
 
-    // ─── Strategy 1: Scrape hitta.se (Swedish business directory, sourced from Bolagsverket/Skatteverket) ───
+    // ─── Strategy 1: Scrape hitta.se ───
     if (FIRECRAWL_API_KEY) {
       let scrapedMarkdown: string | null = null;
-
-      // Search by company name on hitta.se
       const searchUrl = `https://www.hitta.se/sök?vad=${encodeURIComponent(company_name)}`;
       scrapedMarkdown = await firecrawlScrape(searchUrl, FIRECRAWL_API_KEY);
 
-      // If we got search results with an org number, also scrape the företagsinformation page for richer data
       if (scrapedMarkdown && scrapedMarkdown.length > 100) {
-        // Try to find the org number link in the scraped content to get the detailed page
         const orgMatch = scrapedMarkdown.match(/företagsinformation\/[^/]+\/(\d{10})/);
         if (orgMatch) {
           const detailUrl = `https://www.hitta.se/företagsinformation/${orgMatch[0].split('/')[1]}/${orgMatch[1]}`;
           const detailMarkdown = await firecrawlScrape(detailUrl, FIRECRAWL_API_KEY);
           if (detailMarkdown && detailMarkdown.length > 100) {
-            // Combine both pages for maximum data extraction
             scrapedMarkdown = scrapedMarkdown + "\n\n--- DETAILED COMPANY PAGE ---\n\n" + detailMarkdown;
           }
         }
       }
 
-      // If org number is provided but no results, try the företagsinformation page directly
       if ((!scrapedMarkdown || scrapedMarkdown.length < 100) && org_number) {
         const cleanOrg = org_number.replace(/\D/g, "");
         if (cleanOrg.length >= 6) {
@@ -268,30 +291,20 @@ serve(async (req) => {
       if (scrapedMarkdown && scrapedMarkdown.length > 100) {
         try {
           const result = await parseWithAI(scrapedMarkdown, company_name, LOVABLE_API_KEY);
-          
-          // Post-process
           if (result.city) result.city = result.city.toUpperCase();
           if (result.phone) result.phone = result.phone.replace(/^0+/, "");
-
-          // Add verified source attribution for all fields that have data
           const source = "hitta.se (Bolagsverket / Skatteverket registry data)";
           result.sources = {};
           result.verified = true;
           const allFields = ["org_number", "address", "postcode", "city", "phone", "email", "website", "bankgiro", "ceo_name", "company_type"];
           for (const field of allFields) {
-            if (result[field]) {
-              result.sources[field] = source;
-            } else {
-              result.sources[field] = "Not found in registry";
-            }
+            result.sources[field] = result[field] ? source : "Not found in registry";
           }
-
           return new Response(JSON.stringify(result), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         } catch (parseError) {
           console.error("AI parsing of scraped content failed:", parseError);
-          // Fall through to AI fallback
         }
       } else {
         console.log("No usable content scraped from hitta.se, falling back to AI");
@@ -300,10 +313,8 @@ serve(async (req) => {
       console.log("FIRECRAWL_API_KEY not set, using AI fallback");
     }
 
-    // ─── Strategy 2: AI fallback (non-Swedish or Firecrawl unavailable) ───
+    // ─── Strategy 2: AI fallback ───
     const result = await aiFallbackLookup(company_name, org_number || "", LOVABLE_API_KEY);
-    
-    // Post-process
     if (result.city) result.city = result.city.toUpperCase();
     if (result.phone) result.phone = result.phone.replace(/^0+/, "");
 
