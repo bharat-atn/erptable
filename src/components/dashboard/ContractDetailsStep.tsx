@@ -731,9 +731,11 @@ export function ContractDetailsStep({
     miscellaneousText, salaryDeductions, schedulingData, activeSection,
   ]);
 
-  // Auto-save every 1 second after changes
+  // Auto-save every 1 second after changes — but NEVER overwrite contracts already sent for signing
   useEffect(() => {
     if (!contractId) return;
+    // Block auto-save once the contract has been sent for signing to preserve data integrity
+    if (signingStatus && signingStatus !== "not_sent") return;
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
@@ -743,7 +745,8 @@ export function ContractDetailsStep({
         const { error } = await supabase
           .from("contracts")
           .update({ form_data: getFormData() })
-          .eq("id", contractId);
+          .eq("id", contractId)
+          .eq("signing_status", "not_sent"); // Safety: only update if still not sent
         if (error) throw error;
         setSaveStatus("saved");
       } catch {
@@ -754,7 +757,7 @@ export function ContractDetailsStep({
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [getFormData, contractId]);
+  }, [getFormData, contractId, signingStatus]);
 
   // Validation: which required fields are missing per section
   const section21Missing: string[] = [];

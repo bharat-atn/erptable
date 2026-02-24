@@ -303,11 +303,14 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
         </div>
 
         {/* Per-job-type salary display */}
-        {[
-          { idx: 1, jt: fd.jobType, hb: fd.hourlyBasic, hp: fd.hourlyPremium, mb: fd.monthlyBasic, mp: fd.monthlyPremium },
-          ...((fd.numberOfJobTypes === "2" || fd.numberOfJobTypes === "3") ? [{ idx: 2, jt: fd.jobType2, hb: fd.hourlyBasic2, hp: fd.hourlyPremium2, mb: fd.monthlyBasic2, mp: fd.monthlyPremium2 }] : []),
-          ...(fd.numberOfJobTypes === "3" ? [{ idx: 3, jt: fd.jobType3, hb: fd.hourlyBasic3, hp: fd.hourlyPremium3, mb: fd.monthlyBasic3, mp: fd.monthlyPremium3 }] : []),
-        ].map(({ idx, jt, hb, hp, mb, mp }) => (
+        {(() => {
+          const numJobs = String(fd.numberOfJobTypes || "1");
+          return [
+            { idx: 1, jt: fd.jobType, hb: fd.hourlyBasic, hp: fd.hourlyPremium, mb: fd.monthlyBasic, mp: fd.monthlyPremium },
+            ...((numJobs === "2" || numJobs === "3") ? [{ idx: 2, jt: fd.jobType2, hb: fd.hourlyBasic2, hp: fd.hourlyPremium2, mb: fd.monthlyBasic2, mp: fd.monthlyPremium2 }] : []),
+            ...(numJobs === "3" ? [{ idx: 3, jt: fd.jobType3, hb: fd.hourlyBasic3, hp: fd.hourlyPremium3, mb: fd.monthlyBasic3, mp: fd.monthlyPremium3 }] : []),
+          ];
+        })().map(({ idx, jt, hb, hp, mb, mp }) => (
           <div key={idx}>
             <p className="subsection-label">Job Type {idx} / Befattningstyp {idx}: {jt || "—"}</p>
             {fd.salaryType === "hourly" && (
