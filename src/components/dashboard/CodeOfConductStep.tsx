@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, FileText, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, Check, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LANGUAGES = [
-  { code: "sv", label: "Svenska", labelEn: "Swedish", flag: "🇸🇪" },
-  { code: "en", label: "English", labelEn: "English", flag: "🇬🇧" },
-  { code: "ro", label: "Română", labelEn: "Romanian", flag: "🇷🇴" },
-  { code: "th", label: "ไทย", labelEn: "Thai", flag: "🇹🇭" },
+  { code: "sv", label: "Svenska", labelEn: "Swedish", flag: "🇸🇪", file: "/documents/code-of-conduct-sv.pdf" },
+  { code: "en", label: "English", labelEn: "English", flag: "🇬🇧", file: "/documents/code-of-conduct-en.pdf" },
+  { code: "ro", label: "Română", labelEn: "Romanian", flag: "🇷🇴", file: "/documents/code-of-conduct-ro.pdf" },
+  { code: "th", label: "ไทย", labelEn: "Thai", flag: "🇹🇭", file: "/documents/code-of-conduct-th.pdf" },
 ];
 
 interface CodeOfConductStepProps {
@@ -76,6 +76,22 @@ export function CodeOfConductStep({
             ))}
           </div>
         </div>
+
+        {/* Open document link */}
+        {selectedLanguage && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const lang = LANGUAGES.find((l) => l.code === selectedLanguage);
+              if (lang) window.open(lang.file, "_blank");
+            }}
+            className="gap-2"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open document in new tab / Öppna dokument i ny flik
+          </Button>
+        )}
 
         {/* Navigation */}
         <div className="flex justify-between pt-2">
