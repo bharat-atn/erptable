@@ -141,9 +141,10 @@ export function ContractDetailsStep({
   const [citizenship, setCitizenship] = useState(pi.citizenship ?? "");
   const [mobile, setMobile] = useState(employee.phone ?? pi.mobilePhone ?? "");
   const [email, setEmail] = useState(employee.email ?? "");
-  const [emergencyFirstName, setEmergencyFirstName] = useState(pi.emergencyFirstName ?? pi.emergency_first_name ?? "");
-  const [emergencyLastName, setEmergencyLastName] = useState(pi.emergencyLastName ?? pi.emergency_last_name ?? "");
-  const [emergencyMobile, setEmergencyMobile] = useState(pi.emergencyPhone ?? pi.emergency_mobile ?? "");
+  const ec = (pi.emergencyContact ?? pi.emergency_contact ?? {}) as Record<string, any>;
+  const [emergencyFirstName, setEmergencyFirstName] = useState(pi.emergencyFirstName ?? pi.emergency_first_name ?? ec.firstName ?? ec.first_name ?? "");
+  const [emergencyLastName, setEmergencyLastName] = useState(pi.emergencyLastName ?? pi.emergency_last_name ?? ec.lastName ?? ec.last_name ?? "");
+  const [emergencyMobile, setEmergencyMobile] = useState(pi.emergencyPhone ?? pi.emergency_mobile ?? ec.phone ?? ec.mobile ?? "");
 
   // Section 3 state
   const [mainDuties, setMainDuties] = useState("Forest Worker / Skogsarbetare");
