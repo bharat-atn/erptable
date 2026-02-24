@@ -407,18 +407,25 @@ export function ContractDetailsStep({
     setSendingForSigning(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-signing-email", {
-        body: { contractId, signingUrl: window.location.origin },
+        body: { contractId },
       });
       if (error) throw error;
       if (data?.signingToken) {
-        const link = `${window.location.origin}/sign/${data.signingToken}`;
-        setSigningLink(link);
+        setSigningLink(data.signingUrl || `https://erptable.lovable.app/sign/${data.signingToken}`);
         setSigningStatus("sent_to_employee");
-        // Open simulation in new tab
-        window.open(`${window.location.origin}/sign-simulation/${contractId}`, "_blank");
+        if (data.emailSent) {
+          toast.success("Signing email sent / Signeringsmail skickat", {
+            description: `Email sent to ${data.employeeEmail || "employee"}. / E-post skickad till ${data.employeeEmail || "anställd"}.`,
+          });
+        } else {
+          toast.warning("Contract ready for signing / Avtal redo för signering", {
+            description: "Email could not be sent. Use the link below to share manually. / E-post kunde inte skickas. Använd länken nedan för att dela manuellt.",
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to send for signing:", err);
+      toast.error("Failed to prepare contract for signing.");
     } finally {
       setSendingForSigning(false);
     }
@@ -3150,22 +3157,22 @@ export function ContractDetailsStep({
                 {signingStatus === "sent_to_employee" && (
                   <div className="space-y-3">
                     <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
-                      <p className="text-xs font-medium">Signing link / Signeringslänk:</p>
+                      <p className="text-xs font-medium">Signing link (fallback) / Signeringslänk (reserv):</p>
                       <div className="flex gap-2">
                         <Input value={signingLink} readOnly className="h-8 text-xs" />
-                        <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(signingLink)}>Copy</Button>
+                        <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(signingLink); toast.success("Link copied / Länk kopierad"); }}>Copy</Button>
                       </div>
                     </div>
                     <Button
                       className="w-full gap-2"
                       variant="outline"
-                      onClick={() => window.open(`${window.location.origin}/sign-simulation/${contractId}`, "_blank")}
+                      onClick={() => window.open(signingLink, "_blank")}
                     >
                       <Users className="w-4 h-4" />
-                      Open Employee Signing View / Öppna anställds signeringsvy
+                      Open Signing Page / Öppna signeringssida
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Opens in a new tab to simulate the employee's experience. / Öppnas i en ny flik för att simulera den anställdes upplevelse.
+                      Opens the actual signing page the employee received. / Öppnar den faktiska signeringssidan som den anställde fick.
                     </p>
                   </div>
                 )}
