@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
+
+const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
 const COC_LANGUAGES = [
   { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
@@ -43,6 +46,7 @@ export default function ContractSigning() {
   const [data, setData] = useState<SigningData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
+  const [signingError, setSigningError] = useState<string | null>(null);
 
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
@@ -95,7 +99,7 @@ export default function ContractSigning() {
       if (rpcErr) throw rpcErr;
       setSigned(true);
     } catch (err: any) {
-      setError(err.message || "Failed to submit signature");
+      setSigningError(err.message || "Failed to submit signature");
     } finally {
       setSubmitting(false);
     }
@@ -211,10 +215,10 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  {/* Embedded PDF viewer */}
+                  {/* Embedded PDF viewer via Google Docs */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
                     <iframe
-                      src={selectedCocLang.file}
+                      src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       onLoad={() => setCocReviewed(true)}
@@ -384,6 +388,18 @@ export default function ContractSigning() {
                 </div>
 
                 {/* Signature canvas - only enabled when both confirmations are checked */}
+                {signingError && (
+                  <Alert variant="destructive" className="mb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                      <span>{signingError}</span>
+                      <Button variant="outline" size="sm" onClick={() => setSigningError(null)} className="ml-3 shrink-0">
+                        Dismiss / Stäng
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {canSign ? (
                   <>
                     <p className="text-sm text-muted-foreground">
