@@ -121,29 +121,29 @@ export function ContractDetailsStep({
   const [section6Open, setSection6Open] = useState(true);
   const [section7Open, setSection7Open] = useState(true);
 
-  const pi = employee.personal_info ?? {};
+  const pi = (employee.personal_info ?? {}) as Record<string, any>;
 
-  // Employee form state
+  // Employee form state — read camelCase keys (from onboarding) with snake_case fallback
   const [firstName, setFirstName] = useState(employee.first_name ?? "");
   const [middleName, setMiddleName] = useState(employee.middle_name ?? "");
   const [lastName, setLastName] = useState(employee.last_name ?? "");
-  const [preferredName, setPreferredName] = useState(pi.preferred_name ?? "");
+  const [preferredName, setPreferredName] = useState(pi.preferredName ?? pi.preferred_name ?? "");
   const [address, setAddress] = useState(pi.address1 ?? "");
   const [address2, setAddress2] = useState(pi.address2 ?? "");
-  const [zipCode, setZipCode] = useState(pi.zip_code ?? "");
-  const [city, setCity] = useState(employee.city ?? "");
-  const [stateProvince, setStateProvince] = useState(pi.state_province ?? "");
-  const [country, setCountry] = useState(employee.country ?? "");
+  const [zipCode, setZipCode] = useState(pi.zipCode ?? pi.zip_code ?? "");
+  const [city, setCity] = useState(employee.city ?? pi.city ?? "");
+  const [stateProvince, setStateProvince] = useState(pi.stateProvince ?? pi.state_province ?? "");
+  const [country, setCountry] = useState(employee.country ?? pi.country ?? "");
   const [birthday, setBirthday] = useState<Date | undefined>(
     pi.birthday ? new Date(pi.birthday) : undefined
   );
-  const [countryOfBirth, setCountryOfBirth] = useState(pi.country_of_birth ?? "");
+  const [countryOfBirth, setCountryOfBirth] = useState(pi.countryOfBirth ?? pi.country_of_birth ?? "");
   const [citizenship, setCitizenship] = useState(pi.citizenship ?? "");
-  const [mobile, setMobile] = useState(employee.phone ?? "");
+  const [mobile, setMobile] = useState(employee.phone ?? pi.mobilePhone ?? "");
   const [email, setEmail] = useState(employee.email ?? "");
-  const [emergencyFirstName, setEmergencyFirstName] = useState(pi.emergency_first_name ?? "");
-  const [emergencyLastName, setEmergencyLastName] = useState(pi.emergency_last_name ?? "");
-  const [emergencyMobile, setEmergencyMobile] = useState(pi.emergency_mobile ?? "");
+  const [emergencyFirstName, setEmergencyFirstName] = useState(pi.emergencyFirstName ?? pi.emergency_first_name ?? "");
+  const [emergencyLastName, setEmergencyLastName] = useState(pi.emergencyLastName ?? pi.emergency_last_name ?? "");
+  const [emergencyMobile, setEmergencyMobile] = useState(pi.emergencyPhone ?? pi.emergency_mobile ?? "");
 
   // Section 3 state
   const [mainDuties, setMainDuties] = useState("Forest Worker / Skogsarbetare");
