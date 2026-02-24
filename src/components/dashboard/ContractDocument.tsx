@@ -340,12 +340,29 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
         {/* ── §8 SALARY DETAILS ── */}
         <h2 className="section-title page-break-avoid">§8. Salary Details / Löneuppgifter</h2>
         
-        {/* Overtime clause */}
+        {/* Overtime clause - language-aware */}
         <div className="info-block">
-          <p><strong>Only ordered overtime will be compensated with overtime pay.</strong></p>
-          <p className="info-sv">Endast beordrad övertid ersätts med övertidsersättning.</p>
-          <p className="info-sv">Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</p>
-          <p className="info-sv">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
+          {(fd.contractLanguage === "EN/SE" || !fd.contractLanguage) && (
+            <>
+              <p><strong>Only ordered overtime will be compensated with overtime pay.</strong></p>
+              <p className="info-sv">Endast beordrad övertid ersätts med övertidsersättning.</p>
+            </>
+          )}
+          {fd.contractLanguage === "SE" && (
+            <p><strong>Endast beordrad övertid ersätts med övertidsersättning.</strong></p>
+          )}
+          {fd.contractLanguage === "RO/SE" && (
+            <>
+              <p><strong>Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</strong></p>
+              <p className="info-sv">Endast beordrad övertid ersätts med övertidsersättning.</p>
+            </>
+          )}
+          {fd.contractLanguage === "TH/SE" && (
+            <>
+              <p><strong>เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</strong></p>
+              <p className="info-sv">Endast beordrad övertid ersätts med övertidsersättning.</p>
+            </>
+          )}
         </div>
 
         <div className="field-grid-2">

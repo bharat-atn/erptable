@@ -197,6 +197,7 @@ export function ContractDetailsStep({
   const [monthlyBasic3, setMonthlyBasic3] = useState("");
   const [monthlyPremium3, setMonthlyPremium3] = useState("");
   const [companyPremiumPercent, setCompanyPremiumPercent] = useState("0");
+  const [contractLanguage, setContractLanguage] = useState("EN/SE");
   const [pieceWorkPay, setPieceWorkPay] = useState(false);
   const [otherSalaryBenefits, setOtherSalaryBenefits] = useState(false);
   const [showSalaryPrompt, setShowSalaryPrompt] = useState(false);
@@ -537,6 +538,7 @@ export function ContractDetailsStep({
       if (fd.monthlyBasic3) setMonthlyBasic3(fd.monthlyBasic3);
       if (fd.monthlyPremium3) setMonthlyPremium3(fd.monthlyPremium3);
       if (fd.companyPremiumPercent !== undefined) setCompanyPremiumPercent(fd.companyPremiumPercent);
+      if (fd.contractLanguage) setContractLanguage(fd.contractLanguage);
       if (fd.rateApplied) setRateApplied(fd.rateApplied);
       if (fd.rateApplied2) setRateApplied2(fd.rateApplied2);
       if (fd.rateApplied3) setRateApplied3(fd.rateApplied3);
@@ -696,7 +698,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
     hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3, rateApplied3,
-    companyPremiumPercent,
+    companyPremiumPercent, contractLanguage,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText,
@@ -716,7 +718,7 @@ export function ContractDetailsStep({
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
     hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3, rateApplied3,
-    companyPremiumPercent,
+    companyPremiumPercent, contractLanguage,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText, salaryDeductions, schedulingData, activeSection,
@@ -2290,14 +2292,31 @@ export function ContractDetailsStep({
                 </div>
               ))}
 
-              {/* Overtime clause */}
+              {/* Overtime clause - language-aware */}
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-xs">
-                  <p className="font-semibold text-foreground">Only ordered overtime will be compensated with overtime pay.</p>
-                  <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
-                  <p className="text-muted-foreground italic">Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</p>
-                  <p className="text-muted-foreground italic">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
+                  {(contractLanguage === "EN/SE") && (
+                    <>
+                      <p className="font-semibold text-foreground">Only ordered overtime will be compensated with overtime pay.</p>
+                      <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                    </>
+                  )}
+                  {(contractLanguage === "SE") && (
+                    <p className="font-semibold text-foreground">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                  )}
+                  {(contractLanguage === "RO/SE") && (
+                    <>
+                      <p className="font-semibold text-foreground">Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare.</p>
+                      <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                    </>
+                  )}
+                  {(contractLanguage === "TH/SE") && (
+                    <>
+                      <p className="font-semibold text-foreground">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
+                      <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                    </>
+                  )}
                 </div>
               </div>
 
