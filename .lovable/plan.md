@@ -1,43 +1,83 @@
 
-
-# Reorder Section 3: "Number of Job Types" Selector First
+# Section 8 (Salary) Enhancements: Multi-Job-Type Rates, Company Premium, and Overtime Clause
 
 ## Summary
-Move the "Number of Job Types" selector to the top of Section 3 (right after "Main Duties"), and make it a gatekeeper: nothing below it (job type inputs, experience levels) appears until a selection is made. This removes confusion about how many job types to fill in.
+Three major changes to Section 8:
+1. Support salary lookup for up to 3 job types (matching Section 3 selections)
+2. Add a company salary premium setting (percentage above official rate, e.g. 5-10%)
+3. Add an overtime clause between Monthly Salary and Piece-work pay
 
-## Changes
+---
 
-### File: `src/components/dashboard/ContractDetailsStep.tsx`
+## 1. Multi-Job-Type Official Rate Lookup
 
-**1. Change default state for `numberOfJobTypes`**
-- Change from `"1"` to `""` (empty string) so no selection is pre-made
-- Update the type from `"1" | "2" | "3"` to `"" | "1" | "2" | "3"`
+Currently, the "Official Skogsavtalet Rate" card only looks up rates for Job Type 1. With up to 3 job types selected in Section 3, the salary section needs to show rates for each.
 
-**2. Move the "Number of Job Types" selector block (lines 1322-1343) to right after "Main Duties" (after line 1269)**
-- Place it immediately below the "Employed as / Main Duties" field
-- Add a red validation highlight (same destructive border style) when no selection has been made, prompting the user to choose
-- Keep the bilingual helper text
+**What changes:**
+- The single "Official Rate" card becomes a list of rate cards -- one per selected job type (based on `numberOfJobTypes`, `jobType`, `jobType2`, `jobType3`)
+- Each card shows the job type name, its official hourly and monthly rate, age group, and period
+- The "Apply Rate" button on each card fills that specific job type's salary fields
+- State variables expand: instead of single `hourlyBasic`/`monthlyBasic`, we add `hourlyBasic2`, `monthlyBasic2`, `hourlyBasic3`, `monthlyBasic3` (and corresponding premium fields)
+- The Hourly Pay and Monthly Salary input sections repeat per job type, displayed in a clear grouped layout (e.g., "Job Type 1: Planting / Plantering" with its own hourly/monthly inputs)
 
-**3. Conditionally show Job Type 1 + Experience Level 1**
-- Wrap the existing Job Type 1 and Experience Level 1 fields (lines 1271-1320) so they only render when `numberOfJobTypes` is `"1"`, `"2"`, or `"3"` (i.e., not empty)
-- This means: pick a number first, then the system reveals the corresponding inputs
+**Validation updates:**
+- `section8Missing` checks each active job type's required salary field
 
-**4. Job Types 2 and 3 remain conditional as they are**
-- Job Type 2 appears when numberOfJobTypes is "2" or "3"
-- Job Type 3 appears when numberOfJobTypes is "3"
+---
 
-**5. Update validation logic**
-- Add `numberOfJobTypes` as a required field in `section3Missing` -- if empty, push "Number of Job Types"
-- Keep existing validation for job types 1/2/3 and their experience levels
+## 2. Company Salary Premium (Above Official Rate)
 
-**6. Update `getFormData` restoration logic**
-- When restoring from saved `form_data`, if `numberOfJobTypes` is not set but `jobType` exists, default to `"1"` (backward compatibility with existing drafts)
-- Otherwise keep the saved value
+A new feature allowing companies to set a default premium percentage above the official forestry contract rate.
 
-## What the user will experience
-1. Open Section 3 -- sees "Main Duties" field, then a red-highlighted "Number of Job Types" selector with no default
-2. Selects "1" -- one pair of Job Type + Experience Level inputs appears
-3. Selects "2" -- two pairs appear
-4. Selects "3" -- three pairs appear
-5. Cannot proceed without making a selection
+**What changes:**
+- Add a "Company Premium / Företagspremie" input below the official rate lookup area
+- A percentage input (e.g., 5%, 10%) stored in `form_data` as `companyPremiumPercent`
+- Default value: 0 (no premium)
+- When "Apply Rate" is clicked, the system calculates: `official_rate * (1 + premium/100)` and fills the basic pay field with the adjusted amount
+- Visual feedback shows: "Official rate: 147.90 SEK/hr + 5% premium = 155.30 SEK/hr"
+- A safeguard prevents entering a negative premium (never below official rate)
+- This premium setting persists per contract via `form_data`
 
+---
+
+## 3. Overtime Clause Between Monthly Salary and Piece-work Pay
+
+A new bilingual text block inserted between the Monthly Salary section and the Piece-work Pay checkbox.
+
+**What changes:**
+- Add a styled info block (similar to the existing reference notes box) with the text:
+  - English: "Only ordered overtime will be compensated with overtime pay."
+  - Swedish: "Endast beordrad övertid ersätts med övertidsersättning."
+  - Romanian: "Doar orele suplimentare dispuse vor fi compensate cu plata orelor suplimentare."
+  - Thai: "เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา"
+- Displayed as a compact, always-visible notice with an info icon
+- Positioned after the Monthly Salary box and before the Piece-work pay checkbox
+
+---
+
+## Technical Details
+
+### New State Variables (`ContractDetailsStep.tsx`)
+```text
+companyPremiumPercent: string (default "0")
+hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2: string
+hourlyBasic3, hourlyPremium3, monthlyBasic3, monthlyPremium3: string
+```
+
+### Modified Functions
+- `getOfficialRate()` -- becomes `getOfficialRateForJob(jobTypeName, expLevel)` to support per-job-type lookups
+- `handleApplyRate()` -- takes a job index parameter, applies premium, fills correct state variables
+- `getFormData()` -- includes all new fields
+- Restoration logic in `useEffect` -- restores new fields from saved `form_data`
+- `section8Missing` validation -- checks all active job types
+
+### Auto-save
+All new fields added to `getFormData()` and its dependency array for seamless auto-save.
+
+### Contract Document (`ContractDocument.tsx`)
+- Section 8 rendering updated to display salary data for each job type
+- Overtime clause rendered in the document
+
+### File Modified
+- `src/components/dashboard/ContractDetailsStep.tsx` (primary)
+- `src/components/dashboard/ContractDocument.tsx` (contract rendering)
