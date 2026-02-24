@@ -143,8 +143,9 @@ export function ContractIdSettingsView() {
 
   const currentYearContractCount = contractCountsByYear[currentYear] ?? 0;
   const previewNext = currentYearContractCount + 1;
+  const shortYear = String(currentYear).slice(-2);
   const preview = form.include_year
-    ? `${form.prefix}${form.separator}${currentYear}${form.separator}${String(previewNext).padStart(form.padding, "0")}`
+    ? `${form.prefix}${form.separator}${shortYear}${form.separator}${String(previewNext).padStart(form.padding, "0")}`
     : `${form.prefix}${form.separator}${String(previewNext).padStart(form.padding, "0")}`;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading...</p>;
@@ -282,7 +283,7 @@ export function ContractIdSettingsView() {
                       <p className="text-sm text-muted-foreground">
                         {actualCount} contract{actualCount !== 1 ? "s" : ""} issued → next:{" "}
                         <span className="font-mono">
-                          {form.prefix}{form.separator}{counter.year}{form.separator}
+                          {form.prefix}{form.separator}{String(counter.year).slice(-2)}{form.separator}
                           {String(nextNum).padStart(form.padding, "0")}
                         </span>
                       </p>
