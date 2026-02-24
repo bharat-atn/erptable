@@ -565,6 +565,23 @@ export function ContractDetailsStep({
     load();
   }, [contractId, initialLoaded]);
 
+  // Reset rateApplied flags when job type, experience level, or premium % changes
+  // (skip during initial load to avoid clearing persisted values)
+  useEffect(() => {
+    if (!initialLoaded) return;
+    setRateApplied(false);
+  }, [jobType, experienceLevel, companyPremiumPercent]);
+
+  useEffect(() => {
+    if (!initialLoaded) return;
+    setRateApplied2(false);
+  }, [jobType2, experienceLevel2, companyPremiumPercent]);
+
+  useEffect(() => {
+    if (!initialLoaded) return;
+    setRateApplied3(false);
+  }, [jobType3, experienceLevel3, companyPremiumPercent]);
+
   // Fetch agreement periods for salary lookup
   const { data: agreementData } = useQuery({
     queryKey: ["agreement-lookup"],
