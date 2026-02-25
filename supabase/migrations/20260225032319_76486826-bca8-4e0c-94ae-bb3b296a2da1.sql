@@ -1,0 +1,2 @@
+INSERT INTO public.invitation_template_fields (field_key, section, label_en, label_sv, label_ro, label_th, is_visible, is_required, sort_order, field_type)
+VALUES ('work_permit_document', '4', 'Work Permit / Working Visa', 'Arbetstillstånd / Arbetsvisum', 'Permis de muncă / Viză de lucru', 'ใบอนุญาตทำงาน / วีซ่าทำงาน', true, false, 20, 'file');
