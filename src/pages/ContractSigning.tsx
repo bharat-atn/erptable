@@ -3,9 +3,11 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
-import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar } from "lucide-react";
+import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar, RotateCcw, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
@@ -113,7 +115,6 @@ function generateSchedule(schedData: Record<string, any>): ScheduleDay[] {
   });
 }
 
-// ... keep existing code (SigningData interface)
 interface SigningData {
   contract_id: string;
   contract_code: string;
@@ -148,6 +149,13 @@ export default function ContractSigning() {
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
+
+  // Place & Date for signing
+  const [signingPlace, setSigningPlace] = useState("");
+  const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Signature preview (redo flow)
+  const [pendingSignature, setPendingSignature] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -230,7 +238,7 @@ export default function ContractSigning() {
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const canSign = cocReviewed && cocConfirmed && contractConfirmed && (scheduleReviewed || !schedData);
+  const canSign = cocReviewed && cocConfirmed && contractConfirmed && (scheduleReviewed || !schedData) && signingPlace.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
@@ -312,9 +320,10 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  {/* Embedded PDF viewer — Google Docs Viewer for cross-browser support */}
+                  {/* key={cocLanguage} forces iframe re-creation on language change */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
                     <iframe
+                      key={cocLanguage}
                       src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
@@ -520,7 +529,34 @@ export default function ContractSigning() {
                   </label>
                 </div>
 
-                {/* Signature canvas - only enabled when both confirmations are checked */}
+                {/* Place & Date fields */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                    Place and Date / Plats och datum
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-place" className="text-sm">Place / Plats *</Label>
+                      <Input
+                        id="signing-place"
+                        value={signingPlace}
+                        onChange={(e) => setSigningPlace(e.target.value)}
+                        placeholder="e.g. Stockholm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-date" className="text-sm">Date / Datum</Label>
+                      <Input
+                        id="signing-date"
+                        type="date"
+                        value={signingDate}
+                        onChange={(e) => setSigningDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signing error */}
                 {signingError && (
                   <Alert variant="destructive" className="mb-2">
                     <AlertTriangle className="h-4 w-4" />
@@ -534,24 +570,57 @@ export default function ContractSigning() {
                 )}
 
                 {canSign ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Draw your signature below to sign the contract. /
-                      <span className="italic"> Rita din namnteckning nedan för att signera avtalet.</span>
-                    </p>
-                    <SignatureCanvas onSave={handleSign} disabled={submitting} />
-                    {submitting && (
-                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Submitting signature...
+                  pendingSignature ? (
+                    /* Signature preview & redo */
+                    <div className="space-y-4">
+                      <p className="text-sm font-medium">
+                        Review your signature / Granska din namnteckning:
+                      </p>
+                      <div className="rounded-lg border-2 border-primary/30 bg-background p-4">
+                        <img
+                          src={pendingSignature}
+                          alt="Your signature"
+                          className="max-h-[120px] mx-auto"
+                        />
                       </div>
-                    )}
-                  </>
+                      <div className="flex gap-3 justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => setPendingSignature(null)}
+                          disabled={submitting}
+                          className="gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Redo / Gör om
+                        </Button>
+                        <Button
+                          onClick={() => handleSign(pendingSignature)}
+                          disabled={submitting}
+                          className="gap-2"
+                        >
+                          {submitting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                          {submitting ? "Submitting..." : "Submit Signature / Skicka in"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Draw your signature below to sign the contract. /
+                        <span className="italic"> Rita din namnteckning nedan för att signera avtalet.</span>
+                      </p>
+                      <SignatureCanvas onSave={(dataUrl) => setPendingSignature(dataUrl)} disabled={submitting} />
+                    </>
+                  )
                 ) : (
                   <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-8 text-center">
                     <p className="text-sm text-muted-foreground">
-                      Please review the Code of Conduct and confirm both checkboxes above to enable signing. /
-                      <span className="italic"> Granska uppförandekoden och bekräfta båda kryssrutorna ovan för att aktivera signering.</span>
+                      Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing. /
+                      <span className="italic"> Granska uppförandekoden, bekräfta båda kryssrutorna och ange ort för att aktivera signering.</span>
                     </p>
                   </div>
                 )}
