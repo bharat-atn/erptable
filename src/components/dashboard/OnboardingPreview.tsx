@@ -3,39 +3,15 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { OnboardingWizard, PersonalInfo, type OnboardingLanguage } from "@/components/onboarding/OnboardingWizard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Demo data to show in preview mode
-const DEMO_DATA: Partial<PersonalInfo> = {
-  firstName: "John",
-  middleName: "Michael",
-  lastName: "Doe",
-  preferredName: "Johnny",
-  address1: "123 Main Street",
-  address2: "Apt 4B",
-  zipCode: "10001",
-  city: "New York",
-  stateProvince: "NY",
-  country: "USA",
-  birthday: "1990-05-15",
-  countryOfBirth: "USA",
-  citizenship: "USA",
-  mobilePhone: "5551234567",
-  email: "john.doe@example.com",
-  bankName: "BANCA TRANSILVANIA S.A.",
-  bicCode: "BTRLRO22",
-  bankAccountNumber: "RO49BTRL1234567890123456",
-  emergencyFirstName: "Jane",
-  emergencyLastName: "Doe",
-  emergencyPhone: "5559876543",
-};
+import { toast } from "sonner";
 
 interface OnboardingPreviewProps {
   onClose: () => void;
 }
 
 export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
-  const [formData, setFormData] = useState<Partial<PersonalInfo>>(DEMO_DATA);
-  const [selectedBank, setSelectedBank] = useState<string>("BANCA TRANSILVANIA S.A.");
+  const [formData, setFormData] = useState<Partial<PersonalInfo>>({});
+  const [selectedBank, setSelectedBank] = useState<string>("");
   const [isOtherBank, setIsOtherBank] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [workPermitFile, setWorkPermitFile] = useState<File | null>(null);
@@ -67,9 +43,19 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
     }
   };
 
+  const handleAiFill = (data: Record<string, any>) => {
+    // Handle bank selection from AI data
+    if (data.bankName) {
+      setSelectedBank(data.bankName);
+      setIsOtherBank(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Preview mode - do nothing
+    toast.success("Preview mode — form submission simulated successfully!", {
+      description: "In production, this data would be saved to the database.",
+    });
   };
 
   return (
@@ -104,7 +90,7 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
         updateField={updateField}
         onSubmit={handleSubmit}
         isSubmitting={false}
-        isPreview={true}
+        isPreview={false}
         selectedBank={selectedBank}
         isOtherBank={isOtherBank}
         onBankSelect={handleBankSelect}
@@ -113,6 +99,8 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
         workPermitFile={workPermitFile}
         onWorkPermitFileChange={handleWorkPermitFileChange}
         language={previewLanguage}
+        showAiFill={true}
+        onAiFill={handleAiFill}
       />
     </div>
   );
