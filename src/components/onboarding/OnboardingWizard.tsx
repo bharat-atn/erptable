@@ -35,6 +35,16 @@ const FALLBACK_BANKS = [
 
 const COUNTRY_NAMES = countries.map(c => c.name);
 
+/* ─── Priority countries for phone prefix dropdowns ─── */
+const PRIORITY_COUNTRY_CODES = ["RO", "TH", "SE"];
+const priorityCountries = countries.filter(c => PRIORITY_COUNTRY_CODES.includes(c.code));
+const otherCountries = countries.filter(c => !PRIORITY_COUNTRY_CODES.includes(c.code));
+
+/* ─── Priority country names for country selectors ─── */
+const PRIORITY_COUNTRY_NAMES = ["Romania", "Thailand", "Sweden"];
+const priorityCountryNames = COUNTRY_NAMES.filter(n => PRIORITY_COUNTRY_NAMES.includes(n));
+const otherCountryNames = COUNTRY_NAMES.filter(n => !PRIORITY_COUNTRY_NAMES.includes(n));
+
 /* ─── Date validation helpers ─── */
 const today = new Date();
 const MIN_AGE = 16;
@@ -531,7 +541,9 @@ export function OnboardingWizard({
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
-                     {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      <div className="border-t border-border my-1" />
+                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -554,11 +566,25 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Date of Birth" sv="Födelsedatum" />
                 <Input
-                  type="date"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="YYYY-MM-DD"
                   value={formData.birthday || ""}
-                  onChange={(e) => updateField("birthday", e.target.value)}
-                  min={`${minBirthYear}-01-01`}
-                  max={`${maxBirthYear}-12-31`}
+                  onChange={(e) => {
+                    // Auto-format: allow digits and auto-insert dashes for YYYY-MM-DD
+                    let v = e.target.value.replace(/[^\d-]/g, "");
+                    // Remove all dashes first, then reformat
+                    const digits = v.replace(/-/g, "");
+                    if (digits.length <= 4) {
+                      v = digits;
+                    } else if (digits.length <= 6) {
+                      v = `${digits.slice(0, 4)}-${digits.slice(4)}`;
+                    } else {
+                      v = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
+                    }
+                    updateField("birthday", v);
+                  }}
+                  maxLength={10}
                   className={cn("h-11 text-sm font-medium", fieldError(!formData.birthday || !isBirthdayReasonable(formData.birthday || "")))}
                 />
                 <p className="text-[10px] text-muted-foreground">ISO 8601 format: YYYY-MM-DD</p>
@@ -611,7 +637,9 @@ export function OnboardingWizard({
                   }}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      <div className="border-t border-border my-1" />
+                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -623,7 +651,9 @@ export function OnboardingWizard({
                   }}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      <div className="border-t border-border my-1" />
+                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -640,7 +670,13 @@ export function OnboardingWizard({
                   >
                     <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {countries.map((c) => (
+                      {priorityCountries.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
+                      <div className="border-t border-border my-1" />
+                      {otherCountries.map((c) => (
                         <SelectItem key={c.code} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
@@ -705,7 +741,13 @@ export function OnboardingWizard({
                   >
                     <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {countries.map((c) => (
+                      {priorityCountries.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
+                      <div className="border-t border-border my-1" />
+                      {otherCountries.map((c) => (
                         <SelectItem key={c.code} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
