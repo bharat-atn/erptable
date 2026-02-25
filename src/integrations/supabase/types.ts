@@ -71,6 +71,45 @@ export type Database = {
           },
         ]
       }
+      app_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string
+          release_date: string
+          release_time_utc: string
+          release_type: string
+          sequence_number: number
+          status: string
+          version_tag: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string
+          release_date?: string
+          release_time_utc?: string
+          release_type?: string
+          sequence_number: number
+          status?: string
+          version_tag: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string
+          release_date?: string
+          release_time_utc?: string
+          release_type?: string
+          sequence_number?: number
+          status?: string
+          version_tag?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string

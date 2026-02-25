@@ -26,11 +26,16 @@ import {
   X,
   ChevronsUpDown,
   Check,
+  GitBranch,
+  Tag,
+  Calendar,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { type AppDefinition, getIcon, getColor } from "./AppLauncher";
 import { toast } from "sonner";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
@@ -89,6 +94,7 @@ const defaultSettingsItems: MenuItem[] = [
 ];
 
 const defaultConfigItems: MenuItem[] = [
+  { id: "version-management", label: "Version Management", icon: GitBranch },
   { id: "process-guide", label: "Process Guide", icon: BookOpen },
   { id: "audit-log", label: "Audit Log", icon: Shield },
 ];
@@ -561,6 +567,108 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/* ─── Version Badge ─────────────────────────────────────────────── */
+
+const releaseTypeColors: Record<string, string> = {
+  alpha: "text-amber-600",
+  beta: "text-blue-600",
+  rc: "text-orange-600",
+  release: "text-emerald-600",
+};
+
+const releaseTypeLabels: Record<string, string> = {
+  alpha: "Alpha",
+  beta: "Beta",
+  rc: "RC",
+  release: "Release",
+};
+
+function VersionBadge({ collapsed }: { collapsed: boolean }) {
+  const { data: latestVersion } = useQuery({
+    queryKey: ["latest-version"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("app_versions")
+        .select("*")
+        .eq("status", "published")
+        .order("release_date", { ascending: false })
+        .order("sequence_number", { ascending: false })
+        .limit(1)
+        .single();
+      if (error) return null;
+      return data as any;
+    },
+    refetchInterval: 60000,
+  });
+
+  if (!latestVersion) return null;
+
+  const typeColor = releaseTypeColors[latestVersion.release_type] ?? "text-muted-foreground";
+  const typeLabel = releaseTypeLabels[latestVersion.release_type] ?? latestVersion.release_type;
+  const timeGMT = new Date(latestVersion.release_time_utc).toLocaleTimeString("en-GB", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" }) + " GMT";
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeLocal = new Date(latestVersion.release_time_utc).toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }) + ` ${tz.split("/").pop()}`;
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="px-1.5 py-1 flex justify-center">
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", typeColor)}>
+              <Tag className="w-3.5 h-3.5" />
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="max-w-[220px]">
+          <p className="font-mono font-semibold text-xs">{latestVersion.version_tag}</p>
+          <p className={cn("text-[10px] font-medium", typeColor)}>{typeLabel}</p>
+          {latestVersion.notes && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{latestVersion.notes}</p>}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
+          <Tag className={cn("w-3.5 h-3.5 shrink-0", typeColor)} />
+          <span className="font-mono font-semibold text-sidebar-foreground truncate">{latestVersion.version_tag}</span>
+          <span className={cn("text-[10px] font-medium ml-auto shrink-0", typeColor)}>{typeLabel}</span>
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent side="right" align="end" sideOffset={8} className="w-72">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-mono font-bold text-sm">{latestVersion.version_tag}</span>
+            <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
+              latestVersion.release_type === "release" ? "bg-emerald-500/10 text-emerald-600" :
+              latestVersion.release_type === "rc" ? "bg-orange-500/10 text-orange-600" :
+              latestVersion.release_type === "beta" ? "bg-blue-500/10 text-blue-600" :
+              "bg-amber-500/10 text-amber-600"
+            )}>{typeLabel}</span>
+          </div>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3 h-3" />
+              <span>Released {new Date(latestVersion.release_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-3 h-3" />
+              <span>{timeGMT} / {timeLocal}</span>
+            </div>
+          </div>
+          {latestVersion.notes && (
+            <div className="pt-1 border-t border-border">
+              <p className="text-xs text-muted-foreground leading-relaxed">{latestVersion.notes}</p>
+            </div>
+          )}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 /* ─── Main Sidebar ──────────────────────────────────────────────── */
 
 export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange, appId, apps, onSwitchApp, userRole }: SidebarProps) {
@@ -748,6 +856,11 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
             )}
           </div>
         )}
+
+        {/* Version Badge */}
+        <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "px-1.5 pt-1" : "px-3 pt-2")}>
+          <VersionBadge collapsed={collapsed} />
+        </div>
 
         {/* Sign Out */}
         <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "p-1.5" : "px-3 pt-2")}>

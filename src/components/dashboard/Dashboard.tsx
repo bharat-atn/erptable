@@ -18,6 +18,7 @@ import { IsoStandardsView } from "./IsoStandardsView";
 import { AuditLogView } from "./AuditLogView";
 import { BankListView } from "./BankListView";
 import { UserManagementView } from "./UserManagementView";
+import { VersionManagementView } from "./VersionManagementView";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
@@ -81,6 +82,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "iso-standards": return <IsoStandardsView />;
       case "audit-log": return <AuditLogView />;
       case "user-management": return <UserManagementView />;
+      case "version-management": return <VersionManagementView />;
       default: return <DashboardView />;
     }
   };
