@@ -368,9 +368,9 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
 
         {/* ── §8 SALARY DETAILS ── */}
         <h2 className="section-title page-break-avoid">§8. {bl(CL.s8_title, lang)}</h2>
-        <div className="info-block" style={{ borderLeftColor: '#b91c1c', background: 'rgba(185, 28, 28, 0.06)' }}>
-          <p style={{ color: '#b91c1c' }}><strong>{pt(CL.overtimeClause, lang)}</strong></p>
-          {!isSEOnly && <p className="info-sv" style={{ color: '#b91c1c', opacity: 0.75 }}>{svt(CL.overtimeClause)}</p>}
+        <div className="info-block info-block-alert">
+          <p><strong>{pt(CL.overtimeClause, lang)}</strong></p>
+          {!isSEOnly && <p className="info-sv">{svt(CL.overtimeClause)}</p>}
         </div>
 
         <div className="field-grid-2">

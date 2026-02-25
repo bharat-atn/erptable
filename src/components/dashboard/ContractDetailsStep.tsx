@@ -374,6 +374,8 @@ export function ContractDetailsStep({
   .signatures-section { page-break-inside: avoid; break-inside: avoid; }
   .field-grid-2, .field-grid-3 { page-break-inside: avoid; break-inside: avoid; }
   .info-block { page-break-inside: avoid; break-inside: avoid; }
+  .info-block-alert { border-left: 3px solid #b91c1c !important; background: rgba(185,28,28,0.06) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .info-block-alert p { color: #b91c1c !important; }
   .deduction-table { page-break-inside: avoid; break-inside: avoid; }
   h2.section-title { page-break-after: avoid; break-after: avoid; }
 

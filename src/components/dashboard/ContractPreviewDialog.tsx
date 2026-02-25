@@ -67,6 +67,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   .subsection-label { font-size: 10px; font-weight: 600; margin: 8px 0 4px; color: #444; }
   .info-block { background: #f8f8f8; padding: 8px 10px; border-radius: 3px; margin-bottom: 8px; font-size: 10px; }
   .info-sv, .info-sv-inline { color: #666; font-style: italic; }
+  .info-block-alert { border-left: 3px solid #b91c1c; background: rgba(185,28,28,0.06); }
+  .info-block-alert p { color: #b91c1c; }
   .info-list { margin: 4px 0; padding-left: 18px; }
   .info-list li { margin-bottom: 2px; }
   .info-text-muted { color: #999; font-style: italic; }
