@@ -729,48 +729,48 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="First Name" sv="Förnamn" />
-                  <Input value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.firstName))} />
+                  <Input tabIndex={1} value={formData.firstName || ""} onChange={(e) => updateField("firstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.firstName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Middle Name" sv="Mellannamn" required={false} />
-                  <Input value={formData.middleName || ""} onChange={(e) => updateField("middleName", e.target.value)} className="h-11 text-sm font-medium" />
+                  <Input tabIndex={2} value={formData.middleName || ""} onChange={(e) => updateField("middleName", e.target.value)} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Last Name" sv="Efternamn" />
-                  <Input value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.lastName))} />
+                  <Input tabIndex={3} value={formData.lastName || ""} onChange={(e) => updateField("lastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.lastName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Preferred Name" sv="Tilltalsnamn" />
-                  <Input value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.preferredName))} />
+                  <Input tabIndex={4} value={formData.preferredName || ""} onChange={(e) => updateField("preferredName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.preferredName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 1" sv="Adress 1" />
-                  <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.address1))} />
+                  <Input tabIndex={5} value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.address1))} />
                   <AiFieldHint validation={aiValidation.address1} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 2" sv="Adress 2" required={false} />
-                  <Input value={formData.address2 || ""} onChange={(e) => updateField("address2", e.target.value)} className="h-11 text-sm font-medium" />
+                  <Input tabIndex={6} value={formData.address2 || ""} onChange={(e) => updateField("address2", e.target.value)} className="h-11 text-sm font-medium" />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="ZIP / Postal Code" sv="Postnummer" />
-                  <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.zipCode))} />
+                  <Input tabIndex={7} value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.zipCode))} />
                   <AiFieldHint validation={aiValidation.zipCode} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="City" sv="Ort" />
-                  <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.city))} />
+                  <Input tabIndex={8} value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.city))} />
                   <AiFieldHint validation={aiValidation.city} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="State / Province" sv="Län / Region" />
-                  <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.stateProvince))} />
+                  <Input tabIndex={9} value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.stateProvince))} />
                   <AiFieldHint validation={aiValidation.stateProvince} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Country" sv="Land" />
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
-                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger tabIndex={10} className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       <div className="border-t border-border my-1" />
@@ -797,6 +797,7 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Date of Birth" sv="Födelsedatum" />
                 <Input
+                  tabIndex={11}
                   type="text"
                   inputMode="numeric"
                   placeholder="YYYY-MM-DD"
@@ -830,6 +831,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Swedish Coordination Number" sv="Svenskt samordningsnummer" required={false} />
                   <Input
+                    tabIndex={12}
                     value={formData.swedishCoordinationNumber || ""}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
@@ -847,6 +849,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Swedish Personal Number" sv="Svenskt personnummer" required={false} />
                   <Input
+                    tabIndex={13}
                     value={formData.swedishPersonalNumber || ""}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
@@ -869,7 +872,7 @@ export function OnboardingWizard({
                     updateField("countryOfBirth", v);
                     if (!formData.citizenship) updateField("citizenship", v);
                   }}>
-                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
+                    <SelectTrigger tabIndex={14} className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
                       {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       <div className="border-t border-border my-1" />
@@ -883,7 +886,7 @@ export function OnboardingWizard({
                     updateField("citizenship", v);
                     if (!formData.countryOfBirth) updateField("countryOfBirth", v);
                   }}>
-                    <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
+                    <SelectTrigger tabIndex={15} className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                     <SelectContent>
                       {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       <div className="border-t border-border my-1" />
@@ -902,7 +905,7 @@ export function OnboardingWizard({
                       updateField("mobilePhone", `${prefix} ${digits}`);
                     }}
                   >
-                    <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
+                    <SelectTrigger tabIndex={16} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
                       {priorityCountries.map((c) => (
                         <SelectItem key={c.code} value={c.dialCode}>
@@ -918,6 +921,7 @@ export function OnboardingWizard({
                     </SelectContent>
                   </Select>
                   <Input
+                    tabIndex={17}
                     type="tel"
                     inputMode="numeric"
                     value={(formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "")}
@@ -946,6 +950,7 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Email" sv="E-post" />
                 <Input
+                  tabIndex={18}
                   type="email"
                   value={formData.email || ""}
                   onChange={(e) => updateField("email", e.target.value)}
@@ -970,11 +975,11 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact First Name" sv="Förnamn" />
-                  <Input value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyFirstName))} />
+                  <Input tabIndex={19} value={formData.emergencyFirstName || ""} onChange={(e) => updateField("emergencyFirstName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyFirstName))} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact Last Name" sv="Efternamn" />
-                  <Input value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyLastName))} />
+                  <Input tabIndex={20} value={formData.emergencyLastName || ""} onChange={(e) => updateField("emergencyLastName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.emergencyLastName))} />
                 </div>
               </div>
               <div className="space-y-1.5">
@@ -987,7 +992,7 @@ export function OnboardingWizard({
                       updateField("emergencyPhone", `${prefix} ${digits}`);
                     }}
                   >
-                    <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
+                    <SelectTrigger tabIndex={21} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
                       {priorityCountries.map((c) => (
                         <SelectItem key={c.code} value={c.dialCode}>
@@ -1003,6 +1008,7 @@ export function OnboardingWizard({
                     </SelectContent>
                   </Select>
                   <Input
+                    tabIndex={22}
                     type="tel"
                     inputMode="numeric"
                     value={(formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "")}
@@ -1045,7 +1051,7 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
                 <Select value={selectedBankCountry} onValueChange={(val) => { setSelectedBankCountry(val); onBankSelect(""); setBankListExpanded(true); }}>
-                  <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!selectedBankCountry))}>
+                  <SelectTrigger tabIndex={23} className={cn("h-11 text-sm font-medium", fieldError(!selectedBankCountry))}>
                     <SelectValue placeholder="Choose country / Välj land" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1126,12 +1132,13 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
-                  <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))} />
+                  <Input tabIndex={24} value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))} />
                   <AiFieldHint validation={aiValidation.bicCode} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
+                    tabIndex={25}
                     inputMode="numeric"
                     value={formData.bankAccountNumber || ""}
                     onChange={(e) => {

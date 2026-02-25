@@ -185,6 +185,25 @@ export default function OnboardingPortal() {
   }
 
   if (isSubmitted) {
+    const lang = (invitation as any)?.language || "en_sv";
+    const confirmationTexts: Record<string, { title: string; message: string }[]> = {
+      en: [{ title: "Onboarding Complete!", message: "Thank you for completing your onboarding. Our HR team will be in touch shortly." }],
+      sv: [{ title: "Registrering slutförd!", message: "Tack för att du har slutfört din registrering. Vår HR-avdelning kommer att kontakta dig inom kort." }],
+      en_sv: [
+        { title: "Onboarding Complete!", message: "Thank you for completing your onboarding. Our HR team will be in touch shortly." },
+        { title: "Registrering slutförd!", message: "Tack för att du har slutfört din registrering. Vår HR-avdelning kommer att kontakta dig inom kort." },
+      ],
+      ro_en: [
+        { title: "Înregistrare finalizată!", message: "Vă mulțumim că ați completat înregistrarea. Echipa noastră HR vă va contacta în curând." },
+        { title: "Onboarding Complete!", message: "Thank you for completing your onboarding. Our HR team will be in touch shortly." },
+      ],
+      th_en: [
+        { title: "การลงทะเบียนเสร็จสมบูรณ์!", message: "ขอบคุณที่ลงทะเบียนเรียบร้อยแล้ว ทีม HR ของเราจะติดต่อคุณในเร็วๆ นี้" },
+        { title: "Onboarding Complete!", message: "Thank you for completing your onboarding. Our HR team will be in touch shortly." },
+      ],
+    };
+    const texts = confirmationTexts[lang] || confirmationTexts.en_sv;
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -192,10 +211,14 @@ export default function OnboardingPortal() {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h2 className="text-lg font-semibold mb-2">Onboarding Complete!</h2>
-            <p className="text-muted-foreground text-sm">
-              Thank you for completing your onboarding. Our HR team will be in touch shortly.
-            </p>
+            {texts.map((t, i) => (
+              <div key={i} className={i > 0 ? "mt-4 pt-4 border-t border-border" : ""}>
+                <h2 className={`text-lg font-semibold mb-2 ${i > 0 ? "text-base text-muted-foreground" : ""}`}>{t.title}</h2>
+                <p className={`text-sm ${i > 0 ? "text-muted-foreground/70" : "text-muted-foreground"}`}>
+                  {t.message}
+                </p>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
