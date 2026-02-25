@@ -65,14 +65,38 @@ function extractPhoneDigits(phone: string): string {
   return (phone || "").replace(/^\+[\d-]+\s*/, "").replace(/\D/g, "");
 }
 
+function getPhonePrefix(phone: string): string {
+  return phone?.match(/^\+[\d-]+/)?.[0] || "";
+}
+
+/* ─── Country-aware phone length rules ─── */
+const PHONE_LENGTH_RULES: Record<string, { min: number; max: number; placeholder: string }> = {
+  "+46": { min: 7, max: 9, placeholder: "7XXXXXXXX (7-9 digits)" },     // Sweden
+  "+40": { min: 9, max: 10, placeholder: "7XXXXXXXX (9-10 digits)" },    // Romania
+  "+66": { min: 8, max: 9, placeholder: "8XXXXXXXX (8-9 digits)" },      // Thailand
+  "+373": { min: 8, max: 8, placeholder: "XXXXXXXX (8 digits)" },        // Moldova
+};
+const DEFAULT_PHONE_RULE = { min: 4, max: 15, placeholder: "Phone number" };
+
+function getPhoneRule(phone: string) {
+  const prefix = getPhonePrefix(phone);
+  return PHONE_LENGTH_RULES[prefix] || DEFAULT_PHONE_RULE;
+}
+
 function isPhoneValid(phone: string): boolean {
   const digits = extractPhoneDigits(phone);
-  return digits.length >= 7 && digits.length <= 9;
+  const rule = getPhoneRule(phone);
+  return digits.length >= rule.min && digits.length <= rule.max;
 }
 
 function isPhoneTooLong(phone: string): boolean {
   const digits = extractPhoneDigits(phone);
-  return digits.length > 9;
+  const rule = getPhoneRule(phone);
+  return digits.length > rule.max;
+}
+
+function getPhoneMaxDigits(phone: string): number {
+  return getPhoneRule(phone).max;
 }
 
 function isBankAccountValid(account: string): boolean {
@@ -98,7 +122,7 @@ export const personalInfoSchema = z.object({
   citizenship: z.string().min(1, "Citizenship is required"),
   mobilePhone: z.string().min(1, "Phone number is required").refine(
     (val) => isPhoneValid(val),
-    { message: "Phone number must be 7-9 digits (without leading zero or country prefix)" }
+    { message: "Phone number length is invalid for the selected country prefix" }
   ),
   email: z.string().email("Valid email required"),
   bankName: z.string().min(1, "Bank is required"),
@@ -112,7 +136,7 @@ export const personalInfoSchema = z.object({
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
   emergencyPhone: z.string().min(1, "Emergency phone is required").refine(
     (val) => isPhoneValid(val),
-    { message: "Phone number must be 7-9 digits (without leading zero or country prefix)" }
+    { message: "Phone number length is invalid for the selected country prefix" }
   ),
   swedishCoordinationNumber: z.string().max(13).optional().refine(
     (val) => !val || /^\d{8}-?\d{4}$/.test(val),
@@ -421,6 +445,7 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+  const [bankListExpanded, setBankListExpanded] = useState(true);
   const [validationAttempted, setValidationAttempted] = useState(false);
 
   /* ─── Validation: compute missing fields per section ─── */
@@ -443,7 +468,10 @@ export function OnboardingWizard({
   if (!formData.countryOfBirth) s2Missing.push("Country of Birth");
   if (!formData.citizenship) s2Missing.push("Citizenship");
   if (!formData.mobilePhone) s2Missing.push("Mobile Phone");
-  else if (!isPhoneValid(formData.mobilePhone)) s2Missing.push("Mobile Phone (7-9 digits required)");
+  else if (!isPhoneValid(formData.mobilePhone)) {
+    const rule = getPhoneRule(formData.mobilePhone);
+    s2Missing.push(`Mobile Phone (${rule.min}-${rule.max} digits required)`);
+  }
   if (!formData.email) s2Missing.push("Email");
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) s2Missing.push("Email (invalid format)");
 
@@ -451,7 +479,10 @@ export function OnboardingWizard({
   if (!formData.emergencyFirstName) s3Missing.push("First Name");
   if (!formData.emergencyLastName) s3Missing.push("Last Name");
   if (!formData.emergencyPhone) s3Missing.push("Mobile Phone");
-  else if (!isPhoneValid(formData.emergencyPhone)) s3Missing.push("Mobile Phone (7-9 digits required)");
+  else if (!isPhoneValid(formData.emergencyPhone)) {
+    const rule = getPhoneRule(formData.emergencyPhone);
+    s3Missing.push(`Mobile Phone (${rule.min}-${rule.max} digits required)`);
+  }
 
   const s4Missing: string[] = [];
   if (!selectedBankCountry) s4Missing.push("Country");
@@ -802,22 +833,23 @@ export function OnboardingWizard({
                     inputMode="numeric"
                     value={(formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      const maxD = getPhoneMaxDigits(formData.mobilePhone || "+40");
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, maxD);
                       // Strip leading zero when prefix is present
                       const cleaned = digits.replace(/^0+/, "");
                       const prefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40";
                       updateField("mobilePhone", `${prefix} ${cleaned}`);
                     }}
-                    maxLength={9}
-                    placeholder="7XXXXXXXX (9 digits)"
+                    maxLength={getPhoneMaxDigits(formData.mobilePhone || "+40")}
+                    placeholder={getPhoneRule(formData.mobilePhone || "+40").placeholder}
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || !isPhoneValid(formData.mobilePhone)))}
                   />
                 </div>
                 {formData.mobilePhone && isPhoneTooLong(formData.mobilePhone) && (
-                  <p className="text-[11px] text-destructive">Phone number must be max 9 digits (without leading zero)</p>
+                  <p className="text-[11px] text-destructive">Phone number exceeds maximum length for this country</p>
                 )}
-                {formData.mobilePhone && !isPhoneTooLong(formData.mobilePhone) && extractPhoneDigits(formData.mobilePhone).length > 0 && extractPhoneDigits(formData.mobilePhone).length < 7 && (
-                  <p className="text-[11px] text-destructive">Phone number must be at least 7 digits</p>
+                {formData.mobilePhone && !isPhoneTooLong(formData.mobilePhone) && extractPhoneDigits(formData.mobilePhone).length > 0 && extractPhoneDigits(formData.mobilePhone).length < getPhoneRule(formData.mobilePhone).min && (
+                  <p className="text-[11px] text-destructive">Phone number must be at least {getPhoneRule(formData.mobilePhone).min} digits</p>
                 )}
               </div>
               <div className="space-y-1.5">
@@ -884,21 +916,22 @@ export function OnboardingWizard({
                     inputMode="numeric"
                     value={(formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      const maxD = getPhoneMaxDigits(formData.emergencyPhone || "+40");
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, maxD);
                       const cleaned = digits.replace(/^0+/, "");
                       const prefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40";
                       updateField("emergencyPhone", `${prefix} ${cleaned}`);
                     }}
-                    maxLength={9}
-                    placeholder="7XXXXXXXX (9 digits)"
+                    maxLength={getPhoneMaxDigits(formData.emergencyPhone || "+40")}
+                    placeholder={getPhoneRule(formData.emergencyPhone || "+40").placeholder}
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || !isPhoneValid(formData.emergencyPhone)))}
                   />
                 </div>
                 {formData.emergencyPhone && isPhoneTooLong(formData.emergencyPhone) && (
-                  <p className="text-[11px] text-destructive">Phone number must be max 9 digits (without leading zero)</p>
+                  <p className="text-[11px] text-destructive">Phone number exceeds maximum length for this country</p>
                 )}
-                {formData.emergencyPhone && !isPhoneTooLong(formData.emergencyPhone) && extractPhoneDigits(formData.emergencyPhone).length > 0 && extractPhoneDigits(formData.emergencyPhone).length < 7 && (
-                  <p className="text-[11px] text-destructive">Phone number must be at least 7 digits</p>
+                {formData.emergencyPhone && !isPhoneTooLong(formData.emergencyPhone) && extractPhoneDigits(formData.emergencyPhone).length > 0 && extractPhoneDigits(formData.emergencyPhone).length < getPhoneRule(formData.emergencyPhone).min && (
+                  <p className="text-[11px] text-destructive">Phone number must be at least {getPhoneRule(formData.emergencyPhone).min} digits</p>
                 )}
               </div>
             </CollapsibleContent>
@@ -918,7 +951,7 @@ export function OnboardingWizard({
               {/* Country selector */}
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
-                <Select value={selectedBankCountry} onValueChange={(val) => { setSelectedBankCountry(val); onBankSelect(""); }}>
+                <Select value={selectedBankCountry} onValueChange={(val) => { setSelectedBankCountry(val); onBankSelect(""); setBankListExpanded(true); }}>
                   <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!selectedBankCountry))}>
                     <SelectValue placeholder="Choose country / Välj land" />
                   </SelectTrigger>
@@ -933,7 +966,31 @@ export function OnboardingWizard({
               {/* Bank radio list – only shown after country is selected */}
               {selectedBankCountry && (
               <div className="space-y-3">
-                <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
+                <div className="flex items-center justify-between">
+                  <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
+                  {(selectedBank || isOtherBank) && !bankListExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => setBankListExpanded(true)}
+                      className="text-xs text-primary underline hover:text-primary/80"
+                    >
+                      Change bank / Byt bank
+                    </button>
+                  )}
+                </div>
+
+                {/* Selected bank summary (shown when collapsed) */}
+                {(selectedBank || isOtherBank) && !bankListExpanded && (
+                  <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm font-medium text-primary">
+                      {isOtherBank ? (formData.otherBankName || "Other Bank") : selectedBank}
+                    </span>
+                  </div>
+                )}
+
+                {/* Bank list (expanded) */}
+                {bankListExpanded && (
                 <RadioGroup
                   value={isOtherBank ? "other" : selectedBank}
                   onValueChange={(val) => {
@@ -943,6 +1000,8 @@ export function OnboardingWizard({
                       const match = (banksByCountry[selectedBankCountry] || []).find((b) => b.name === val);
                       if (match?.bic_code) updateField("bicCode", match.bic_code);
                     }
+                    // Collapse the list after selection
+                    setBankListExpanded(false);
                   }}
                   className="space-y-2"
                 >
@@ -962,6 +1021,7 @@ export function OnboardingWizard({
                     </div>
                   </div>
                 </RadioGroup>
+                )}
               </div>
               )}
               {isOtherBank && (
