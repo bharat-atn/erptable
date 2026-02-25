@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, eachDayOfInterval, isWeekend, parseISO, addDays } from "date-fns";
-import { CalendarIcon, CalendarDays, Briefcase, Clock, Plane, ArrowLeft, ArrowRight, Save, Filter } from "lucide-react";
+import { CalendarIcon, CalendarDays, Briefcase, Clock, Plane, ArrowLeft, ArrowRight, Save, Filter, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -416,10 +416,19 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
             </CardContent>
           </Card>
 
-          {/* Work period */}
-          <div className="grid grid-cols-2 gap-4">
-            <DatePicker label="WORK START (FIRST DAY) / ARBETSSTART" value={data.workStartDate} onSelect={(d) => update({ workStartDate: d })} />
-            <DatePicker label="WORK END (LAST DAY) / ARBETSSTOPP" value={data.workEndDate} onSelect={(d) => update({ workEndDate: d })} />
+          {/* Work period — highlighted warning */}
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 space-y-2">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs text-destructive font-medium">
+                Note: Work start/end may differ from the contract period. This is for scheduling only and does not affect the employment contract. /
+                <span className="italic"> OBS: Arbetsstart/-stopp kan skilja sig från avtalsperioden. Detta gäller enbart schemaläggning och påverkar inte anställningsavtalet.</span>
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <DatePicker label="WORK START (FIRST DAY) / ARBETSSTART" value={data.workStartDate} onSelect={(d) => update({ workStartDate: d })} />
+              <DatePicker label="WORK END (LAST DAY) / ARBETSSTOPP" value={data.workEndDate} onSelect={(d) => update({ workEndDate: d })} />
+            </div>
           </div>
         </CardContent>
       </Card>
