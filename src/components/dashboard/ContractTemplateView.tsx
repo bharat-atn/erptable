@@ -424,7 +424,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
 
                 {/* Navigation buttons */}
                 <div className="flex justify-between pt-2">
-                  <Button variant="outline" onClick={() => setActiveStep(1)}>
+                  <Button variant="back" onClick={() => setActiveStep(1)}>
                     <ArrowLeft className="w-4 h-4 mr-1" />
                     Back
                   </Button>

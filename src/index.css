@@ -38,6 +38,12 @@
     
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
+
+    /* Back / Go-back button */
+    --back: 30 90% 52%;
+    --back-foreground: 30 80% 25%;
+    --back-border: 30 70% 70%;
+    --back-bg: 30 100% 96%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
