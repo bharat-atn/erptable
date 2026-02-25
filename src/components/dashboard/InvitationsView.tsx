@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
-import { SubmissionViewDialog } from "./SubmissionViewDialog";
+import { SubmissionView } from "./SubmissionViewDialog";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
@@ -171,6 +171,10 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
     return <OnboardingPreview onClose={() => setShowPreview(false)} />;
   }
 
+  if (viewSubmissionEmployeeId) {
+    return <SubmissionView employeeId={viewSubmissionEmployeeId} onClose={() => setViewSubmissionEmployeeId(null)} />;
+  }
+
   const columns: ColumnDef<InvitationRow>[] = [
     {
       key: "email", header: "Employee", accessor: (inv) => inv.employees?.email, hideable: false,
@@ -300,10 +304,6 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         requireTypedConfirmation
       />
 
-      <SubmissionViewDialog
-        employeeId={viewSubmissionEmployeeId}
-        onOpenChange={(open) => { if (!open) setViewSubmissionEmployeeId(null); }}
-      />
     </div>
   );
 }
