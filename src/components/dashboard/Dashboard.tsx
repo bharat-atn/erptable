@@ -3,7 +3,7 @@ import { Sidebar, screenSizes, type ScreenSizeOption } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
 import { EmployeeRegisterView } from "./EmployeeRegisterView";
 import { InvitationsView } from "./InvitationsView";
-import { ContractsView } from "./ContractsView";
+import { ContractsView, type ResumeMode } from "./ContractsView";
 import { SettingsView } from "./SettingsView";
 import { ContractTemplateView } from "./ContractTemplateView";
 import { CompanyRegisterView } from "./CompanyRegisterView";
@@ -41,6 +41,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const [activeView, setActiveView] = useState("dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
+  const [resumeMode, setResumeMode] = useState<ResumeMode>("resume");
   const [preselectedEmployeeId, setPreselectedEmployeeId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -52,8 +53,9 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     }
   }, [screenSize]);
 
-  const handleContinueContract = (contractId: string) => {
+  const handleContinueContract = (contractId: string, mode: ResumeMode = "resume") => {
     setResumeContractId(contractId);
+    setResumeMode(mode);
     setActiveView("contract-template");
   };
 
@@ -68,7 +70,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "invitations": return <InvitationsView />;
       case "contracts": return <ContractsView onContinueContract={handleContinueContract} />;
       case "settings": return <SettingsView />;
-      case "contract-template": return <ContractTemplateView resumeContractId={resumeContractId} preselectedEmployeeId={preselectedEmployeeId} />;
+      case "contract-template": return <ContractTemplateView resumeContractId={resumeContractId} preselectedEmployeeId={preselectedEmployeeId} resumeMode={resumeMode} />;
       case "company-register": return <CompanyRegisterView />;
       case "process-guide": return <ProcessGuideView />;
       case "employee-id-settings": return <EmployeeIdSettingsView />;

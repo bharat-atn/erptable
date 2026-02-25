@@ -3,7 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle, RotateCcw } from "lucide-react";
+import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle, RotateCcw, Play, Zap, RotateCw, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -11,8 +17,10 @@ import { EmployerSigningDialog } from "./EmployerSigningDialog";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
 import { RedoConfirmDialog } from "./RedoConfirmDialog";
 import { toast } from "sonner";
+export type ResumeMode = "start" | "fasttrack" | "resume";
+
 interface ContractsViewProps {
-  onContinueContract?: (contractId: string) => void;
+  onContinueContract?: (contractId: string, mode: ResumeMode) => void;
 }
 
 type ContractRow = {
@@ -266,9 +274,30 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
               </Button>
             )}
             {onContinueContract && contract.status === "draft" && (
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => onContinueContract(contract.id)}>
-                Continue <ArrowRight className="w-3 h-3" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1">
+                    Continue <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52 z-50 bg-popover">
+                  <DropdownMenuItem onClick={() => onContinueContract(contract.id, "start")} className="gap-2 cursor-pointer">
+                    <Play className="w-3.5 h-3.5 text-primary" />
+                    From Start
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onContinueContract(contract.id, "fasttrack")} className="gap-2 cursor-pointer">
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    Fast Track
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onContinueContract(contract.id, "resume")} className="gap-2 cursor-pointer font-medium">
+                    <RotateCw className="w-3.5 h-3.5 text-emerald-600" />
+                    {(() => {
+                      const fd = (contract as any).form_data as Record<string, any> | null;
+                      return fd?.lastActiveSection ? "Resume Where Left Off" : "Resume (from beginning)";
+                    })()}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
             <Button
               variant="ghost"

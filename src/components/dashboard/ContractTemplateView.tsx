@@ -122,12 +122,15 @@ const steps = [{
   labelSv: "Underskrift",
   icon: Briefcase
 }];
+type ResumeMode = "start" | "fasttrack" | "resume";
+
 interface ContractTemplateViewProps {
   resumeContractId?: string | null;
   preselectedEmployeeId?: string | null;
+  resumeMode?: ResumeMode;
 }
 
-export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }: ContractTemplateViewProps) {
+export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, resumeMode = "resume" }: ContractTemplateViewProps) {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   
@@ -207,7 +210,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
       const emp = employees.find(e => e.id === data.employee_id);
       if (emp) setSelectedEmployee(emp);
 
-      // Determine which step to resume at based on form_data
+      // Determine which step to resume at based on form_data and resumeMode
       const formData = (data.form_data as Record<string, any>) || {};
       let resumeStep = 4; // default to employee details
 
@@ -216,19 +219,27 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId }
       if (formData.cocLanguage) setCocLanguage(formData.cocLanguage);
       if (formData.cocReviewed) setCocReviewed(formData.cocReviewed);
 
-      // Use the explicitly saved step if available
-      if (formData.lastActiveSection) {
-        const sectionToStepMap: Record<string, number> = {
-          "employee": 4, "section-3": 5, "section-4": 6, "section-5": 7,
-          "section-6": 8, "section-7": 9, "section-8": 10, "section-9": 11,
-          "section-10": 12, "section-11": 13, "section-12": 14, "section-13": 15,
-          "section-scheduling": 16, "section-14": 18,
-        };
-        resumeStep = sectionToStepMap[formData.lastActiveSection] ?? 4;
-      } else if (formData.cocReviewed) {
-        resumeStep = 17;
+      if (resumeMode === "start") {
+        // From Start: go to language selection (step 3), keeping company/employee
+        resumeStep = 3;
+      } else if (resumeMode === "fasttrack") {
+        // Fast Track: jump straight to Review & Sign (step 18)
+        resumeStep = 18;
       } else {
-        resumeStep = 4; // default
+        // Resume: use the explicitly saved step if available
+        if (formData.lastActiveSection) {
+          const sectionToStepMap: Record<string, number> = {
+            "employee": 4, "section-3": 5, "section-4": 6, "section-5": 7,
+            "section-6": 8, "section-7": 9, "section-8": 10, "section-9": 11,
+            "section-10": 12, "section-11": 13, "section-12": 14, "section-13": 15,
+            "section-scheduling": 16, "section-14": 18,
+          };
+          resumeStep = sectionToStepMap[formData.lastActiveSection] ?? 4;
+        } else if (formData.cocReviewed) {
+          resumeStep = 17;
+        } else {
+          resumeStep = 4; // default
+        }
       }
 
       setActiveStep(resumeStep);
