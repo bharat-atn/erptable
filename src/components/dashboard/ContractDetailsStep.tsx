@@ -17,6 +17,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { getFormLabel, getFormSectionLabel } from "@/lib/form-translations";
 import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -963,12 +964,16 @@ export function ContractDetailsStep({
 
   const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
 
-  const renderLabel = (en: string, sv: string, required = true) => (
-    <label className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground/70">
-      {en} / {sv}
-      {required && <span className="text-destructive ml-0.5">*</span>}
-    </label>
-  );
+  const renderLabel = (en: string, sv: string, required = true) => {
+    const primary = getFormLabel(en, contractLanguage);
+    const display = contractLanguage === "SE" ? sv : `${primary} / ${sv}`;
+    return (
+      <label className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted-foreground/70">
+        {display}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+      </label>
+    );
+  };
 
   const renderField = (value: string, onChange: (v: string) => void, type = "text") => (
     <Input
@@ -1011,7 +1016,13 @@ export function ContractDetailsStep({
             {hasWarning && (
               <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
             )}
-            Section {number}: {titleEn} / Sektion {number}: {titleSv}
+            {contractLanguage === "SE"
+              ? `Sektion ${number}: ${titleSv}`
+              : contractLanguage === "RO/SE"
+              ? `Secțiunea ${number}: ${getFormLabel(titleEn, contractLanguage)} / Sektion ${number}: ${titleSv}`
+              : contractLanguage === "TH/SE"
+              ? `ส่วนที่ ${number}: ${getFormLabel(titleEn, contractLanguage)} / Sektion ${number}: ${titleSv}`
+              : `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`}
           </span>
           <ChevronDown
             className={cn(
