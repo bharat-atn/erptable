@@ -1,14 +1,10 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { OnboardingWizard, type PersonalInfo, type OnboardingLanguage } from "@/components/onboarding/OnboardingWizard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface SubmissionViewDialogProps {
@@ -16,89 +12,16 @@ interface SubmissionViewDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type FieldDef = { key: string; label: string };
-
-const SECTIONS: { title: string; fields: FieldDef[] }[] = [
-  {
-    title: "Personal Information",
-    fields: [
-      { key: "preferredName", label: "Preferred Name" },
-      { key: "nationality", label: "Nationality" },
-      { key: "citizenship", label: "Citizenship" },
-    ],
-  },
-  {
-    title: "Address",
-    fields: [
-      { key: "address", label: "Address" },
-      { key: "postcode", label: "Postcode" },
-      { key: "city", label: "City" },
-      { key: "country", label: "Country" },
-    ],
-  },
-  {
-    title: "Birth & Contact",
-    fields: [
-      { key: "dateOfBirth", label: "Date of Birth" },
-      { key: "gender", label: "Gender" },
-      { key: "mobilePhone", label: "Mobile Phone" },
-      { key: "privateEmail", label: "Private Email" },
-    ],
-  },
-  {
-    title: "Emergency Contact",
-    fields: [
-      { key: "emergencyName", label: "Name" },
-      { key: "emergencyRelation", label: "Relation" },
-      { key: "emergencyPhone", label: "Phone" },
-    ],
-  },
-  {
-    title: "Bank Details",
-    fields: [
-      { key: "bankName", label: "Bank Name" },
-      { key: "clearingNumber", label: "Clearing Number" },
-      { key: "accountNumber", label: "Account Number" },
-    ],
-  },
-  {
-    title: "Swedish ID Numbers",
-    fields: [
-      { key: "personnummer", label: "Personnummer" },
-      { key: "samordningsnummer", label: "Samordningsnummer" },
-    ],
-  },
-];
-
-function extractValue(info: Record<string, unknown>, key: string): string {
-  // Handle nested emergency contact object
-  if (key === "emergencyName" && typeof info.emergencyContact === "object" && info.emergencyContact) {
-    return String((info.emergencyContact as Record<string, unknown>).name ?? "");
-  }
-  if (key === "emergencyRelation" && typeof info.emergencyContact === "object" && info.emergencyContact) {
-    return String((info.emergencyContact as Record<string, unknown>).relation ?? "");
-  }
-  if (key === "emergencyPhone" && typeof info.emergencyContact === "object" && info.emergencyContact) {
-    return String((info.emergencyContact as Record<string, unknown>).phone ?? "");
-  }
-  // Flat keys or snake_case fallback
-  const val = info[key] ?? info[toSnake(key)];
-  if (val === null || val === undefined || val === "") return "";
-  return String(val);
-}
-
-function toSnake(s: string) {
-  return s.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
-}
-
 export function SubmissionViewDialog({ employeeId, onOpenChange }: SubmissionViewDialogProps) {
+  const [previewLanguage, setPreviewLanguage] = useState<OnboardingLanguage>("en_sv");
+
   const { data: employee, isLoading } = useQuery({
     queryKey: ["employee-submission", employeeId],
     enabled: !!employeeId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("first_name, last_name, email, personal_info")
+        .select("first_name, last_name, middle_name, email, personal_info")
         .eq("id", employeeId!)
         .single();
       if (error) throw error;
@@ -106,51 +29,94 @@ export function SubmissionViewDialog({ employeeId, onOpenChange }: SubmissionVie
     },
   });
 
+  if (!employeeId) return null;
+
   const info = (employee?.personal_info ?? {}) as Record<string, unknown>;
-  const name = employee ? `${employee.first_name ?? ""} ${employee.last_name ?? ""}`.trim() || employee.email : "";
+
+  // Map personal_info JSON to PersonalInfo shape expected by OnboardingWizard
+  const formData: Partial<PersonalInfo> = {
+    firstName: String(info.firstName ?? info.first_name ?? employee?.first_name ?? ""),
+    middleName: String(info.middleName ?? info.middle_name ?? employee?.middle_name ?? ""),
+    lastName: String(info.lastName ?? info.last_name ?? employee?.last_name ?? ""),
+    preferredName: String(info.preferredName ?? info.preferred_name ?? ""),
+    address1: String(info.address1 ?? info.address ?? ""),
+    address2: String(info.address2 ?? ""),
+    zipCode: String(info.zipCode ?? info.zip_code ?? info.postcode ?? ""),
+    city: String(info.city ?? ""),
+    stateProvince: String(info.stateProvince ?? info.state_province ?? ""),
+    country: String(info.country ?? ""),
+    birthday: String(info.birthday ?? info.dateOfBirth ?? info.date_of_birth ?? ""),
+    countryOfBirth: String(info.countryOfBirth ?? info.country_of_birth ?? ""),
+    citizenship: String(info.citizenship ?? ""),
+    mobilePhone: String(info.mobilePhone ?? info.mobile_phone ?? ""),
+    email: String(info.email ?? info.privateEmail ?? info.private_email ?? employee?.email ?? ""),
+    bankName: String(info.bankName ?? info.bank_name ?? ""),
+    bicCode: String(info.bicCode ?? info.bic_code ?? ""),
+    bankAccountNumber: String(info.bankAccountNumber ?? info.bank_account_number ?? info.accountNumber ?? info.account_number ?? ""),
+    emergencyFirstName: String(
+      info.emergencyFirstName ?? info.emergency_first_name ??
+      (typeof info.emergencyContact === "object" && info.emergencyContact ? (info.emergencyContact as any).name?.split(" ")[0] ?? "" : "")
+    ),
+    emergencyLastName: String(
+      info.emergencyLastName ?? info.emergency_last_name ??
+      (typeof info.emergencyContact === "object" && info.emergencyContact ? (info.emergencyContact as any).name?.split(" ").slice(1).join(" ") ?? "" : "")
+    ),
+    emergencyPhone: String(
+      info.emergencyPhone ?? info.emergency_phone ??
+      (typeof info.emergencyContact === "object" && info.emergencyContact ? (info.emergencyContact as any).phone ?? "" : "")
+    ),
+    swedishPersonalNumber: String(info.swedishPersonalNumber ?? info.personnummer ?? ""),
+    swedishCoordinationNumber: String(info.swedishCoordinationNumber ?? info.samordningsnummer ?? ""),
+  };
+
+  const handleClose = () => onOpenChange(false);
 
   return (
-    <Dialog open={!!employeeId} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] p-0">
-        <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>Onboarding Submission</DialogTitle>
-          <DialogDescription>{name ? `Submitted by ${name}` : "Loading…"}</DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
+      {/* Floating controls */}
+      <div className="fixed bottom-24 md:bottom-6 right-4 md:right-6 z-50 flex items-center gap-2">
+        <Select value={previewLanguage} onValueChange={(v) => setPreviewLanguage(v as OnboardingLanguage)}>
+          <SelectTrigger className="w-[180px] h-9 bg-background shadow-lg text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="en_sv">English + Swedish</SelectItem>
+            <SelectItem value="en">English only</SelectItem>
+            <SelectItem value="sv">Swedish only</SelectItem>
+            <SelectItem value="ro_en">Romanian + English</SelectItem>
+            <SelectItem value="th_en">Thai + English</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="default" className="shadow-lg gap-2" onClick={handleClose}>
+          <X className="w-4 h-4" />
+          <span className="hidden sm:inline">Back to Invitations</span>
+          <span className="sm:hidden">Back</span>
+        </Button>
+      </div>
 
-        <ScrollArea className="h-[60vh] px-6 pb-6">
-          {isLoading ? (
-            <div className="space-y-4 py-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-6 py-2">
-              {SECTIONS.map((section, idx) => {
-                const hasAny = section.fields.some((f) => extractValue(info, f.key));
-                return (
-                  <div key={section.title}>
-                    {idx > 0 && <Separator className="mb-4" />}
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-3">{section.title}</h3>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                      {section.fields.map((field) => {
-                        const val = extractValue(info, field.key);
-                        return (
-                          <div key={field.key} className="space-y-0.5">
-                            <p className="text-xs text-muted-foreground">{field.label}</p>
-                            <p className="text-sm font-medium">{val || "—"}</p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {!hasAny && <p className="text-xs text-muted-foreground italic">No data submitted</p>}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+      {isLoading ? (
+        <div className="max-w-2xl mx-auto p-8 space-y-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
+        </div>
+      ) : (
+        <OnboardingWizard
+          formData={formData}
+          updateField={() => {}}
+          onSubmit={(e) => e.preventDefault()}
+          isSubmitting={false}
+          isPreview={true}
+          selectedBank={formData.bankName || ""}
+          isOtherBank={false}
+          onBankSelect={() => {}}
+          uploadedFile={null}
+          onFileChange={() => {}}
+          workPermitFile={null}
+          onWorkPermitFileChange={() => {}}
+          language={previewLanguage}
+        />
+      )}
+    </div>
   );
 }
