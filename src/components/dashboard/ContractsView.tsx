@@ -131,6 +131,10 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
       toast.success("Contract deleted successfully");
       setDeleteTarget(null);
     },
@@ -149,6 +153,10 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
     onSuccess: (_data, ids) => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
       toast.success(`${ids.length} contract(s) deleted successfully`);
       setBulkDeleteIds(null);
       clearSelectionFn?.();

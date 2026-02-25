@@ -129,7 +129,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       const { error } = await supabase.from("invitations").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Invitation deleted"); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); queryClient.invalidateQueries({ queryKey: ["operations-employees"] }); queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] }); queryClient.invalidateQueries({ queryKey: ["operations-contracts"] }); queryClient.invalidateQueries({ queryKey: ["register-employees"] }); toast.success("Invitation deleted"); },
     onError: (error: Error) => { toast.error(error.message); },
   });
 
@@ -140,6 +140,10 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
       toast.success("Selected invitations deleted");
     },
     onError: (error: Error) => { toast.error(error.message); },
