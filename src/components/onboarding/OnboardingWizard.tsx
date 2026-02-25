@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Folder, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
@@ -60,6 +60,26 @@ function isBirthdayReasonable(dateStr: string): boolean {
   return year >= minBirthYear && year <= maxBirthYear;
 }
 
+/* ─── Phone digit extraction helper ─── */
+function extractPhoneDigits(phone: string): string {
+  return (phone || "").replace(/^\+[\d-]+\s*/, "").replace(/\D/g, "");
+}
+
+function isPhoneValid(phone: string): boolean {
+  const digits = extractPhoneDigits(phone);
+  return digits.length >= 7 && digits.length <= 9;
+}
+
+function isPhoneTooLong(phone: string): boolean {
+  const digits = extractPhoneDigits(phone);
+  return digits.length > 9;
+}
+
+function isBankAccountValid(account: string): boolean {
+  if (!account) return false;
+  return /^\d+$/.test(account);
+}
+
 export const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   middleName: z.string().max(100).optional(),
@@ -76,15 +96,24 @@ export const personalInfoSchema = z.object({
   }),
   countryOfBirth: z.string().min(1, "Country of birth is required"),
   citizenship: z.string().min(1, "Citizenship is required"),
-  mobilePhone: z.string().min(10, "Valid phone number required").max(20),
+  mobilePhone: z.string().min(1, "Phone number is required").refine(
+    (val) => isPhoneValid(val),
+    { message: "Phone number must be 7-9 digits (without leading zero or country prefix)" }
+  ),
   email: z.string().email("Valid email required"),
   bankName: z.string().min(1, "Bank is required"),
   otherBankName: z.string().max(200).optional(),
   bicCode: z.string().min(1, "BIC Code is required").max(20),
-  bankAccountNumber: z.string().min(1, "Bank account number is required").max(50),
+  bankAccountNumber: z.string().min(1, "Bank account number is required").max(50).refine(
+    (val) => /^\d+$/.test(val),
+    { message: "Bank account number must contain only digits" }
+  ),
   emergencyFirstName: z.string().min(1, "Emergency contact first name is required").max(100),
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
-  emergencyPhone: z.string().min(10, "Valid phone number required").max(20),
+  emergencyPhone: z.string().min(1, "Emergency phone is required").refine(
+    (val) => isPhoneValid(val),
+    { message: "Phone number must be 7-9 digits (without leading zero or country prefix)" }
+  ),
   swedishCoordinationNumber: z.string().max(13).optional().refine(
     (val) => !val || /^\d{8}-?\d{4}$/.test(val),
     { message: "Must be exactly 12 digits (YYYYMMDD-XXXX)" }
@@ -129,6 +158,8 @@ interface OnboardingWizardProps {
   workPermitFile?: File | null;
   onWorkPermitFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   language?: OnboardingLanguage;
+  showAiFill?: boolean;
+  onAiFill?: (data: Record<string, any>) => void;
 }
 
 /* ─── Language label maps ─── */
@@ -310,7 +341,58 @@ export function OnboardingWizard({
   workPermitFile,
   onWorkPermitFileChange,
   language = "en_sv",
+  showAiFill = false,
+  onAiFill,
 }: OnboardingWizardProps) {
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAiFill = async (nationality: string) => {
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-test-data", {
+        body: { nationality, language },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      // Fill fields from AI response
+      if (data.firstName) updateField("firstName", data.firstName);
+      if (data.middleName) updateField("middleName", data.middleName);
+      if (data.lastName) updateField("lastName", data.lastName);
+      if (data.preferredName) updateField("preferredName", data.preferredName);
+      if (data.address1) updateField("address1", data.address1);
+      if (data.address2) updateField("address2", data.address2 || "");
+      if (data.zipCode) updateField("zipCode", data.zipCode);
+      if (data.city) updateField("city", data.city);
+      if (data.stateProvince) updateField("stateProvince", data.stateProvince);
+      if (data.country) updateField("country", data.country);
+      if (data.birthday) updateField("birthday", data.birthday);
+      if (data.countryOfBirth) updateField("countryOfBirth", data.countryOfBirth);
+      if (data.citizenship) updateField("citizenship", data.citizenship);
+      if (data.mobilePhonePrefix && data.mobilePhoneNumber) {
+        updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
+      }
+      if (data.email) updateField("email", data.email);
+      if (data.bicCode) updateField("bicCode", data.bicCode);
+      if (data.bankAccountNumber) updateField("bankAccountNumber", data.bankAccountNumber.replace(/\D/g, ""));
+      if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
+      if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
+      if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
+        updateField("emergencyPhone", `${data.emergencyPhonePrefix} ${data.emergencyPhoneNumber}`);
+      }
+      
+      // Handle bank selection via callback
+      if (onAiFill) onAiFill(data);
+      
+      toast.success("AI test data generated successfully!", {
+        description: "Review the auto-filled data and adjust as needed before submitting.",
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate test data");
+    } finally {
+      setAiLoading(false);
+    }
+  };
   const templateLogo = loadTemplateLogo();
   const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
@@ -361,7 +443,7 @@ export function OnboardingWizard({
   if (!formData.countryOfBirth) s2Missing.push("Country of Birth");
   if (!formData.citizenship) s2Missing.push("Citizenship");
   if (!formData.mobilePhone) s2Missing.push("Mobile Phone");
-  else if (formData.mobilePhone.length < 10) s2Missing.push("Mobile Phone (min 10 digits)");
+  else if (!isPhoneValid(formData.mobilePhone)) s2Missing.push("Mobile Phone (7-9 digits required)");
   if (!formData.email) s2Missing.push("Email");
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) s2Missing.push("Email (invalid format)");
 
@@ -369,7 +451,7 @@ export function OnboardingWizard({
   if (!formData.emergencyFirstName) s3Missing.push("First Name");
   if (!formData.emergencyLastName) s3Missing.push("Last Name");
   if (!formData.emergencyPhone) s3Missing.push("Mobile Phone");
-  else if (formData.emergencyPhone.length < 10) s3Missing.push("Mobile Phone (min 10 digits)");
+  else if (!isPhoneValid(formData.emergencyPhone)) s3Missing.push("Mobile Phone (7-9 digits required)");
 
   const s4Missing: string[] = [];
   if (!selectedBankCountry) s4Missing.push("Country");
@@ -377,6 +459,7 @@ export function OnboardingWizard({
   if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
+  else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (digits only)");
 
   const s5Missing: string[] = [];
   if (!uploadedFile) s5Missing.push("ID / Passport Document");
@@ -456,6 +539,35 @@ export function OnboardingWizard({
             <span className="text-xs bg-primary/10 text-primary px-3 py-1 rounded-full font-medium">
               Preview Mode
             </span>
+          </div>
+        )}
+
+        {/* AI Auto-Fill for Testing */}
+        {showAiFill && !isPreview && (
+          <div className="mb-5 rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h3 className="text-sm font-bold text-primary">AI Test Data Generator</h3>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">
+              Generate realistic test data for a seasonal worker. Select nationality:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["Romanian", "Thai", "Swedish"].map((nat) => (
+                <Button
+                  key={nat}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={aiLoading}
+                  onClick={() => handleAiFill(nat)}
+                  className="gap-1.5 text-xs"
+                >
+                  {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {nat} Worker
+                </Button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -687,15 +799,26 @@ export function OnboardingWizard({
                   </Select>
                   <Input
                     type="tel"
+                    inputMode="numeric"
                     value={(formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      // Strip leading zero when prefix is present
+                      const cleaned = digits.replace(/^0+/, "");
                       const prefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40";
-                      updateField("mobilePhone", `${prefix} ${e.target.value}`);
+                      updateField("mobilePhone", `${prefix} ${cleaned}`);
                     }}
-                    placeholder="Phone number"
-                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || formData.mobilePhone.length < 10))}
+                    maxLength={9}
+                    placeholder="7XXXXXXXX (9 digits)"
+                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || !isPhoneValid(formData.mobilePhone)))}
                   />
                 </div>
+                {formData.mobilePhone && isPhoneTooLong(formData.mobilePhone) && (
+                  <p className="text-[11px] text-destructive">Phone number must be max 9 digits (without leading zero)</p>
+                )}
+                {formData.mobilePhone && !isPhoneTooLong(formData.mobilePhone) && extractPhoneDigits(formData.mobilePhone).length > 0 && extractPhoneDigits(formData.mobilePhone).length < 7 && (
+                  <p className="text-[11px] text-destructive">Phone number must be at least 7 digits</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <FieldLabel en="Email" sv="E-post" />
@@ -758,15 +881,25 @@ export function OnboardingWizard({
                   </Select>
                   <Input
                     type="tel"
+                    inputMode="numeric"
                     value={(formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      const cleaned = digits.replace(/^0+/, "");
                       const prefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40";
-                      updateField("emergencyPhone", `${prefix} ${e.target.value}`);
+                      updateField("emergencyPhone", `${prefix} ${cleaned}`);
                     }}
-                    placeholder="Phone number"
-                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || formData.emergencyPhone.length < 10))}
+                    maxLength={9}
+                    placeholder="7XXXXXXXX (9 digits)"
+                    className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || !isPhoneValid(formData.emergencyPhone)))}
                   />
                 </div>
+                {formData.emergencyPhone && isPhoneTooLong(formData.emergencyPhone) && (
+                  <p className="text-[11px] text-destructive">Phone number must be max 9 digits (without leading zero)</p>
+                )}
+                {formData.emergencyPhone && !isPhoneTooLong(formData.emergencyPhone) && extractPhoneDigits(formData.emergencyPhone).length > 0 && extractPhoneDigits(formData.emergencyPhone).length < 7 && (
+                  <p className="text-[11px] text-destructive">Phone number must be at least 7 digits</p>
+                )}
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -844,7 +977,19 @@ export function OnboardingWizard({
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
-                  <Input value={formData.bankAccountNumber || ""} onChange={(e) => updateField("bankAccountNumber", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber))} />
+                  <Input
+                    inputMode="numeric"
+                    value={formData.bankAccountNumber || ""}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, "");
+                      updateField("bankAccountNumber", digitsOnly);
+                    }}
+                    placeholder="Digits only"
+                    className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber || !isBankAccountValid(formData.bankAccountNumber || "")))}
+                  />
+                  {formData.bankAccountNumber && !isBankAccountValid(formData.bankAccountNumber) && (
+                    <p className="text-[11px] text-destructive">Bank account number must contain only digits — no letters or special characters</p>
+                  )}
                 </div>
               </div>
             </CollapsibleContent>

@@ -147,6 +147,15 @@ export default function OnboardingPortal() {
         workPermitFile={workPermitFile}
         onWorkPermitFileChange={handleWorkPermitFileChange}
         language="en_sv"
+        showAiFill={true}
+        onAiFill={(data) => {
+          if (data.bankCountry) {
+            // Auto-select bank country & bank if available
+          }
+          if (data.bankName) {
+            handleBankSelect(data.bankName);
+          }
+        }}
       />
     );
   }
