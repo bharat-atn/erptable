@@ -2,7 +2,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
+import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2, Info } from "lucide-react";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
@@ -63,6 +63,14 @@ function isBirthdayReasonable(dateStr: string): boolean {
 /* ─── Phone digit extraction helper ─── */
 function extractPhoneDigits(phone: string): string {
   return (phone || "").replace(/^\+[\d-]+\s*/, "").replace(/\D/g, "");
+}
+
+/* ─── AI Validation Hint component ─── */
+function AiFieldHint({ validation, isValidating }: { validation?: { valid: boolean | null; message: string }; isValidating?: boolean }) {
+  if (isValidating) return <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5"><Loader2 className="w-3 h-3 animate-spin" /> Checking...</span>;
+  if (!validation || validation.valid === null) return null;
+  if (validation.valid) return <span className="text-[10px] text-emerald-600 flex items-center gap-1 mt-0.5"><CheckCircle2 className="w-3 h-3" /> {validation.message}</span>;
+  return <span className="text-[10px] text-amber-600 flex items-center gap-1 mt-0.5"><Info className="w-3 h-3" /> {validation.message}</span>;
 }
 
 function getPhonePrefix(phone: string): string {
@@ -448,6 +456,53 @@ export function OnboardingWizard({
   const [bankListExpanded, setBankListExpanded] = useState(!selectedBank);
   const [validationAttempted, setValidationAttempted] = useState(false);
 
+  /* ─── AI inline validation state ─── */
+  type FieldValidation = { valid: boolean | null; message: string };
+  const [aiValidation, setAiValidation] = useState<Record<string, FieldValidation>>({});
+  const [aiValidating, setAiValidating] = useState(false);
+
+  useEffect(() => {
+    // Debounced AI validation — trigger 2s after last change to key fields
+    const hasEnoughData = formData.country && (formData.zipCode || formData.city || formData.mobilePhone || formData.bankAccountNumber);
+    if (!hasEnoughData) return;
+
+    const timer = setTimeout(async () => {
+      setAiValidating(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("validate-onboarding-fields", {
+          body: {
+            country: formData.country,
+            zipCode: formData.zipCode,
+            city: formData.city,
+            address1: formData.address1,
+            stateProvince: formData.stateProvince,
+            mobilePhone: formData.mobilePhone,
+            emergencyPhone: formData.emergencyPhone,
+            bicCode: formData.bicCode,
+            bankAccountNumber: formData.bankAccountNumber,
+            bankName: selectedBank || formData.otherBankName,
+            bankCountry: selectedBankCountry,
+            birthday: formData.birthday,
+          },
+        });
+        if (!error && data?.fields) {
+          setAiValidation(data.fields);
+        }
+      } catch {
+        // Silently fail — validation is advisory
+      } finally {
+        setAiValidating(false);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [
+    formData.country, formData.zipCode, formData.city, formData.address1,
+    formData.stateProvince, formData.mobilePhone, formData.emergencyPhone,
+    formData.bicCode, formData.bankAccountNumber, formData.birthday,
+    selectedBank, selectedBankCountry,
+  ]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ─── Auto-collapse bank list if a bank is already selected on mount ─── */
   useEffect(() => {
     if (selectedBank && bankListExpanded) {
@@ -691,6 +746,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 1" sv="Adress 1" />
                   <Input value={formData.address1 || ""} onChange={(e) => updateField("address1", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.address1))} />
+                  <AiFieldHint validation={aiValidation.address1} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Address 2" sv="Adress 2" required={false} />
@@ -699,14 +755,17 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="ZIP / Postal Code" sv="Postnummer" />
                   <Input value={formData.zipCode || ""} onChange={(e) => updateField("zipCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.zipCode))} />
+                  <AiFieldHint validation={aiValidation.zipCode} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="City" sv="Ort" />
                   <Input value={formData.city || ""} onChange={(e) => updateField("city", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.city))} />
+                  <AiFieldHint validation={aiValidation.city} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="State / Province" sv="Län / Region" />
                   <Input value={formData.stateProvince || ""} onChange={(e) => updateField("stateProvince", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.stateProvince))} />
+                  <AiFieldHint validation={aiValidation.stateProvince} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Country" sv="Land" />
@@ -760,6 +819,7 @@ export function OnboardingWizard({
                   className={cn("h-11 text-sm font-medium", fieldError(!formData.birthday || !isBirthdayReasonable(formData.birthday || "")))}
                 />
                 <p className="text-[10px] text-muted-foreground">ISO 8601 format: YYYY-MM-DD</p>
+                <AiFieldHint validation={aiValidation.birthday} isValidating={aiValidating} />
                 {formData.birthday && !isBirthdayReasonable(formData.birthday) && (
                   <p className="text-[11px] text-destructive">
                     Age must be between {MIN_AGE} and {MAX_AGE} years old
@@ -881,6 +941,7 @@ export function OnboardingWizard({
                 {formData.mobilePhone && !isPhoneTooLong(formData.mobilePhone) && extractPhoneDigits(formData.mobilePhone).length > 0 && extractPhoneDigits(formData.mobilePhone).length < getPhoneRule(formData.mobilePhone).min && (
                   <p className="text-[11px] text-destructive">Phone number must be at least {getPhoneRule(formData.mobilePhone).min} digits</p>
                 )}
+                <AiFieldHint validation={aiValidation.mobilePhone} isValidating={aiValidating} />
               </div>
               <div className="space-y-1.5">
                 <FieldLabel en="Email" sv="E-post" />
@@ -964,6 +1025,7 @@ export function OnboardingWizard({
                 {formData.emergencyPhone && !isPhoneTooLong(formData.emergencyPhone) && extractPhoneDigits(formData.emergencyPhone).length > 0 && extractPhoneDigits(formData.emergencyPhone).length < getPhoneRule(formData.emergencyPhone).min && (
                   <p className="text-[11px] text-destructive">Phone number must be at least {getPhoneRule(formData.emergencyPhone).min} digits</p>
                 )}
+                <AiFieldHint validation={aiValidation.emergencyPhone} isValidating={aiValidating} />
               </div>
             </CollapsibleContent>
           </Collapsible>
@@ -1065,6 +1127,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
                   <Input value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))} />
+                  <AiFieldHint validation={aiValidation.bicCode} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
@@ -1081,6 +1144,7 @@ export function OnboardingWizard({
                   {formData.bankAccountNumber && !isBankAccountValid(formData.bankAccountNumber) && (
                     <p className="text-[11px] text-destructive">Bank account number must contain only digits — no letters or special characters</p>
                   )}
+                  <AiFieldHint validation={aiValidation.bankAccountNumber} isValidating={aiValidating} />
                 </div>
               </div>
             </CollapsibleContent>
