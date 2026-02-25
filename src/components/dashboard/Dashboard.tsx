@@ -122,7 +122,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         {(activeView === "invitations" || activeView === "invitation-template") && (
           <Button
             variant="default"
-            className="fixed bottom-6 right-6 shadow-lg gap-2 z-40"
+            className="fixed top-4 right-6 shadow-lg gap-2 z-40"
             onClick={() => setShowPreview(true)}
           >
             <Eye className="w-4 h-4" />
