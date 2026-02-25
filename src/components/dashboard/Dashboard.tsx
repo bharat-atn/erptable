@@ -19,6 +19,7 @@ import { AuditLogView } from "./AuditLogView";
 import { BankListView } from "./BankListView";
 import { UserManagementView } from "./UserManagementView";
 import { VersionManagementView } from "./VersionManagementView";
+import { TopVersionBadge } from "./TopVersionBadge";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
@@ -115,8 +116,11 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
           onSwitchApp={onSwitchApp}
           userRole={userRole}
         />
-        <main className="flex-1 min-w-0 p-6 overflow-auto">
-          <div className={cn("mx-auto", isConstrained && "max-w-full")}>
+        <main className="flex-1 min-w-0 overflow-auto">
+          <div className="flex items-center justify-end px-6 pt-4 pb-0">
+            <TopVersionBadge />
+          </div>
+          <div className={cn("mx-auto px-6 pb-6", isConstrained && "max-w-full")}>
             {renderView()}
           </div>
         </main>
