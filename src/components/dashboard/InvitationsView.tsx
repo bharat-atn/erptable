@@ -10,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { MoreVertical, Copy, Send, Trash2, Eye, RefreshCw, RotateCcw } from "lucide-react";
+import { MoreVertical, Copy, Send, Trash2, Eye, RefreshCw, RotateCcw, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { SubmissionViewDialog } from "./SubmissionViewDialog";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
@@ -55,6 +56,7 @@ type InvitationRow = {
   status: string;
   created_at: string;
   expires_at: string;
+  employee_id: string | null;
   employees: { email: string; first_name: string | null; last_name: string | null } | null;
 };
 
@@ -66,6 +68,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<InvitationRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
+  const [viewSubmissionEmployeeId, setViewSubmissionEmployeeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: invitations, isLoading } = useQuery({
@@ -259,6 +262,11 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
               {invitation.status === "PENDING" && (
                 <DropdownMenuItem onClick={() => markAsSent.mutate(invitation.id)}><Send className="w-4 h-4 mr-2" /> Mark as Sent</DropdownMenuItem>
               )}
+              {invitation.status === "ACCEPTED" && invitation.employee_id && (
+                <DropdownMenuItem onClick={() => setViewSubmissionEmployeeId(invitation.employee_id)}>
+                  <FileText className="w-4 h-4 mr-2" /> View Submission
+                </DropdownMenuItem>
+              )}
               {invitation.status !== "ACCEPTED" && (
                 <DropdownMenuItem onClick={() => resendInvitation.mutate(invitation)}>
                   <RotateCcw className="w-4 h-4 mr-2" /> Resend Invitation
@@ -290,6 +298,11 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         onConfirm={() => { if (bulkDeleteIds) { bulkDelete.mutate(bulkDeleteIds); setBulkDeleteIds(null); } }}
         isLoading={bulkDelete.isPending}
         requireTypedConfirmation
+      />
+
+      <SubmissionViewDialog
+        employeeId={viewSubmissionEmployeeId}
+        onOpenChange={(open) => { if (!open) setViewSubmissionEmployeeId(null); }}
       />
     </div>
   );
