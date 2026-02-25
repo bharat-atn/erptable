@@ -244,7 +244,7 @@ export function CreateInvitationDialog() {
     return (
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) resetForm(); else setIsOpen(true); }}>
         <DialogTrigger asChild>
-          <Button>
+          <Button className="min-w-[200px]">
             <Plus className="w-4 h-4 mr-2" />
             Create Invitation
           </Button>
@@ -314,7 +314,7 @@ export function CreateInvitationDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="min-w-[200px]">
           <Plus className="w-4 h-4 mr-2" />
           Create Invitation
         </Button>
