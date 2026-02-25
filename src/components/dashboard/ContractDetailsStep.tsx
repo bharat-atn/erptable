@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { Switch } from "@/components/ui/switch";
+import { differenceInMonths, differenceInDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -173,6 +175,7 @@ export function ContractDetailsStep({
   const [tempReplacementNoLaterThan, setTempReplacementNoLaterThan] = useState<Date | undefined>(undefined);
   const [seasonalFromDate, setSeasonalFromDate] = useState<Date | undefined>(undefined);
   const [seasonalEndAround, setSeasonalEndAround] = useState<Date | undefined>(undefined);
+  const [sinkEnabled, setSinkEnabled] = useState(false);
   const [age69FromDate, setAge69FromDate] = useState<Date | undefined>(undefined);
   const [age69UntilDate, setAge69UntilDate] = useState<Date | undefined>(undefined);
 
@@ -541,6 +544,7 @@ export function ContractDetailsStep({
       if (fd.tempReplacementNoLaterThan) setTempReplacementNoLaterThan(new Date(fd.tempReplacementNoLaterThan));
       if (fd.seasonalFromDate) setSeasonalFromDate(new Date(fd.seasonalFromDate));
       if (fd.seasonalEndAround) setSeasonalEndAround(new Date(fd.seasonalEndAround));
+      if (fd.sinkEnabled != null) setSinkEnabled(fd.sinkEnabled);
       if (fd.age69FromDate) setAge69FromDate(new Date(fd.age69FromDate));
       if (fd.age69UntilDate) setAge69UntilDate(new Date(fd.age69UntilDate));
       if (fd.workingTime) setWorkingTime(fd.workingTime);
@@ -758,6 +762,7 @@ export function ContractDetailsStep({
     tempReplacementPosition, tempReplacementNoLaterThan: tempReplacementNoLaterThan?.toISOString() ?? null,
     seasonalFromDate: seasonalFromDate?.toISOString() ?? null,
     seasonalEndAround: seasonalEndAround?.toISOString() ?? null,
+    sinkEnabled,
     age69FromDate: age69FromDate?.toISOString() ?? null,
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
@@ -779,7 +784,7 @@ export function ContractDetailsStep({
     mainDuties, jobType, experienceLevel, numberOfJobTypes, jobType2, experienceLevel2, jobType3, experienceLevel3, postingLocation, workplaceVaries, mainWorkplace, stationing,
     employmentForm, permanentFromDate, probationFromDate, probationUntilDate,
     fixedTermFromDate, fixedTermUntilDate, tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
-    seasonalFromDate, seasonalEndAround, age69FromDate, age69UntilDate,
+    seasonalFromDate, seasonalEndAround, sinkEnabled, age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
@@ -861,6 +866,20 @@ export function ContractDetailsStep({
   if (employmentForm === "fixed_term" && (!fixedTermFromDate || !fixedTermUntilDate)) section5Missing.push("Fixed-Term Dates");
   if (employmentForm === "temporary_replacement" && !tempReplacementFromDate) section5Missing.push("Temp Replacement Start Date");
   if (employmentForm === "seasonal" && !seasonalFromDate) section5Missing.push("Seasonal Start Date");
+
+  // SINK validation: if enabled, seasonal period must be ≤ 6 months
+  const sinkPeriodExceeded = useMemo(() => {
+    if (!sinkEnabled || employmentForm !== "seasonal") return false;
+    if (!seasonalFromDate || !seasonalEndAround) return false;
+    // Allow up to exactly 6 calendar months (e.g. March 1 → August 31)
+    const months = differenceInMonths(seasonalEndAround, seasonalFromDate);
+    if (months > 6) return true;
+    if (months === 6 && differenceInDays(seasonalEndAround, seasonalFromDate) > 183) return true;
+    return false;
+  }, [sinkEnabled, employmentForm, seasonalFromDate, seasonalEndAround]);
+
+  if (sinkPeriodExceeded) section5Missing.push("SINK period exceeds 6 months");
+
   if (employmentForm === "age69" && (!age69FromDate || !age69UntilDate)) section5Missing.push("Age 69 Dates");
 
   const section6Missing: string[] = [];
@@ -1966,6 +1985,16 @@ export function ContractDetailsStep({
                     {employmentForm === "seasonal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
                   <span className="text-sm font-semibold">Seasonal employment from / Säsongsanställning från</span>
+                  <div className="ml-auto flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <label htmlFor="sink-toggle" className="text-xs font-bold tracking-wide text-muted-foreground cursor-pointer select-none">SINK</label>
+                    <Switch
+                      id="sink-toggle"
+                      checked={sinkEnabled}
+                      onCheckedChange={setSinkEnabled}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap mt-2 pl-8">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1991,6 +2020,21 @@ export function ContractDetailsStep({
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">3)</span>
                 </div>
+                {/* SINK warning */}
+                {sinkPeriodExceeded && employmentForm === "seasonal" && (
+                  <div className="mt-3 ml-8 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-semibold text-destructive">
+                        SINK: The period exceeds 6 months / SINK: Perioden överstiger 6 månader
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        When SINK taxation applies, the seasonal employment period must not exceed 6 months. Please adjust the start or end date. / 
+                        Vid SINK-beskattning får säsongsanställningen inte överstiga 6 månader. Justera start- eller slutdatum.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 6. When the employee has reached the age of 69 */}
