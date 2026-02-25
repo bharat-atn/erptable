@@ -2,11 +2,15 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { ContractDocument } from "./ContractDocument";
-import { Loader2, CheckCircle, FileText, Calendar } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Calendar, RotateCcw, Send, Image } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 interface EmployerSigningDialogProps {
   contractId: string | null;
@@ -23,9 +27,22 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
   const [company, setCompany] = useState<Record<string, any> | null>(null);
   const [employee, setEmployee] = useState<Record<string, any> | null>(null);
 
+  // Place & Date
+  const [signingPlace, setSigningPlace] = useState("");
+  const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
+
+  // Signature preview (redo flow)
+  const [pendingSignature, setPendingSignature] = useState<string | null>(null);
+
+  // Default signature
+  const [defaultSignatureUrl, setDefaultSignatureUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (!contractId || !open) return;
     setSigned(false);
+    setPendingSignature(null);
+    setSigningPlace("");
+    setSigningDate(format(new Date(), "yyyy-MM-dd"));
     setLoading(true);
 
     const load = async () => {
@@ -46,7 +63,19 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
       const { data: emp } = await supabase.from("employees").select("first_name, last_name, email").eq("id", c.employee_id).maybeSingle();
       if (emp) setEmployee(emp);
 
-      
+      // Fetch default signature from profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("default_signature_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (profile?.default_signature_url) {
+          setDefaultSignatureUrl(profile.default_signature_url);
+        }
+      }
+
       setLoading(false);
     };
     load();
@@ -56,20 +85,25 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
     if (!contractId) return;
     setSubmitting(true);
     try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const filePath = `employer/${contractId}.png`;
+      // If it's already a URL (default signature), use directly
+      let signatureUrl = dataUrl;
+      if (dataUrl.startsWith("data:")) {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const filePath = `employer/${contractId}.png`;
 
-      const { error: uploadErr } = await supabase.storage
-        .from("signatures")
-        .upload(filePath, blob, { upsert: true, contentType: "image/png" });
-      if (uploadErr) throw uploadErr;
+        const { error: uploadErr } = await supabase.storage
+          .from("signatures")
+          .upload(filePath, blob, { upsert: true, contentType: "image/png" });
+        if (uploadErr) throw uploadErr;
 
-      const { data: urlData } = supabase.storage.from("signatures").getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage.from("signatures").getPublicUrl(filePath);
+        signatureUrl = urlData.publicUrl;
+      }
 
       const { error: rpcErr } = await supabase.rpc("submit_employer_signature", {
         _contract_id: contractId,
-        _signature_url: urlData.publicUrl,
+        _signature_url: signatureUrl,
       });
       if (rpcErr) throw rpcErr;
 
@@ -88,6 +122,7 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
 
   const fd = (contract?.form_data || {}) as Record<string, any>;
   const empName = employee ? `${employee.first_name || ""} ${employee.last_name || ""}`.trim() : "—";
+  const placeValid = signingPlace.trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,16 +180,123 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
               </CardContent>
             </Card>
 
+            {/* Place & Date */}
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                  Place and Date / Plats och datum
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="employer-signing-place" className="text-sm">Place / Plats *</Label>
+                    <Input
+                      id="employer-signing-place"
+                      value={signingPlace}
+                      onChange={(e) => setSigningPlace(e.target.value)}
+                      placeholder="e.g. Stockholm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="employer-signing-date" className="text-sm">Date / Datum</Label>
+                    <Input
+                      id="employer-signing-date"
+                      type="date"
+                      value={signingDate}
+                      onChange={(e) => setSigningDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Employer signature */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Employer Signature / Arbetsgivarens underskrift</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">
-                  Draw your signature below to counter-sign this contract as the employer.
-                </p>
-                <SignatureCanvas onSave={handleSign} disabled={submitting} />
+                {!placeValid && (
+                  <p className="text-sm text-amber-600">
+                    Please enter the signing place above before signing.
+                  </p>
+                )}
+
+                {pendingSignature ? (
+                  /* Signature preview & redo */
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium">
+                      Review your signature:
+                    </p>
+                    <div className="rounded-lg border-2 border-primary/30 bg-background p-4">
+                      <img
+                        src={pendingSignature}
+                        alt="Employer signature preview"
+                        className="max-h-[120px] mx-auto"
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setPendingSignature(null)}
+                        disabled={submitting}
+                        className="gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Redo
+                      </Button>
+                      <Button
+                        onClick={() => handleSign(pendingSignature)}
+                        disabled={submitting}
+                        className="gap-2"
+                      >
+                        {submitting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        {submitting ? "Submitting..." : "Submit Signature"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Default signature option */}
+                    {defaultSignatureUrl && (
+                      <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <Image className="w-4 h-4 text-primary" />
+                          Use saved signature
+                        </p>
+                        <div className="rounded border border-border bg-background p-3">
+                          <img
+                            src={defaultSignatureUrl}
+                            alt="Default signature"
+                            className="max-h-[80px] mx-auto"
+                          />
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => placeValid && setPendingSignature(defaultSignatureUrl)}
+                          disabled={!placeValid || submitting}
+                          className="gap-2"
+                        >
+                          <Image className="w-4 h-4" />
+                          Use this signature
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-sm text-muted-foreground">
+                      {defaultSignatureUrl ? "Or draw your signature below:" : "Draw your signature below to counter-sign this contract as the employer."}
+                    </p>
+                    <SignatureCanvas
+                      onSave={(dataUrl) => placeValid && setPendingSignature(dataUrl)}
+                      disabled={submitting || !placeValid}
+                    />
+                  </>
+                )}
+
                 {submitting && (
                   <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 animate-spin" /> Submitting signature...
