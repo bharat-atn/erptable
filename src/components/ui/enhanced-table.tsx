@@ -160,6 +160,17 @@ export function EnhancedTable<T>({
   const [dense, setDense] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // ── Clear stale selections when data changes ──
+  useEffect(() => {
+    if (!enableSelection || selectedKeys.size === 0) return;
+    const currentKeys = new Set(data.map((row) => rowKey(row)));
+    const stillValid = new Set<string>();
+    selectedKeys.forEach((k) => { if (currentKeys.has(k)) stillValid.add(k); });
+    if (stillValid.size !== selectedKeys.size) {
+      setSelectedKeys(stillValid);
+    }
+  }, [data]);
+
   // ── Keyboard shortcut Ctrl+K ──
   useEffect(() => {
     if (!enableKeyboardShortcut) return;
