@@ -323,7 +323,7 @@ export function AuditLogView() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="max-h-[600px]">
+          <ScrollArea className="h-[600px]">
             <Table>
               <TableHeader>
                 <TableRow>
