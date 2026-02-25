@@ -91,10 +91,20 @@ export function VersionManagementView() {
     onSuccess: (tag) => {
       queryClient.invalidateQueries({ queryKey: ["app-versions"] });
       queryClient.invalidateQueries({ queryKey: ["latest-version"] });
-      toast.success(`Version ${tag} published`);
+      toast.success(`Version ${tag} published`, {
+        description: "Remember: You must also publish your app in Lovable for changes to take effect in the production environment.",
+        duration: 8000,
+      });
       setDialogOpen(false);
       setNotes("");
       setReleaseType("alpha");
+      // Show a second reminder after a short delay
+      setTimeout(() => {
+        toast.info("🚀 Don't forget to publish!", {
+          description: "This version tag is registered, but your app changes won't be live until you click 'Publish' in the top-right corner of Lovable.",
+          duration: 10000,
+        });
+      }, 1500);
     },
     onError: (err: any) => {
       toast.error(err.message ?? "Failed to publish version");
