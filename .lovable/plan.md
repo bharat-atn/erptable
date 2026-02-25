@@ -1,33 +1,64 @@
 
 
-## Plan: View Submitted Onboarding Data from Invitations
+## Plan: Version Management System
 
-### Problem
-When an invitation is marked as "Completed" (ACCEPTED), the candidate has filled out and submitted their onboarding form. Currently there is no way for an HR admin to review what the candidate submitted. The `personal_info` JSONB column on the `employees` table holds all the submitted data, but there is no UI to display it.
+### Overview
+Build an industrial-strength version management system with a database-backed version history, a management UI in Settings, and a version badge visible in the sidebar. Supports release stages: Alpha, Beta, RC (Release Candidate), and Release.
 
-### Solution
-Add a "View Submission" action to the row actions menu in the Invitations view. For completed invitations, clicking this opens a read-only dialog showing all the fields the candidate filled out, organized by section (Name/Address, Birth/Contact, Emergency Contact, Bank Details, Documents).
+### Database Changes
 
-### Technical approach
+**New table: `app_versions`**
+| Column | Type | Default | Notes |
+|---|---|---|---|
+| id | uuid | gen_random_uuid() | PK |
+| version_tag | text | NOT NULL | e.g. `v2026-02-25-001` |
+| release_type | text | 'alpha' | One of: alpha, beta, rc, release |
+| release_date | date | CURRENT_DATE | |
+| release_time_utc | timestamptz | now() | |
+| sequence_number | integer | NOT NULL | Daily sequence (#001, #002...) |
+| status | text | 'published' | published / draft |
+| notes | text | '' | Release notes / changelog |
+| created_by | uuid | auth.uid() | User who created it |
+| created_at | timestamptz | now() | |
 
-**1. New component: `SubmissionViewDialog.tsx`**
-- A dialog that receives an `employeeId` and fetches the employee's `personal_info` JSONB from the `employees` table.
-- Renders the data in a clean, read-only layout organized into labeled sections matching the onboarding form structure.
-- Sections: Personal Info, Address, Birth & Contact, Emergency Contact, Bank Details, Swedish ID numbers.
-- Each field shown as a label/value pair. Empty fields shown as "—".
+- RLS: HR users can read/insert/update; no deletes.
+- Auto-generate `version_tag` as `vYYYY-MM-DD-NNN` where NNN is the daily sequence.
 
-**2. Update `InvitationsView.tsx`**
-- Add state for `viewSubmissionEmployeeId`.
-- In the row actions dropdown, add a "View Submission" menu item (visible only when `status === "ACCEPTED"`), which sets the employee ID from the invitation.
-- Render the new `SubmissionViewDialog` at the bottom of the component.
-- The invitation query already joins `employees`, but we only fetch `email, first_name, last_name`. We need to also include the `id` in the join so we can pass it to the dialog. Looking at the `InvitationRow` type and query, the employee_id is available on the invitation row itself.
+### New Components
 
-**3. Data flow**
-- `InvitationRow` already has `employee_id` from the invitations table (it is a column).
-- The dialog fetches `employees.personal_info` using that ID.
-- No database changes needed -- just reading existing data.
+**1. `src/components/dashboard/VersionManagementView.tsx`**
+- Header: "Version Management" with subtitle instructions and "+ New Release" button
+- Card with scrollable table showing all versions (newest first)
+- Columns: Version, Type (badge: Alpha=yellow, Beta=blue, RC=orange, Release=green), Release Date, Time (GMT), Time (Local), Sequence, Status (badge), Release Notes (truncated)
+- "New Release" dialog:
+  - Auto-generated version tag (`vYYYY-MM-DD-NNN`)
+  - Type selector dropdown (Alpha, Beta, RC, Release)
+  - Notes textarea
+  - "Publish" button that inserts into `app_versions`
 
-### Files to create/edit
-- **Create**: `src/components/dashboard/SubmissionViewDialog.tsx`
-- **Edit**: `src/components/dashboard/InvitationsView.tsx` (add state, menu item, dialog render)
+**2. Version badge in Sidebar**
+- Below the user profile or above sign-out, show a small badge with the latest version tag and type
+- Clicking it opens a popover/hover-card showing: Version, Status, Released date, Time (GMT), Time (Local), and Release Notes — matching the reference screenshot
+- When sidebar is collapsed, show just a small version icon with tooltip
+
+### Integration Points
+
+- **Sidebar**: Add version badge component, fetch latest version via `useQuery`
+- **Dashboard routing**: Add `case "version-management"` → `<VersionManagementView />`
+- **Sidebar menu**: Add "Version Management" item to the config/settings menu group with a `GitBranch` icon
+- **Settings view**: No changes needed — version management gets its own dedicated view accessible from the sidebar
+
+### Technical Details
+
+- Daily sequence auto-calculated: count existing versions for the same date + 1
+- Version tag format: `v{YYYY-MM-DD}-{NNN}` (zero-padded 3 digits)
+- Release type badges use existing Badge component variants
+- All times stored as UTC; local time computed client-side using `Intl.DateTimeFormat`
+- Table uses the existing `EnhancedTable` component for consistency
+
+### Files to Create/Edit
+- **Create**: `src/components/dashboard/VersionManagementView.tsx`
+- **Edit**: `src/components/dashboard/Sidebar.tsx` (add menu item + version badge)
+- **Edit**: `src/components/dashboard/Dashboard.tsx` (add routing case)
+- **DB Migration**: Create `app_versions` table with RLS policies
 
