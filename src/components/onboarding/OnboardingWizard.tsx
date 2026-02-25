@@ -445,8 +445,37 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
-  const [bankListExpanded, setBankListExpanded] = useState(true);
+  const [bankListExpanded, setBankListExpanded] = useState(!selectedBank);
   const [validationAttempted, setValidationAttempted] = useState(false);
+
+  /* ─── Auto-collapse bank list if a bank is already selected on mount ─── */
+  useEffect(() => {
+    if (selectedBank && bankListExpanded) {
+      setBankListExpanded(false);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ─── Auto-set phone prefixes when address country changes ─── */
+  useEffect(() => {
+    if (formData.country) {
+      const match = findCountryByName(formData.country);
+      if (match) {
+        const dialCode = match.dialCode;
+        // Update mobile phone prefix
+        const currentPrefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0];
+        if (!currentPrefix || currentPrefix === "+40" || currentPrefix === "+93") {
+          const digits = extractPhoneDigits(formData.mobilePhone || "");
+          updateField("mobilePhone", `${dialCode} ${digits}`);
+        }
+        // Update emergency phone prefix if no digits entered yet
+        const emergencyDigits = extractPhoneDigits(formData.emergencyPhone || "");
+        const emergencyPrefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0];
+        if (!emergencyDigits && (!emergencyPrefix || emergencyPrefix === "+40" || emergencyPrefix === "+93")) {
+          updateField("emergencyPhone", `${dialCode} `);
+        }
+      }
+    }
+  }, [formData.country]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ─── Validation: compute missing fields per section ─── */
   const s1Missing: string[] = [];
@@ -807,7 +836,7 @@ export function OnboardingWizard({
                 <FieldLabel en="Mobile Phone Number" sv="Mobiltelefon" />
                 <div className="flex gap-2">
                   <Select
-                    value={formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40"}
+                    value={formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")}
                     onValueChange={(prefix) => {
                       const digits = (formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "");
                       updateField("mobilePhone", `${prefix} ${digits}`);
@@ -833,15 +862,16 @@ export function OnboardingWizard({
                     inputMode="numeric"
                     value={(formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
-                      const maxD = getPhoneMaxDigits(formData.mobilePhone || "+40");
+                      const defaultPrefix = formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46";
+                      const maxD = getPhoneMaxDigits(formData.mobilePhone || defaultPrefix);
                       const digits = e.target.value.replace(/\D/g, "").slice(0, maxD);
                       // Strip leading zero when prefix is present
                       const cleaned = digits.replace(/^0+/, "");
-                      const prefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40";
+                      const prefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || defaultPrefix;
                       updateField("mobilePhone", `${prefix} ${cleaned}`);
                     }}
-                    maxLength={getPhoneMaxDigits(formData.mobilePhone || "+40")}
-                    placeholder={getPhoneRule(formData.mobilePhone || "+40").placeholder}
+                    maxLength={getPhoneMaxDigits(formData.mobilePhone || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46"))}
+                    placeholder={getPhoneRule(formData.mobilePhone || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")).placeholder}
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || !isPhoneValid(formData.mobilePhone)))}
                   />
                 </div>
@@ -890,7 +920,7 @@ export function OnboardingWizard({
                 <FieldLabel en="Emergency Contact Mobile Phone" sv="Mobiltelefon" />
                 <div className="flex gap-2">
                   <Select
-                    value={formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40"}
+                    value={formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")}
                     onValueChange={(prefix) => {
                       const digits = (formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "");
                       updateField("emergencyPhone", `${prefix} ${digits}`);
@@ -916,14 +946,15 @@ export function OnboardingWizard({
                     inputMode="numeric"
                     value={(formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "")}
                     onChange={(e) => {
-                      const maxD = getPhoneMaxDigits(formData.emergencyPhone || "+40");
+                      const defaultPrefix = formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46";
+                      const maxD = getPhoneMaxDigits(formData.emergencyPhone || defaultPrefix);
                       const digits = e.target.value.replace(/\D/g, "").slice(0, maxD);
                       const cleaned = digits.replace(/^0+/, "");
-                      const prefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40";
+                      const prefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || defaultPrefix;
                       updateField("emergencyPhone", `${prefix} ${cleaned}`);
                     }}
-                    maxLength={getPhoneMaxDigits(formData.emergencyPhone || "+40")}
-                    placeholder={getPhoneRule(formData.emergencyPhone || "+40").placeholder}
+                    maxLength={getPhoneMaxDigits(formData.emergencyPhone || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46"))}
+                    placeholder={getPhoneRule(formData.emergencyPhone || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")).placeholder}
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || !isPhoneValid(formData.emergencyPhone)))}
                   />
                 </div>
