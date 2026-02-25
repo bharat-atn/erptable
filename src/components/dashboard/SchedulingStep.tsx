@@ -383,8 +383,20 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
-            <DatePicker label="START DATE / STARTDATUM" value={data.contractStartDate} onSelect={(d) => update({ contractStartDate: d })} />
-            <DatePicker label="END DATE / SLUTDATUM" value={data.contractEndDate} onSelect={(d) => update({ contractEndDate: d })} />
+            <DatePicker label="START DATE / STARTDATUM" value={data.contractStartDate} onSelect={(d) => {
+              const updates: Partial<SchedulingData> = { contractStartDate: d };
+              if (d && (!data.workStartDate || (data.workStartDate && data.workStartDate < d))) {
+                updates.workStartDate = d;
+              }
+              update(updates);
+            }} />
+            <DatePicker label="END DATE / SLUTDATUM" value={data.contractEndDate} onSelect={(d) => {
+              const updates: Partial<SchedulingData> = { contractEndDate: d };
+              if (d && (!data.workEndDate || (data.workEndDate && data.workEndDate > d))) {
+                updates.workEndDate = d;
+              }
+              update(updates);
+            }} />
           </div>
 
           {/* Daily Schedule */}
@@ -429,6 +441,22 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
               <DatePicker label="WORK START (FIRST DAY) / ARBETSSTART" value={data.workStartDate} onSelect={(d) => update({ workStartDate: d })} />
               <DatePicker label="WORK END (LAST DAY) / ARBETSSTOPP" value={data.workEndDate} onSelect={(d) => update({ workEndDate: d })} />
             </div>
+            {data.workStartDate && data.contractStartDate && data.workStartDate < data.contractStartDate && (
+              <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                <p className="text-xs text-destructive font-medium">
+                  ⚠ Work start is before contract start date. / <span className="italic">OBS: Arbetsstart är före avtalets startdatum.</span>
+                </p>
+              </div>
+            )}
+            {data.workEndDate && data.contractEndDate && data.workEndDate > data.contractEndDate && (
+              <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2">
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                <p className="text-xs text-destructive font-medium">
+                  ⚠ Work end is after contract end date. / <span className="italic">OBS: Arbetsstopp är efter avtalets slutdatum.</span>
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
