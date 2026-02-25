@@ -20,6 +20,7 @@ import {
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { countries, findCountryByName } from "@/lib/countries";
 import { supabase } from "@/integrations/supabase/client";
 
 const FALLBACK_BANKS = [
@@ -32,11 +33,7 @@ const FALLBACK_BANKS = [
   "RAIFFEISEN BANK S.A.",
 ];
 
-const COUNTRIES = [
-  "Romania", "USA", "Germany", "France", "Italy", "Spain", "UK", "Netherlands",
-  "Belgium", "Austria", "Poland", "Sweden", "Norway", "Denmark", "Finland",
-  "Hungary", "Czech Republic", "Portugal", "Greece", "Ireland"
-];
+const COUNTRY_NAMES = countries.map(c => c.name);
 
 /* ─── Date validation helpers ─── */
 const today = new Date();
@@ -534,7 +531,7 @@ export function OnboardingWizard({
                   <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                     {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -555,7 +552,7 @@ export function OnboardingWizard({
             />
             <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
               <div className="space-y-1.5">
-                <FieldLabel en="Birthday" sv="Födelsedag" />
+                <FieldLabel en="Date of Birth" sv="Födelsedatum" />
                 <Input
                   type="date"
                   value={formData.birthday || ""}
@@ -564,6 +561,7 @@ export function OnboardingWizard({
                   max={`${maxBirthYear}-12-31`}
                   className={cn("h-11 text-sm font-medium", fieldError(!formData.birthday || !isBirthdayReasonable(formData.birthday || "")))}
                 />
+                <p className="text-[10px] text-muted-foreground">ISO 8601 format: YYYY-MM-DD</p>
                 {formData.birthday && !isBirthdayReasonable(formData.birthday) && (
                   <p className="text-[11px] text-destructive">
                     Age must be between {MIN_AGE} and {MAX_AGE} years old
@@ -607,19 +605,25 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Country of Birth" sv="Födelseland" />
-                  <Select value={formData.countryOfBirth} onValueChange={(v) => updateField("countryOfBirth", v)}>
+                  <Select value={formData.countryOfBirth} onValueChange={(v) => {
+                    updateField("countryOfBirth", v);
+                    if (!formData.citizenship) updateField("citizenship", v);
+                  }}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Citizenship" sv="Medborgarskap" />
-                  <Select value={formData.citizenship} onValueChange={(v) => updateField("citizenship", v)}>
+                  <Select value={formData.citizenship} onValueChange={(v) => {
+                    updateField("citizenship", v);
+                    if (!formData.countryOfBirth) updateField("countryOfBirth", v);
+                  }}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
                     <SelectContent>
-                      {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {COUNTRY_NAMES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -627,19 +631,30 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Mobile Phone Number" sv="Mobiltelefon" />
                 <div className="flex gap-2">
-                  <Select defaultValue="RO">
-                    <SelectTrigger className="w-24 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RO">🇷🇴 +40</SelectItem>
-                      <SelectItem value="US">🇺🇸 +1</SelectItem>
-                      <SelectItem value="DE">🇩🇪 +49</SelectItem>
-                      <SelectItem value="SE">🇸🇪 +46</SelectItem>
+                  <Select
+                    value={formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40"}
+                    onValueChange={(prefix) => {
+                      const digits = (formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "");
+                      updateField("mobilePhone", `${prefix} ${digits}`);
+                    }}
+                  >
+                    <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {countries.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Input
                     type="tel"
-                    value={formData.mobilePhone || ""}
-                    onChange={(e) => updateField("mobilePhone", e.target.value)}
+                    value={(formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "")}
+                    onChange={(e) => {
+                      const prefix = formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || "+40";
+                      updateField("mobilePhone", `${prefix} ${e.target.value}`);
+                    }}
+                    placeholder="Phone number"
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.mobilePhone || formData.mobilePhone.length < 10))}
                   />
                 </div>
@@ -681,19 +696,30 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Emergency Contact Mobile Phone" sv="Mobiltelefon" />
                 <div className="flex gap-2">
-                  <Select defaultValue="RO">
-                    <SelectTrigger className="w-24 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="RO">🇷🇴 +40</SelectItem>
-                      <SelectItem value="US">🇺🇸 +1</SelectItem>
-                      <SelectItem value="DE">🇩🇪 +49</SelectItem>
-                      <SelectItem value="SE">🇸🇪 +46</SelectItem>
+                  <Select
+                    value={formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40"}
+                    onValueChange={(prefix) => {
+                      const digits = (formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "");
+                      updateField("emergencyPhone", `${prefix} ${digits}`);
+                    }}
+                  >
+                    <SelectTrigger className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {countries.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <Input
                     type="tel"
-                    value={formData.emergencyPhone || ""}
-                    onChange={(e) => updateField("emergencyPhone", e.target.value)}
+                    value={(formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "")}
+                    onChange={(e) => {
+                      const prefix = formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || "+40";
+                      updateField("emergencyPhone", `${prefix} ${e.target.value}`);
+                    }}
+                    placeholder="Phone number"
                     className={cn("flex-1 h-11 text-sm font-medium", fieldError(!formData.emergencyPhone || formData.emergencyPhone.length < 10))}
                   />
                 </div>
