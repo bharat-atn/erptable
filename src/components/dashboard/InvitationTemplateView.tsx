@@ -19,6 +19,7 @@ const FIELD_TYPE_OPTIONS = [
   { value: "date", label: "Date" },
   { value: "email", label: "Email" },
   { value: "phone", label: "Phone" },
+  { value: "mobile_phone", label: "Mobile Phone" },
   { value: "select", label: "Dropdown" },
   { value: "textarea", label: "Text Area" },
   { value: "checkbox", label: "Checkbox" },
