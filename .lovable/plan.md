@@ -1,39 +1,33 @@
 
 
-## Plan: Add "Field Type" Column to Invitation Template
+## Plan: View Submitted Onboarding Data from Invitations
 
-### What's changing
-A new "Field Type" dropdown column will be added to the far right of each row in the Invitation Template grid. This lets administrators define what input type each field should use on the onboarding form (text, number, date, email, phone, select/dropdown, textarea, checkbox, file upload, url).
+### Problem
+When an invitation is marked as "Completed" (ACCEPTED), the candidate has filled out and submitted their onboarding form. Currently there is no way for an HR admin to review what the candidate submitted. The `personal_info` JSONB column on the `employees` table holds all the submitted data, but there is no UI to display it.
 
-### Technical Details
+### Solution
+Add a "View Submission" action to the row actions menu in the Invitations view. For completed invitations, clicking this opens a read-only dialog showing all the fields the candidate filled out, organized by section (Name/Address, Birth/Contact, Emergency Contact, Bank Details, Documents).
 
-The `field_type` column already exists in the database table `invitation_template_fields`. No database migration is needed — this is a UI-only change.
+### Technical approach
 
-**File:** `src/components/dashboard/InvitationTemplateView.tsx`
+**1. New component: `SubmissionViewDialog.tsx`**
+- A dialog that receives an `employeeId` and fetches the employee's `personal_info` JSONB from the `employees` table.
+- Renders the data in a clean, read-only layout organized into labeled sections matching the onboarding form structure.
+- Sections: Personal Info, Address, Birth & Contact, Emergency Contact, Bank Details, Swedish ID numbers.
+- Each field shown as a label/value pair. Empty fields shown as "—".
 
-1. **Add a Select import** from `@/components/ui/select`
+**2. Update `InvitationsView.tsx`**
+- Add state for `viewSubmissionEmployeeId`.
+- In the row actions dropdown, add a "View Submission" menu item (visible only when `status === "ACCEPTED"`), which sets the employee ID from the invitation.
+- Render the new `SubmissionViewDialog` at the bottom of the component.
+- The invitation query already joins `employees`, but we only fetch `email, first_name, last_name`. We need to also include the `id` in the join so we can pass it to the dialog. Looking at the `InvitationRow` type and query, the employee_id is available on the invitation row itself.
 
-2. **Define field type options** — approximately 10 standard form input types:
-   - `text` — Text
-   - `number` — Number
-   - `date` — Date
-   - `email` — Email
-   - `phone` — Phone
-   - `select` — Dropdown
-   - `textarea` — Text Area
-   - `checkbox` — Checkbox
-   - `file` — File Upload
-   - `url` — URL
+**3. Data flow**
+- `InvitationRow` already has `employee_id` from the invitations table (it is a column).
+- The dialog fetches `employees.personal_info` using that ID.
+- No database changes needed -- just reading existing data.
 
-3. **Update the grid layout** from 6 columns to 7 columns:
-   - Current: `grid-cols-[1fr_1fr_1fr_1fr_80px_80px]`
-   - New: `grid-cols-[1fr_1fr_1fr_1fr_80px_80px_120px]`
-   - The new "Field Type" column goes on the far right
-
-4. **Add header** for the new column: "Field Type"
-
-5. **Add a `<Select>` dropdown** in each row that:
-   - Displays the current `field_type` value
-   - On change, calls `updateField(rawField.id, { field_type: value })`
-   - Saves with the existing "Save Changes" button (same dirty-tracking mechanism)
+### Files to create/edit
+- **Create**: `src/components/dashboard/SubmissionViewDialog.tsx`
+- **Edit**: `src/components/dashboard/InvitationsView.tsx` (add state, menu item, dialog render)
 
