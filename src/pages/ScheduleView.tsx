@@ -230,7 +230,7 @@ export default function ScheduleView() {
                       return (
                         <tr key={day.schedule_date} className={cn("border-t border-border", dayTypeBg(day.day_type))}>
                           <td className="p-2 font-mono">{day.schedule_date}</td>
-                          <td className="p-2">{dayName}</td>
+                          <td className={cn("p-2", day.day_type === "Weekend" && "font-semibold")}>{dayName}</td>
                           <td className={cn("p-2 font-medium", dayTypeColor(day.day_type))}>{day.day_type}</td>
                           <td className="p-2 text-right font-medium">{day.scheduled_hours > 0 ? `${day.scheduled_hours}h` : "—"}</td>
                           <td className="p-2 hidden sm:table-cell text-muted-foreground">

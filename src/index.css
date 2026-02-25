@@ -159,6 +159,8 @@
 .contract-doc .info-block p { margin-bottom: 6px; }
 .contract-doc .info-block-alert { border-left-color: #b91c1c; background: rgba(185,28,28,0.06); }
 .contract-doc .info-block-alert p { color: #b91c1c; }
+.contract-doc .info-block-alert .info-sv { color: #b91c1c; }
+.contract-doc .info-block-alert .info-sv-inline { color: #b91c1c; }
 .contract-doc .info-sv { font-style: italic; color: hsl(var(--muted-foreground)); }
 .contract-doc .info-sv-inline { font-style: italic; color: hsl(var(--muted-foreground)); }
 .contract-doc .info-list { margin: 4px 0 8px 18px; font-size: 0.72rem; }

@@ -431,9 +431,9 @@ export default function ContractSigning() {
                           };
                           const colorClass = typeColors[day.dayType] || "text-muted-foreground";
                           return (
-                            <tr key={day.date} className={cn("border-b border-border/50 last:border-0", day.dayType === "Weekend" && "bg-muted/20")}>
+                            <tr key={day.date} className={cn("border-b border-border/50 last:border-0", day.dayType === "Weekend" && "bg-muted/30", day.dayType === "Holiday" && "bg-destructive/5", day.dayType === "Vacation" && "bg-amber-50")}>
                               <td className="px-3 py-1.5 font-medium tabular-nums">{day.date}</td>
-                              <td className="px-3 py-1.5 text-muted-foreground">{dayName}</td>
+                              <td className={cn("px-3 py-1.5 text-muted-foreground", day.dayType === "Weekend" && "font-semibold")}>{dayName}</td>
                               <td className="px-3 py-1.5">
                                 <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium", colorClass)}>
                                   {day.dayType}
