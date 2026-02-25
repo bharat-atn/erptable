@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Cal
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo.png";
+import { format, addDays, eachDayOfInterval, getDay } from "date-fns";
 
 const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
@@ -18,6 +19,99 @@ const COC_LANGUAGES = [
   { code: "ro", label: "Română", labelEn: "Romanian", file: "/documents/code-of-conduct-ro.pdf" },
   { code: "th", label: "ไทย", labelEn: "Thai", file: "/documents/code-of-conduct-th.pdf" },
 ];
+
+// Swedish public holidays calculation
+function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
+  const fixed = [
+    { m: 1, d: 1, nameEn: "New Year's Day", nameSv: "Nyårsdagen" },
+    { m: 1, d: 6, nameEn: "Epiphany", nameSv: "Trettondedag jul" },
+    { m: 5, d: 1, nameEn: "Labour Day", nameSv: "Första Maj" },
+    { m: 6, d: 6, nameEn: "National Day", nameSv: "Sveriges nationaldag" },
+    { m: 12, d: 24, nameEn: "Christmas Eve", nameSv: "Julafton" },
+    { m: 12, d: 25, nameEn: "Christmas Day", nameSv: "Juldagen" },
+    { m: 12, d: 26, nameEn: "Second Day of Christmas", nameSv: "Annandag jul" },
+    { m: 12, d: 31, nameEn: "New Year's Eve", nameSv: "Nyårsafton" },
+  ];
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, month - 1, day);
+  const easterBased = [
+    { offset: -2, nameEn: "Good Friday", nameSv: "Långfredagen" },
+    { offset: 0, nameEn: "Easter Sunday", nameSv: "Påskdagen" },
+    { offset: 1, nameEn: "Easter Monday", nameSv: "Annandag påsk" },
+    { offset: 39, nameEn: "Ascension Day", nameSv: "Kristi himmelsfärdsdag" },
+    { offset: 49, nameEn: "Pentecost Sunday", nameSv: "Pingstdagen" },
+  ];
+  let midsummerEve = new Date(year, 5, 19);
+  while (midsummerEve.getDay() !== 5) midsummerEve = addDays(midsummerEve, 1);
+  let allSaints = new Date(year, 9, 31);
+  while (allSaints.getDay() !== 6) allSaints = addDays(allSaints, 1);
+  const holidays = fixed.map(h => ({
+    date: `${year}-${String(h.m).padStart(2, "0")}-${String(h.d).padStart(2, "0")}`,
+    nameEn: h.nameEn, nameSv: h.nameSv,
+  }));
+  easterBased.forEach(eb => {
+    const dd = addDays(easter, eb.offset);
+    holidays.push({ date: format(dd, "yyyy-MM-dd"), nameEn: eb.nameEn, nameSv: eb.nameSv });
+  });
+  holidays.push({ date: format(midsummerEve, "yyyy-MM-dd"), nameEn: "Midsummer Eve", nameSv: "Midsommarafton" });
+  holidays.push({ date: format(addDays(midsummerEve, 1), "yyyy-MM-dd"), nameEn: "Midsummer Day", nameSv: "Midsommardagen" });
+  holidays.push({ date: format(allSaints, "yyyy-MM-dd"), nameEn: "All Saints' Day", nameSv: "Alla helgons dag" });
+  return holidays;
+}
+
+interface ScheduleDay {
+  date: string;
+  dayType: string;
+  hours: number;
+  holidayEn?: string;
+  holidaySv?: string;
+}
+
+function generateSchedule(schedData: Record<string, any>): ScheduleDay[] {
+  const startStr = schedData.workStartDate || schedData.contractStartDate;
+  const endStr = schedData.workEndDate || schedData.contractEndDate;
+  if (!startStr || !endStr) return [];
+  
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+
+  const weeklyHours = Number(schedData.weeklyHours) || 40;
+  const dailyHours = weeklyHours / 5;
+  
+  // Gather holidays for all years in range
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  const holidayMap = new Map<string, { nameEn: string; nameSv: string }>();
+  for (let y = startYear; y <= endYear; y++) {
+    getSwedishHolidays(y).forEach(h => holidayMap.set(h.date, { nameEn: h.nameEn, nameSv: h.nameSv }));
+  }
+
+  // Vacation range
+  const vacStart = schedData.vacationEnabled && schedData.vacationStartDate ? new Date(schedData.vacationStartDate) : null;
+  const vacEnd = schedData.vacationEnabled && schedData.vacationEndDate ? new Date(schedData.vacationEndDate) : null;
+
+  const days = eachDayOfInterval({ start, end });
+  return days.map(d => {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dow = getDay(d); // 0=Sun, 6=Sat
+    const holiday = holidayMap.get(dateStr);
+    const isVacation = vacStart && vacEnd && d >= vacStart && d <= vacEnd;
+
+    if (holiday) return { date: dateStr, dayType: "Holiday", hours: 0, holidayEn: holiday.nameEn, holidaySv: holiday.nameSv };
+    if (isVacation) return { date: dateStr, dayType: "Vacation", hours: 0 };
+    if (dow === 0 || dow === 6) return { date: dateStr, dayType: "Weekend", hours: 0 };
+    return { date: dateStr, dayType: "Workday", hours: Math.round(dailyHours * 100) / 100 };
+  });
+}
 
 // ... keep existing code (SigningData interface)
 interface SigningData {
@@ -71,6 +165,11 @@ export default function ContractSigning() {
     };
     load();
   }, [token]);
+
+  // Derive schedule days from form data (must be before early returns)
+  const fd = data?.form_data || {};
+  const schedData = (fd as Record<string, any>).schedulingData as Record<string, any> | undefined;
+  const scheduleDays = useMemo(() => schedData ? generateSchedule(schedData) : [], [schedData]);
 
   const handleSign = async (dataUrl: string) => {
     if (!token || !data) return;
@@ -130,9 +229,7 @@ export default function ContractSigning() {
   if (!data) return null;
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
-  const fd = data.form_data || {};
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const schedData = fd.schedulingData as Record<string, any> | undefined;
   const canSign = cocReviewed && cocConfirmed && contractConfirmed && (scheduleReviewed || !schedData);
 
   return (
@@ -215,22 +312,15 @@ export default function ContractSigning() {
                       </span>
                     )}
                   </div>
-                  {/* Embedded PDF viewer */}
+                  {/* Embedded PDF viewer — Google Docs Viewer for cross-browser support */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-                    <object
-                      data={`${selectedCocLang.file}#toolbar=1&navpanes=0`}
-                      type="application/pdf"
+                    <iframe
+                      src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       onLoad={() => setCocReviewed(true)}
-                    >
-                      <iframe
-                        src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
-                        className="w-full h-[400px] sm:h-[500px]"
-                        title={`Code of Conduct - ${selectedCocLang.label}`}
-                        onLoad={() => setCocReviewed(true)}
-                      />
-                    </object>
+                      style={{ border: "none" }}
+                    />
                   </div>
                   <div className="flex items-center gap-3">
                     <a
@@ -270,6 +360,7 @@ export default function ContractSigning() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Summary info */}
               <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <span className="text-muted-foreground">Contract period / Avtalsperiod:</span>
@@ -288,34 +379,68 @@ export default function ContractSigning() {
                   )}
                 </div>
               </div>
-              {/* Inline schedule summary */}
-              <div className="rounded-lg border border-border overflow-hidden bg-background">
-                <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto p-4">
-                  <p className="text-xs text-muted-foreground mb-3 italic">
-                    Detailed schedule overview based on contracted period. / Detaljerad schemaöversikt baserad på avtalsperioden.
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                    <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Season Year / Säsongsår</span>
-                      <p className="font-medium">{schedData.seasonYear || data.season_year || "—"}</p>
+
+              {/* Statistics */}
+              {scheduleDays.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: "Workdays", sv: "Arbetsdagar", value: scheduleDays.filter(d => d.dayType === "Workday").length, color: "text-primary" },
+                    { label: "Holidays", sv: "Helgdagar", value: scheduleDays.filter(d => d.dayType === "Holiday").length, color: "text-destructive" },
+                    { label: "Vacation", sv: "Semester", value: scheduleDays.filter(d => d.dayType === "Vacation").length, color: "text-amber-600" },
+                    { label: "Total hours", sv: "Totala timmar", value: Math.round(scheduleDays.reduce((s, d) => s + d.hours, 0)), color: "text-foreground" },
+                  ].map(stat => (
+                    <div key={stat.label} className="rounded-lg border border-border bg-background p-3 text-center">
+                      <p className={cn("text-xl font-bold", stat.color)}>{stat.value}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{stat.label} / {stat.sv}</p>
                     </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Weekly Hours / Veckotimmar</span>
-                      <p className="font-medium">{schedData.weeklyHours || 40}h</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground uppercase tracking-wide">Work Hours / Arbetstider</span>
-                      <p className="font-medium">{schedData.startTime || "06:30"} – {schedData.endTime || "17:00"}</p>
-                    </div>
-                    {schedData.vacationEnabled && (
-                      <div>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Vacation / Semester</span>
-                        <p className="font-medium">{schedData.vacationStartDate || "—"} → {schedData.vacationEndDate || "—"}</p>
-                      </div>
-                    )}
+                  ))}
+                </div>
+              )}
+
+              {/* Full day-by-day schedule */}
+              {scheduleDays.length > 0 && (
+                <div className="rounded-lg border border-border overflow-hidden bg-background">
+                  <div className="max-h-[400px] sm:max-h-[500px] overflow-y-auto">
+                    <table className="w-full text-sm">
+                      <thead className="sticky top-0 bg-muted/80 backdrop-blur-sm">
+                        <tr className="border-b border-border">
+                          <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date / Datum</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Day / Dag</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Type / Typ</th>
+                          <th className="text-right px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hours / Tim</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scheduleDays.map((day) => {
+                          const d = new Date(day.date);
+                          const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+                          const typeColors: Record<string, string> = {
+                            Workday: "text-primary bg-primary/5",
+                            Weekend: "text-muted-foreground bg-muted/30",
+                            Holiday: "text-destructive bg-destructive/5",
+                            Vacation: "text-amber-600 bg-amber-50",
+                          };
+                          const colorClass = typeColors[day.dayType] || "text-muted-foreground";
+                          return (
+                            <tr key={day.date} className={cn("border-b border-border/50 last:border-0", day.dayType === "Weekend" && "bg-muted/20")}>
+                              <td className="px-3 py-1.5 font-medium tabular-nums">{day.date}</td>
+                              <td className="px-3 py-1.5 text-muted-foreground">{dayName}</td>
+                              <td className="px-3 py-1.5">
+                                <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium", colorClass)}>
+                                  {day.dayType}
+                                  {day.holidayEn && <span className="text-[10px] opacity-70">({day.holidayEn})</span>}
+                                </span>
+                              </td>
+                              <td className="px-3 py-1.5 text-right tabular-nums font-medium">{day.hours > 0 ? `${day.hours}h` : "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
+              )}
+
               <div className="flex items-center gap-3">
                 {!scheduleReviewed && (
                   <Button variant="secondary" size="sm" onClick={() => setScheduleReviewed(true)} className="gap-2">
