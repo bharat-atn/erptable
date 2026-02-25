@@ -654,7 +654,11 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
               <ArrowLeft className="w-4 h-4 mr-1" />
               Go back / Tillbaka
             </Button>
-            <Button onClick={() => { setShowConfirmDialog(false); onNext(); }} className="px-8">
+            <Button
+              onClick={() => { setShowConfirmDialog(false); onNext(); }}
+              className="px-8"
+              disabled={!vacationConsidered || !data.attachToContract}
+            >
               Continue / Fortsätt
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>
