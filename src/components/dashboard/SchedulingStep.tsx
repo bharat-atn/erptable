@@ -125,6 +125,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
   const [saving, setSaving] = useState(false);
   const [scheduleSaved, setScheduleSaved] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [vacationConsidered, setVacationConsidered] = useState(false);
   const scheduleScrollRef = useRef<HTMLDivElement>(null);
 
   // Check if schedule already exists in DB (for resumed contracts)
@@ -626,8 +627,8 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
             {/* Vacation question */}
             <label className="flex items-center gap-3 rounded-lg border border-border p-4 cursor-pointer hover:bg-muted/40 transition-colors">
               <Checkbox
-                checked={data.vacationEnabled}
-                onCheckedChange={(v) => update({ vacationEnabled: !!v })}
+                checked={vacationConsidered}
+                onCheckedChange={(v) => setVacationConsidered(!!v)}
                 className="mt-0.5 shrink-0"
               />
               <div className="space-y-0.5">
