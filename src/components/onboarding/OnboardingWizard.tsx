@@ -85,13 +85,13 @@ export const personalInfoSchema = z.object({
   emergencyFirstName: z.string().min(1, "Emergency contact first name is required").max(100),
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
   emergencyPhone: z.string().min(10, "Valid phone number required").max(20),
-  swedishCoordinationNumber: z.string().max(12).optional().refine(
-    (val) => !val || /^\d{12}$/.test(val),
-    { message: "Must be exactly 12 digits" }
+  swedishCoordinationNumber: z.string().max(13).optional().refine(
+    (val) => !val || /^\d{8}-?\d{4}$/.test(val),
+    { message: "Must be exactly 12 digits (YYYYMMDD-XXXX)" }
   ),
-  swedishPersonalNumber: z.string().max(12).optional().refine(
-    (val) => !val || /^\d{12}$/.test(val),
-    { message: "Must be exactly 12 digits" }
+  swedishPersonalNumber: z.string().max(13).optional().refine(
+    (val) => !val || /^\d{8}-?\d{4}$/.test(val),
+    { message: "Must be exactly 12 digits (YYYYMMDD-XXXX)" }
   ),
 });
 
@@ -600,14 +600,15 @@ export function OnboardingWizard({
                   <Input
                     value={formData.swedishCoordinationNumber || ""}
                     onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const v = digits.length === 12 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits;
                       updateField("swedishCoordinationNumber", v);
                     }}
-                    placeholder="12 digits / 12 siffror"
-                    maxLength={12}
+                    placeholder="YYYYMMDD-XXXX"
+                    maxLength={13}
                     className="h-11 text-sm font-medium"
                   />
-                  {formData.swedishCoordinationNumber && formData.swedishCoordinationNumber.length > 0 && formData.swedishCoordinationNumber.length !== 12 && (
+                  {formData.swedishCoordinationNumber && formData.swedishCoordinationNumber.length > 0 && formData.swedishCoordinationNumber.replace(/-/g, "").length !== 12 && (
                     <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
                   )}
                 </div>
@@ -616,14 +617,15 @@ export function OnboardingWizard({
                   <Input
                     value={formData.swedishPersonalNumber || ""}
                     onChange={(e) => {
-                      const v = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const v = digits.length === 12 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits;
                       updateField("swedishPersonalNumber", v);
                     }}
-                    placeholder="12 digits / 12 siffror"
-                    maxLength={12}
+                    placeholder="YYYYMMDD-XXXX"
+                    maxLength={13}
                     className="h-11 text-sm font-medium"
                   />
-                  {formData.swedishPersonalNumber && formData.swedishPersonalNumber.length > 0 && formData.swedishPersonalNumber.length !== 12 && (
+                  {formData.swedishPersonalNumber && formData.swedishPersonalNumber.length > 0 && formData.swedishPersonalNumber.replace(/-/g, "").length !== 12 && (
                     <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
                   )}
                 </div>
