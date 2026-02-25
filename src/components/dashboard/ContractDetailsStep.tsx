@@ -2561,70 +2561,72 @@ export function ContractDetailsStep({
           </Card>
         )}
 
-        {/* Salary options prompt dialog */}
+        {/* Salary options prompt dialog — centered modal */}
         {showSalaryPrompt && (
-          <Card className="border-2 border-primary/30 bg-primary/5 shadow-lg animate-fade-in">
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-start gap-3">
-                <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-semibold">Before continuing / Innan du fortsätter</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Would you also like to include any of the following salary options? / Vill du även inkludera något av följande lönealternativ?
-                  </p>
-                </div>
-              </div>
-              <div className="space-y-2 ml-8">
-                <div
-                  className={cn(
-                    "rounded-xl border p-3 cursor-pointer transition-colors",
-                    pieceWorkPay ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
-                  )}
-                  onClick={() => setPieceWorkPay(!pieceWorkPay)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
-                      pieceWorkPay ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    )}>
-                      {pieceWorkPay && <Check className="w-3 h-3 text-primary-foreground" />}
-                    </div>
-                    <span className={cn("text-sm font-medium", !pieceWorkPay && "text-muted-foreground")}>
-                      Piece-work pay / Ackordslön
-                    </span>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
+            <Card className="border-2 border-primary/30 bg-background shadow-2xl animate-fade-in w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold">Before continuing / Innan du fortsätter</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Would you also like to include any of the following salary options? / Vill du även inkludera något av följande lönealternativ?
+                    </p>
                   </div>
                 </div>
-                <div
-                  className={cn(
-                    "rounded-xl border p-3 cursor-pointer transition-colors",
-                    otherSalaryBenefits ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
-                  )}
-                  onClick={() => setOtherSalaryBenefits(!otherSalaryBenefits)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
-                      otherSalaryBenefits ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    )}>
-                      {otherSalaryBenefits && <Check className="w-3 h-3 text-primary-foreground" />}
+                <div className="space-y-2 ml-8">
+                  <div
+                    className={cn(
+                      "rounded-xl border p-3 cursor-pointer transition-colors",
+                      pieceWorkPay ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
+                    )}
+                    onClick={() => setPieceWorkPay(!pieceWorkPay)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
+                        pieceWorkPay ? "border-primary bg-primary" : "border-muted-foreground/40"
+                      )}>
+                        {pieceWorkPay && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <span className={cn("text-sm font-medium", !pieceWorkPay && "text-muted-foreground")}>
+                        Piece-work pay / Ackordslön
+                      </span>
                     </div>
-                    <span className={cn("text-sm font-medium", !otherSalaryBenefits && "text-muted-foreground")}>
-                      Other salary benefits / Andra löneförmåner
-                    </span>
+                  </div>
+                  <div
+                    className={cn(
+                      "rounded-xl border p-3 cursor-pointer transition-colors",
+                      otherSalaryBenefits ? "border-primary/50 bg-primary/5" : "border-border hover:bg-muted/30"
+                    )}
+                    onClick={() => setOtherSalaryBenefits(!otherSalaryBenefits)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0",
+                        otherSalaryBenefits ? "border-primary bg-primary" : "border-muted-foreground/40"
+                      )}>
+                        {otherSalaryBenefits && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <span className={cn("text-sm font-medium", !otherSalaryBenefits && "text-muted-foreground")}>
+                        Other salary benefits / Andra löneförmåner
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-2 ml-8">
-                <Button variant="outline" size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
-                  Skip / Hoppa över
-                </Button>
-                <Button size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
-                  Continue / Fortsätt
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex justify-end gap-2 ml-8">
+                  <Button variant="outline" size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
+                    Skip / Hoppa över
+                  </Button>
+                  <Button size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
+                    Continue / Fortsätt
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         </>}
