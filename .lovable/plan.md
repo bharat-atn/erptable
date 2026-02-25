@@ -1,36 +1,40 @@
 
 
-## Problem Analysis
+## Problem
 
-The database cascade triggers are working correctly -- when you delete an invitation, the employee record IS deleted from the database if it has no other invitations or contracts. However, the **Operations view doesn't refresh** because its React Query cache is never invalidated.
-
-Here is what happens:
-1. You delete an invitation in the Invitations tab
-2. The `InvitationsView` invalidates only `["invitations"]` query cache
-3. The database trigger deletes the orphaned employee record
-4. The Operations view still shows stale cached data from `["operations-employees"]`
-
-The same issue exists for contract deletions in the Contracts view.
+When the user sets contract start/end dates (Duration & Timing), the Work Start and Work End fields below do not automatically inherit those values. Additionally, there is no validation preventing the work period from exceeding the contract period — e.g., a 6-month contract with a 10-month work period.
 
 ## Plan
 
-### 1. Update `InvitationsView` delete mutations to also invalidate Operations caches
+### 1. Auto-populate Work Start/End from Contract Dates
 
-In `src/components/dashboard/InvitationsView.tsx`, update `onSuccess` for both `deleteInvitation` and `bulkDelete` mutations to also invalidate:
-- `["operations-employees"]`
-- `["operations-invitation-stats"]`
-- `["operations-contracts"]`
+In `SchedulingStep.tsx`, when the user sets or changes `contractStartDate` or `contractEndDate`:
+- Automatically copy the value into `workStartDate` / `workEndDate` respectively
+- This only applies if the work date is currently `null`, or if the work date would now fall outside the new contract period
 
-### 2. Update `ContractsView` delete mutations similarly
+Implementation: Modify the `onSelect` handlers for the contract start/end `DatePicker` components (lines 386-387) to also call `update()` with the corresponding work dates.
 
-In `src/components/dashboard/ContractsView.tsx`, update any delete mutation `onSuccess` to also invalidate:
-- `["operations-employees"]`
-- `["operations-contracts"]`
-- `["operations-invitation-stats"]`
+### 2. Clamp Work Dates to Contract Period
 
-### 3. Update `EmployeeRegisterView` delete mutations
+When the user manually changes `workStartDate` or `workEndDate`:
+- If `workStartDate` is set earlier than `contractStartDate`, show a bilingual warning
+- If `workEndDate` is set later than `contractEndDate`, show a bilingual warning
+- The warnings will appear as inline destructive alerts below the date pickers (similar to existing warning style)
+- The dates will NOT be blocked — the user can still proceed, but they are warned
 
-In `src/components/dashboard/EmployeeRegisterView.tsx`, update delete mutation `onSuccess` to also invalidate the operations query keys, ensuring Employee Register and Operations stay in sync.
+### 3. Validation Warnings
 
-This is a frontend cache synchronization fix -- no database changes needed since the triggers already handle the data cleanup correctly.
+Add computed warning flags:
+- `workStartTooEarly`: `workStartDate < contractStartDate`
+- `workEndTooLate`: `workEndDate > contractEndDate`
+
+Display conditional warning messages inside the red work-period section, below the date pickers:
+- "⚠ Work start is before contract start date. / OBS: Arbetsstart är före avtalets startdatum."
+- "⚠ Work end is after contract end date. / OBS: Arbetsstopp är efter avtalets slutdatum."
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/SchedulingStep.tsx` | Auto-sync contract dates → work dates; add out-of-range warnings |
 
