@@ -32,8 +32,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Plus, Loader2, Mail, ChevronsUpDown, Check, Copy, CheckCircle, AlertTriangle } from "lucide-react";
+import { Plus, Loader2, Mail, ChevronsUpDown, Check, Copy, CheckCircle, AlertTriangle, Eye, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmailPreviewPanel } from "./EmailPreviewPanel";
 
 const LANGUAGE_OPTIONS = [
   { value: "sv", label: "Swedish only / Bara svenska" },
@@ -64,6 +65,7 @@ export function CreateInvitationDialog() {
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const [emailResult, setEmailResult] = useState<EmailResult | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: employees } = useQuery({
@@ -200,6 +202,7 @@ export function CreateInvitationDialog() {
     setSelectedEmployeeId(null);
     setEmailResult(null);
     setLinkCopied(false);
+    setShowPreview(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -461,14 +464,48 @@ export function CreateInvitationDialog() {
             </>
           )}
 
-          <Button type="submit" className="w-full" disabled={createInvitation.isPending || !isFormValid}>
-            {createInvitation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Mail className="w-4 h-4 mr-2" />
-            )}
-            Send Invitation
-          </Button>
+          {showPreview ? (
+            <div className="space-y-4">
+              <EmailPreviewPanel
+                language={language}
+                recipientName={
+                  type === "CONTRACT_RENEWAL"
+                    ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")
+                    : [firstName, lastName].filter(Boolean).join(" ")
+                }
+                recipientEmail={type === "CONTRACT_RENEWAL" ? selectedEmployee?.email || "" : email}
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowPreview(false)}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <Button type="submit" className="flex-1" disabled={createInvitation.isPending || !isFormValid}>
+                  {createInvitation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 mr-2" />
+                  )}
+                  Send Invitation
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!isFormValid}
+              onClick={() => setShowPreview(true)}
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview Email
+            </Button>
+          )}
         </form>
       </DialogContent>
     </Dialog>
