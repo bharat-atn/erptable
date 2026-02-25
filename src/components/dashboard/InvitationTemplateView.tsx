@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Save, Loader2, AlertTriangle, FileText, Upload, X, Image } from "lucide-react";
+import { ChevronDown, Save, Loader2, AlertTriangle, FileText, Upload, X, Image, Eye } from "lucide-react";
 
 const FIELD_TYPE_OPTIONS = [
   { value: "text", label: "Text" },
@@ -76,7 +76,11 @@ function saveLogo(settings: LogoSettings | null) {
   }
 }
 
-export function InvitationTemplateView() {
+interface InvitationTemplateViewProps {
+  onShowPreview?: () => void;
+}
+
+export function InvitationTemplateView({ onShowPreview }: InvitationTemplateViewProps) {
   const queryClient = useQueryClient();
   const [editedFields, setEditedFields] = useState<Map<string, Partial<TemplateField>>>(new Map());
   const [openSections, setOpenSections] = useState<Set<string>>(new Set(Object.keys(SECTION_LABELS)));
@@ -210,18 +214,26 @@ export function InvitationTemplateView() {
             Configure which fields appear on the candidate onboarding form and set their requirements
           </p>
         </div>
-        <Button
-          onClick={() => saveFieldsMutation.mutate()}
-          disabled={!hasChanges || saveFieldsMutation.isPending}
-          className="gap-2"
-        >
-          {saveFieldsMutation.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
+        <div className="flex items-center gap-3">
+          {onShowPreview && (
+            <Button variant="default" onClick={onShowPreview} className="gap-2 min-w-[200px]">
+              <Eye className="w-4 h-4" />
+              Switch to Candidate View
+            </Button>
           )}
-          {saveFieldsMutation.isPending ? "Saving..." : "Save Changes"}
-        </Button>
+          <Button
+            onClick={() => saveFieldsMutation.mutate()}
+            disabled={!hasChanges || saveFieldsMutation.isPending}
+            className="gap-2 min-w-[200px]"
+          >
+            {saveFieldsMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {saveFieldsMutation.isPending ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
       </div>
 
       {hasChanges && (

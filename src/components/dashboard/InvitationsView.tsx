@@ -58,7 +58,11 @@ type InvitationRow = {
   employees: { email: string; first_name: string | null; last_name: string | null } | null;
 };
 
-export function InvitationsView() {
+interface InvitationsViewProps {
+  onShowPreview?: () => void;
+}
+
+export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<InvitationRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
@@ -198,7 +202,15 @@ export function InvitationsView() {
           <h1 className="text-2xl font-semibold">Invitations</h1>
           <p className="text-muted-foreground text-sm">Manage employee onboarding invitations</p>
         </div>
-        <CreateInvitationDialog />
+        <div className="flex items-center gap-3">
+          {onShowPreview && (
+            <Button variant="default" onClick={onShowPreview} className="gap-2 min-w-[200px]">
+              <Eye className="w-4 h-4" />
+              Switch to Candidate View
+            </Button>
+          )}
+          <CreateInvitationDialog />
+        </div>
       </div>
 
       <EnhancedTable<InvitationRow>

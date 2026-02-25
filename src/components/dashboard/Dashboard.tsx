@@ -19,7 +19,7 @@ import { AuditLogView } from "./AuditLogView";
 import { BankListView } from "./BankListView";
 import { UserManagementView } from "./UserManagementView";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 import { type AppDefinition } from "./AppLauncher";
@@ -67,7 +67,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         setActiveView(view);
       }} />;
       case "employee-register": return <EmployeeRegisterView />;
-      case "invitations": return <InvitationsView />;
+      case "invitations": return <InvitationsView onShowPreview={() => setShowPreview(true)} />;
       case "contracts": return <ContractsView onContinueContract={handleContinueContract} />;
       case "settings": return <SettingsView />;
       case "contract-template": return <ContractTemplateView resumeContractId={resumeContractId} preselectedEmployeeId={preselectedEmployeeId} resumeMode={resumeMode} />;
@@ -75,7 +75,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "process-guide": return <ProcessGuideView />;
       case "employee-id-settings": return <EmployeeIdSettingsView />;
       case "contract-id-settings": return <ContractIdSettingsView />;
-      case "invitation-template": return <InvitationTemplateView />;
+      case "invitation-template": return <InvitationTemplateView onShowPreview={() => setShowPreview(true)} />;
       case "contract-data": return <ContractDataRegistryView />;
       case "bank-list": return <BankListView />;
       case "iso-standards": return <IsoStandardsView />;
@@ -119,16 +119,6 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
           </div>
         </main>
         
-        {(activeView === "invitations" || activeView === "invitation-template") && (
-          <Button
-            variant="default"
-            className="fixed top-4 right-6 shadow-lg gap-2 z-40"
-            onClick={() => setShowPreview(true)}
-          >
-            <Eye className="w-4 h-4" />
-            Switch to Candidate View
-          </Button>
-        )}
       </div>
     </div>
   );
