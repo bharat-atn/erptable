@@ -50,6 +50,12 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        back: {
+          DEFAULT: "hsl(var(--back))",
+          foreground: "hsl(var(--back-foreground))",
+          border: "hsl(var(--back-border))",
+          bg: "hsl(var(--back-bg))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",

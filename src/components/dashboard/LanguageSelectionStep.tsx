@@ -159,7 +159,7 @@ export function LanguageSelectionStep({
         </p>
         {/* Navigation */}
         <div className="flex justify-between pt-2">
-          <Button variant="outline" onClick={onBack} className="border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 hover:text-orange-800">
+          <Button variant="back" onClick={onBack}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back
           </Button>
