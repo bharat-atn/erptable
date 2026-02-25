@@ -407,6 +407,19 @@ export function ContractDetailsStep({
   const handleSendForSigning = async () => {
     setSendingForSigning(true);
     try {
+      // Force-save the latest form data before sending for signing
+      // so the signing page always shows the most up-to-date contract
+      const currentFormData = getFormData();
+      const { error: saveErr } = await supabase
+        .from("contracts")
+        .update({ form_data: currentFormData })
+        .eq("id", contractId)
+        .eq("signing_status", "not_sent");
+      if (saveErr) {
+        console.warn("Pre-send save failed:", saveErr);
+        // Continue anyway — existing saved data will be used
+      }
+
       const { data, error } = await supabase.functions.invoke("send-signing-email", {
         body: { contractId },
       });
