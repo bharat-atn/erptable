@@ -157,6 +157,8 @@
 .contract-doc .subsection-label { font-family: Arial, Helvetica, sans-serif; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: hsl(var(--muted-foreground)); margin-top: 0.75rem; margin-bottom: 0.35rem; }
 .contract-doc .info-block { background: hsl(var(--muted)); border-left: 3px solid hsl(var(--border)); padding: 0.625rem 0.875rem; margin-bottom: 0.5rem; font-size: 0.78rem; line-height: 1.5; border-radius: 0 4px 4px 0; }
 .contract-doc .info-block p { margin-bottom: 6px; }
+.contract-doc .info-block-alert { border-left-color: #b91c1c; background: rgba(185,28,28,0.06); }
+.contract-doc .info-block-alert p { color: #b91c1c; }
 .contract-doc .info-sv { font-style: italic; color: hsl(var(--muted-foreground)); }
 .contract-doc .info-sv-inline { font-style: italic; color: hsl(var(--muted-foreground)); }
 .contract-doc .info-list { margin: 4px 0 8px 18px; font-size: 0.72rem; }
