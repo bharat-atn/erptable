@@ -159,7 +159,7 @@ export function EmployeeRegisterView() {
       const { error } = await supabase.from("employees").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["register-employees"] }); toast.success("Employee deleted!"); setDeleteEmployee(null); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["register-employees"] }); queryClient.invalidateQueries({ queryKey: ["operations-employees"] }); queryClient.invalidateQueries({ queryKey: ["operations-contracts"] }); queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] }); queryClient.invalidateQueries({ queryKey: ["invitations"] }); toast.success("Employee deleted!"); setDeleteEmployee(null); },
     onError: (err: Error) => toast.error(err.message),
   });
 
@@ -190,6 +190,10 @@ export function EmployeeRegisterView() {
     },
     onSuccess: (_data, ids) => {
       queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
       toast.success(`${ids.length} employee(s) deleted successfully`);
       setBulkDeleteIds(null);
       clearSelectionFn?.();
