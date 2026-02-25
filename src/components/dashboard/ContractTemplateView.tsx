@@ -124,6 +124,9 @@ const steps = [{
 }];
 type ResumeMode = "start" | "fasttrack" | "resume";
 
+/** Steps visited in fast-track mode (skips non-essential sections) */
+const FAST_TRACK_STEPS = [3, 4, 5, 7, 10, 16, 17, 18];
+
 interface ContractTemplateViewProps {
   resumeContractId?: string | null;
   preselectedEmployeeId?: string | null;
@@ -132,6 +135,31 @@ interface ContractTemplateViewProps {
 
 export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, resumeMode = "resume" }: ContractTemplateViewProps) {
   const [activeStep, setActiveStep] = useState(1);
+  const [isFastTrack, setIsFastTrack] = useState(false);
+
+  /** Navigate to the next step, respecting fast-track sequence */
+  const goNext = (fromStep: number) => {
+    if (isFastTrack) {
+      const idx = FAST_TRACK_STEPS.indexOf(fromStep);
+      if (idx !== -1 && idx < FAST_TRACK_STEPS.length - 1) {
+        setActiveStep(FAST_TRACK_STEPS[idx + 1]);
+        return;
+      }
+    }
+    setActiveStep(fromStep + 1);
+  };
+
+  /** Navigate to the previous step, respecting fast-track sequence */
+  const goBack = (fromStep: number) => {
+    if (isFastTrack) {
+      const idx = FAST_TRACK_STEPS.indexOf(fromStep);
+      if (idx > 0) {
+        setActiveStep(FAST_TRACK_STEPS[idx - 1]);
+        return;
+      }
+    }
+    setActiveStep(fromStep === 4 ? 3 : fromStep - 1);
+  };
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -223,8 +251,9 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
         // From Start: go to language selection (step 3), keeping company/employee
         resumeStep = 3;
       } else if (resumeMode === "fasttrack") {
-        // Fast Track: jump straight to Review & Sign (step 18)
-        resumeStep = 18;
+        // Fast Track: start at language selection, then guided through key steps
+        resumeStep = 3;
+        setIsFastTrack(true);
       } else {
         // Resume: use the explicitly saved step if available
         if (formData.lastActiveSection) {
@@ -480,20 +509,20 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                 const fd = (existing?.form_data as Record<string, any>) || {};
                 await supabase.from("contracts").update({ form_data: { ...fd, contractLanguage: selectedLanguage } }).eq("id", contractId);
               }
-              setActiveStep(4);
+              goNext(3);
             }} />}
 
-          {activeStep >= 4 && activeStep <= 16 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : "section-scheduling"} onBack={() => setActiveStep(activeStep === 4 ? 3 : activeStep - 1)} onNext={() => setActiveStep(activeStep + 1)} onGoToStep={(step: number) => setActiveStep(step)} />}
+          {activeStep >= 4 && activeStep <= 16 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection={activeStep === 4 ? "employee" : activeStep === 5 ? "section-3" : activeStep === 6 ? "section-4" : activeStep === 7 ? "section-5" : activeStep === 8 ? "section-6" : activeStep === 9 ? "section-7" : activeStep === 10 ? "section-8" : activeStep === 11 ? "section-9" : activeStep === 12 ? "section-10" : activeStep === 13 ? "section-11" : activeStep === 14 ? "section-12" : activeStep === 15 ? "section-13" : "section-scheduling"} onBack={() => goBack(activeStep)} onNext={() => goNext(activeStep)} onGoToStep={(step: number) => setActiveStep(step)} />}
 
-          {activeStep === 17 && selectedCompany && selectedEmployee && contractId && <CodeOfConductStep selectedLanguage={cocLanguage} onSelectLanguage={setCocLanguage} reviewed={cocReviewed} onSetReviewed={setCocReviewed} onBack={() => setActiveStep(16)} onNext={async () => {
+          {activeStep === 17 && selectedCompany && selectedEmployee && contractId && <CodeOfConductStep selectedLanguage={cocLanguage} onSelectLanguage={setCocLanguage} reviewed={cocReviewed} onSetReviewed={setCocReviewed} onBack={() => goBack(17)} onNext={async () => {
             // Persist COC data to form_data
             const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
             const fd = (existing?.form_data as Record<string, any>) || {};
             await supabase.from("contracts").update({ form_data: { ...fd, cocLanguage, cocReviewed: true } }).eq("id", contractId);
-            setActiveStep(18);
+            goNext(17);
           }} />}
 
-          {activeStep === 18 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection="section-14" onBack={() => setActiveStep(17)} onNext={() => {}} onGoToStep={(step: number) => setActiveStep(step)} />}
+          {activeStep === 18 && selectedCompany && selectedEmployee && contractId && <ContractDetailsStep company={selectedCompany} employee={selectedEmployee} contractId={contractId} activeSection="section-14" onBack={() => goBack(18)} onNext={() => {}} onGoToStep={(step: number) => setActiveStep(step)} />}
         </div>
       </div>
 
