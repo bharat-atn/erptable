@@ -26,6 +26,7 @@ export function EmployeesView() {
       const { data, error } = await supabase
         .from("employees")
         .select("*")
+        .in("status", ["ACTIVE", "INACTIVE"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;

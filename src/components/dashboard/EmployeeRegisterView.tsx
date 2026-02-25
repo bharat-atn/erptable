@@ -23,9 +23,7 @@ import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
 
-const statusConfig: Record<EmployeeStatus, { label: string; dot: string }> = {
-  INVITED: { label: "Invited", dot: "bg-blue-500" },
-  ONBOARDING: { label: "Onboarding", dot: "bg-amber-500" },
+const statusConfig: Record<string, { label: string; dot: string }> = {
   ACTIVE: { label: "Active", dot: "bg-emerald-500" },
   INACTIVE: { label: "Terminated", dot: "bg-red-500" },
 };
@@ -110,8 +108,6 @@ const employeeColumns: ColumnDef<Employee>[] = [
 ];
 
 const statusFilterOptions = [
-  { value: "INVITED", label: "Invited", dot: "bg-blue-500" },
-  { value: "ONBOARDING", label: "Onboarding", dot: "bg-amber-500" },
   { value: "ACTIVE", label: "Active", dot: "bg-emerald-500" },
   { value: "INACTIVE", label: "Terminated", dot: "bg-red-500" },
 ];
@@ -142,7 +138,7 @@ export function EmployeeRegisterView() {
   const { data: employees, isLoading } = useQuery({
     queryKey: ["register-employees"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("employees").select("*").in("status", ["ACTIVE", "INACTIVE"]).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -207,7 +203,7 @@ export function EmployeeRegisterView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Employee Register</h1>
-          <p className="text-muted-foreground text-sm">Add and manage employees in your organization.</p>
+          <p className="text-muted-foreground text-sm">Registered employees who have completed all onboarding steps.</p>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
