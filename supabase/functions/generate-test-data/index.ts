@@ -32,6 +32,16 @@ CRITICAL RULES:
 - Emergency contact should be a family member with same nationality
 - Email should be a realistic format using the person's name
 
+COUNTRY-SPECIFIC VALIDATION RULES:
+- Romania: Phone prefix +40, 9 digits, cities like București, Cluj-Napoca, Brașov, Timișoara. Postcodes 6 digits. States like "Cluj", "Brașov", "Timiș".
+- Thailand: Phone prefix +66, 9 digits, cities like Bangkok, Chiang Mai, Udon Thani. Postcodes 5 digits. Provinces like "Chiang Mai", "Udon Thani".
+- Sweden: Phone prefix +46, 7-9 digits, cities like Stockholm, Göteborg, Sundsvall. Postcodes 5 digits (NNN NN). Counties like "Västernorrland", "Jämtland".
+
+IMPORTANT: The address country, country of birth, citizenship, phone prefix, and emergency phone prefix must ALL be consistent with the "${countryHint}" nationality. 
+- If Romanian worker: country=Romania, phone prefix=+40, emergency phone prefix=+40
+- If Thai worker: country=Thailand, phone prefix=+66, emergency phone prefix=+66  
+- If Swedish worker: country=Sweden, phone prefix=+46, emergency phone prefix=+46
+
 Return a JSON object with these exact keys:
 {
   "firstName": "string",
@@ -56,7 +66,7 @@ Return a JSON object with these exact keys:
   "bankAccountNumber": "string (digits only, realistic length)",
   "emergencyFirstName": "string",
   "emergencyLastName": "string",
-  "emergencyPhonePrefix": "string",
+  "emergencyPhonePrefix": "string (MUST match nationality prefix)",
   "emergencyPhoneNumber": "string (9 digits, no leading zero)"
 }`;
 
@@ -108,6 +118,42 @@ Return a JSON object with these exact keys:
 
     try {
       const parsed = JSON.parse(jsonStr);
+      
+      // Post-generation validation & cleanup
+      // Ensure phone numbers are digits only, no leading zero
+      if (parsed.mobilePhoneNumber) {
+        parsed.mobilePhoneNumber = parsed.mobilePhoneNumber.replace(/\D/g, "").replace(/^0+/, "");
+      }
+      if (parsed.emergencyPhoneNumber) {
+        parsed.emergencyPhoneNumber = parsed.emergencyPhoneNumber.replace(/\D/g, "").replace(/^0+/, "");
+      }
+      // Ensure bank account is digits only
+      if (parsed.bankAccountNumber) {
+        parsed.bankAccountNumber = parsed.bankAccountNumber.replace(/\D/g, "");
+      }
+      // Validate birthday is reasonable
+      if (parsed.birthday) {
+        const birthYear = parseInt(parsed.birthday.slice(0, 4));
+        if (birthYear < minBirthYear || birthYear > maxBirthYear) {
+          const safeYear = minBirthYear + Math.floor(Math.random() * (maxBirthYear - minBirthYear));
+          parsed.birthday = `${safeYear}${parsed.birthday.slice(4)}`;
+        }
+      }
+      // Ensure country consistency based on nationality
+      const nationalityMap: Record<string, { country: string; prefix: string }> = {
+        "Romanian": { country: "Romania", prefix: "+40" },
+        "Thai": { country: "Thailand", prefix: "+66" },
+        "Swedish": { country: "Sweden", prefix: "+46" },
+      };
+      const nat = nationalityMap[countryHint];
+      if (nat) {
+        if (!parsed.country) parsed.country = nat.country;
+        if (!parsed.countryOfBirth) parsed.countryOfBirth = nat.country;
+        if (!parsed.citizenship) parsed.citizenship = nat.country;
+        if (!parsed.mobilePhonePrefix) parsed.mobilePhonePrefix = nat.prefix;
+        if (!parsed.emergencyPhonePrefix) parsed.emergencyPhonePrefix = nat.prefix;
+      }
+      
       return new Response(JSON.stringify(parsed), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
