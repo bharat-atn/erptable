@@ -268,20 +268,14 @@ export default function SigningSimulation() {
                   </div>
                   {/* Embedded PDF viewer */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
-                    <object
-                      data={`${selectedCocLang.file}#toolbar=1&navpanes=0`}
-                      type="application/pdf"
+                    <iframe
+                      key={cocLanguage}
+                      src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       onLoad={() => setCocReviewed(true)}
-                    >
-                      <iframe
-                        src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
-                        className="w-full h-[400px] sm:h-[500px]"
-                        title={`Code of Conduct - ${selectedCocLang.label}`}
-                        onLoad={() => setCocReviewed(true)}
-                      />
-                    </object>
+                      style={{ border: "none" }}
+                    />
                   </div>
                   <div className="flex items-center gap-3">
                     <a
@@ -392,9 +386,14 @@ export default function SigningSimulation() {
                             const d = new Date(day.schedule_date + "T00:00:00");
                             const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
                             return (
-                              <tr key={day.schedule_date} className="border-t border-border hover:bg-muted/30">
+                              <tr key={day.schedule_date} className={cn(
+                                "border-t border-border hover:bg-muted/30",
+                                day.day_type === "Weekend" && "bg-muted/40",
+                                day.day_type === "Holiday" && "bg-destructive/5",
+                                day.day_type === "Vacation" && "bg-primary/5",
+                              )}>
                                 <td className="p-2 font-mono">{day.schedule_date}</td>
-                                <td className="p-2">{dayName}</td>
+                                <td className={cn("p-2", day.day_type === "Weekend" && "font-semibold")}>{dayName}</td>
                                 <td className={cn("p-2 font-medium", dayTypeColor(day.day_type))}>
                                   {day.day_type}
                                 </td>

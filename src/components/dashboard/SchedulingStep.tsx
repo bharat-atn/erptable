@@ -528,10 +528,10 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
                           "border-t border-border",
                           row.type === "Holiday" && "bg-destructive/5",
                           row.type === "Vacation" && "bg-primary/5",
-                          row.type === "Weekend" && "bg-muted/50",
+                          row.type === "Weekend" && "bg-amber-50/60 dark:bg-amber-950/20",
                         )}>
                           <td className="px-4 py-2 font-mono text-xs">{row.date}</td>
-                          <td className="px-4 py-2 text-xs">{dayName}</td>
+                          <td className={cn("px-4 py-2 text-xs", row.type === "Weekend" && "font-semibold")}>{dayName}</td>
                           <td className="px-4 py-2">
                             <span className={cn(
                               "text-xs font-semibold",
