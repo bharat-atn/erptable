@@ -9,8 +9,22 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Save, Loader2, AlertTriangle, FileText, Upload, X, Image } from "lucide-react";
+
+const FIELD_TYPE_OPTIONS = [
+  { value: "text", label: "Text" },
+  { value: "number", label: "Number" },
+  { value: "date", label: "Date" },
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone" },
+  { value: "select", label: "Dropdown" },
+  { value: "textarea", label: "Text Area" },
+  { value: "checkbox", label: "Checkbox" },
+  { value: "file", label: "File Upload" },
+  { value: "url", label: "URL" },
+] as const;
 import { toast } from "sonner";
 
 interface TemplateField {
@@ -336,13 +350,14 @@ export function InvitationTemplateView() {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0 pb-4 px-5">
-                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px] gap-3 pb-2 mb-2 border-b border-border">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 pb-2 mb-2 border-b border-border">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">English Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Swedish Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Romanian Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Thai Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 text-center">Visible</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 text-center">Required</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Field Type</span>
                     </div>
 
                     {section.fields.map((rawField) => {
@@ -353,7 +368,7 @@ export function InvitationTemplateView() {
                         <div
                           key={field.id}
                           className={cn(
-                            "grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px] gap-3 items-center py-2.5 rounded-lg px-2 -mx-2 transition-colors",
+                            "grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 items-center py-2.5 rounded-lg px-2 -mx-2 transition-colors",
                             !field.is_visible && "opacity-50",
                             isEdited && "bg-primary/5"
                           )}
@@ -398,6 +413,21 @@ export function InvitationTemplateView() {
                               }
                             />
                           </div>
+                          <Select
+                            value={field.field_type || "text"}
+                            onValueChange={(value) => updateField(rawField.id, { field_type: value })}
+                          >
+                            <SelectTrigger className="h-9 text-xs bg-background">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[200] bg-popover">
+                              {FIELD_TYPE_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       );
                     })}
