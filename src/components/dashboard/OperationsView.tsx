@@ -1,10 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Search,
   FileText,
@@ -19,12 +26,17 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Calendar,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  FilePlus,
 } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
+import { toast } from "sonner";
 import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
 import type { Tables } from "@/integrations/supabase/types";
-import { FilePlus } from "lucide-react";
+import { EmployeeFormDialog, type EmployeeFormData } from "./EmployeeFormDialog";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
@@ -104,6 +116,9 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: employees, isLoading } = useQuery({
     queryKey: ["operations-employees"],
@@ -136,6 +151,44 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
     },
   });
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+    queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+    queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+    queryClient.invalidateQueries({ queryKey: ["invitations"] });
+    queryClient.invalidateQueries({ queryKey: ["contracts"] });
+  };
+
+  const updateEmployee = useMutation({
+    mutationFn: async ({ id, ...data }: EmployeeFormData & { id: string }) => {
+      const { error } = await supabase.from("employees").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success("Employee updated!");
+      setEditEmployee(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteEmployee = useMutation({
+    mutationFn: async (id: string) => {
+      // Delete related invitations and contracts first (cascade)
+      await supabase.from("invitations").delete().eq("employee_id", id);
+      await supabase.from("contracts").delete().eq("employee_id", id);
+      const { error } = await supabase.from("employees").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast.success("Employee deleted!");
+      setDeleteTarget(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const employeesWithContracts = employees?.filter((e) =>
     contracts?.some((c) => c.employee_id === e.id)
   ) || [];
@@ -145,7 +198,6 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
   const active = employees?.filter((e) => e.status === "ACTIVE").length || 0;
   const inactive = employees?.filter((e) => e.status === "INACTIVE").length || 0;
 
-  // Contract-aware stats
   const onboardingEmployees = employees?.filter((e) => e.status === "ONBOARDING") || [];
   const onboardingWithSignedContracts = onboardingEmployees.filter((e) =>
     contracts?.some((c) => c.employee_id === e.id && c.signing_status === "signed")
@@ -159,7 +211,7 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
 
   const statusFilteredEmployees = employees?.filter((emp) => {
     if (statusFilter === "ALL") return true;
-    if (statusFilter === "RENEWAL" || statusFilter === "SEASONAL") return false; // No data yet for these
+    if (statusFilter === "RENEWAL" || statusFilter === "SEASONAL") return false;
     return emp.status === statusFilter;
   }) ?? [];
 
@@ -248,20 +300,36 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
             emptyMessage="No employees found"
             rowActions={(e) => {
               const hasContract = contracts?.some((c) => c.employee_id === e.id);
-              if (e.status === "ONBOARDING" && !hasContract && onNavigate) {
-                return (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 text-xs whitespace-nowrap"
-                    onClick={() => onNavigate("contract-template", e.id)}
-                  >
-                    <FilePlus className="w-3.5 h-3.5" />
-                    Create Contract
-                  </Button>
-                );
-              }
-              return null;
+              return (
+                <div className="flex items-center gap-1">
+                  {e.status === "ONBOARDING" && !hasContract && onNavigate && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 text-xs whitespace-nowrap"
+                      onClick={() => onNavigate("contract-template", e.id)}
+                    >
+                      <FilePlus className="w-3.5 h-3.5" />
+                      Create Contract
+                    </Button>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setEditEmployee(e)}>
+                        <Pencil className="w-4 h-4 mr-2" /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(e)}>
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
             }}
           />
         </CardContent>
@@ -286,6 +354,31 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
           </div>
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <EmployeeFormDialog
+        open={!!editEmployee}
+        onOpenChange={(open) => { if (!open) setEditEmployee(null); }}
+        employee={editEmployee}
+        onSubmit={(data) => {
+          if (editEmployee) {
+            updateEmployee.mutate({ ...data, id: editEmployee.id });
+          }
+        }}
+        isLoading={updateEmployee.isPending}
+      />
+
+      {/* Delete Confirm Dialog */}
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete Employee"
+        itemName={deleteTarget ? `${deleteTarget.first_name || ""} ${deleteTarget.last_name || deleteTarget.email}`.trim() : ""}
+        description="This will permanently delete the employee and all associated invitations and contracts. This action cannot be undone."
+        onConfirm={() => { if (deleteTarget) deleteEmployee.mutate(deleteTarget.id); }}
+        isLoading={deleteEmployee.isPending}
+        requireTypedConfirmation
+      />
     </div>
   );
 }
