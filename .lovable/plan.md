@@ -1,68 +1,81 @@
 
 
-# Plan: Signing Page Improvements (4 items)
+## Plan: Clean Employee Lifecycle — Separate Candidates from Employees
 
-## 1. Fix Code of Conduct Language Switching
+### Problem
+Currently, creating an invitation immediately creates an employee record (status: INVITED). This means candidates appear in the Employee Register before they've completed all onboarding steps. The user wants a clear separation: you are only an "employee" after the full process is complete.
 
-**Problem**: When the user selects a different language on the signing page, the iframe URL doesn't change because the Google Docs Viewer caches the previous URL. The iframe `src` needs a cache-busting key to force a re-render when the language changes.
+### Desired Lifecycle
+```text
+Step 1: Invitation sent        → tracked in Invitations view only
+Step 2: Form filled out         → status: ONBOARDING (still a candidate)
+Step 3: Contract signed         → status: ONBOARDING (still a candidate)
+Step 4: Employer counter-signs  → status: ACTIVE → Employee ID assigned → appears in Employee Register
+```
 
-**Fix** in `src/pages/ContractSigning.tsx`:
-- Add a `key={cocLanguage}` prop to the `<iframe>` element so React destroys and re-creates it when the language changes, forcing a fresh load of the new PDF URL.
+### Changes
 
----
+#### 1. Employee Register — Show Only Employed People
+**Files:** `src/components/dashboard/EmployeeRegisterView.tsx`, `src/components/dashboard/EmployeesView.tsx`
 
-## 2. Add Mandatory Place & Date Fields Before Signing
+- Filter the query to only fetch employees with status `ACTIVE` or `INACTIVE`
+- Remove `INVITED` and `ONBOARDING` from the status filter options in the Employee Register
+- Update the status config to only show "Active" and "Terminated"
+- Update heading/description to clarify this is for employed staff only ("Registered employees who have completed all onboarding steps")
 
-**Problem**: The signing section has no "Place and Date" inputs. These are legally required and shown in the contract document template (see screenshot: "PLACE AND DATE / PLATS OCH DATUM").
+#### 2. Operations View — The Lifecycle Pipeline
+**File:** `src/components/dashboard/OperationsView.tsx`
 
-**Changes** in `src/pages/ContractSigning.tsx`:
-- Add two state variables: `signingPlace` (string) and `signingDate` (string, defaulting to today's date).
-- Render two input fields (Place and Date) above the signature canvas, inside the signing area card.
-- Update the `canSign` condition to also require `signingPlace` to be non-empty.
-- Pass `signingPlace` and `signingDate` along with the signature submission (store in `form_data` or as part of the RPC call metadata).
+- Keep showing all statuses (INVITED, ONBOARDING, ACTIVE, INACTIVE) — this is the pipeline tracker
+- Update description to clarify it tracks the full lifecycle from invitation through employment
 
-**Changes** in `src/components/dashboard/EmployerSigningDialog.tsx`:
-- Add the same Place & Date fields for the employer counter-signing flow.
-- Store the employer's place and date alongside the employer signature.
+#### 3. Automatic Status Transition on Contract Completion
+**File:** Database migration
 
----
+- Create a trigger on the `contracts` table: when `signing_status` changes to `employer_signed`, automatically update the linked employee's status from `ONBOARDING` to `ACTIVE`
+- This ensures the employee only enters the register after the contract is fully signed
+- The existing `generate_employee_code` trigger already fires when status becomes `ACTIVE`, so the Employee ID will be assigned automatically
 
-## 3. Signature Redo/Reset Before Submission
+#### 4. EmployeesView Alignment
+**File:** `src/components/dashboard/EmployeesView.tsx`
 
-**Current behavior**: The `SignatureCanvas` component already has a "Clear" button and a "Confirm Signature" button. Once "Confirm Signature" is clicked, `onSave` is called and the signature is immediately submitted to the database -- there is no preview/approval step.
+- Apply the same `ACTIVE`/`INACTIVE` filter so this view also only shows registered employees
 
-**Changes** in `src/pages/ContractSigning.tsx`:
-- Instead of calling `handleSign` directly from the `SignatureCanvas.onSave`, introduce an intermediate "preview" state.
-- When the user clicks "Confirm Signature", store the data URL in state (`pendingSignature`) and show a preview of the signature image.
-- Show two buttons: "Redo Signature / Gör om" (clears the preview and returns to the canvas) and "Submit Signature / Skicka in" (calls the actual `handleSign`).
-- This gives the user a chance to review before the irreversible database submission.
+### Technical Details
 
-Same pattern applied in `src/components/dashboard/EmployerSigningDialog.tsx` for the employer flow.
+**Database trigger (new):**
+```sql
+CREATE OR REPLACE FUNCTION public.activate_employee_on_contract_signed()
+RETURNS trigger AS $$
+BEGIN
+  IF NEW.signing_status = 'employer_signed' 
+     AND OLD.signing_status IS DISTINCT FROM 'employer_signed' THEN
+    UPDATE public.employees
+    SET status = 'ACTIVE', updated_at = now()
+    WHERE id = NEW.employee_id
+      AND status = 'ONBOARDING';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public';
 
----
+CREATE TRIGGER trg_activate_employee_on_contract_signed
+  AFTER UPDATE ON public.contracts
+  FOR EACH ROW
+  EXECUTE FUNCTION public.activate_employee_on_contract_signed();
+```
 
-## 4. Default Employer Signature (Upload Feature)
+**Employee Register query change:**
+```typescript
+// Before:
+.from("employees").select("*").order(...)
+// After:
+.from("employees").select("*").in("status", ["ACTIVE", "INACTIVE"]).order(...)
+```
 
-**Purpose**: Allow HR managers to upload a default signature image (e.g., a scanned signature) so they don't need to draw it every time.
-
-**Changes** in `src/components/dashboard/SettingsView.tsx`:
-- Add a new "Default Signature" card section.
-- Allow the HR manager to upload a small PNG/JPG image of their signature.
-- Store the uploaded image in the `signatures` storage bucket under `employer-default/` path.
-- Save the public URL reference in a new `employer_default_signature` column in the `profiles` table (or use a simple key-value approach in a settings table).
-
-**Database migration**: Add `default_signature_url TEXT` column to the `profiles` table.
-
-**Changes** in `src/components/dashboard/EmployerSigningDialog.tsx`:
-- Fetch the current user's `default_signature_url` from `profiles`.
-- If a default signature exists, show it as an option: "Use saved signature" button alongside the draw canvas.
-- Clicking "Use saved signature" skips the canvas and uses the stored URL directly (still shows preview for confirmation).
-
----
-
-## Files Modified
-- `src/pages/ContractSigning.tsx` -- Fix language switching, add place/date, add signature preview step
-- `src/components/dashboard/EmployerSigningDialog.tsx` -- Add place/date, signature preview, default signature option
-- `src/components/dashboard/SettingsView.tsx` -- Add default signature upload card
-- Database migration -- Add `default_signature_url` to `profiles` table
+**No changes needed to:**
+- Invitation creation flow (still creates employee records for internal tracking)
+- Onboarding submission (still updates employee to ONBOARDING)
+- Contract wizard (still references employee_id)
+- The `generate_employee_code` trigger (already only fires on ACTIVE)
 
