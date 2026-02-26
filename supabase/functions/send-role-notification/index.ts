@@ -118,12 +118,20 @@ Deno.serve(async (req) => {
     const roleName = ROLE_LABELS[role] || role;
     const html = buildEmailHtml(userName || email, roleName, loginUrl || supabaseUrl);
 
+    const displayName = userName || email;
+    const plainText = `Hi ${displayName},\n\nGreat news! Your account has been approved and you have been assigned the role of ${roleName}. You can now sign in and start using the system.\n\nSign in here: ${loginUrl || supabaseUrl}\n\nThis is an automated notification from ERP Table HR. If you did not expect this email, please disregard it.`;
+
     const resend = new Resend(resendApiKey);
     const { error: sendError } = await resend.emails.send({
-      from: "HR System <hr@mail.erptable.com>",
+      from: "ERP Table HR <hr@mail.erptable.com>",
+      reply_to: "hr@mail.erptable.com",
       to: [email],
-      subject: "Your Account Has Been Approved",
+      subject: `${displayName} — Your ERP Table Account Is Ready`,
       html,
+      text: plainText,
+      headers: {
+        "X-Entity-Ref-ID": `role-approval-${Date.now()}`,
+      },
     });
 
     if (sendError) {
