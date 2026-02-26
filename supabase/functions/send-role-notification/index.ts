@@ -41,6 +41,14 @@ function buildEmailHtml(userName: string, roleName: string, loginUrl: string) {
         </a>
       </div>
 
+      <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <p style="color: #333; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">How to sign in:</p>
+        <ul style="color: #555; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
+          <li><strong>Google account?</strong> Click "Sign in with Google" — it's the fastest option.</li>
+          <li><strong>Other email (iCloud, Outlook, etc.)?</strong> Click "Use email &amp; password instead", then click <strong>"Forgot password?"</strong> to set your own password.</li>
+        </ul>
+      </div>
+
       <p style="color: #666; font-size: 13px; line-height: 1.5;">
         If the button doesn't work, copy and paste this link into your browser:<br/>
         <a href="${loginUrl}" style="color: #2563eb; word-break: break-all;">${loginUrl}</a>
@@ -48,7 +56,7 @@ function buildEmailHtml(userName: string, roleName: string, loginUrl: string) {
 
       <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;" />
       <p style="font-size: 11px; color: #999; text-align: center;">
-        This is an automated notification from the HR system. If you did not expect this email, please disregard it.
+        This is an automated notification from ERP Table HR. If you did not expect this email, please disregard it.
       </p>
     </div>
   `;

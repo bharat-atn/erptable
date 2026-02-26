@@ -21,6 +21,8 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,26 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
       if (error) throw error;
     } catch (error: any) {
       toast.error(error.message || "Google sign-in failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleForgotPassword = async () => {
+    const emailToReset = resetEmail || email;
+    if (!emailToReset) {
+      toast.error("Please enter your email address first");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(emailToReset, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent! Check your inbox.");
+      setShowForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -176,7 +198,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                   </Button>
                 </form>
 
-                <div className="text-center">
+                <div className="flex items-center justify-between">
                   <button
                     type="button"
                     onClick={() => setIsSignUp(!isSignUp)}
@@ -184,7 +206,38 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
                   >
                     {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
                   </button>
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
                 </div>
+
+                {showForgotPassword && (
+                  <div className="space-y-2 animate-fade-in border border-border rounded-lg p-3 bg-muted/30">
+                    <p className="text-xs text-muted-foreground">Enter your email and we'll send a password reset link.</p>
+                    <Input
+                      type="email"
+                      placeholder="you@company.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={isLoading}
+                      onClick={handleForgotPassword}
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Reset Link"}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
