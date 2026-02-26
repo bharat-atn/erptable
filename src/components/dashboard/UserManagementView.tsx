@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedTable, ColumnDef, FilterOption } from "@/components/ui/enhanced-table";
@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot, UserX, ShieldOff, Users, Briefcase, Wallet } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -48,20 +48,20 @@ const ROLE_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const roleBadge = (role: string | null) => {
-  const badge = (Icon: React.ComponentType<{ className?: string }>, label: string, highlight = false) => (
+  const badge = (Icon: React.ComponentType<{ className?: string }>, label: string, colorClass: string) => (
     <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-      <Icon className={`w-3.5 h-3.5 ${highlight ? "text-foreground" : "text-muted-foreground"}`} />
+      <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
       {label}
     </span>
   );
   switch (role) {
-    case "admin": return badge(Shield, "Super Admin", true);
-    case "org_admin": return badge(ShieldCheck, "Admin");
-    case "hr_manager": return badge(UserCheck, "HR Manager");
-    case "project_manager": return badge(Briefcase, "Project Manager");
-    case "payroll_manager": return badge(Wallet, "Payroll Manager");
-    case "team_leader": return badge(Users, "Team Leader");
-    case "user": return badge(User, "Standard User");
+    case "admin": return badge(Shield, "Super Admin", "text-indigo-600");
+    case "org_admin": return badge(ShieldCheck, "Admin", "text-blue-600");
+    case "hr_manager": return badge(UserCheck, "HR Manager", "text-sky-500");
+    case "project_manager": return badge(Briefcase, "Project Manager", "text-amber-600");
+    case "payroll_manager": return badge(Wallet, "Payroll Manager", "text-emerald-600");
+    case "team_leader": return badge(Users, "Team Leader", "text-purple-500");
+    case "user": return badge(User, "Standard User", "text-muted-foreground");
     default:
       return (
         <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -157,84 +157,6 @@ function EditNameDialog({ open, onClose, userId, currentName }: EditNameDialogPr
   );
 }
 
-// ─── App Access Dialog ──────────────────────────────────────────────
-
-interface AppAccessDialogProps {
-  open: boolean;
-  onClose: () => void;
-  userId: string;
-  userName: string;
-  currentAccess: string[];
-  apps: AppDefinition[];
-}
-
-function AppAccessDialog({ open, onClose, userId, userName, currentAccess, apps }: AppAccessDialogProps) {
-  const queryClient = useQueryClient();
-  const [selected, setSelected] = useState<Set<string>>(new Set(currentAccess));
-  const [saving, setSaving] = useState(false);
-
-  const toggle = (appId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(appId)) next.delete(appId);
-      else next.add(appId);
-      return next;
-    });
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await supabase.from("user_app_access").delete().eq("user_id", userId);
-      const rows = Array.from(selected).map((app_id) => ({ user_id: userId, app_id }));
-      if (rows.length > 0) {
-        const { error } = await supabase.from("user_app_access").insert(rows);
-        if (error) throw error;
-      }
-      queryClient.invalidateQueries({ queryKey: ["admin-app-access"] });
-      toast({ title: "App access updated" });
-      onClose();
-    } catch (err: any) {
-      toast({ title: "Failed to update", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings2 className="w-5 h-5" />
-            App Access — {userName}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3 py-2">
-          <p className="text-sm text-muted-foreground">Toggle which applications this user can access.</p>
-          {apps.filter(a => a.enabled).map((app) => (
-            <label key={app.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 cursor-pointer">
-              <Checkbox
-                checked={selected.has(app.id)}
-                onCheckedChange={() => toggle(app.id)}
-              />
-              <div>
-                <p className="text-sm font-medium">{app.name}</p>
-                <p className="text-xs text-muted-foreground">{app.description?.slice(0, 60)}…</p>
-              </div>
-            </label>
-          ))}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save Access"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 // ─── Invite User Dialog ─────────────────────────────────────────────
 
@@ -254,7 +176,28 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
   const [showFallback, setShowFallback] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set(apps.filter(a => a.enabled).map(a => a.id)));
+  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+
+  // Fetch role-based app access and auto-set when role changes
+  const { data: roleAppAccess } = useQuery({
+    queryKey: ["role-app-access", role],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("role_app_access")
+        .select("app_id")
+        .eq("role", role);
+      if (error) throw error;
+      return data.map((r) => r.app_id);
+    },
+    enabled: open,
+  });
+
+  // Auto-set selectedApps whenever role's app access data arrives
+  useEffect(() => {
+    if (roleAppAccess) {
+      setSelectedApps(new Set(roleAppAccess));
+    }
+  }, [roleAppAccess]);
 
   const toggleApp = (appId: string) => {
     setSelectedApps((prev) => {
@@ -306,7 +249,7 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
     setRole("user");
     setResult(null);
     setShowFallback(false);
-    setSelectedApps(new Set(apps.filter(a => a.enabled).map(a => a.id)));
+    setSelectedApps(new Set());
     onClose();
   };
 
@@ -487,7 +430,7 @@ export function UserManagementView() {
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [accessDialog, setAccessDialog] = useState<{ userId: string; name: string; access: string[] } | null>(null);
+  
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
   const apps = useMemo(() => loadApps(), []);
 
@@ -541,7 +484,7 @@ export function UserManagementView() {
         status: currentRole ? "Approved" : "Pending",
         created_at: p.created_at,
         last_sign_in_at: p.last_sign_in_at,
-        appCount: accessMap.get(p.user_id)?.length ?? 0,
+        appCount: 0,
       };
     }),
   [profiles, roleMap, accessMap]);
@@ -664,30 +607,6 @@ export function UserManagementView() {
             {row.status}
           </span>
         </span>
-      ),
-    },
-    {
-      key: "appCount",
-      header: "Apps",
-      sortable: true,
-      align: "center",
-      render: (row) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 text-xs gap-1"
-          onClick={(e) => {
-            e.stopPropagation();
-            setAccessDialog({
-              userId: row.user_id,
-              name: row.full_name,
-              access: accessMap.get(row.user_id) || [],
-            });
-          }}
-        >
-          <Settings2 className="w-3 h-3" />
-          {row.appCount}
-        </Button>
       ),
     },
     {
@@ -837,17 +756,6 @@ export function UserManagementView() {
         onSuccess={invalidateAll}
         apps={apps}
       />
-
-      {accessDialog && (
-        <AppAccessDialog
-          open
-          onClose={() => setAccessDialog(null)}
-          userId={accessDialog.userId}
-          userName={accessDialog.name}
-          currentAccess={accessDialog.access}
-          apps={apps}
-        />
-      )}
 
       {editNameDialog && (
         <EditNameDialog
