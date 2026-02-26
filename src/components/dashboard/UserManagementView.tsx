@@ -2,17 +2,16 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedTable, ColumnDef, FilterOption } from "@/components/ui/enhanced-table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2 } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -47,11 +46,41 @@ const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
 
 const roleBadge = (role: AppRole | null) => {
   switch (role) {
-    case "admin": return <Badge variant="destructive" className="gap-1"><Shield className="w-3 h-3" />Super Admin</Badge>;
-    case "hr_admin": return <Badge className="gap-1 bg-blue-600"><UserCheck className="w-3 h-3" />HR Admin</Badge>;
-    case "hr_staff": return <Badge className="gap-1 bg-emerald-600"><UserCheck className="w-3 h-3" />HR Staff</Badge>;
-    case "user": return <Badge variant="secondary" className="gap-1">User</Badge>;
-    default: return <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 bg-amber-50"><Clock className="w-3 h-3" />Pending</Badge>;
+    case "admin":
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+          <Shield className="w-3.5 h-3.5 text-foreground" />
+          Super Admin
+        </span>
+      );
+    case "hr_admin":
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+          <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+          HR Admin
+        </span>
+      );
+    case "hr_staff":
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+          <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
+          HR Staff
+        </span>
+      );
+    case "user":
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+          <User className="w-3.5 h-3.5 text-muted-foreground" />
+          User
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <CircleDot className="w-3.5 h-3.5" />
+          No Role
+        </span>
+      );
   }
 };
 
@@ -75,6 +104,69 @@ function timeAgo(dateStr: string | null): string {
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
   return new Date(dateStr).toLocaleDateString();
+}
+
+// ─── Edit Name Dialog ───────────────────────────────────────────────
+
+interface EditNameDialogProps {
+  open: boolean;
+  onClose: () => void;
+  userId: string;
+  currentName: string;
+}
+
+function EditNameDialog({ open, onClose, userId, currentName }: EditNameDialogProps) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState(currentName === "—" ? "" : currentName);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: name.trim() })
+        .eq("user_id", userId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      toast({ title: "Name updated" });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Failed to update name", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="w-4 h-4" />
+            Edit User Name
+          </DialogTitle>
+          <DialogDescription>Update the display name for this user.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 py-2">
+          <Label>Full Name</Label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter full name"
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || !name.trim()}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 // ─── App Access Dialog ──────────────────────────────────────────────
@@ -105,9 +197,7 @@ function AppAccessDialog({ open, onClose, userId, userName, currentAccess, apps 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Delete existing
       await supabase.from("user_app_access").delete().eq("user_id", userId);
-      // Insert new
       const rows = Array.from(selected).map((app_id) => ({ user_id: userId, app_id }));
       if (rows.length > 0) {
         const { error } = await supabase.from("user_app_access").insert(rows);
@@ -200,7 +290,6 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
         role,
         app_access: Array.from(selectedApps),
       };
-      // Only send temp_password if fallback is expanded (user wants it)
       if (showFallback) {
         body.temp_password = tempPassword;
       }
@@ -410,6 +499,7 @@ export function UserManagementView() {
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accessDialog, setAccessDialog] = useState<{ userId: string; name: string; access: string[] } | null>(null);
+  const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
   const apps = useMemo(() => loadApps(), []);
 
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
@@ -540,12 +630,18 @@ export function UserManagementView() {
       key: "status",
       header: "Status",
       sortable: true,
-      render: (row) =>
-        row.status === "Pending" ? (
-          <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">Pending</Badge>
-        ) : (
-          <Badge variant="outline" className="text-emerald-600 border-emerald-300 bg-emerald-50">Approved</Badge>
-        ),
+      render: (row) => (
+        <span className="inline-flex items-center gap-1.5 text-sm">
+          <span
+            className={`inline-block w-1.5 h-1.5 rounded-full ${
+              row.status === "Pending" ? "bg-amber-500" : "bg-emerald-500"
+            }`}
+          />
+          <span className={row.status === "Pending" ? "text-muted-foreground" : "text-foreground"}>
+            {row.status}
+          </span>
+        </span>
+      ),
     },
     {
       key: "appCount",
@@ -625,16 +721,27 @@ export function UserManagementView() {
   ];
 
   const rowActions = (row: UserRow) => (
-    row.role ? (
+    <div className="flex items-center gap-1">
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-        onClick={() => setDeleteUser({ user_id: row.user_id, email: row.full_name })}
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        onClick={() => setEditNameDialog({ userId: row.user_id, currentName: row.full_name })}
+        title="Edit name"
       >
-        <Trash2 className="w-4 h-4" />
+        <Pencil className="w-3.5 h-3.5" />
       </Button>
-    ) : null
+      {row.role && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => setDeleteUser({ user_id: row.user_id, email: row.full_name })}
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
   );
 
   const invalidateAll = () => {
@@ -702,6 +809,15 @@ export function UserManagementView() {
           userName={accessDialog.name}
           currentAccess={accessDialog.access}
           apps={apps}
+        />
+      )}
+
+      {editNameDialog && (
+        <EditNameDialog
+          open
+          onClose={() => setEditNameDialog(null)}
+          userId={editNameDialog.userId}
+          currentName={editNameDialog.currentName}
         />
       )}
 
