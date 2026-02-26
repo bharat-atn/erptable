@@ -823,7 +823,16 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "hr_admin" | "hr_staff" | "user"
+      app_role:
+        | "admin"
+        | "hr_admin"
+        | "hr_staff"
+        | "user"
+        | "org_admin"
+        | "team_leader"
+        | "hr_manager"
+        | "project_manager"
+        | "payroll_manager"
       employee_status: "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE"
       invitation_status: "PENDING" | "SENT" | "ACCEPTED" | "EXPIRED"
       invitation_type: "NEW_HIRE" | "CONTRACT_RENEWAL"
@@ -954,7 +963,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "hr_admin", "hr_staff", "user"],
+      app_role: [
+        "admin",
+        "hr_admin",
+        "hr_staff",
+        "user",
+        "org_admin",
+        "team_leader",
+        "hr_manager",
+        "project_manager",
+        "payroll_manager",
+      ],
       employee_status: ["INVITED", "ONBOARDING", "ACTIVE", "INACTIVE"],
       invitation_status: ["PENDING", "SENT", "ACCEPTED", "EXPIRED"],
       invitation_type: ["NEW_HIRE", "CONTRACT_RENEWAL"],
