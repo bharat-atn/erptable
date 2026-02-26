@@ -1,48 +1,61 @@
 
 
-## Analysis & Answers to Your Questions
+## Plan: Expand Role System to 7 Roles
 
-**How do pending users appear?** When someone signs in (via Google or email), the `handle_new_user` database trigger automatically creates a profile with `role = 'pending'`. They have no entry in `user_roles`, so they're stuck at the "Pending Approval" screen until an admin assigns them a role. Anyone who visits the sign-in page and authenticates will appear as "Pending."
+### Current State
+The database has an `app_role` enum with 4 values: `admin`, `hr_admin`, `hr_staff`, `user`. These are referenced across the database (functions, RLS policies), edge functions, and multiple frontend components.
 
-**Does assigning a role send an email?** No. Currently, assigning a role just updates the database silently. The user would only discover they're approved next time they try to log in. We can add email notification as a future feature.
+### New Role Structure
 
-**Is "Last Active" working?** No. The `last_sign_in_at` column in profiles is never updated after the initial signup. The `handle_new_user` trigger only fires on user creation, not on subsequent sign-ins. This needs a fix.
+| # | Display Name | Enum Value | Replaces |
+|---|---|---|---|
+| 1 | Super Admin | `admin` | (unchanged) |
+| 2 | Admin | `org_admin` | (new) |
+| 3 | Standard User | `user` | (unchanged) |
+| 4 | Team Leader | `team_leader` | (new) |
+| 5 | HR Manager | `hr_manager` | replaces `hr_admin` |
+| 6 | Project Manager | `project_manager` | (new) |
+| 7 | Payroll Manager | `payroll_manager` | (new) |
 
----
+Old values `hr_admin` and `hr_staff` will be migrated: `hr_admin` → `hr_manager`, `hr_staff` → `user`.
 
-## Plan: Improve User Management UX & Fix Issues
+### Database Migration
 
-### 1. Redesign Role & Status Badges (subtle, no loud colors)
+1. **Add new enum values** to `app_role`: `org_admin`, `team_leader`, `hr_manager`, `project_manager`, `payroll_manager`
+2. **Migrate existing data**: Update `user_roles` rows with `hr_admin` → `hr_manager` and `hr_staff` → `user`
+3. **Remove old values**: Recreate the enum without `hr_admin` and `hr_staff` (requires column type swap since Postgres cannot drop enum values directly)
+4. **Update `is_hr_user()` function**: Change the role check to include the new management roles (`admin`, `org_admin`, `hr_manager`) instead of the old ones
+5. **Update `handle_new_user()` and other functions**: No changes needed (they don't reference specific non-admin roles)
 
-Replace the current colorful badges with a more refined approach:
-- **Roles**: Use subtle, monochrome icon-based labels instead of colored badges. For example, a small shield icon + "Super Admin" in regular text weight, no background color. Differentiate with icon variants only.
-- **Status**: Replace colored badges with a simple dot indicator (small 6px circle) — green dot for Approved, amber dot for Pending — next to plain text. No background fills.
-
-### 2. Fix "Last Active" Tracking
-
-Create a database trigger on `auth.users` — wait, we cannot attach triggers to `auth` schema. Instead:
-- Add an `onAuthStateChange` listener in the app that updates `profiles.last_sign_in_at` whenever a user signs in (fires on `SIGNED_IN` event). This is a client-side approach in `App.tsx` or the auth flow.
-
-### 3. Add Ability to Edit User Names
-
-- Add an "Edit" action to each user row (pencil icon) that opens a small dialog to update `full_name` on the `profiles` table.
-- This lets the admin correct names that came from Google metadata or were set incorrectly.
-
-### 4. Summary of Visual Changes
-
-Current role badge rendering will be replaced with clean, minimal text + icon approach:
-
-```text
-Current:        [🔴 Super Admin]  [🟢 HR Admin]  [🔵 HR Staff]
-Proposed:       🛡 Super Admin    👤 HR Admin     👤 HR Staff    👤 User    ○ No Role
-```
-
-Status will use inline dots instead of colored badge backgrounds.
-
-### Files Changed
+### Frontend Changes
 
 | File | Change |
-|------|--------|
-| `src/components/dashboard/UserManagementView.tsx` | Redesign `roleBadge()` to use subtle icons+text; redesign status column to use dot+text; add edit name dialog; add edit action to row actions |
-| `src/App.tsx` | Add `onAuthStateChange` listener that updates `profiles.last_sign_in_at` on `SIGNED_IN` events |
+|---|---|
+| `src/components/dashboard/UserManagementView.tsx` | Update `ROLE_OPTIONS` array to 7 roles with new labels. Update `roleBadge()` with icons for each role. Update filter options. |
+| `src/hooks/useUserRole.ts` | Update priority array to new 7-role order. Update `isHR` check to use new role names. |
+| `src/components/dashboard/AppLauncher.tsx` | Update `allowedRoles` arrays in `defaultApps` to reference new role values. Update type annotations. |
+| `src/components/dashboard/Sidebar.tsx` | Update `userRole` type annotation to include all 7 roles. |
+| `src/components/dashboard/Dashboard.tsx` | Type will auto-update from the enum. |
+| `supabase/functions/send-role-notification/index.ts` | Update `ROLE_LABELS` map with all 7 roles. |
+| `supabase/functions/invite-user/index.ts` | No logic changes needed (role is passed through). |
+
+### Role Icon Mapping (for `roleBadge`)
+
+```text
+admin          → Shield         Super Admin
+org_admin      → ShieldCheck    Admin
+hr_manager     → UserCheck      HR Manager
+project_manager→ Briefcase      Project Manager
+payroll_manager→ Wallet         Payroll Manager
+team_leader    → Users          Team Leader
+user           → User           Standard User
+```
+
+### Access Control Updates
+
+The `is_hr_user()` database function currently checks for `hr_staff`, `hr_admin`, `admin`. It will be updated to check for `admin`, `org_admin`, `hr_manager` — these are the roles that can manage employees, contracts, and invitations.
+
+The `useUserRole` hook's `isHR` flag will match the same set.
+
+App visibility will be reconfigured in the next step (as the user mentioned), so for now `allowedRoles` will be broadened to include all new roles where appropriate.
 
