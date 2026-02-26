@@ -1,25 +1,31 @@
 
 
-## Sign-In Page Refresh
+## Plan: Make User Management a Standalone App
 
-### Changes to `src/components/auth/AuthForm.tsx`
+### Current State
+- "User Management" appears as a sidebar item in the "Others" group inside every app (for admins)
+- When the "User Management" app is launched from the App Launcher, it shares the same generic sidebar as HR Management, showing irrelevant items like "Contract Template", "Invitations", etc.
 
-1. **Replace logo**: Copy the uploaded `ERPTable_logo.png` to `src/assets/erp-table-logo.png` and import it instead of `ljungan-forestry-logo.png`.
+### Changes
 
-2. **Logo styling**: Display the logo as a square/rectangular image (no rounded-full), larger size (~h-20 or h-24), so the full "ERP TABLE" wordmark is visible.
+**1. Remove "User Management" from the shared sidebar (`Sidebar.tsx`)**
+- Remove the code at lines 681-684 that injects "user-management" into `configItems` for admins
+- User Management will only be accessible via its dedicated app in the App Launcher
 
-3. **Remove text below logo**: Remove the `<h1>ERP Table</h1>` heading — the logo already contains the brand name. Keep only `<p>Application Launcher</p>` below the logo (or remove it per preference — user said "just keep the logo there", so remove "Application Launcher" text too).
+**2. Add a dedicated sidebar for the User Management app (`Sidebar.tsx`)**
+- When `appId === "user-management"`, render a simplified sidebar with only User Management-relevant items:
+  - **Users** (the main user list/table)
+  - **Audit Log** (track user changes)
+  - **Settings** (org settings, default signature)
+- This keeps the User Management app focused as a dedicated hub
 
-4. **Remove footer**: Change the footer from "Ljungåverk Forestry AB · Secure Enterprise Login" to just "Secure Enterprise Login".
-
-5. **Make the card bigger**: Increase `max-w-sm` to `max-w-md`, bump button height from `h-12` to `h-14`, increase card padding, and make the overall layout feel more spacious and polished.
-
-6. **Spice up the design**: Add a subtle gradient border or glow effect on the card, slightly larger text on the Google button, and more generous spacing throughout.
+**3. Update `Dashboard.tsx` to default to the user management view**
+- When `appId === "user-management"`, set the initial `activeView` to `"user-management"` instead of `"dashboard"`
 
 ### Files Changed
 
 | File | Change |
 |------|--------|
-| `src/assets/erp-table-logo.png` | New file (copied from upload) |
-| `src/components/auth/AuthForm.tsx` | Replace logo, remove heading text, enlarge card, update footer |
+| `src/components/dashboard/Sidebar.tsx` | Remove user-management injection into configItems; render dedicated nav when `appId === "user-management"` |
+| `src/components/dashboard/Dashboard.tsx` | Set default view to `"user-management"` when appId is `"user-management"` |
 
