@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot, UserX, ShieldOff } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -497,6 +497,7 @@ interface UserRow {
 export function UserManagementView() {
   const queryClient = useQueryClient();
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
+  const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [accessDialog, setAccessDialog] = useState<{ userId: string; name: string; access: string[] } | null>(null);
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
@@ -568,11 +569,28 @@ export function UserManagementView() {
         if (error) throw error;
       }
       await supabase.from("profiles").update({ role: "approved" }).eq("user_id", userId);
+
+      // Find user info for email notification
+      const user = userRows.find((u) => u.user_id === userId);
+      if (user?.email) {
+        try {
+          await supabase.functions.invoke("send-role-notification", {
+            body: {
+              email: user.email,
+              userName: user.full_name !== "—" ? user.full_name : user.email,
+              role,
+              loginUrl: window.location.origin,
+            },
+          });
+        } catch (emailErr) {
+          console.error("Role notification email failed:", emailErr);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
-      toast({ title: "Role updated successfully" });
+      toast({ title: "Role updated — notification email sent" });
     },
     onError: (err: Error) => {
       toast({ title: "Failed to update role", description: err.message, variant: "destructive" });
@@ -588,12 +606,29 @@ export function UserManagementView() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
-      toast({ title: "User role removed" });
+      toast({ title: "Access revoked — user set back to pending" });
       setDeleteUser(null);
     },
     onError: (err: Error) => {
-      toast({ title: "Failed to remove role", description: err.message, variant: "destructive" });
+      toast({ title: "Failed to revoke access", description: err.message, variant: "destructive" });
       setDeleteUser(null);
+    },
+  });
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      // Delete the profile (pending user with no role)
+      const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      toast({ title: "User deleted from system" });
+      setDeletePendingUser(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to delete user", description: err.message, variant: "destructive" });
+      setDeletePendingUser(null);
     },
   });
 
@@ -731,12 +766,23 @@ export function UserManagementView() {
       >
         <Pencil className="w-3.5 h-3.5" />
       </Button>
-      {row.role && (
+      {row.role ? (
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => setDeleteUser({ user_id: row.user_id, email: row.full_name })}
+          onClick={() => setDeleteUser({ user_id: row.user_id, email: row.email })}
+          title="Revoke access"
+        >
+          <ShieldOff className="w-4 h-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => setDeletePendingUser({ user_id: row.user_id, email: row.email })}
+          title="Delete pending user"
         >
           <Trash2 className="w-4 h-4" />
         </Button>
@@ -824,11 +870,22 @@ export function UserManagementView() {
       <DeleteConfirmDialog
         open={!!deleteUser}
         onOpenChange={(open) => !open && setDeleteUser(null)}
-        title="Remove User Role"
+        title="Revoke User Access"
         itemName={deleteUser?.email ?? ""}
-        description="This will remove the user's role and set them back to pending status. They will lose access to the system."
+        description="This will remove the user's role and set them back to pending status. They will lose all access to the system but their profile will remain."
         onConfirm={() => deleteUser && removeRoleMutation.mutate(deleteUser.user_id)}
         isLoading={removeRoleMutation.isPending}
+        requireTypedConfirmation
+      />
+
+      <DeleteConfirmDialog
+        open={!!deletePendingUser}
+        onOpenChange={(open) => !open && setDeletePendingUser(null)}
+        title="Delete Pending User"
+        itemName={deletePendingUser?.email ?? ""}
+        description="This will permanently remove this pending user's profile from the system. This action cannot be undone."
+        onConfirm={() => deletePendingUser && deleteProfileMutation.mutate(deletePendingUser.user_id)}
+        isLoading={deleteProfileMutation.isPending}
         requireTypedConfirmation
       />
     </div>
