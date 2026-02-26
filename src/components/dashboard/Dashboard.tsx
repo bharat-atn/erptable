@@ -41,7 +41,7 @@ interface DashboardProps {
 const TABLET_THRESHOLD = 1100;
 
 export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
-  const [activeView, setActiveView] = useState("dashboard");
+  const [activeView, setActiveView] = useState(appId === "user-management" ? "user-management" : "dashboard");
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
   const [resumeMode, setResumeMode] = useState<ResumeMode>("resume");
