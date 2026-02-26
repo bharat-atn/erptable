@@ -8,6 +8,7 @@ import OnboardingPortal from "./pages/OnboardingPortal";
 import ContractSigning from "./pages/ContractSigning";
 import SigningSimulation from "./pages/SigningSimulation";
 import ScheduleView from "./pages/ScheduleView";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/sign/:token" element={<ContractSigning />} />
           <Route path="/sign-simulation/:contractId" element={<SigningSimulation />} />
           <Route path="/schedule-view/:contractId" element={<ScheduleView />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
