@@ -31,7 +31,7 @@ const DEFAULT_ACCESS: Record<string, string[]> = {
 
 export function RolePermissionMatrix() {
   const queryClient = useQueryClient();
-  const apps = useMemo(() => loadApps(), []);
+  const apps = useMemo(() => loadApps().filter(a => a.id !== "user-management"), []);
 
   const { data: accessRows = [], isLoading } = useQuery({
     queryKey: ["role-app-access"],
