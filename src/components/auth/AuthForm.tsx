@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Loader2, Mail, Lock, UserPlus, LogIn, AlertTriangle, ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import logoImage from "@/assets/ljungan-forestry-logo.png";
+import logoImage from "@/assets/erp-table-logo.png";
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -68,25 +68,21 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-primary/3 blur-2xl" />
       </div>
 
-      <div className="relative w-full max-w-sm animate-fade-in">
-        {/* Logo & heading outside card */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center mb-3">
-            <img src={logoImage} alt="Ljungåverk Forestry" className="h-16 w-auto drop-shadow-sm" />
+      <div className="relative w-full max-w-md animate-fade-in">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center">
+            <img src={logoImage} alt="ERP Table" className="h-24 w-auto drop-shadow-md" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            ERP Table
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Application Launcher</p>
         </div>
 
-        <Card className="shadow-xl border-border/50 backdrop-blur-sm bg-card/95">
-          <CardContent className="pt-6 pb-6 space-y-5">
+        <Card className="shadow-2xl border-border/40 backdrop-blur-sm bg-card/95 ring-1 ring-primary/10">
+          <CardContent className="pt-8 pb-8 px-8 space-y-6">
             {/* Google — Hero CTA */}
             <div className="space-y-3">
               <Button
                 type="button"
-                className="w-full h-12 text-base gap-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                className="w-full h-14 text-lg gap-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
                 disabled={isLoading}
                 onClick={handleGoogleSignIn}
               >
@@ -195,8 +191,8 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
         </Card>
 
         {/* Footer */}
-        <p className="text-center text-[11px] text-muted-foreground/60 mt-4">
-          Ljungåverk Forestry AB · Secure Enterprise Login
+        <p className="text-center text-[11px] text-muted-foreground/60 mt-6">
+          Secure Enterprise Login
         </p>
       </div>
     </div>
