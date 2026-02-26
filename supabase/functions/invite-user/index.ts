@@ -99,10 +99,11 @@ Deno.serve(async (req) => {
       console.log("New user created:", userId);
     }
 
-    // Upsert the role
+    // Delete existing roles, then insert the new one
+    await adminClient.from("user_roles").delete().eq("user_id", userId);
     const { error: roleError } = await adminClient
       .from("user_roles")
-      .upsert({ user_id: userId, role }, { onConflict: "user_id" });
+      .insert({ user_id: userId, role });
 
     if (roleError) {
       console.error("Role upsert failed:", roleError.message);
