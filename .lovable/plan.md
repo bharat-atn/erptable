@@ -1,39 +1,35 @@
 
 
-## Plan: Improve Non-Google User Sign-In Experience
+## Problem
 
-### Problem
-Users with non-Google emails (like Apple/iCloud accounts) have no clear path to sign in. The temporary password set during invitation is never communicated to them, and there's no password reset flow.
+Two issues identified:
 
-### Changes
+1. **Password reset redirect goes to wrong URL**: In `AuthForm.tsx`, the `resetPasswordForEmail` call uses `window.location.origin` for `redirectTo`. When triggered from the preview environment, this sends users to the Lovable preview URL instead of `https://erptable.lovable.app/reset-password`. The password reset email link therefore doesn't work correctly.
 
-#### 1. Add "Forgot Password" flow to AuthForm
-**File: `src/components/auth/AuthForm.tsx`**
-- Add a "Forgot password?" link below the password field in the email/password form
-- When clicked, show an input for email and call `supabase.auth.resetPasswordForEmail()` with redirect to `/reset-password`
-- Show a toast confirming the reset email was sent
+2. **Same problem exists everywhere `window.location.origin` is used for auth redirects**: The Google sign-in redirect also uses `window.location.origin`, which could cause issues in preview.
 
-#### 2. Create `/reset-password` page
-**New file: `src/pages/ResetPassword.tsx`**
-- Detects `type=recovery` token in URL hash
-- Shows a form to set a new password
-- Calls `supabase.auth.updateUser({ password })` to save the new password
-- Redirects to the main app on success
+## Changes
 
-**File: `src/App.tsx`**
-- Add route for `/reset-password`
+### 1. Fix password reset redirect URL (`src/components/auth/AuthForm.tsx`)
+- Replace `window.location.origin` in `resetPasswordForEmail` with a helper that returns `https://erptable.lovable.app` on production hostnames and `window.location.origin` otherwise
+- This ensures the password reset email links to the published app, not the Lovable preview
 
-#### 3. Update the approval email to include sign-in instructions
-**File: `supabase/functions/send-role-notification/index.ts`**
-- Add clear instructions: "Sign in with Google if you have a Google account, or use email & password"
-- Add a "Forgot password?" hint directing them to use the reset flow if they don't know their password
-- If a temp password was set, mention that they can sign in with email/password (without revealing the password in the email for security)
+### 2. Fix Google sign-in redirect URL (`src/components/auth/AuthForm.tsx`)
+- Apply the same fix to the `handleGoogleSignIn` `redirect_uri` parameter
 
-#### 4. (Optional future) Add Apple Sign-In
-Apple Sign-In is supported by Lovable Cloud and would let iCloud users sign in natively. This can be added later if needed.
+### Implementation detail
+Add a small helper at the top of `AuthForm.tsx`:
+```typescript
+const getAppOrigin = () => {
+  const host = window.location.hostname;
+  if (host.includes("lovable.app") || host.includes("lovable.dev")) {
+    return "https://erptable.lovable.app";
+  }
+  return window.location.origin;
+};
+```
 
-### Impact
-- Non-Google users can use "Forgot password?" to set their own password and sign in
-- The approval email clearly explains both sign-in methods
-- No database changes required
+Then use `getAppOrigin()` in place of `window.location.origin` for:
+- Line 72: `redirectTo: \`${getAppOrigin()}/reset-password\``
+- Line 57: `redirect_uri: getAppOrigin()`
 
