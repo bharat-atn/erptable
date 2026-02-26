@@ -143,6 +143,16 @@ const defaultApps: AppDefinition[] = [
     available: false,
     allowedRoles: ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"],
   },
+  {
+    id: "time-reporting",
+    name: "Time Reporting",
+    description: "Report and track working hours per project and object. Manage daily time entries, approve timesheets, and generate attendance summaries.",
+    iconName: "Clock",
+    colorIndex: 6,
+    enabled: true,
+    available: false,
+    allowedRoles: ["admin", "org_admin", "project_manager", "team_leader"],
+  },
 ];
 
 export function loadApps(): AppDefinition[] {

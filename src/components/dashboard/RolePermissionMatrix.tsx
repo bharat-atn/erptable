@@ -26,6 +26,7 @@ const DEFAULT_ACCESS: Record<string, string[]> = {
   "forestry-project": ["admin", "org_admin", "project_manager"],
   "payroll": ["admin", "org_admin", "payroll_manager"],
   "employee-hub": ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"],
+  "time-reporting": ["admin", "org_admin", "project_manager", "team_leader"],
 };
 
 export function RolePermissionMatrix() {
