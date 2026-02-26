@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = string;
 
 export function useUserRole() {
   const [role, setRole] = useState<AppRole | null>(null);
@@ -28,8 +27,8 @@ export function useUserRole() {
           setRole(null);
         } else {
           // Pick highest priority role
-          const priority: AppRole[] = ["admin", "hr_admin", "hr_staff", "user"];
-          const roles = data.map((r) => r.role);
+          const priority = ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"];
+          const roles = data.map((r) => r.role as string);
           const best = priority.find((p) => roles.includes(p)) ?? roles[0];
           setRole(best);
         }
@@ -50,5 +49,5 @@ export function useUserRole() {
     };
   }, []);
 
-  return { role, loading, isAdmin: role === "admin", isHR: role === "admin" || role === "hr_admin" || role === "hr_staff" };
+  return { role, loading, isAdmin: role === "admin", isHR: role === "admin" || role === "org_admin" || role === "hr_manager" };
 }

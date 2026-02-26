@@ -100,7 +100,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 0,
     enabled: true,
     available: true,
-    allowedRoles: ["admin", "hr_admin", "hr_staff"],
+    allowedRoles: ["admin", "org_admin", "hr_manager"],
   },
   {
     id: "user-management",
@@ -121,7 +121,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 2,
     enabled: true,
     available: false,
-    allowedRoles: ["admin", "hr_admin"],
+    allowedRoles: ["admin", "org_admin", "project_manager"],
   },
   {
     id: "payroll",
@@ -131,7 +131,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 3,
     enabled: true,
     available: false,
-    allowedRoles: ["admin", "hr_admin"],
+    allowedRoles: ["admin", "org_admin", "payroll_manager"],
   },
   {
     id: "employee-hub",
@@ -141,7 +141,7 @@ const defaultApps: AppDefinition[] = [
     colorIndex: 4,
     enabled: true,
     available: false,
-    allowedRoles: ["admin", "hr_admin", "hr_staff", "user"],
+    allowedRoles: ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"],
   },
 ];
 
@@ -350,7 +350,7 @@ function DeleteAppDialog({ open, appName, onClose, onConfirm }: DeleteDialogProp
 
 interface AppLauncherProps {
   onLaunchApp: (appId: string) => void;
-  userRole?: "admin" | "hr_admin" | "hr_staff" | "user" | null;
+  userRole?: string | null;
 }
 
 export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {

@@ -9,9 +9,12 @@ const corsHeaders = {
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Super Admin",
-  hr_admin: "HR Admin",
-  hr_staff: "HR Staff",
-  user: "User",
+  org_admin: "Admin",
+  user: "Standard User",
+  team_leader: "Team Leader",
+  hr_manager: "HR Manager",
+  project_manager: "Project Manager",
+  payroll_manager: "Payroll Manager",
 };
 
 function buildEmailHtml(userName: string, roleName: string, loginUrl: string) {

@@ -65,7 +65,7 @@ interface SidebarProps {
   appId?: string | null;
   apps?: AppDefinition[];
   onSwitchApp?: (appId: string) => void;
-  userRole?: "admin" | "hr_admin" | "hr_staff" | "user" | null;
+  userRole?: string | null;
 }
 
 interface MenuItem {
