@@ -168,6 +168,63 @@ const TEASER: Record<string, TeaserContent> = {
     timeline: "Expected availability: Q4 2026",
   },
 
+  "time-reporting": {
+    tagline: "Track · Approve · Report",
+    intro:
+      "A streamlined time reporting platform for team leaders and managers — log daily hours per project and object, approve timesheets, and generate attendance summaries.",
+    pages: [
+      {
+        headline: "Daily Time Entry",
+        subtitle: "Fast and accurate hour logging for every project",
+        highlights: [
+          {
+            icon: Clock,
+            title: "Clock In / Clock Out",
+            description:
+              "Start and stop timers per project and work object, or enter hours manually at the end of the day.",
+          },
+          {
+            icon: MapPin,
+            title: "Project & Object Allocation",
+            description:
+              "Assign hours to specific forestry projects, work areas, and cost objects for precise tracking.",
+          },
+          {
+            icon: Calendar,
+            title: "Weekly Overview",
+            description:
+              "View and edit the full work week in a clear grid — spot gaps, overtime, and missing entries at a glance.",
+          },
+        ],
+      },
+      {
+        headline: "Approval & Reporting",
+        subtitle: "Keep timesheets accurate and payroll-ready",
+        highlights: [
+          {
+            icon: Check,
+            title: "Timesheet Approval",
+            description:
+              "Team leaders review and approve crew timesheets before they flow to payroll processing.",
+          },
+          {
+            icon: BarChart3,
+            title: "Attendance Summaries",
+            description:
+              "Generate attendance reports by employee, project, or period — exportable for payroll and invoicing.",
+          },
+          {
+            icon: Users,
+            title: "Team Dashboard",
+            description:
+              "See who's clocked in, who's on leave, and total hours per crew member in real time.",
+          },
+        ],
+      },
+    ],
+    timeline: "Expected availability: Q2 2027",
+  },
+
   "employee-hub": {
     tagline: "Connect · Sign · Report",
     intro:
