@@ -18,6 +18,7 @@ import { IsoStandardsView } from "./IsoStandardsView";
 import { AuditLogView } from "./AuditLogView";
 import { BankListView } from "./BankListView";
 import { UserManagementView } from "./UserManagementView";
+import { RolePermissionMatrix } from "./RolePermissionMatrix";
 import { VersionManagementView } from "./VersionManagementView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
@@ -83,6 +84,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "iso-standards": return <IsoStandardsView />;
       case "audit-log": return <AuditLogView />;
       case "user-management": return <UserManagementView />;
+      case "role-permissions": return <RolePermissionMatrix />;
       case "version-management": return <VersionManagementView />;
       default: return <DashboardView />;
     }
