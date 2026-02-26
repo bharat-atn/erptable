@@ -145,7 +145,7 @@ const defaultApps: AppDefinition[] = [
   },
   {
     id: "time-reporting",
-    name: "Time Reporting",
+    name: "Time & Status Reporting",
     description: "Report and track working hours per project and object. Manage daily time entries, approve timesheets, and generate attendance summaries.",
     iconName: "Clock",
     colorIndex: 6,

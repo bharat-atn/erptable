@@ -171,7 +171,7 @@ const TEASER: Record<string, TeaserContent> = {
   "time-reporting": {
     tagline: "Track · Approve · Report",
     intro:
-      "A streamlined time reporting platform for team leaders and managers — log daily hours per project and object, approve timesheets, and generate attendance summaries.",
+      "A streamlined time and status reporting platform for team leaders and managers — log daily hours per project and object, approve timesheets, and generate attendance summaries.",
     pages: [
       {
         headline: "Daily Time Entry",
