@@ -26,9 +26,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 import { type AppDefinition } from "./AppLauncher";
-import type { Database } from "@/integrations/supabase/types";
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = string;
 
 interface DashboardProps {
   onBackToLauncher?: () => void;

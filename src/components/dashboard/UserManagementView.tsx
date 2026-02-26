@@ -11,11 +11,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot, UserX, ShieldOff } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Clock, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Settings2, Pencil, User, CircleDot, UserX, ShieldOff, Users, Briefcase, Wallet } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = string;
 
 interface UserProfile {
   id: string;
@@ -37,43 +37,31 @@ interface UserAppAccess {
   app_id: string;
 }
 
-const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
+const ROLE_OPTIONS: { value: string; label: string }[] = [
   { value: "admin", label: "Super Admin" },
-  { value: "hr_admin", label: "HR Admin" },
-  { value: "hr_staff", label: "HR Staff" },
-  { value: "user", label: "User" },
+  { value: "org_admin", label: "Admin" },
+  { value: "user", label: "Standard User" },
+  { value: "team_leader", label: "Team Leader" },
+  { value: "hr_manager", label: "HR Manager" },
+  { value: "project_manager", label: "Project Manager" },
+  { value: "payroll_manager", label: "Payroll Manager" },
 ];
 
-const roleBadge = (role: AppRole | null) => {
+const roleBadge = (role: string | null) => {
+  const badge = (Icon: React.ComponentType<{ className?: string }>, label: string, highlight = false) => (
+    <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
+      <Icon className={`w-3.5 h-3.5 ${highlight ? "text-foreground" : "text-muted-foreground"}`} />
+      {label}
+    </span>
+  );
   switch (role) {
-    case "admin":
-      return (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <Shield className="w-3.5 h-3.5 text-foreground" />
-          Super Admin
-        </span>
-      );
-    case "hr_admin":
-      return (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
-          HR Admin
-        </span>
-      );
-    case "hr_staff":
-      return (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <UserCheck className="w-3.5 h-3.5 text-muted-foreground" />
-          HR Staff
-        </span>
-      );
-    case "user":
-      return (
-        <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
-          <User className="w-3.5 h-3.5 text-muted-foreground" />
-          User
-        </span>
-      );
+    case "admin": return badge(Shield, "Super Admin", true);
+    case "org_admin": return badge(ShieldCheck, "Admin");
+    case "hr_manager": return badge(UserCheck, "HR Manager");
+    case "project_manager": return badge(Briefcase, "Project Manager");
+    case "payroll_manager": return badge(Wallet, "Payroll Manager");
+    case "team_leader": return badge(Users, "Team Leader");
+    case "user": return badge(User, "Standard User");
     default:
       return (
         <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -559,13 +547,13 @@ export function UserManagementView() {
   [profiles, roleMap, accessMap]);
 
   const assignRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: AppRole }) => {
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       const existing = roleMap.get(userId);
       if (existing) {
-        const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId);
+        const { error } = await supabase.from("user_roles").update({ role: role as any }).eq("user_id", userId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: role as any });
         if (error) throw error;
       }
       await supabase.from("profiles").update({ role: "approved" }).eq("user_id", userId);
@@ -747,9 +735,12 @@ export function UserManagementView() {
       label: "Role",
       options: [
         { value: "admin", label: "Super Admin" },
-        { value: "hr_admin", label: "HR Admin" },
-        { value: "hr_staff", label: "HR Staff" },
-        { value: "user", label: "User" },
+        { value: "org_admin", label: "Admin" },
+        { value: "user", label: "Standard User" },
+        { value: "team_leader", label: "Team Leader" },
+        { value: "hr_manager", label: "HR Manager" },
+        { value: "project_manager", label: "Project Manager" },
+        { value: "payroll_manager", label: "Payroll Manager" },
         { value: "pending", label: "No Role" },
       ],
     },
