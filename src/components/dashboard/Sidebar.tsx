@@ -676,14 +676,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => {
-    const items = loadOrder("config", defaultConfigItems);
-    // Add user-management item for admins
-    if (isAdmin && !items.find((i) => i.id === "user-management")) {
-      return [...items, { id: "user-management", label: "User Management", icon: Shield }];
-    }
-    return items;
-  });
+  const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
 
   const { data: pendingCount } = useQuery({
     queryKey: ["pending-signatures-count"],
@@ -756,36 +749,47 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         {/* Navigation */}
         <ScrollArea className="flex-1">
           <nav className={cn("py-2", collapsed ? "px-1.5" : "px-3")}>
-            <GroupLabel label="Main" collapsed={collapsed} />
-            <DraggableGroup
-              items={menuItems}
-              groupKey="menu"
-              activeView={activeView}
-              onViewChange={onViewChange}
-              onReorder={handleMenuReorder}
-              collapsed={collapsed}
-              badges={{ contracts: pendingCount || 0 }}
-            />
+            {appId === "user-management" ? (
+              <>
+                <GroupLabel label="Management" collapsed={collapsed} />
+                <SidebarItem item={{ id: "user-management", label: "Users", icon: Users }} isActive={activeView === "user-management"} onViewChange={onViewChange} collapsed={collapsed} />
+                <SidebarItem item={{ id: "audit-log", label: "Audit Log", icon: Shield }} isActive={activeView === "audit-log"} onViewChange={onViewChange} collapsed={collapsed} />
+                <SidebarItem item={{ id: "settings", label: "Settings", icon: Settings }} isActive={activeView === "settings"} onViewChange={onViewChange} collapsed={collapsed} />
+              </>
+            ) : (
+              <>
+                <GroupLabel label="Main" collapsed={collapsed} />
+                <DraggableGroup
+                  items={menuItems}
+                  groupKey="menu"
+                  activeView={activeView}
+                  onViewChange={onViewChange}
+                  onReorder={handleMenuReorder}
+                  collapsed={collapsed}
+                  badges={{ contracts: pendingCount || 0 }}
+                />
 
-            <GroupLabel label="Settings" collapsed={collapsed} />
-            <DraggableGroup
-              items={settingsItems}
-              groupKey="settings"
-              activeView={activeView}
-              onViewChange={onViewChange}
-              onReorder={handleSettingsReorder}
-              collapsed={collapsed}
-            />
+                <GroupLabel label="Settings" collapsed={collapsed} />
+                <DraggableGroup
+                  items={settingsItems}
+                  groupKey="settings"
+                  activeView={activeView}
+                  onViewChange={onViewChange}
+                  onReorder={handleSettingsReorder}
+                  collapsed={collapsed}
+                />
 
-            <GroupLabel label="Others" collapsed={collapsed} />
-            <DraggableGroup
-              items={configItems}
-              groupKey="config"
-              activeView={activeView}
-              onViewChange={onViewChange}
-              onReorder={handleConfigReorder}
-              collapsed={collapsed}
-            />
+                <GroupLabel label="Others" collapsed={collapsed} />
+                <DraggableGroup
+                  items={configItems}
+                  groupKey="config"
+                  activeView={activeView}
+                  onViewChange={onViewChange}
+                  onReorder={handleConfigReorder}
+                  collapsed={collapsed}
+                />
+              </>
+            )}
           </nav>
         </ScrollArea>
 
