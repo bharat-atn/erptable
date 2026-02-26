@@ -1,31 +1,32 @@
 
 
-## Plan: Clean Up User Management & Smart App Access in Invite Dialog
+## Problem Analysis
 
-### Changes
+**Root cause**: Ove Eriksson's role in `user_roles` is currently `org_admin` instead of `admin`. This happened during a previous role assignment operation. Since the RLS policies on the `profiles` table require `has_role(auth.uid(), 'admin')` to view all users, Ove can now only see his own profile. The `assign_user_role` function also requires `admin`, so he cannot fix this himself.
 
-| File | Change |
-|---|---|
-| `src/components/dashboard/UserManagementView.tsx` | **1.** Remove the "Apps" column (key `appCount`) from the columns array and the `AppAccessDialog` component + related state. **2.** Add subtle color to role icons in `roleBadge` — e.g., Shield in indigo, UserCheck in blue, Briefcase in amber, Wallet in emerald, Users in purple. **3.** In `InviteUserDialog`, fetch `role_app_access` for the selected role and auto-set `selectedApps` whenever the role dropdown changes. This way selecting "Standard User" only checks Employee Hub, selecting "Team Leader" checks Employee Hub + Time Reporting, etc. |
+**Why users "disappeared"**: The SELECT policy on `profiles` only shows all users to accounts with the `admin` role. With `org_admin`, Ove falls back to the "Users can view own profile" policy, seeing only himself.
 
-### Role Icon Colors
+## Fix Plan
+
+### 1. Database: Restore Ove's admin role
+Update `user_roles` to change `org_admin` back to `admin` for Ove's user ID (`077d0153-5c56-40e5-8a3d-e887c8cb14e3`).
+
+### 2. Code: Prevent self-demotion in `UserManagementView.tsx`
+Add a guard in the `assignRoleMutation` to block any admin from changing their own role. This prevents the scenario that caused this lockout. The "Assign Role" dropdown will be disabled for the currently logged-in user with a tooltip explaining why.
+
+### 3. Database function: Add self-assignment protection in `assign_user_role`
+Add a server-side check in the `assign_user_role` function so that even if the client-side guard is bypassed, the function will refuse to let an admin demote themselves:
 
 ```text
-Super Admin  → Shield      → indigo-600
-Admin        → ShieldCheck → blue-600
-HR Manager   → UserCheck   → sky-500
-Project Mgr  → Briefcase   → amber-600
-Payroll Mgr  → Wallet      → emerald-600
-Team Leader  → Users       → purple-500
-Standard     → User        → gray-400
-No Role      → CircleDot   → gray-400
+IF _target_user_id = auth.uid() THEN
+  RAISE EXCEPTION 'Cannot change your own role';
+END IF;
 ```
 
-### Invite Dialog: Role-Driven App Access
+This is a defense-in-depth measure ensuring the lockout scenario cannot recur.
 
-When the admin changes the role dropdown, we query `role_app_access` for that role and pre-check exactly those apps. The admin can still manually override by toggling checkboxes before sending the invite. On initial load the default role is "user", so only Employee Hub will be checked.
-
-### Regarding Emails
-
-The system already sends a role notification email via the `send-role-notification` Edge Function when a role is assigned. The invite flow creates the user and assigns their role in a single step via the `invite-user` Edge Function, so the user receives the notification. No additional email work is needed.
+### Summary of changes
+- **Database data fix**: Restore `admin` role for Ove
+- **Database function update**: Add self-assignment block in `assign_user_role`
+- **Frontend**: Disable "Assign Role" dropdown for the current user's own row
 
