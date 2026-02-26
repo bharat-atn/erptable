@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { EnhancedTable, ColumnDef, FilterOption } from "@/components/ui/enhanced-table";
@@ -430,9 +430,16 @@ export function UserManagementView() {
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
   const apps = useMemo(() => loadApps(), []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   const { data: profiles = [], isLoading: loadingProfiles } = useQuery({
     queryKey: ["admin-profiles"],
@@ -630,21 +637,25 @@ export function UserManagementView() {
       key: "assign",
       header: "Assign Role",
       hideable: false,
-      render: (row) => (
-        <Select
-          value={row.role ?? ""}
-          onValueChange={(val) => assignRoleMutation.mutate({ userId: row.user_id, role: val as AppRole })}
-        >
-          <SelectTrigger className="w-[140px] h-8 text-xs">
-            <SelectValue placeholder="Select role…" />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ),
+      render: (row) => {
+        const isSelf = row.user_id === currentUserId;
+        return (
+          <Select
+            value={row.role ?? ""}
+            onValueChange={(val) => assignRoleMutation.mutate({ userId: row.user_id, role: val as AppRole })}
+            disabled={isSelf}
+          >
+            <SelectTrigger className={`w-[140px] h-8 text-xs ${isSelf ? "opacity-50 cursor-not-allowed" : ""}`} title={isSelf ? "You cannot change your own role" : undefined}>
+              <SelectValue placeholder="Select role…" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
     },
   ];
 
