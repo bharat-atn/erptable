@@ -525,7 +525,7 @@ export function UserManagementView() {
               email: user.email,
               userName: user.full_name !== "—" ? user.full_name : user.email,
               role,
-              loginUrl: window.location.origin,
+              loginUrl: "https://erptable.lovable.app",
             },
           });
         } catch (emailErr) {
