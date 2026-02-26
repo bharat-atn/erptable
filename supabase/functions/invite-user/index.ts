@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,17 +22,36 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+    // Parse body first (can only be read once)
+    const body = await req.json();
+    const { email, full_name, role, temp_password, app_access } = body;
+
+    console.log("Invite user request:", { email, role, full_name });
+
+    if (!email || !role) {
+      return new Response(JSON.stringify({ error: "Email and role are required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate caller
+    const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) {
+    const { data: { user: caller }, error: callerError } = await callerClient.auth.getUser();
+    
+    if (callerError || !caller) {
+      console.error("Caller auth failed:", callerError?.message);
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("Caller:", caller.email);
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleData } = await adminClient
@@ -43,31 +62,24 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      console.error("Caller is not admin:", caller.email);
       return new Response(JSON.stringify({ error: "Only admins can invite users" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const { email, full_name, role, temp_password, app_access } = await req.json();
-
-    if (!email || !role) {
-      return new Response(JSON.stringify({ error: "Email and role are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // Check if user already exists
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u) => u.email === email);
+    const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
 
     let userId: string;
 
     if (existingUser) {
       userId = existingUser.id;
+      console.log("Existing user found:", userId);
     } else {
-      // Create user - use temp_password if provided, otherwise generate a random one
+      // Create user
       const password = temp_password || crypto.randomUUID() + "!Aa1";
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
@@ -76,13 +88,15 @@ Deno.serve(async (req) => {
         user_metadata: { full_name: full_name || email },
       });
 
-      if (createError) {
-        return new Response(JSON.stringify({ error: createError.message }), {
+      if (createError || !newUser) {
+        console.error("User creation failed:", createError?.message);
+        return new Response(JSON.stringify({ error: createError?.message || "Failed to create user" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       userId = newUser.user.id;
+      console.log("New user created:", userId);
     }
 
     // Upsert the role
@@ -91,6 +105,7 @@ Deno.serve(async (req) => {
       .upsert({ user_id: userId, role }, { onConflict: "user_id" });
 
     if (roleError) {
+      console.error("Role upsert failed:", roleError.message);
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -105,9 +120,7 @@ Deno.serve(async (req) => {
 
     // Handle app access grants
     if (Array.isArray(app_access)) {
-      // Remove existing access
       await adminClient.from("user_app_access").delete().eq("user_id", userId);
-      // Insert new access
       if (app_access.length > 0) {
         const rows = app_access.map((app_id: string) => ({
           user_id: userId,
@@ -135,6 +148,8 @@ Deno.serve(async (req) => {
       console.error("Audit log insert failed:", auditErr);
     }
 
+    console.log("Invite success:", email, action);
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -147,6 +162,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (err) {
+    console.error("Unhandled error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
