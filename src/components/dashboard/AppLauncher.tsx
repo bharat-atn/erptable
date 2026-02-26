@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -369,12 +369,30 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
   const [teaserApp, setTeaserApp] = useState<AppDefinition | null>(null);
 
   const isProduction = isPublishedEnvironment();
+  // Fetch role-based app access from database
+  const [roleAccess, setRoleAccess] = useState<Set<string>>(new Set());
+  const [accessLoaded, setAccessLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!userRole) return;
+    supabase
+      .from("role_app_access")
+      .select("app_id")
+      .eq("role", userRole)
+      .then(({ data }) => {
+        if (data) setRoleAccess(new Set(data.map((r: any) => r.app_id)));
+        setAccessLoaded(true);
+      });
+  }, [userRole]);
+
   const visibleApps = (editMode ? apps : apps.filter((a) => a.enabled)).filter((a) => {
-    // In edit mode, show all to admin
     if (editMode) return true;
-    // adminOnly legacy check
     if (a.adminOnly && userRole !== "admin") return false;
-    // allowedRoles check
+    // Use database-driven access if loaded
+    if (accessLoaded && userRole) {
+      return roleAccess.has(a.id);
+    }
+    // Fallback to hardcoded allowedRoles
     if (a.allowedRoles && a.allowedRoles.length > 0 && userRole) {
       return a.allowedRoles.includes(userRole);
     }

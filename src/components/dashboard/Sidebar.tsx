@@ -753,6 +753,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
               <>
                 <GroupLabel label="Management" collapsed={collapsed} />
                 <SidebarItem item={{ id: "user-management", label: "Users", icon: Users }} isActive={activeView === "user-management"} onViewChange={onViewChange} collapsed={collapsed} />
+                <SidebarItem item={{ id: "role-permissions", label: "Role Permissions", icon: Shield }} isActive={activeView === "role-permissions"} onViewChange={onViewChange} collapsed={collapsed} />
                 <SidebarItem item={{ id: "audit-log", label: "Audit Log", icon: Shield }} isActive={activeView === "audit-log"} onViewChange={onViewChange} collapsed={collapsed} />
                 <SidebarItem item={{ id: "settings", label: "Settings", icon: Settings }} isActive={activeView === "settings"} onViewChange={onViewChange} collapsed={collapsed} />
               </>
