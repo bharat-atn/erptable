@@ -461,7 +461,17 @@ export function UserManagementView() {
     },
   });
 
-  const roleMap = new Map(roles.map((r) => [r.user_id, r.role]));
+  const roleMap = useMemo(() => {
+    const priority = ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"];
+    const m = new Map<string, string>();
+    roles.forEach((r) => {
+      const existing = m.get(r.user_id);
+      if (!existing || priority.indexOf(r.role) < priority.indexOf(existing)) {
+        m.set(r.user_id, r.role);
+      }
+    });
+    return m;
+  }, [roles]);
   const accessMap = useMemo(() => {
     const m = new Map<string, string[]>();
     appAccess.forEach((a) => {
@@ -491,14 +501,10 @@ export function UserManagementView() {
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const existing = roleMap.get(userId);
-      if (existing) {
-        const { error } = await supabase.from("user_roles").update({ role: role as any }).eq("user_id", userId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: role as any });
-        if (error) throw error;
-      }
+      // Delete all existing roles then insert the new one (prevents duplicates)
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: role as any });
+      if (error) throw error;
       await supabase.from("profiles").update({ role: "approved" }).eq("user_id", userId);
 
       // Find user info for email notification
