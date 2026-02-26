@@ -640,8 +640,10 @@ export type Database = {
         Row: {
           created_at: string
           default_signature_url: string | null
+          email: string | null
           full_name: string | null
           id: string
+          last_sign_in_at: string | null
           role: string | null
           updated_at: string
           user_id: string
@@ -649,8 +651,10 @@ export type Database = {
         Insert: {
           created_at?: string
           default_signature_url?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          last_sign_in_at?: string | null
           role?: string | null
           updated_at?: string
           user_id: string
@@ -658,8 +662,10 @@ export type Database = {
         Update: {
           created_at?: string
           default_signature_url?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          last_sign_in_at?: string | null
           role?: string | null
           updated_at?: string
           user_id?: string
@@ -690,6 +696,30 @@ export type Database = {
           label_sv?: string
           sort_order?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_app_access: {
+        Row: {
+          app_id: string
+          created_at: string
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
