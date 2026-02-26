@@ -501,20 +501,12 @@ export function UserManagementView() {
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      // Check if user already has a role entry
-      const { data: existing } = await supabase.from("user_roles").select("id").eq("user_id", userId);
-      if (existing && existing.length > 0) {
-        // Update the first entry and delete any extras (prevents duplicates)
-        const { error } = await supabase.from("user_roles").update({ role: role as any }).eq("id", existing[0].id);
-        if (error) throw error;
-        if (existing.length > 1) {
-          const extraIds = existing.slice(1).map((r) => r.id);
-          await supabase.from("user_roles").delete().in("id", extraIds);
-        }
-      } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: role as any });
-        if (error) throw error;
-      }
+      // Use secure RPC function to assign role (avoids RLS race condition)
+      const { error } = await supabase.rpc("assign_user_role", {
+        _target_user_id: userId,
+        _new_role: role as any,
+      });
+      if (error) throw error;
       await supabase.from("profiles").update({ role: "approved" }).eq("user_id", userId);
 
       // Find user info for email notification
