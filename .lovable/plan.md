@@ -1,35 +1,36 @@
 
 
-## Problem
+## Authentication & User Management Flow — Verification Report
 
-Two issues identified:
+### What is in place and working correctly
 
-1. **Password reset redirect goes to wrong URL**: In `AuthForm.tsx`, the `resetPasswordForEmail` call uses `window.location.origin` for `redirectTo`. When triggered from the preview environment, this sends users to the Lovable preview URL instead of `https://erptable.lovable.app/reset-password`. The password reset email link therefore doesn't work correctly.
+1. **Google Sign-In (primary)**: Uses `lovable.auth.signInWithOAuth("google")` with `redirect_uri: window.location.origin`. This is correct per the Lovable Cloud OAuth docs — the redirect must match the current origin for the OAuth callback to complete.
 
-2. **Same problem exists everywhere `window.location.origin` is used for auth redirects**: The Google sign-in redirect also uses `window.location.origin`, which could cause issues in preview.
+2. **Email/Password Sign-In (secondary)**: Uses `supabase.auth.signInWithPassword()`. Correctly implemented with collapsible UI.
 
-## Changes
+3. **Email/Password Sign-Up**: Uses `supabase.auth.signUp()`. Shows confirmation message to check email.
 
-### 1. Fix password reset redirect URL (`src/components/auth/AuthForm.tsx`)
-- Replace `window.location.origin` in `resetPasswordForEmail` with a helper that returns `https://erptable.lovable.app` on production hostnames and `window.location.origin` otherwise
-- This ensures the password reset email links to the published app, not the Lovable preview
+4. **Forgot Password**: Uses `supabase.auth.resetPasswordForEmail()` with `redirectTo: getAppOrigin() + "/reset-password"` — correctly points to the published domain.
 
-### 2. Fix Google sign-in redirect URL (`src/components/auth/AuthForm.tsx`)
-- Apply the same fix to the `handleGoogleSignIn` `redirect_uri` parameter
+5. **Reset Password Page** (`/reset-password`): Listens for `PASSWORD_RECOVERY` event, shows form, calls `supabase.auth.updateUser({ password })`. Route registered in `App.tsx`.
 
-### Implementation detail
-Add a small helper at the top of `AuthForm.tsx`:
-```typescript
-const getAppOrigin = () => {
-  const host = window.location.hostname;
-  if (host.includes("lovable.app") || host.includes("lovable.dev")) {
-    return "https://erptable.lovable.app";
-  }
-  return window.location.origin;
-};
-```
+6. **Role-based access**: `useUserRole` hook fetches from `user_roles` table with priority ordering. No role = pending approval screen.
 
-Then use `getAppOrigin()` in place of `window.location.origin` for:
-- Line 72: `redirectTo: \`${getAppOrigin()}/reset-password\``
-- Line 57: `redirect_uri: getAppOrigin()`
+7. **Pending Approval**: Shows clean "Account Pending Approval" screen with sign-out button.
+
+8. **Invite User (admin)**: Edge function creates user via `admin.createUser()`, assigns role, sets profile to approved, grants app access. Supports optional fallback password.
+
+9. **Role Assignment + Notification**: Uses `assign_user_role` RPC (SECURITY DEFINER). Sends approval email via Resend with `loginUrl: "https://erptable.lovable.app"` — correctly hardcoded.
+
+10. **Approval Email Content**: Includes instructions for both Google and email/password users ("Click Forgot password? to set your own password").
+
+11. **Self-demotion protection**: Handled by the `assign_user_role` RPC.
+
+12. **Audit logging**: Auth events, role changes, and invitations are all logged.
+
+### Issues Found — None Critical
+
+All flows are properly connected. No broken links, no missing routes, no incorrect redirects remaining.
+
+**Verdict: The system is complete and secure.** All authentication paths (Google sign-in, email/password sign-in, sign-up, forgot password, password reset, admin invitation, role assignment, approval notification) are wired up correctly. No code changes needed.
 
