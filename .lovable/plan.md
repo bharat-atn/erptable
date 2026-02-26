@@ -1,51 +1,31 @@
 
 
-## Plan: Add Time Reporting Application
-
-### What We Are Building
-A new "Time Reporting" application card in the App Launcher for team leaders and managers to report working hours per project and object. It will be marked as "Coming Soon" and use a clock icon.
+## Plan: Clean Up User Management & Smart App Access in Invite Dialog
 
 ### Changes
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/AppLauncher.tsx` | Add a new entry to `defaultApps` with id `time-reporting`, name "Time Reporting", Clock icon, Coming Soon status, and `allowedRoles` for admin, org_admin, project_manager, team_leader. |
-| `src/components/dashboard/RolePermissionMatrix.tsx` | Add `time-reporting` to `DEFAULT_ACCESS` with the same roles so the "Reset to Defaults" feature includes it. |
-| `src/components/dashboard/TeaserDialog.tsx` | Add teaser content for the Time Reporting app so clicking "Coming Soon" shows a feature preview dialog. |
-| **Database** | Insert rows into `role_app_access` for the new `time-reporting` app granting access to admin, org_admin, project_manager, and team_leader. |
+| `src/components/dashboard/UserManagementView.tsx` | **1.** Remove the "Apps" column (key `appCount`) from the columns array and the `AppAccessDialog` component + related state. **2.** Add subtle color to role icons in `roleBadge` — e.g., Shield in indigo, UserCheck in blue, Briefcase in amber, Wallet in emerald, Users in purple. **3.** In `InviteUserDialog`, fetch `role_app_access` for the selected role and auto-set `selectedApps` whenever the role dropdown changes. This way selecting "Standard User" only checks Employee Hub, selecting "Team Leader" checks Employee Hub + Time Reporting, etc. |
 
-### App Definition
+### Role Icon Colors
 
 ```text
-id:          time-reporting
-name:        Time Reporting
-description: Report and track working hours per project and object. 
-             Manage daily time entries, approve timesheets, and 
-             generate attendance summaries.
-icon:        Clock
-color:       Amber (index 6)
-available:   false (Coming Soon)
-allowedRoles: admin, org_admin, project_manager, team_leader
+Super Admin  → Shield      → indigo-600
+Admin        → ShieldCheck → blue-600
+HR Manager   → UserCheck   → sky-500
+Project Mgr  → Briefcase   → amber-600
+Payroll Mgr  → Wallet      → emerald-600
+Team Leader  → Users       → purple-500
+Standard     → User        → gray-400
+No Role      → CircleDot   → gray-400
 ```
 
-### Permission Matrix After Change
+### Invite Dialog: Role-Driven App Access
 
-```text
-                  HR    User   Forestry  Payroll  Employee  Time
-                  Mgmt  Mgmt   Project   Mgmt     Hub      Report
-Super Admin       ✓      ✓       ✓        ✓        ✓        ✓
-Admin             ✓      -       ✓        ✓        ✓        ✓
-HR Manager        ✓      -       -        -        ✓        -
-Project Manager   -      -       ✓        -        ✓        ✓
-Payroll Manager   -      -       -        ✓        ✓        -
-Team Leader       -      -       -        -        ✓        ✓
-Standard User     -      -       -        -        ✓        -
-```
+When the admin changes the role dropdown, we query `role_app_access` for that role and pre-check exactly those apps. The admin can still manually override by toggling checkboxes before sending the invite. On initial load the default role is "user", so only Employee Hub will be checked.
 
-### Database Seed
-Insert 4 rows into `role_app_access` using the data insert tool (not a migration, since this is data, not schema):
-- `(admin, time-reporting)`
-- `(org_admin, time-reporting)`
-- `(project_manager, time-reporting)`
-- `(team_leader, time-reporting)`
+### Regarding Emails
+
+The system already sends a role notification email via the `send-role-notification` Edge Function when a role is assigned. The invite flow creates the user and assigns their role in a single step via the `invite-user` Edge Function, so the user receives the notification. No additional email work is needed.
 
