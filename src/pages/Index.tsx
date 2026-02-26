@@ -28,12 +28,20 @@ const Index = () => {
       if (!session) setActiveApp(null);
 
       if (event === "SIGNED_IN" && session?.user) {
+        // Log auth event
         supabase.rpc("log_auth_event", {
           _action: "LOGIN",
           _user_id: session.user.id,
           _user_email: session.user.email ?? null,
           _summary: `${session.user.email} logged in`,
         }).then();
+
+        // Update last_sign_in_at on profile
+        supabase
+          .from("profiles")
+          .update({ last_sign_in_at: new Date().toISOString() })
+          .eq("user_id", session.user.id)
+          .then();
       }
     });
 
