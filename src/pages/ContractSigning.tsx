@@ -184,26 +184,13 @@ export default function ContractSigning() {
     setSubmitting(true);
 
     try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const filePath = `employee/${data.contract_id}.png`;
+      const { data: result, error: fnErr } = await supabase.functions.invoke(
+        "upload-employee-signature",
+        { body: { token, signatureDataUrl: dataUrl } }
+      );
 
-      const { error: uploadErr } = await supabase.storage
-        .from("signatures")
-        .upload(filePath, blob, { upsert: true, contentType: "image/png" });
-
-      if (uploadErr) throw uploadErr;
-
-      const { data: urlData } = supabase.storage
-        .from("signatures")
-        .getPublicUrl(filePath);
-
-      const { error: rpcErr } = await supabase.rpc("submit_employee_signature", {
-        _token: token,
-        _signature_url: urlData.publicUrl,
-      });
-
-      if (rpcErr) throw rpcErr;
+      if (fnErr) throw fnErr;
+      if (result?.error) throw new Error(result.error);
       setSigned(true);
     } catch (err: any) {
       setSigningError(err.message || "Failed to submit signature");
