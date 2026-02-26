@@ -11,6 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import logoImage from "@/assets/erp-table-logo.png";
 
+const getAppOrigin = () => {
+  const host = window.location.hostname;
+  if (host.includes("lovableproject.com") || host.includes("lovable.app") || host.includes("lovable.dev")) {
+    return "https://erptable.lovable.app";
+  }
+  return window.location.origin;
+};
+
 interface AuthFormProps {
   onSuccess: () => void;
 }
@@ -51,7 +59,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setIsLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: getAppOrigin(),
       });
       if (error) throw error;
     } catch (error: any) {
@@ -69,7 +77,7 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(emailToReset, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${getAppOrigin()}/reset-password`,
       });
       if (error) throw error;
       toast.success("Password reset email sent! Check your inbox.");
