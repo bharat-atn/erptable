@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify calling user is admin
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -24,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is admin using their JWT
     const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -36,7 +34,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleData } = await adminClient
       .from("user_roles")
@@ -52,7 +49,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, full_name, role, temp_password } = await req.json();
+    const { email, full_name, role, temp_password, app_access } = await req.json();
 
     if (!email || !role) {
       return new Response(JSON.stringify({ error: "Email and role are required" }), {
@@ -68,13 +65,13 @@ Deno.serve(async (req) => {
     let userId: string;
 
     if (existingUser) {
-      // User exists — just update their role
       userId = existingUser.id;
     } else {
-      // Create user with temp password using admin API
+      // Create user - use temp_password if provided, otherwise generate a random one
+      const password = temp_password || crypto.randomUUID() + "!Aa1";
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
-        password: temp_password,
+        password,
         email_confirm: true,
         user_metadata: { full_name: full_name || email },
       });
@@ -100,15 +97,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update profile to approved
+    // Update profile to approved + store email
     await adminClient
       .from("profiles")
-      .update({ role: "approved", full_name: full_name || email })
+      .update({ role: "approved", full_name: full_name || email, email })
       .eq("user_id", userId);
+
+    // Handle app access grants
+    if (Array.isArray(app_access)) {
+      // Remove existing access
+      await adminClient.from("user_app_access").delete().eq("user_id", userId);
+      // Insert new access
+      if (app_access.length > 0) {
+        const rows = app_access.map((app_id: string) => ({
+          user_id: userId,
+          app_id,
+          granted_by: caller.id,
+        }));
+        await adminClient.from("user_app_access").insert(rows);
+      }
+    }
 
     const action = existingUser ? "updated" : "created";
 
-    // Audit log entry
+    // Audit log
     try {
       await adminClient.from("audit_log").insert({
         user_id: caller.id,
@@ -117,7 +129,7 @@ Deno.serve(async (req) => {
         table_name: "user_roles",
         record_id: userId,
         summary: `User ${email} ${action} with role "${role}" by ${caller.email}`,
-        new_data: { email, role, full_name, action },
+        new_data: { email, role, full_name, action, app_access },
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);
@@ -127,7 +139,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         user_id: userId,
-        message: `User ${email} ${action} with role ${role}.${existingUser ? "" : " They can sign in with the temporary password or use Google if available."}`,
+        message: `User ${email} ${action} with role ${role}. They can sign in with Google.${temp_password && !existingUser ? " A fallback password was also set." : ""}`,
       }),
       {
         status: 200,
