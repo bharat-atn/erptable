@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -411,16 +411,27 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
 
 // ─── Merged User Row Type ───────────────────────────────────────────
 
+interface PendingInvitation {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: string;
+  app_access: string[] | null;
+  invited_by: string | null;
+  created_at: string;
+}
+
 interface UserRow {
   id: string;
   user_id: string;
   full_name: string;
   email: string;
   role: AppRole | null;
-  status: "Approved" | "Pending";
+  status: "Approved" | "Pending" | "Invited";
   created_at: string;
   last_sign_in_at: string | null;
   appCount: number;
+  isPendingInvitation?: boolean;
 }
 
 // ─── Main View ──────────────────────────────────────────────────────
@@ -469,6 +480,15 @@ export function UserManagementView() {
     },
   });
 
+  const { data: pendingInvitations = [] } = useQuery({
+    queryKey: ["admin-pending-invitations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pending_role_assignments").select("*").order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as PendingInvitation[];
+    },
+  });
+
   const roleMap = useMemo(() => {
     const priority = ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"];
     const m = new Map<string, string>();
@@ -490,8 +510,8 @@ export function UserManagementView() {
     return m;
   }, [appAccess]);
 
-  const userRows: UserRow[] = useMemo(() =>
-    profiles.map((p) => {
+  const userRows: UserRow[] = useMemo(() => {
+    const profileRows: UserRow[] = profiles.map((p) => {
       const currentRole = roleMap.get(p.user_id) ?? null;
       return {
         id: p.id,
@@ -504,8 +524,28 @@ export function UserManagementView() {
         last_sign_in_at: p.last_sign_in_at,
         appCount: 0,
       };
-    }),
-  [profiles, roleMap, accessMap]);
+    });
+
+    // Add pending invitations (users who haven't signed in yet)
+    const existingEmails = new Set(profiles.map((p) => p.email?.toLowerCase()));
+    const invitedRows: UserRow[] = pendingInvitations
+      .filter((inv) => !existingEmails.has(inv.email.toLowerCase()))
+      .map((inv) => ({
+        id: `pending-${inv.id}`,
+        user_id: inv.id,
+        full_name: inv.full_name || "—",
+        email: inv.email,
+        role: inv.role,
+        status: "Invited" as const,
+        created_at: inv.created_at,
+        last_sign_in_at: null,
+        appCount: inv.app_access?.length ?? 0,
+        isPendingInvitation: true,
+      }));
+
+    return [...profileRows, ...invitedRows];
+  },
+  [profiles, roleMap, accessMap, pendingInvitations]);
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
@@ -579,6 +619,49 @@ export function UserManagementView() {
     },
   });
 
+  const deletePendingInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { error } = await supabase.from("pending_role_assignments").delete().eq("id", invitationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      toast({ title: "Pending invitation removed" });
+      setDeletePendingUser(null);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to remove invitation", description: err.message, variant: "destructive" });
+      setDeletePendingUser(null);
+    },
+  });
+
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
+
+  const handleResendInvite = async (row: UserRow) => {
+    setResendingEmail(row.email);
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: row.email,
+          full_name: row.full_name !== "—" ? row.full_name : row.email,
+          role: row.role,
+          resend_only: true,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({
+        title: data.email_sent ? "Invite email resent" : "Resend failed",
+        description: data.message,
+        variant: data.email_sent ? "default" : "destructive",
+      });
+    } catch (err: any) {
+      toast({ title: "Failed to resend invite", description: err.message, variant: "destructive" });
+    } finally {
+      setResendingEmail(null);
+    }
+  };
+
   const handleCleanupOrphan = async (email: string) => {
     setCleaningUp(email);
     try {
@@ -597,6 +680,7 @@ export function UserManagementView() {
   };
 
   const pendingCount = userRows.filter((u) => u.status === "Pending").length;
+  const invitedCount = userRows.filter((u) => u.status === "Invited").length;
   const loading = loadingProfiles || loadingRoles;
 
   const columns: ColumnDef<UserRow>[] = [
@@ -629,18 +713,18 @@ export function UserManagementView() {
       key: "status",
       header: "Status",
       sortable: true,
-      render: (row) => (
-        <span className="inline-flex items-center gap-1.5 text-sm">
-          <span
-            className={`inline-block w-1.5 h-1.5 rounded-full ${
-              row.status === "Pending" ? "bg-amber-500" : "bg-emerald-500"
-            }`}
-          />
-          <span className={row.status === "Pending" ? "text-muted-foreground" : "text-foreground"}>
-            {row.status}
+      render: (row) => {
+        const dotColor = row.status === "Invited" ? "bg-blue-500" : row.status === "Pending" ? "bg-amber-500" : "bg-emerald-500";
+        const textClass = row.status === "Approved" ? "text-foreground" : "text-muted-foreground";
+        return (
+          <span className="inline-flex items-center gap-1.5 text-sm">
+            <span className={`inline-block w-1.5 h-1.5 rounded-full ${dotColor}`} />
+            <span className={textClass}>
+              {row.status === "Invited" ? "Invited" : row.status}
+            </span>
           </span>
-        </span>
-      ),
+        );
+      },
     },
     {
       key: "last_sign_in_at",
@@ -656,6 +740,9 @@ export function UserManagementView() {
       header: "Assign Role",
       hideable: false,
       render: (row) => {
+        if (row.isPendingInvitation) {
+          return <span className="text-xs text-muted-foreground italic">Awaiting sign-in</span>;
+        }
         const isSelf = row.user_id === currentUserId;
         return (
           <Select
@@ -684,6 +771,7 @@ export function UserManagementView() {
       options: [
         { value: "Approved", label: "Approved", dot: "bg-emerald-500" },
         { value: "Pending", label: "Pending", dot: "bg-amber-500" },
+        { value: "Invited", label: "Invited", dot: "bg-blue-500" },
       ],
     },
     {
@@ -704,6 +792,34 @@ export function UserManagementView() {
 
   const rowActions = (row: UserRow) => {
     const isSelf = row.user_id === currentUserId;
+
+    // Pending invitation rows get resend + delete
+    if (row.isPendingInvitation) {
+      return (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            onClick={() => handleResendInvite(row)}
+            disabled={resendingEmail === row.email}
+            title="Resend invite email"
+          >
+            <Send className="w-3.5 h-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeletePendingUser({ user_id: row.user_id, email: row.email })}
+            title="Remove pending invitation"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    }
+
     // Orphan: has a role + approved status but never signed in
     const isOrphan = row.role && !row.last_sign_in_at && !isSelf;
 
@@ -759,6 +875,7 @@ export function UserManagementView() {
     queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
     queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
     queryClient.invalidateQueries({ queryKey: ["admin-app-access"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-pending-invitations"] });
   };
 
   return (
@@ -770,6 +887,9 @@ export function UserManagementView() {
             Manage user access, roles, and application permissions.
             {pendingCount > 0 && (
               <span className="ml-2 text-amber-600 font-medium">{pendingCount} pending approval</span>
+            )}
+            {invitedCount > 0 && (
+              <span className="ml-2 text-blue-600 font-medium">{invitedCount} invited</span>
             )}
           </p>
         </div>
@@ -835,11 +955,23 @@ export function UserManagementView() {
       <DeleteConfirmDialog
         open={!!deletePendingUser}
         onOpenChange={(open) => !open && setDeletePendingUser(null)}
-        title="Delete Pending User"
+        title={deletePendingUser && userRows.find(u => u.user_id === deletePendingUser.user_id)?.isPendingInvitation ? "Remove Pending Invitation" : "Delete Pending User"}
         itemName={deletePendingUser?.email ?? ""}
-        description="This will permanently remove this pending user's profile from the system. This action cannot be undone."
-        onConfirm={() => deletePendingUser && deleteProfileMutation.mutate(deletePendingUser.user_id)}
-        isLoading={deleteProfileMutation.isPending}
+        description={
+          deletePendingUser && userRows.find(u => u.user_id === deletePendingUser.user_id)?.isPendingInvitation
+            ? "This will remove the pending invitation. The user will no longer be auto-approved when they sign in."
+            : "This will permanently remove this pending user's profile from the system. This action cannot be undone."
+        }
+        onConfirm={() => {
+          if (!deletePendingUser) return;
+          const row = userRows.find(u => u.user_id === deletePendingUser.user_id);
+          if (row?.isPendingInvitation) {
+            deletePendingInvitationMutation.mutate(deletePendingUser.user_id);
+          } else {
+            deleteProfileMutation.mutate(deletePendingUser.user_id);
+          }
+        }}
+        isLoading={deleteProfileMutation.isPending || deletePendingInvitationMutation.isPending}
         requireTypedConfirmation
       />
     </div>
