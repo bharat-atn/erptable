@@ -58,8 +58,13 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      // Read login_hint from URL (set by invitation emails)
+      const urlParams = new URLSearchParams(window.location.search);
+      const loginHint = urlParams.get("login_hint");
+
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
+        ...(loginHint ? { extraParams: { login_hint: loginHint } } : {}),
       });
       if (error) throw error;
     } catch (error: any) {

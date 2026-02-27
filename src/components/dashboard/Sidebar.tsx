@@ -694,9 +694,9 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
     enabled: !!userRole && !!appId,
   });
 
-  // Filter items based on permissions from database
+  // Filter items based on permissions from database — return nothing while loading
   const filterByPermission = (items: MenuItem[]): MenuItem[] => {
-    if (!allowedItems) return items; // Show all while loading
+    if (!allowedItems) return [];
     return items.filter((item) => allowedItems.has(item.id));
   };
 

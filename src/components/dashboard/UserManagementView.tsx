@@ -343,7 +343,7 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
             <div className="space-y-2">
               <Label>Application Access</Label>
               <div className="rounded-lg border border-border p-3 space-y-2">
-                {apps.filter(a => a.enabled).map((app) => (
+                {apps.filter(a => a.enabled && a.id !== "user-management").map((app) => (
                   <label key={app.id} className="flex items-center gap-3 p-1.5 rounded hover:bg-muted/50 cursor-pointer">
                     <Checkbox
                       checked={selectedApps.has(app.id)}

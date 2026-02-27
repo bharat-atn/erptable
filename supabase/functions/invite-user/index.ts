@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const loginUrl = "https://erptable.lovable.app";
+    const loginUrl = `https://erptable.lovable.app?login_hint=${encodeURIComponent(email)}`;
 
     // ── Resend-only mode: just re-send the invite email ──
     if (resend_only) {
