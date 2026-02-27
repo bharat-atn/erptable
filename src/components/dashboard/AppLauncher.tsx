@@ -160,7 +160,6 @@ export function loadApps(): AppDefinition[] {
     const saved = localStorage.getItem("app-launcher-apps");
     if (!saved) return defaultApps;
     const parsed: AppDefinition[] = JSON.parse(saved);
-    // Sync allowedRoles and adminOnly from defaults into saved apps
     const defaultMap = new Map(defaultApps.map((d) => [d.id, d]));
     const synced = parsed.map((app) => {
       const def = defaultMap.get(app.id);
@@ -169,7 +168,6 @@ export function loadApps(): AppDefinition[] {
       }
       return app;
     });
-    // Merge any new default apps that aren't in the saved list
     const savedIds = new Set(synced.map((a) => a.id));
     const missing = defaultApps.filter((d) => !savedIds.has(d.id));
     if (missing.length > 0) {
@@ -177,7 +175,6 @@ export function loadApps(): AppDefinition[] {
       localStorage.setItem("app-launcher-apps", JSON.stringify(merged));
       return merged;
     }
-    // Save back synced roles
     localStorage.setItem("app-launcher-apps", JSON.stringify(synced));
     return synced;
   } catch {
@@ -185,8 +182,57 @@ export function loadApps(): AppDefinition[] {
   }
 }
 
+function syncWithDefaults(parsed: AppDefinition[]): AppDefinition[] {
+  const defaultMap = new Map(defaultApps.map((d) => [d.id, d]));
+  const synced = parsed.map((app) => {
+    const def = defaultMap.get(app.id);
+    if (def) {
+      return { ...app, name: def.name, description: def.description, allowedRoles: def.allowedRoles, adminOnly: def.adminOnly };
+    }
+    return app;
+  });
+  const savedIds = new Set(synced.map((a) => a.id));
+  const missing = defaultApps.filter((d) => !savedIds.has(d.id));
+  return missing.length > 0 ? [...synced, ...missing] : synced;
+}
+
 function saveApps(apps: AppDefinition[]) {
   localStorage.setItem("app-launcher-apps", JSON.stringify(apps));
+}
+
+async function loadAppsFromDb(): Promise<AppDefinition[] | null> {
+  const { data, error } = await supabase
+    .from("app_launcher_config")
+    .select("id, apps")
+    .limit(1)
+    .maybeSingle();
+  if (error || !data) return null;
+  try {
+    const parsed = data.apps as unknown as AppDefinition[];
+    return syncWithDefaults(parsed);
+  } catch {
+    return null;
+  }
+}
+
+async function saveAppsToDb(apps: AppDefinition[]) {
+  // Strip runtime-only fields before saving
+  const toSave = apps.map(({ allowedRoles, adminOnly, ...rest }) => rest);
+  const { data: existing } = await supabase
+    .from("app_launcher_config")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+  if (existing) {
+    await supabase
+      .from("app_launcher_config")
+      .update({ apps: toSave as any, updated_at: new Date().toISOString() })
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("app_launcher_config")
+      .insert({ apps: toSave as any });
+  }
 }
 
 export function getIcon(iconName: string): LucideIcon {
@@ -409,9 +455,20 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
     return true;
   });
 
+  // Load from database on mount
+  useEffect(() => {
+    loadAppsFromDb().then((dbApps) => {
+      if (dbApps) {
+        setApps(dbApps);
+        saveApps(dbApps); // sync localStorage cache
+      }
+    });
+  }, []);
+
   const updateApps = (updated: AppDefinition[]) => {
     setApps(updated);
     saveApps(updated);
+    saveAppsToDb(updated); // persist to database
   };
 
   const toggleApp = (id: string) => {
