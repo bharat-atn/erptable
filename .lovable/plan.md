@@ -1,34 +1,24 @@
 
 
-## Two Bugs to Fix
+## Fix Syntax Error + End-to-End Test Plan
 
-### Bug 1: Contract doesn't pick up employee information
+There is a **syntax error in `EmployerSigningDialog.tsx`** (visible in console logs) that must be fixed before testing. The JSX structure around lines 215-303 has a `<div>` that opens inside `<CardContent>` but its closing creates a parsing issue due to inconsistent nesting with the conditional blocks.
 
-**Root cause:** Employee personal data (name, address, phone, etc.) only gets written to the contract's `form_data` when the HR user visits step 4 of the wizard, which mounts `ContractDetailsStep` and triggers auto-save. If the user skips steps, uses fast-track, or views the contract before visiting step 4, the `form_data` remains empty for employee fields.
+### Step 1: Fix EmployerSigningDialog.tsx syntax error
+The `<div className="border-t border-border pt-4 space-y-3">` at line 215 closes at line 303, but the parser is choking on it. The fix is to ensure the closing `</div>` at line 303 is properly aligned and there's no stray text node between the conditional blocks and the closing tag. Specifically, add proper wrapping so the JSX fragment structure is unambiguous.
 
-**Fix:** When a contract is created or when the wizard first loads a contract with empty employee fields in `form_data`, pre-populate the `form_data` with employee data from `personal_info`. This should happen in `ContractTemplateView.tsx` when the contract is first created (step 2 → step 3 transition) or when resuming. Specifically:
+### Step 2: Test the full end-to-end flow
+After fixing the syntax error, use the browser automation to:
 
-1. In `ContractTemplateView.tsx`, after creating or loading a contract, check if `form_data` is missing employee fields. If so, immediately write the employee's data (from `personal_info` and top-level columns) into `form_data`.
-2. This ensures the contract document always has employee data available, regardless of which steps the HR user visits.
+1. **Send an invitation** — Navigate to Invitations, create a new invitation for a test Swedish employee, send it
+2. **Fill out onboarding** — Open the onboarding portal link, use AI test data generator to fill as a Swedish person, submit
+3. **Create contract** — Go to Contracts, open the new contract, fill in required fields with random data across all sections
+4. **Employer signing** — Send contract for signing, then counter-sign as employer using the signing dialog
+5. **Verify employee signing** — Navigate to the employee signing page, confirm the contract is ready for employee signature
+6. **Report results** — Confirm both signatures are stored and the contract status is fully signed in the database
 
-**Files to modify:**
-- `src/components/dashboard/ContractTemplateView.tsx` — Add a function that pre-populates `form_data` with employee data when the contract is first associated with an employee (after step 2 completes and a contract record exists).
-
-### Bug 2: Signing UX — Place & Date should be above the signature
-
-**Root cause:** In both `EmployerSigningDialog.tsx` and `ContractSigning.tsx`, the Place & Date fields appear before the signature canvas, but the user's expectation (and the user's complaint about "going upwards") suggests the current visual order creates confusion when scrolling through a long contract document.
-
-Re-reading the user's request: "Be that you entering the location where you're signing and the date, and below that you do the signing." — The user wants Place & Date ABOVE the signature, which IS the current order. The confusion is likely caused by the long contract document pushing Place & Date far down, and then the signature card creates additional scrolling. The real issue may be that in the `EmployerSigningDialog`, the signature card is a separate card below Place & Date, requiring scrolling past Place & Date to reach the signature canvas.
-
-**Fix:** Merge the Place & Date fields and the Signature section into a single card in both `EmployerSigningDialog.tsx` and `ContractSigning.tsx`, with Place & Date at the top and signature drawing area directly below — no gap or separate card headers. This eliminates the "going upwards" scroll issue.
-
-**Files to modify:**
-- `src/components/dashboard/EmployerSigningDialog.tsx` — Merge the Place & Date card and Employer Signature card into one card, with Place & Date fields first, then the signature canvas directly below.
-- `src/pages/ContractSigning.tsx` — Same merge for the employee signing page: combine Place & Date and signature canvas into one cohesive section.
-
-### Implementation Steps
-
-1. **Pre-populate form_data with employee data** — In `ContractTemplateView.tsx`, after a contract is created or loaded, write employee personal info into `form_data` if employee fields are missing.
-
-2. **Merge Place & Date with Signature section** — In both `EmployerSigningDialog.tsx` and `ContractSigning.tsx`, combine the two separate sections into one card with Place & Date on top and signature drawing below.
+### Technical Details
+- The syntax error is at line 303 in `EmployerSigningDialog.tsx` — the `</div>` closing the `<div>` from line 215 may need the conditional blocks wrapped in a fragment or the div restructured
+- The ContractTemplateView employee data pre-population code (recently added) will be verified as part of this flow
+- The merged Place & Date + Signature UI will be tested during the employer signing step
 
