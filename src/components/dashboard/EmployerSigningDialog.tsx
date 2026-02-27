@@ -174,8 +174,9 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
                   contractCode={contract.contract_code}
                   seasonYear={contract.season_year}
                   formData={fd}
-                  employeeSignatureUrl={contract.employee_signature_url}
+                  employeeSignatureUrl={contract.employee_signature_url ? `${contract.employee_signature_url}?t=${Date.now()}` : null}
                   employerSignatureUrl={null}
+                  employeeSignedAt={contract.employee_signed_at}
                 />
               </CardContent>
             </Card>
