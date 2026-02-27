@@ -1297,7 +1297,7 @@ export function ContractDetailsStep({
                   {renderLabel("Country", "Land")}
                   <Select value={country} onValueChange={setCountry} required>
                     <SelectTrigger className="h-11 text-sm font-medium">
-                      <SelectValue placeholder="Select country..." />
+                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
                     </SelectTrigger>
                     <SelectContent>
                       {COUNTRIES.map((c) => (
@@ -1338,7 +1338,7 @@ export function ContractDetailsStep({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {birthday ? format(birthday, "yyyy-MM-dd") : "Pick a date"}
+                      {birthday ? format(birthday, "yyyy-MM-dd") : bl("Pick a date", "Välj datum")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -1360,7 +1360,7 @@ export function ContractDetailsStep({
                 {renderLabel("Country of Birth?", "Födelseland?")}
                 <Select value={countryOfBirth} onValueChange={setCountryOfBirth} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
-                    <SelectValue placeholder="Select country..." />
+                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
                   </SelectTrigger>
                   <SelectContent>
                     {COUNTRIES.map((c) => (
@@ -1375,7 +1375,7 @@ export function ContractDetailsStep({
                 {renderLabel("Citizenship?", "Medborgarskap?")}
                 <Select value={citizenship} onValueChange={setCitizenship} required>
                   <SelectTrigger className="h-11 text-sm font-medium">
-                    <SelectValue placeholder="Select country..." />
+                    <SelectValue placeholder={bl("Select country...", "Välj land...")} />
                   </SelectTrigger>
                   <SelectContent>
                     {COUNTRIES.map((c) => (
@@ -1784,9 +1784,9 @@ export function ContractDetailsStep({
           <CollapsibleContent>
             <div className="pt-4 pb-2 px-2">
               <div className="rounded-xl border border-border bg-muted/20 p-5">
-                <p className="text-sm font-bold mb-1">Collective agreement / Kollektivavtal</p>
+                <p className="text-sm font-bold mb-1">{bl("Collective agreement", "Kollektivavtal")}</p>
                 <p className="text-sm text-muted-foreground">
-                  The employment arrangement is covered by the collective agreement known as Skogsavtalet [<em>Forest Agreement</em>] between the GS trade union and Gröna arbetsgivare. / Anställningen omfattas av kollektivavtalet Skogsavtalet mellan fackförbundet GS och Gröna arbetsgivare.
+                  {bl("The employment arrangement is covered by the collective agreement known as Skogsavtalet [Forest Agreement] between the GS trade union and Gröna arbetsgivare.", "Anställningen omfattas av kollektivavtalet Skogsavtalet mellan fackförbundet GS och Gröna arbetsgivare.")}
                 </p>
               </div>
             </div>
@@ -1827,7 +1827,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium ml-auto", !permanentFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {permanentFromDate ? format(permanentFromDate, "yyyy-MM-dd") : "Select date"}
+                        {permanentFromDate ? format(permanentFromDate, "yyyy-MM-dd") : bl("Select date", "Välj datum")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -1855,7 +1855,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {probationFromDate ? format(probationFromDate, "yyyy-MM-dd") : "from"}
+                        {probationFromDate ? format(probationFromDate, "yyyy-MM-dd") : bl("from", "från")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -1867,7 +1867,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {probationUntilDate ? format(probationUntilDate, "yyyy-MM-dd") : "until"}
+                        {probationUntilDate ? format(probationUntilDate, "yyyy-MM-dd") : bl("until", "till")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -1895,7 +1895,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {fixedTermFromDate ? format(fixedTermFromDate, "yyyy-MM-dd") : "from"}
+                        {fixedTermFromDate ? format(fixedTermFromDate, "yyyy-MM-dd") : bl("from", "från")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -1907,17 +1907,17 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {fixedTermUntilDate ? format(fixedTermUntilDate, "yyyy-MM-dd") : "until"}
+                        {fixedTermUntilDate ? format(fixedTermUntilDate, "yyyy-MM-dd") : bl("until", "till")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
                       <Calendar mode="single" selected={fixedTermUntilDate} onSelect={setFixedTermUntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
-                  <span className="text-[10px] text-muted-foreground align-super">3) and 4)</span>
-                </div>
+                   <span className="text-[10px] text-muted-foreground align-super">{bl("3) and 4)", "3) och 4)")}</span>
+                 </div>
                 <p className="text-xs text-muted-foreground mt-2 ml-8">
-                  See also annex for repeated periods of employment on a general fixed-term basis. / Se även bilaga för upprepade perioder av allmän visstidsanställning.
+                   {bl("See also annex for repeated periods of employment on a general fixed-term basis.", "Se även bilaga för upprepade perioder av allmän visstidsanställning.")}
                 </p>
               </div>
 
@@ -1938,7 +1938,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !tempReplacementFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {tempReplacementFromDate ? format(tempReplacementFromDate, "yyyy-MM-dd") : "from"}
+                        {tempReplacementFromDate ? format(tempReplacementFromDate, "yyyy-MM-dd") : bl("from", "från")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -1948,21 +1948,21 @@ export function ContractDetailsStep({
                 </div>
                 {employmentForm === "temporary_replacement" && (
                   <div className="mt-3 ml-8 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      The employment ends when the holder of the regular position returns to work. But no later than: / Anställningen upphör när ordinarie befattningshavare återgår i tjänst. Dock senast:
+                     <p className="text-xs text-muted-foreground">
+                       {bl("The employment ends when the holder of the regular position returns to work. But no later than:", "Anställningen upphör när ordinarie befattningshavare återgår i tjänst. Dock senast:")}
                     </p>
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">Position / Befattning</label>
-                        <Input value={tempReplacementPosition} onChange={(e) => setTempReplacementPosition(e.target.value)} className="h-9 text-sm w-48" placeholder="Position..." onClick={(e) => e.stopPropagation()} />
+                         <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">{bl("Position", "Befattning")}</label>
+                         <Input value={tempReplacementPosition} onChange={(e) => setTempReplacementPosition(e.target.value)} className="h-9 text-sm w-48" placeholder={bl("Position", "Befattning") + "..."} onClick={(e) => e.stopPropagation()} />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">No later than / Dock senast</label>
+                        <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">{bl("No later than", "Dock senast")}</label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !tempReplacementNoLaterThan && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {tempReplacementNoLaterThan ? format(tempReplacementNoLaterThan, "yyyy-MM-dd") : "Select date"}
+                              {tempReplacementNoLaterThan ? format(tempReplacementNoLaterThan, "yyyy-MM-dd") : bl("Select date", "Välj datum")}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="end">
@@ -2003,7 +2003,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {seasonalFromDate ? format(seasonalFromDate, "yyyy-MM-dd") : "from"}
+                        {seasonalFromDate ? format(seasonalFromDate, "yyyy-MM-dd") : bl("from", "från")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -2015,7 +2015,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalEndAround && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {seasonalEndAround ? format(seasonalEndAround, "yyyy-MM-dd") : "end around"}
+                        {seasonalEndAround ? format(seasonalEndAround, "yyyy-MM-dd") : bl("end around", "slutar omkring")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -2029,13 +2029,12 @@ export function ContractDetailsStep({
                   <div className="mt-3 ml-8 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3">
                     <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-semibold text-destructive">
-                        SINK: The period exceeds 6 months / SINK: Perioden överstiger 6 månader
-                      </p>
-                      <p className="text-muted-foreground text-xs mt-1">
-                        When SINK taxation applies, the seasonal employment period must not exceed 6 months. Please adjust the start or end date. / 
-                        Vid SINK-beskattning får säsongsanställningen inte överstiga 6 månader. Justera start- eller slutdatum.
-                      </p>
+                       <p className="font-semibold text-destructive">
+                         {bl("SINK: The period exceeds 6 months", "SINK: Perioden överstiger 6 månader")}
+                       </p>
+                       <p className="text-muted-foreground text-xs mt-1">
+                         {bl("When SINK taxation applies, the seasonal employment period must not exceed 6 months. Please adjust the start or end date.", "Vid SINK-beskattning får säsongsanställningen inte överstiga 6 månader. Justera start- eller slutdatum.")}
+                       </p>
                     </div>
                   </div>
                 )}
@@ -2058,7 +2057,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69FromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {age69FromDate ? format(age69FromDate, "yyyy-MM-dd") : "from"}
+                        {age69FromDate ? format(age69FromDate, "yyyy-MM-dd") : bl("from", "från")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -2070,7 +2069,7 @@ export function ContractDetailsStep({
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69UntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {age69UntilDate ? format(age69UntilDate, "yyyy-MM-dd") : "until"}
+                        {age69UntilDate ? format(age69UntilDate, "yyyy-MM-dd") : bl("until", "till")}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -2161,14 +2160,14 @@ export function ContractDetailsStep({
                         placeholder="%"
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        per cent of full time / procent av heltid
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      per cent of full time / procent av heltid
-                    </span>
+                       <span className="text-xs text-muted-foreground whitespace-nowrap">
+                         {bl("per cent of full time", "procent av heltid")}
+                       </span>
+                     </div>
+                   ) : (
+                     <span className="text-xs text-muted-foreground">
+                       {bl("per cent of full time", "procent av heltid")}
+                     </span>
                   )}
                 </div>
               </div>
@@ -2197,7 +2196,7 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">🌴</span>
-                    Holiday Entitlement / Semesterrätt
+                    {bl("Holiday Entitlement", "Semesterrätt")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -2244,12 +2243,12 @@ export function ContractDetailsStep({
                       <DollarSign className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-                        Company Premium / Företagspremie
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        Percentage above the official Skogsavtalet rate / Procentuellt påslag ovanpå officiella Skogsavtalets lön
-                      </p>
+                       <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                         {bl("Company Premium", "Företagspremie")}
+                       </p>
+                       <p className="text-[10px] text-muted-foreground">
+                         {bl("Percentage above the official Skogsavtalet rate", "Procentuellt påslag ovanpå officiella Skogsavtalets lön")}
+                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 ml-11">
@@ -2268,7 +2267,7 @@ export function ContractDetailsStep({
                     <span className="text-sm font-semibold text-muted-foreground">%</span>
                     {parseFloat(companyPremiumPercent) > 0 && (
                       <span className="text-xs text-primary font-medium">
-                        +{companyPremiumPercent}% above official rate
+                        +{companyPremiumPercent}% {bl("above official rate", "över officiell taxa")}
                       </span>
                     )}
                   </div>
@@ -2293,10 +2292,10 @@ export function ContractDetailsStep({
                         </div>
                         <div>
                           <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-                            Job Type {idx}: Official Rate / Befattningstyp {idx}: Officiell lön
+                             {bl(`Job Type ${idx}: Official Rate`, `Befattningstyp ${idx}: Officiell lön`)}
                           </p>
                           <p className="text-[10px] text-muted-foreground truncate max-w-[280px]">
-                            {jt || "Not selected"}
+                            {jt || bl("Not selected", "Ej vald")}
                           </p>
                           {rate ? (
                             <div className="flex items-baseline gap-2 mt-0.5">
@@ -2310,13 +2309,13 @@ export function ContractDetailsStep({
                               )}
                             </div>
                           ) : (
-                            <p className="text-sm text-muted-foreground">
-                              {!jt || !exp
-                                ? "Select Job Type and Experience Level in Section 3 first"
-                                : !birthday
-                                  ? "Set employee birth date in Section 2 first"
-                                  : "No matching rate found in agreement data"}
-                            </p>
+                             <p className="text-sm text-muted-foreground">
+                               {!jt || !exp
+                                 ? bl("Select Job Type and Experience Level in Section 3 first", "Välj befattningstyp och erfarenhetsnivå i Sektion 3 först")
+                                 : !birthday
+                                   ? bl("Set employee birth date in Section 2 first", "Ange anställds födelsedatum i Sektion 2 först")
+                                   : bl("No matching rate found in agreement data", "Ingen matchande lön hittades i avtalsdata")}
+                             </p>
                           )}
                         </div>
                       </div>
@@ -2325,7 +2324,7 @@ export function ContractDetailsStep({
                         disabled={!rate || applied}
                         className="px-6"
                       >
-                        {applied ? "Applied ✓" : "Apply Rate"}
+                        {applied ? `${bl("Applied", "Applicerad")} ✓` : bl("Apply Rate", "Tillämpa lön")}
                       </Button>
                     </div>
                     {rate && (
@@ -2354,7 +2353,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "hourly" ? "border-primary" : "border-muted-foreground/40")}>
                     {salaryType === "hourly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-bold uppercase tracking-wider">Hourly Pay / Timlön **</span>
+                  <span className="text-sm font-bold uppercase tracking-wider">{bl("Hourly Pay", "Timlön")} **</span>
                 </div>
                 <div
                   className={cn(
@@ -2366,7 +2365,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", salaryType === "monthly" ? "border-primary" : "border-muted-foreground/40")}>
                     {salaryType === "monthly" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-bold uppercase tracking-wider">Monthly Salary / Månadslön **</span>
+                  <span className="text-sm font-bold uppercase tracking-wider">{bl("Monthly Salary", "Månadslön")} **</span>
                 </div>
               </div>
 
@@ -2377,17 +2376,17 @@ export function ContractDetailsStep({
                 ...(numberOfJobTypes === "3" ? [{ idx: 3, jt: jobType3, hb: hourlyBasic3, setHb: setHourlyBasic3, hp: hourlyPremium3, setHp: setHourlyPremium3, mb: monthlyBasic3, setMb: setMonthlyBasic3, mp: monthlyPremium3, setMp: setMonthlyPremium3 }] : []),
               ].map(({ idx, jt, hb, setHb, hp, setHp, mb, setMb, mp, setMp }) => (
                 <div key={idx} className="rounded-xl border border-border p-4 space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Job Type {idx} / Befattningstyp {idx}: <span className="text-foreground">{jt || "—"}</span>
+                   <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                     {bl(`Job Type ${idx}`, `Befattningstyp ${idx}`)}: <span className="text-foreground">{jt || "—"}</span>
                   </p>
                   {salaryType === "hourly" && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        {renderLabel("Basic pay / Grundlön (SEK/hr)", "", true)}
+                        {renderLabel(bl("Basic pay", "Grundlön") + " (SEK/hr)", "", true)}
                         <Input type="number" value={hb} onChange={(e) => setHb(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
                       </div>
                       <div className="space-y-1.5">
-                        {renderLabel("Premium pay / Premielön (SEK/hr)", "", false)}
+                        {renderLabel(bl("Premium pay", "Premielön") + " (SEK/hr)", "", false)}
                         <Input type="number" value={hp} onChange={(e) => setHp(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
                       </div>
                     </div>
@@ -2395,11 +2394,11 @@ export function ContractDetailsStep({
                   {salaryType === "monthly" && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        {renderLabel("Basic salary / Grundlön (SEK/mån)", "", true)}
+                        {renderLabel(bl("Basic salary", "Grundlön") + " (SEK/mån)", "", true)}
                         <Input type="number" value={mb} onChange={(e) => setMb(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
                       </div>
                       <div className="space-y-1.5">
-                        {renderLabel("Premium salary / Premielön (SEK/mån)", "", false)}
+                        {renderLabel(bl("Premium salary", "Premielön") + " (SEK/mån)", "", false)}
                         <Input type="number" value={mp} onChange={(e) => setMp(e.target.value)} className="h-11 text-sm font-medium" placeholder="0" />
                       </div>
                     </div>
@@ -2450,8 +2449,8 @@ export function ContractDetailsStep({
                   )}>
                     {pieceWorkPay && <Check className="w-3 h-3 text-primary-foreground" />}
                   </div>
-                  <span className={cn("text-sm font-semibold", !pieceWorkPay && "text-muted-foreground")}>
-                    Piece-work pay / Ackordslön * <span className="font-normal text-xs">(specified in "Other" below / specificeras under "Övrigt")</span>
+                   <span className={cn("text-sm font-semibold", !pieceWorkPay && "text-muted-foreground")}>
+                     {bl("Piece-work pay", "Ackordslön")} * <span className="font-normal text-xs">({bl("specified in \"Other\" below", "specificeras under \"Övrigt\"")})</span>
                   </span>
                 </div>
               </div>
@@ -2471,8 +2470,8 @@ export function ContractDetailsStep({
                   )}>
                     {otherSalaryBenefits && <Check className="w-3 h-3 text-primary-foreground" />}
                   </div>
-                  <span className={cn("text-sm font-semibold", !otherSalaryBenefits && "text-muted-foreground")}>
-                    Other salary benefits by separate agreement / Andra löneförmåner enligt separat avtal
+                   <span className={cn("text-sm font-semibold", !otherSalaryBenefits && "text-muted-foreground")}>
+                     {bl("Other salary benefits by separate agreement", "Andra löneförmåner enligt separat avtal")}
                   </span>
                 </div>
               </div>
@@ -2487,8 +2486,8 @@ export function ContractDetailsStep({
               {/* Payment method */}
               <Card className="border border-border shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold uppercase tracking-wider">
-                    Payment Method / Utbetalningssätt
+                 <CardTitle className="text-sm font-bold uppercase tracking-wider">
+                     {bl("Payment Method", "Utbetalningssätt")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -2503,7 +2502,7 @@ export function ContractDetailsStep({
                       <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", paymentMethod === "account" ? "border-primary" : "border-muted-foreground/40")}>
                         {paymentMethod === "account" && <div className="w-2 h-2 rounded-full bg-primary" />}
                       </div>
-                      <span className="text-sm font-medium">Into the specified account / Till angivet konto</span>
+                      <span className="text-sm font-medium">{bl("Into the specified account", "Till angivet konto")}</span>
                     </div>
                     <div
                       className={cn(
@@ -2515,7 +2514,7 @@ export function ContractDetailsStep({
                       <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0", paymentMethod === "cash" ? "border-primary" : "border-muted-foreground/40")}>
                         {paymentMethod === "cash" && <div className="w-2 h-2 rounded-full bg-primary" />}
                       </div>
-                      <span className="text-sm font-medium">In cash / Kontant</span>
+                      <span className="text-sm font-medium">{bl("In cash", "Kontant")}</span>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -2534,16 +2533,15 @@ export function ContractDetailsStep({
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold">Official rate not applied / Officiell lön ej tillämpad</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it? /
-                    <span className="italic"> Du har inte tillämpat den officiella kollektivavtalslönen för alla befattningstyper. Är du säker på att du vill fortsätta utan att tillämpa den?</span>
-                  </p>
+                   <p className="text-sm font-semibold">{bl("Official rate not applied", "Officiell lön ej tillämpad")}</p>
+                   <p className="text-xs text-muted-foreground mt-1">
+                     {bl("You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it?", "Du har inte tillämpat den officiella kollektivavtalslönen för alla befattningstyper. Är du säker på att du vill fortsätta utan att tillämpa den?")}
+                   </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 ml-8">
-                <Button variant="outline" size="sm" onClick={() => setShowRateWarning(false)}>
-                  Go back / Gå tillbaka
+                 <Button variant="outline" size="sm" onClick={() => setShowRateWarning(false)}>
+                   {bl("Go back", "Gå tillbaka")}
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => {
                   setShowRateWarning(false);
@@ -2554,8 +2552,8 @@ export function ContractDetailsStep({
                     setShowSalaryPrompt(false);
                     onNext();
                   }
-                }}>
-                  Continue anyway / Fortsätt ändå
+                 }}>
+                   {bl("Continue anyway", "Fortsätt ändå")}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
@@ -2571,9 +2569,9 @@ export function ContractDetailsStep({
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-semibold">Before continuing / Innan du fortsätter</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Would you also like to include any of the following salary options? / Vill du även inkludera något av följande lönealternativ?
+                     <p className="text-sm font-semibold">{bl("Before continuing", "Innan du fortsätter")}</p>
+                     <p className="text-xs text-muted-foreground mt-1">
+                       {bl("Would you also like to include any of the following salary options?", "Vill du även inkludera något av följande lönealternativ?")}
                     </p>
                   </div>
                 </div>
@@ -2611,18 +2609,18 @@ export function ContractDetailsStep({
                       )}>
                         {otherSalaryBenefits && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
-                      <span className={cn("text-sm font-medium", !otherSalaryBenefits && "text-muted-foreground")}>
-                        Other salary benefits / Andra löneförmåner
+                       <span className={cn("text-sm font-medium", !otherSalaryBenefits && "text-muted-foreground")}>
+                         {bl("Other salary benefits", "Andra löneförmåner")}
                       </span>
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-2 ml-8">
-                  <Button variant="outline" size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
-                    Skip / Hoppa över
-                  </Button>
-                  <Button size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
-                    Continue / Fortsätt
+                   <Button variant="outline" size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
+                     {bl("Skip", "Hoppa över")}
+                   </Button>
+                   <Button size="sm" onClick={() => { setShowSalaryPrompt(false); onNext(); }}>
+                     {bl("Continue", "Fortsätt")}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
@@ -2651,12 +2649,12 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📚</span>
-                    Mandatory Training / Obligatorisk utbildning
+                    {bl("Mandatory Training", "Obligatorisk utbildning")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Mandatory training (if appropriate) to which the employee is entitled: / Obligatorisk utbildning (om tillämpligt) som den anställde har rätt till:
+                   <p className="text-sm text-muted-foreground">
+                     {bl("Mandatory training (if appropriate) to which the employee is entitled:", "Obligatorisk utbildning (om tillämpligt) som den anställde har rätt till:")}
                   </p>
 
                   {/* Skötselskolan */}
@@ -2678,9 +2676,9 @@ export function ContractDetailsStep({
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold">Skötselskolan</p>
-                      <p className="text-xs text-muted-foreground">
-                        Forestry care and management training program / Utbildningsprogram för skogsvård och skötsel
-                      </p>
+                       <p className="text-xs text-muted-foreground">
+                         {bl("Forestry care and management training program", "Utbildningsprogram för skogsvård och skötsel")}
+                       </p>
                     </div>
                   </button>
 
@@ -2703,9 +2701,9 @@ export function ContractDetailsStep({
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm font-semibold">Skogsbrukets yrkesnämnd (SYN)</p>
-                      <p className="text-xs text-muted-foreground">
-                        Forestry vocational board – safety &amp; project handling certification / Skogsbrukets yrkesnämnd – säkerhet &amp; projekthanteringscertifiering
-                      </p>
+                       <p className="text-xs text-muted-foreground">
+                         {bl("Forestry vocational board – safety & project handling certification", "Skogsbrukets yrkesnämnd – säkerhet & projekthanteringscertifiering")}
+                       </p>
                     </div>
                   </button>
 
@@ -2727,10 +2725,10 @@ export function ContractDetailsStep({
                       {trainingOtherEnabled && <Check className="h-3.5 w-3.5" />}
                     </div>
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold">Other Training / Annan utbildning</p>
-                      <p className="text-xs text-muted-foreground">
-                        Additional training requirements / Ytterligare utbildningskrav
-                      </p>
+                       <p className="text-sm font-semibold">{bl("Additional training", "Annan utbildning")}</p>
+                       <p className="text-xs text-muted-foreground">
+                         {bl("Additional training requirements", "Ytterligare utbildningskrav")}
+                       </p>
                     </div>
                   </button>
 
@@ -2739,7 +2737,7 @@ export function ContractDetailsStep({
                       value={trainingOtherText}
                       onChange={(e) => setTrainingOtherText(e.target.value)}
                       className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      placeholder="Describe additional training... / Beskriv ytterligare utbildning..."
+                      placeholder={bl("Describe additional training...", "Beskriv ytterligare utbildning...")}
                     />
                   )}
                 </CardContent>
@@ -2944,12 +2942,12 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">💰</span>
-                    Net Salary Deductions / Nettolöneavdrag
+                    {bl("Net Salary Deductions", "Nettolöneavdrag")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Define recurring or one-time deductions from the employee's net salary. / Definiera återkommande eller engångsavdrag från den anställdes nettolön.
+                   <p className="text-sm text-muted-foreground">
+                     {bl("Define recurring or one-time deductions from the employee's net salary.", "Definiera återkommande eller engångsavdrag från den anställdes nettolön.")}
                   </p>
 
                   {salaryDeductions.map((deduction, index) => {
@@ -2969,13 +2967,13 @@ export function ContractDetailsStep({
                                 setSalaryDeductions(prev => prev.filter(d => d.id !== deduction.id));
                               }}
                             >
-                              Remove
+                              {bl("Remove", "Ta bort")}
                             </Button>
                           </div>
 
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                              <label className="text-xs font-medium text-muted-foreground">Amount (SEK) / Belopp (SEK)</label>
+                              <label className="text-xs font-medium text-muted-foreground">{bl("Amount (SEK)", "Belopp (SEK)")}</label>
                               <Input
                                 type="number"
                                 value={deduction.amount}
@@ -2989,7 +2987,7 @@ export function ContractDetailsStep({
                               />
                             </div>
                             <div className="space-y-1.5">
-                              <label className="text-xs font-medium text-muted-foreground">Frequency / Frekvens</label>
+                              <label className="text-xs font-medium text-muted-foreground">{bl("Frequency", "Frekvens")}</label>
                               <Select
                                 value={deduction.frequency}
                                 onValueChange={(val) => {
@@ -3002,10 +3000,10 @@ export function ContractDetailsStep({
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="monthly">Monthly / Månatligen</SelectItem>
-                                  <SelectItem value="one-time">One-time / Engångs</SelectItem>
-                                  <SelectItem value="per-km">Per km / Per km</SelectItem>
-                                  <SelectItem value="seasonal">Per season / Per säsong</SelectItem>
+                                   <SelectItem value="monthly">{bl("Monthly", "Månatligen")}</SelectItem>
+                                   <SelectItem value="one-time">{bl("One-time", "Engångs")}</SelectItem>
+                                   <SelectItem value="per-km">{bl("Per km", "Per km")}</SelectItem>
+                                   <SelectItem value="seasonal">{bl("Per season", "Per säsong")}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -3021,7 +3019,7 @@ export function ContractDetailsStep({
                           )}
 
                           <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-muted-foreground">Note / Anteckning</label>
+                            <label className="text-xs font-medium text-muted-foreground">{bl("Note", "Anteckning")}</label>
                             <Input
                               value={deduction.note}
                               onChange={(e) => {
@@ -3029,7 +3027,7 @@ export function ContractDetailsStep({
                                   d.id === deduction.id ? { ...d, note: e.target.value } : d
                                 ));
                               }}
-                              placeholder="Optional description... / Valfri beskrivning..."
+                              placeholder={bl("Optional description...", "Valfri beskrivning...")}
                               className="h-9"
                             />
                           </div>
@@ -3040,7 +3038,7 @@ export function ContractDetailsStep({
 
                   {/* Add deduction buttons */}
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Add Deduction / Lägg till avdrag</p>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{bl("Add Deduction", "Lägg till avdrag")}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {DEDUCTION_TYPES.map(dt => (
                         <button
@@ -3074,7 +3072,7 @@ export function ContractDetailsStep({
                   {salaryDeductions.length > 0 && (
                     <div className="rounded-lg border border-border bg-accent/30 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">Total Monthly Deductions / Totala månatliga avdrag</span>
+                        <span className="text-sm font-semibold">{bl("Total Monthly Deductions", "Totala månatliga avdrag")}</span>
                         <span className="text-sm font-bold text-destructive">
                           {salaryDeductions
                             .filter(d => d.frequency === "monthly" && d.amount)
@@ -3084,7 +3082,7 @@ export function ContractDetailsStep({
                       </div>
                       {salaryDeductions.some(d => d.frequency === "one-time" && d.amount) && (
                         <div className="flex items-center justify-between mt-1">
-                          <span className="text-xs text-muted-foreground">One-time deductions / Engångsavdrag</span>
+                          <span className="text-xs text-muted-foreground">{bl("One-time deductions", "Engångsavdrag")}</span>
                           <span className="text-xs font-medium">
                             {salaryDeductions
                               .filter(d => d.frequency === "one-time" && d.amount)
@@ -3109,9 +3107,7 @@ export function ContractDetailsStep({
                       className="mt-0.5"
                     />
                     <label htmlFor="deductions-confirmed" className="text-sm cursor-pointer leading-relaxed">
-                      <span className="font-semibold">I confirm that I have reviewed and considered all applicable salary deductions for this contract.</span>
-                      <br />
-                      <span className="text-muted-foreground">Jag bekräftar att jag har granskat och övervägt alla tillämpliga löneavdrag för detta avtal.</span>
+                       <span className="font-semibold">{bl("I confirm that I have reviewed and considered all applicable salary deductions for this contract.", "Jag bekräftar att jag har granskat och övervägt alla tillämpliga löneavdrag för detta avtal.")}</span>
                     </label>
                   </div>
                 </CardContent>
@@ -3140,7 +3136,7 @@ export function ContractDetailsStep({
             "w-full flex items-center justify-between rounded-full border px-6 py-3 text-sm font-semibold",
             "border-primary bg-primary/5 text-primary"
           )}>
-            <span>Signing / Underskrift</span>
+            <span>{bl("Signing", "Underskrift")}</span>
           </div>
         </div>
 
@@ -3150,11 +3146,11 @@ export function ContractDetailsStep({
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📄</span>
-                Contract Preview / Avtalsförhandsgranskning
+                {bl("Contract Preview", "Avtalsförhandsgranskning")}
               </CardTitle>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="w-4 h-4 mr-1" />
-                Print / Skriv ut
+                {bl("Print", "Skriv ut")}
               </Button>
             </CardHeader>
             <CardContent className="p-0 border-t border-border">
@@ -3183,13 +3179,12 @@ export function ContractDetailsStep({
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">✍️</span>
-                E-Signing / E-signering
+                {bl("E-Signing", "E-signering")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                Send this contract for electronic signing, or use the Print button above to print and sign on paper. / 
-                Skicka detta avtal för elektronisk signering, eller använd knappen Skriv ut ovan för att skriva ut och signera på papper.
+               <p className="text-sm text-muted-foreground">
+                 {bl("Send this contract for electronic signing, or use the Print button above to print and sign on paper.", "Skicka detta avtal för elektronisk signering, eller använd knappen Skriv ut ovan för att skriva ut och signera på papper.")}
               </p>
 
               {/* Status indicator */}
@@ -3203,10 +3198,10 @@ export function ContractDetailsStep({
                     "bg-primary"
                   )} />
                   <span className="text-sm font-medium">
-                    {signingStatus === "not_sent" && "Not yet sent for signing / Ännu ej skickat för signering"}
-                    {signingStatus === "sent_to_employee" && "Awaiting employee signature / Väntar på anställds underskrift"}
-                    {signingStatus === "employee_signed" && "Employee signed – awaiting employer signature / Anställd har signerat – väntar på arbetsgivarens underskrift"}
-                    {signingStatus === "employer_signed" && "✅ Fully signed / Fullständigt signerat"}
+                     {signingStatus === "not_sent" && bl("Not yet sent for signing", "Ännu ej skickat för signering")}
+                     {signingStatus === "sent_to_employee" && bl("Awaiting employee signature", "Väntar på anställds underskrift")}
+                     {signingStatus === "employee_signed" && bl("Employee signed – awaiting employer signature", "Anställd har signerat – väntar på arbetsgivarens underskrift")}
+                     {signingStatus === "employer_signed" && `✅ ${bl("Fully signed", "Fullständigt signerat")}`}
                   </span>
                 </div>
 
