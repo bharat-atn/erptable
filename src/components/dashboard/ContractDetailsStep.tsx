@@ -981,7 +981,7 @@ export function ContractDetailsStep({
     }
   };
 
-  const isNextDisabled = false;
+  const isNextDisabled = getMissingFieldsForSection(activeSection).length > 0;
 
   const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
 
