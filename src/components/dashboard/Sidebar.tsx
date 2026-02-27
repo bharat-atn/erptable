@@ -691,12 +691,12 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
       if (error) return null;
       return new Set((data as { menu_item_id: string }[]).map((r) => r.menu_item_id));
     },
-    enabled: !!userRole && !!appId && userRole !== "admin",
+    enabled: !!userRole && !!appId,
   });
 
-  // Filter items based on permissions (admin bypasses)
+  // Filter items based on permissions from database
   const filterByPermission = (items: MenuItem[]): MenuItem[] => {
-    if (isAdmin || !allowedItems) return items;
+    if (!allowedItems) return items; // Show all while loading
     return items.filter((item) => allowedItems.has(item.id));
   };
 
