@@ -42,7 +42,13 @@ interface DashboardProps {
 const TABLET_THRESHOLD = 1100;
 
 export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
-  const [activeView, setActiveView] = useState(appId === "user-management" ? "user-management" : "dashboard");
+  const getDefaultView = (id?: string | null) => id === "user-management" ? "user-management" : "dashboard";
+  const [activeView, setActiveView] = useState(getDefaultView(appId));
+
+  // When app changes via the switcher, reset to the first/default view
+  useEffect(() => {
+    setActiveView(getDefaultView(appId));
+  }, [appId]);
   const [showPreview, setShowPreview] = useState(false);
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
   const [resumeMode, setResumeMode] = useState<ResumeMode>("resume");
