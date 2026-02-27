@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { differenceInMonths, differenceInDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -245,6 +246,7 @@ export function ContractDetailsStep({
     { value: "other", label: "Other Deduction", labelSv: "Annat avdrag" },
   ];
   const [salaryDeductions, setSalaryDeductions] = useState<SalaryDeduction[]>([]);
+  const [deductionsConfirmed, setDeductionsConfirmed] = useState(false);
 
   // Scheduling state
   const defaultSeasonYear = new Date().getFullYear();
@@ -579,6 +581,7 @@ export function ContractDetailsStep({
       if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
       if (fd.miscellaneousText) setMiscellaneousText(fd.miscellaneousText);
       if (fd.salaryDeductions) setSalaryDeductions(fd.salaryDeductions);
+      if (fd.deductionsConfirmed !== undefined) setDeductionsConfirmed(fd.deductionsConfirmed);
       if (fd.schedulingData) setSchedulingData(fd.schedulingData);
       setInitialLoaded(true);
     };
@@ -775,7 +778,8 @@ export function ContractDetailsStep({
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
     miscellaneousText,
-    salaryDeductions,
+     salaryDeductions,
+     deductionsConfirmed,
     schedulingData: schedulingData as unknown as Record<string, any>,
     lastActiveSection: activeSection,
   }), [
@@ -794,7 +798,7 @@ export function ContractDetailsStep({
     companyPremiumPercent, contractLanguage,
     pieceWorkPay, otherSalaryBenefits, paymentMethod,
     trainingSkotselskolan, trainingSYN, trainingOtherEnabled, trainingOtherText,
-    miscellaneousText, salaryDeductions, schedulingData, activeSection,
+    miscellaneousText, salaryDeductions, deductionsConfirmed, schedulingData, activeSection,
   ]);
 
   // Auto-save every 1 second after changes — but NEVER overwrite contracts already sent for signing
@@ -971,17 +975,15 @@ export function ContractDetailsStep({
       setShowSalaryPrompt(false);
       onNext();
     } else if (activeSection === "section-12") {
-      if (salaryDeductions.length === 0 && onGoToStep) {
-        onGoToStep(16);
-      } else {
-        onNext();
-      }
+      onNext();
     } else {
       handleValidatedNext();
     }
   };
 
-  const isNextDisabled = getMissingFieldsForSection(activeSection).length > 0;
+  const isNextDisabled = activeSection === "section-13"
+    ? !deductionsConfirmed
+    : getMissingFieldsForSection(activeSection).length > 0;
 
   const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
 
@@ -3093,6 +3095,25 @@ export function ContractDetailsStep({
                       )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Confirmation checkbox */}
+              <Card className="border border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="deductions-confirmed"
+                      checked={deductionsConfirmed}
+                      onCheckedChange={(checked) => setDeductionsConfirmed(checked === true)}
+                      className="mt-0.5"
+                    />
+                    <label htmlFor="deductions-confirmed" className="text-sm cursor-pointer leading-relaxed">
+                      <span className="font-semibold">I confirm that I have reviewed and considered all applicable salary deductions for this contract.</span>
+                      <br />
+                      <span className="text-muted-foreground">Jag bekräftar att jag har granskat och övervägt alla tillämpliga löneavdrag för detta avtal.</span>
+                    </label>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -125,7 +125,7 @@ const steps = [{
 type ResumeMode = "start" | "fasttrack" | "resume";
 
 /** Steps visited in fast-track mode (skips non-essential sections) */
-const FAST_TRACK_STEPS = [3, 4, 5, 7, 10, 16, 17, 18];
+const FAST_TRACK_STEPS = [3, 4, 5, 7, 10, 15, 16, 17, 18];
 
 interface ContractTemplateViewProps {
   resumeContractId?: string | null;
