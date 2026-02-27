@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -431,6 +431,7 @@ export function UserManagementView() {
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [cleaningUp, setCleaningUp] = useState<string | null>(null);
   
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
   const apps = useMemo(() => loadApps(), []);
@@ -578,6 +579,23 @@ export function UserManagementView() {
     },
   });
 
+  const handleCleanupOrphan = async (email: string) => {
+    setCleaningUp(email);
+    try {
+      const { data, error } = await supabase.functions.invoke("cleanup-orphan-user", {
+        body: { email },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Orphan cleaned up", description: data.message });
+      invalidateAll();
+    } catch (err: any) {
+      toast({ title: "Cleanup failed", description: err.message, variant: "destructive" });
+    } finally {
+      setCleaningUp(null);
+    }
+  };
+
   const pendingCount = userRows.filter((u) => u.status === "Pending").length;
   const loading = loadingProfiles || loadingRoles;
 
@@ -684,40 +702,58 @@ export function UserManagementView() {
     },
   ];
 
-  const rowActions = (row: UserRow) => (
-    <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-        onClick={() => setEditNameDialog({ userId: row.user_id, currentName: row.full_name })}
-        title="Edit name"
-      >
-        <Pencil className="w-3.5 h-3.5" />
-      </Button>
-      {row.role ? (
+  const rowActions = (row: UserRow) => {
+    const isSelf = row.user_id === currentUserId;
+    // Orphan: has a role + approved status but never signed in
+    const isOrphan = row.role && !row.last_sign_in_at && !isSelf;
+
+    return (
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => setDeleteUser({ user_id: row.user_id, email: row.email })}
-          title="Revoke access"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          onClick={() => setEditNameDialog({ userId: row.user_id, currentName: row.full_name })}
+          title="Edit name"
         >
-          <ShieldOff className="w-4 h-4" />
+          <Pencil className="w-3.5 h-3.5" />
         </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-          onClick={() => setDeletePendingUser({ user_id: row.user_id, email: row.email })}
-          title="Delete pending user"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      )}
-    </div>
-  );
+        {isOrphan && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+            onClick={() => handleCleanupOrphan(row.email)}
+            disabled={cleaningUp === row.email}
+            title="Clean up orphan (delete auth user, preserve role as pending)"
+          >
+            <Eraser className="w-4 h-4" />
+          </Button>
+        )}
+        {row.role ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeleteUser({ user_id: row.user_id, email: row.email })}
+            title="Revoke access"
+          >
+            <ShieldOff className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeletePendingUser({ user_id: row.user_id, email: row.email })}
+            title="Delete pending user"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
