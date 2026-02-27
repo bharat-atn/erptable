@@ -1,69 +1,50 @@
 
 
-## Sidebar Visibility Permissions per Role per App
+## Add Email Notification to User Invitations
 
 ### Problem
-Currently, all sidebar menu items are visible to every user regardless of role. The user needs a system where admins can configure which sidebar items each role can see, per application.
+The "Invite User" flow in User Management stores a pending role assignment but does **not** send any email to notify the invited person. The user has no way of knowing they've been invited unless told manually.
+
+### Current State
+- `invite-user` edge function creates a `pending_role_assignments` record and an audit log entry
+- No email is sent during this process
+- The `send-invitation-email` function is for onboarding invitations (HR), not user role invitations
+- Pending users don't appear in the User Management list until they sign in
 
 ### Design
 
-**New database table: `role_sidebar_access`**
-- `id` (uuid, PK)
-- `role` (text, NOT NULL) — the role value (admin, org_admin, hr_manager, etc.)
-- `app_id` (text, NOT NULL) — which app this applies to (hr-management, etc.)
-- `menu_item_id` (text, NOT NULL) — the sidebar item id (dashboard, operations, contracts, etc.)
-- `created_at` (timestamptz)
-- Unique constraint on (role, app_id, menu_item_id)
-- RLS: admins can manage, authenticated users can read
+**1. Show pending invitations in the user list**
+- Query `pending_role_assignments` alongside `profiles` in `UserManagementView`
+- Display pending invitations as rows with a "Pending Invitation" status badge
+- Show email, assigned role, app access, and invited date
+- Allow delete (remove pending assignment) and resend actions
 
-**Default seeding:** Super Admin gets all items for all apps. Other roles get a sensible subset.
+**2. Send a notification email when inviting a user**
+- Update the `invite-user` edge function to send an email via Resend (if configured) after storing the pending assignment
+- Email content: "You've been invited to ERP Table. Sign in with your Google account at [link]."
+- If Resend is not configured or fails, log it but don't block the invitation
 
-**New UI: "Sidebar Permissions" tab in Role Permission Matrix**
-- Extend the existing Role Permission Matrix with a second tab or section
-- For each app, show a matrix: rows = sidebar items (Dashboard, Operations, Invitations, etc.), columns = roles
-- Toggle switches to grant/revoke visibility per role per item
-- "Reset to Defaults" button
-
-**Sidebar filtering:**
-- Sidebar component fetches `role_sidebar_access` for the current user's role + current app
-- Filters `menuItems`, `settingsItems`, `configItems` to only show permitted items
-- Super Admin always sees everything (hardcoded bypass)
+**3. Add "Resend Invite" action for pending users**
+- Create a small edge function or reuse `send-role-notification` to re-send the invite email
+- Available from the row actions menu on pending invitation rows
 
 ### Implementation Steps
 
-1. **Create `role_sidebar_access` table** with migration — columns: role, app_id, menu_item_id. RLS policies for admin management + authenticated read. Seed with defaults for all roles.
+1. **Update `invite-user` edge function** -- Add email sending via Resend after the pending assignment is created (in the `else` branch where `action = "invited"`). Use the same Resend pattern as `send-invitation-email`. Fallback gracefully if no API key.
 
-2. **Build Sidebar Permissions UI** — Add a new view (or tab within Role Permission Matrix) showing a matrix per app where admins toggle which sidebar items each role can see. Reuse the existing matrix pattern.
+2. **Show pending invitations in UserManagementView** -- Fetch `pending_role_assignments` and merge them into the user list as synthetic rows with a distinct "Invited" status. Add delete and resend actions.
 
-3. **Filter sidebar items by role** — In `Sidebar.tsx`, fetch the user's permitted menu items from `role_sidebar_access` for the current `appId` and `userRole`. Filter `menuItems`, `settingsItems`, and `configItems` accordingly. Super Admin bypasses the filter.
-
-4. **Add sidebar item registry** — Create a constant mapping of all sidebar item IDs with their group (main/settings/others) and app association, so the permission UI knows what items exist for each app.
+3. **Add resend capability** -- Allow re-triggering the invite email for pending users from the UI.
 
 ### Technical Details
 
+The `invite-user` function already has access to the service role key and the invited email. Adding Resend integration follows the exact same pattern used in `send-invitation-email`:
+
 ```text
-role_sidebar_access table:
-┌──────────┬────────────────┬──────────────────────┐
-│ role     │ app_id         │ menu_item_id         │
-├──────────┼────────────────┼──────────────────────┤
-│ admin    │ hr-management  │ dashboard            │
-│ admin    │ hr-management  │ operations           │
-│ admin    │ hr-management  │ invitations          │
-│ admin    │ hr-management  │ contracts            │
-│ admin    │ hr-management  │ contract-template    │
-│ ...      │ ...            │ ...                  │
-│ hr_mgr   │ hr-management  │ dashboard            │
-│ hr_mgr   │ hr-management  │ operations           │
-│ hr_mgr   │ hr-management  │ invitations          │
-│ team_ldr │ hr-management  │ dashboard            │
-└──────────┴────────────────┴──────────────────────┘
+invite-user flow (updated):
+1. Store pending_role_assignment  ← existing
+2. Send email via Resend          ← NEW
+3. Write audit log                ← existing
+4. Return success + email status  ← updated
 ```
-
-The Sidebar component will use a query like:
-```sql
-SELECT menu_item_id FROM role_sidebar_access 
-WHERE role = :userRole AND app_id = :appId
-```
-
-Then filter the three item arrays (`menuItems`, `settingsItems`, `configItems`) to only include items present in the result set. Admin role skips this filter entirely.
 
