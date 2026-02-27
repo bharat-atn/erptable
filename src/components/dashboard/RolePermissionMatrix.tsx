@@ -6,9 +6,11 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Shield, ShieldCheck, UserCheck, Briefcase, Wallet, Users, User, RotateCcw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SidebarPermissionsTab } from "./SidebarPermissionsTab";
 
 const ROLES = [
   { value: "admin", label: "Super Admin", icon: Shield },
@@ -110,7 +112,14 @@ export function RolePermissionMatrix() {
   const isMutating = grantMutation.isPending || revokeMutation.isPending;
 
   return (
-    <div className="space-y-6 pt-6">
+    <Tabs defaultValue="app-access" className="pt-6">
+      <TabsList>
+        <TabsTrigger value="app-access">App Access</TabsTrigger>
+        <TabsTrigger value="sidebar-permissions">Sidebar Permissions</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="app-access">
+    <div className="space-y-6 pt-4">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Role Permission Matrix</h2>
@@ -194,5 +203,11 @@ export function RolePermissionMatrix() {
         </CardContent>
       </Card>
     </div>
+      </TabsContent>
+
+      <TabsContent value="sidebar-permissions">
+        <SidebarPermissionsTab />
+      </TabsContent>
+    </Tabs>
   );
 }

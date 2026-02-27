@@ -678,6 +678,32 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
   const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
 
+  // Fetch sidebar permissions for current role + app
+  const { data: allowedItems } = useQuery({
+    queryKey: ["role-sidebar-access", userRole, appId],
+    queryFn: async () => {
+      if (!userRole || !appId) return null;
+      const { data, error } = await (supabase as any)
+        .from("role_sidebar_access")
+        .select("menu_item_id")
+        .eq("role", userRole)
+        .eq("app_id", appId);
+      if (error) return null;
+      return new Set((data as { menu_item_id: string }[]).map((r) => r.menu_item_id));
+    },
+    enabled: !!userRole && !!appId && userRole !== "admin",
+  });
+
+  // Filter items based on permissions (admin bypasses)
+  const filterByPermission = (items: MenuItem[]): MenuItem[] => {
+    if (isAdmin || !allowedItems) return items;
+    return items.filter((item) => allowedItems.has(item.id));
+  };
+
+  const filteredMenuItems = filterByPermission(menuItems);
+  const filteredSettingsItems = filterByPermission(settingsItems);
+  const filteredConfigItems = filterByPermission(configItems);
+
   const { data: pendingCount } = useQuery({
     queryKey: ["pending-signatures-count"],
     queryFn: async () => {
@@ -761,7 +787,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
               <>
                 <GroupLabel label="Main" collapsed={collapsed} />
                 <DraggableGroup
-                  items={menuItems}
+                  items={filteredMenuItems}
                   groupKey="menu"
                   activeView={activeView}
                   onViewChange={onViewChange}
@@ -770,25 +796,33 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                   badges={{ contracts: pendingCount || 0 }}
                 />
 
-                <GroupLabel label="Settings" collapsed={collapsed} />
-                <DraggableGroup
-                  items={settingsItems}
-                  groupKey="settings"
-                  activeView={activeView}
-                  onViewChange={onViewChange}
-                  onReorder={handleSettingsReorder}
-                  collapsed={collapsed}
-                />
+                {filteredSettingsItems.length > 0 && (
+                  <>
+                    <GroupLabel label="Settings" collapsed={collapsed} />
+                    <DraggableGroup
+                      items={filteredSettingsItems}
+                      groupKey="settings"
+                      activeView={activeView}
+                      onViewChange={onViewChange}
+                      onReorder={handleSettingsReorder}
+                      collapsed={collapsed}
+                    />
+                  </>
+                )}
 
-                <GroupLabel label="Others" collapsed={collapsed} />
-                <DraggableGroup
-                  items={configItems}
-                  groupKey="config"
-                  activeView={activeView}
-                  onViewChange={onViewChange}
-                  onReorder={handleConfigReorder}
-                  collapsed={collapsed}
-                />
+                {filteredConfigItems.length > 0 && (
+                  <>
+                    <GroupLabel label="Others" collapsed={collapsed} />
+                    <DraggableGroup
+                      items={filteredConfigItems}
+                      groupKey="config"
+                      activeView={activeView}
+                      onViewChange={onViewChange}
+                      onReorder={handleConfigReorder}
+                      collapsed={collapsed}
+                    />
+                  </>
+                )}
               </>
             )}
           </nav>

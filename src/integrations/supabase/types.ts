@@ -723,6 +723,30 @@ export type Database = {
         }
         Relationships: []
       }
+      role_sidebar_access: {
+        Row: {
+          app_id: string
+          created_at: string
+          id: string
+          menu_item_id: string
+          role: string
+        }
+        Insert: {
+          app_id: string
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          role: string
+        }
+        Update: {
+          app_id?: string
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          role?: string
+        }
+        Relationships: []
+      }
       skill_groups: {
         Row: {
           created_at: string
