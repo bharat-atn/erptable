@@ -657,10 +657,16 @@ export type Database = {
           id: string
           is_active: boolean
           label_en: string
+          label_ro: string
           label_sv: string
+          label_th: string
+          label_uk: string
           sort_order: number
           type_label_en: string
+          type_label_ro: string
           type_label_sv: string
+          type_label_th: string
+          type_label_uk: string
           type_number: number
           updated_at: string
         }
@@ -669,10 +675,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           label_en: string
+          label_ro?: string
           label_sv: string
+          label_th?: string
+          label_uk?: string
           sort_order?: number
           type_label_en?: string
+          type_label_ro?: string
           type_label_sv?: string
+          type_label_th?: string
+          type_label_uk?: string
           type_number?: number
           updated_at?: string
         }
@@ -681,10 +693,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           label_en?: string
+          label_ro?: string
           label_sv?: string
+          label_th?: string
+          label_uk?: string
           sort_order?: number
           type_label_en?: string
+          type_label_ro?: string
           type_label_sv?: string
+          type_label_th?: string
+          type_label_uk?: string
           type_number?: number
           updated_at?: string
         }
@@ -776,7 +794,10 @@ export type Database = {
           created_at: string
           id: string
           label_en: string
+          label_ro: string
           label_sv: string
+          label_th: string
+          label_uk: string
           sort_order: number
           updated_at: string
         }
@@ -784,7 +805,10 @@ export type Database = {
           created_at?: string
           id?: string
           label_en: string
+          label_ro?: string
           label_sv: string
+          label_th?: string
+          label_uk?: string
           sort_order?: number
           updated_at?: string
         }
@@ -792,7 +816,10 @@ export type Database = {
           created_at?: string
           id?: string
           label_en?: string
+          label_ro?: string
           label_sv?: string
+          label_th?: string
+          label_uk?: string
           sort_order?: number
           updated_at?: string
         }
