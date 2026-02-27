@@ -71,13 +71,38 @@ const COUNTRIES = [
 
 // JOB_TYPES now fetched dynamically from the positions table
 
-const EXPERIENCE_LEVELS = [
-  "Entry Level / Nybörjare (0 years / < 1 season / 0 år / < 1 säsong)",
-  "Junior / Junior (1 year / 1 season / 1 år / 1 säsong)",
-  "Experienced / Erfaren (2 years / seasons / 2 år / säsonger)",
-  "Senior / Senior (3 years / seasons / 3 år / säsonger)",
-  "Expert / Expert (4+ years / seasons / 4+ år / säsonger)",
+const EXPERIENCE_LEVELS_BASE = [
+  { en: "Entry Level", sv: "Nybörjare", ro: "Începător", th: "ระดับเริ่มต้น", uk: "Початківець", detail_en: "0 years / < 1 season", detail_sv: "0 år / < 1 säsong" },
+  { en: "Junior", sv: "Junior", ro: "Junior", th: "จูเนียร์", uk: "Молодший", detail_en: "1 year / 1 season", detail_sv: "1 år / 1 säsong" },
+  { en: "Experienced", sv: "Erfaren", ro: "Experimentat", th: "มีประสบการณ์", uk: "Досвідчений", detail_en: "2 years / seasons", detail_sv: "2 år / säsonger" },
+  { en: "Senior", sv: "Senior", ro: "Senior", th: "อาวุโส", uk: "Старший", detail_en: "3 years / seasons", detail_sv: "3 år / säsonger" },
+  { en: "Expert", sv: "Expert", ro: "Expert", th: "ผู้เชี่ยวชาญ", uk: "Експерт", detail_en: "4+ years / seasons", detail_sv: "4+ år / säsonger" },
 ];
+
+// Original format kept as values for backward compatibility
+const EXPERIENCE_LEVELS = EXPERIENCE_LEVELS_BASE.map(
+  (l) => `${l.en} / ${l.sv} (${l.detail_en} / ${l.detail_sv})`
+);
+
+function getExperienceLevelLabel(value: string, lang: string): string {
+  const base = EXPERIENCE_LEVELS_BASE.find(
+    (l) => `${l.en} / ${l.sv} (${l.detail_en} / ${l.detail_sv})` === value
+  );
+  if (!base) return value;
+  switch (lang) {
+    case "SE":
+      return `${base.sv} (${base.detail_sv})`;
+    case "RO/SE":
+      return `${base.ro} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "TH/SE":
+      return `${base.th} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "UK/SE":
+      return `${base.uk} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "EN/SE":
+    default:
+      return value;
+  }
+}
 
 export function ContractDetailsStep({
   company,
@@ -103,15 +128,29 @@ export function ContractDetailsStep({
     },
   });
 
-  // Group active positions by type for the dropdown
+  // Group active positions by type for the dropdown (language-aware)
   const jobTypeGroups = activePositions.reduce<Array<{ group: string; items: Array<{ label: string; value: string }> }>>((acc, pos: any) => {
-    const groupLabel = `Type ${pos.type_number}: ${pos.type_label_en}${pos.type_label_sv ? ` / ${pos.type_label_sv}` : ''}`;
+    const primaryTypeLabel = contractLanguage === "SE" ? pos.type_label_sv
+      : contractLanguage === "RO/SE" ? (pos.type_label_ro || pos.type_label_en)
+      : contractLanguage === "TH/SE" ? (pos.type_label_th || pos.type_label_en)
+      : contractLanguage === "UK/SE" ? (pos.type_label_uk || pos.type_label_en)
+      : pos.type_label_en;
+    const groupLabel = contractLanguage === "SE"
+      ? `Typ ${pos.type_number}: ${pos.type_label_sv}`
+      : `Type ${pos.type_number}: ${primaryTypeLabel}${pos.type_label_sv ? ` / ${pos.type_label_sv}` : ''}`;
     let group = acc.find(g => g.group === groupLabel);
     if (!group) {
       group = { group: groupLabel, items: [] };
       acc.push(group);
     }
-    group.items.push({ label: `${pos.label_en} / ${pos.label_sv}`, value: `${pos.label_en} / ${pos.label_sv}` });
+    const primaryLabel = contractLanguage === "SE" ? pos.label_sv
+      : contractLanguage === "RO/SE" ? (pos.label_ro || pos.label_en)
+      : contractLanguage === "TH/SE" ? (pos.label_th || pos.label_en)
+      : contractLanguage === "UK/SE" ? (pos.label_uk || pos.label_en)
+      : pos.label_en;
+    const displayLabel = contractLanguage === "SE" ? pos.label_sv : `${primaryLabel} / ${pos.label_sv}`;
+    // Always store value as EN/SV for consistency
+    group.items.push({ label: displayLabel, value: `${pos.label_en} / ${pos.label_sv}` });
     return acc;
   }, []);
 
@@ -1045,6 +1084,8 @@ export function ContractDetailsStep({
               ? `Secțiunea ${number}: ${getFormLabel(titleEn, contractLanguage)} / Sektion ${number}: ${titleSv}`
               : contractLanguage === "TH/SE"
               ? `ส่วนที่ ${number}: ${getFormLabel(titleEn, contractLanguage)} / Sektion ${number}: ${titleSv}`
+              : contractLanguage === "UK/SE"
+              ? `Розділ ${number}: ${getFormLabel(titleEn, contractLanguage)} / Sektion ${number}: ${titleSv}`
               : `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`}
           </span>
           <ChevronDown
@@ -1542,7 +1583,7 @@ export function ContractDetailsStep({
                           <SelectContent>
                             {EXPERIENCE_LEVELS.map((level) => (
                               <SelectItem key={level} value={level}>
-                                {level}
+                                {getExperienceLevelLabel(level, contractLanguage)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1597,7 +1638,7 @@ export function ContractDetailsStep({
                             <SelectContent>
                               {EXPERIENCE_LEVELS.map((level) => (
                                 <SelectItem key={level} value={level}>
-                                  {level}
+                                  {getExperienceLevelLabel(level, contractLanguage)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1653,7 +1694,7 @@ export function ContractDetailsStep({
                             <SelectContent>
                               {EXPERIENCE_LEVELS.map((level) => (
                                 <SelectItem key={level} value={level}>
-                                  {level}
+                                  {getExperienceLevelLabel(level, contractLanguage)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -2428,6 +2469,12 @@ export function ContractDetailsStep({
                   {(contractLanguage === "TH/SE") && (
                     <>
                       <p className="font-semibold text-foreground">เฉพาะการทำงานล่วงเวลาที่ได้รับคำสั่งเท่านั้นที่จะได้รับค่าชดเชยการทำงานล่วงเวลา</p>
+                      <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
+                    </>
+                  )}
+                  {(contractLanguage === "UK/SE") && (
+                    <>
+                      <p className="font-semibold text-foreground">Лише замовлена понаднормова робота буде компенсована оплатою за понаднормову роботу.</p>
                       <p className="text-muted-foreground italic">Endast beordrad övertid ersätts med övertidsersättning.</p>
                     </>
                   )}
