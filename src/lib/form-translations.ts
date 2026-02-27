@@ -196,6 +196,71 @@ export const FORM_LABELS_RO: Record<string, string> = {
   // Workplace varies
   "Workplace Varies Between Different Days": "Locul de muncă variază între diferite zile",
 
+  // Numbered job type / experience level labels
+  "Job Type 1": "Tipul postului 1",
+  "Experience Level 1": "Nivel de experiență 1",
+  "Pick job type 2...": "Alegeți tipul postului 2...",
+  "Pick job type 3...": "Alegeți tipul postului 3...",
+  "Duplicate: same as Job Type 1 – not necessary": "Dublură: la fel ca Tipul postului 1 – nu este necesar",
+  "Duplicate: same as Job Type 2 – not necessary": "Dublură: la fel ca Tipul postului 2 – nu este necesar",
+
+  // Section 5 additional
+  "3) and 4)": "3) și 4)",
+
+  // Section 8 salary cards & labels
+  "above official rate": "peste tariful oficial",
+  "Official rate not applied": "Tariful oficial nu a fost aplicat",
+  "You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it?": "Nu ați aplicat tariful oficial al acordului colectiv pentru toate tipurile de post. Sunteți sigur că doriți să continuați fără a-l aplica?",
+  "Go back": "Înapoi",
+  "Continue anyway": "Continuați oricum",
+  "Before continuing": "Înainte de a continua",
+  "Would you also like to include any of the following salary options?": "Doriți să includeți și oricare dintre următoarele opțiuni salariale?",
+  "Other salary benefits": "Alte beneficii salariale",
+  "Basic pay / Grundlön (SEK/hr)": "Salariu de bază / Grundlön (SEK/hr)",
+  "Premium pay / Premielön (SEK/hr)": "Salariu premium / Premielön (SEK/hr)",
+  "Basic salary / Grundlön (SEK/mån)": "Salariu de bază / Grundlön (SEK/mån)",
+  "Premium salary / Premielön (SEK/mån)": "Salariu premium / Premielön (SEK/mån)",
+  "In cash": "Numerar",
+
+  // Section 9 training (additional)
+  "Mandatory training (if appropriate) to which the employee is entitled:": "Instruirea obligatorie (dacă este cazul) la care angajatul are dreptul:",
+  "Forestry care and management training program": "Program de instruire pentru îngrijirea și gestionarea pădurilor",
+  "Forestry vocational board – safety & project handling certification": "Comitetul profesional forestier – certificare securitate și gestionare proiecte",
+  "Additional training": "Altă instruire",
+  "Additional training requirements": "Cerințe suplimentare de instruire",
+  "Describe additional training...": "Descrieți instruirea suplimentară...",
+
+  // Section 10 social security (additional)
+  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "Lucrătorii angajați au dreptul la indemnizație de boală în conformitate cu Legea suedeză a indemnizației de boală (1991:1047) și următoarele beneficii bazate pe acordul colectiv:",
+
+  // Section 11 miscellaneous
+  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "Indicați orice alte condiții pentru aranjamentul de angajare, de ex. salariu și beneficii în plus față de acordul colectiv aplicabil.",
+  "Enter additional terms and conditions...": "Introduceți condiții suplimentare...",
+
+  // Section 13 deductions
+  "Net Salary Deductions": "Deduceri din salariul net",
+  "Define recurring or one-time deductions from the employee's net salary.": "Definiți deducerile recurente sau unice din salariul net al angajatului.",
+  "Remove": "Eliminați",
+  "Amount (SEK)": "Sumă (SEK)",
+  "Frequency": "Frecvență",
+  "Monthly": "Lunar",
+  "One-time": "O singură dată",
+  "Per km": "Per km",
+  "Per season": "Per sezon",
+  "Total Monthly Deductions": "Total deduceri lunare",
+  "One-time deductions": "Deduceri unice",
+  "Optional description...": "Descriere opțională...",
+
+  // Section 14 signing
+  "Signing": "Semnare",
+  "Contract Preview": "Previzualizare contract",
+  "E-Signing": "E-semnare",
+  "Send this contract for electronic signing, or use the Print button above to print and sign on paper.": "Trimiteți acest contract pentru semnare electronică sau folosiți butonul Tipărește de mai sus pentru a tipări și semna pe hârtie.",
+  "Not yet sent for signing": "Încă nu a fost trimis pentru semnare",
+  "Awaiting employee signature": "Se așteaptă semnătura angajatului",
+  "Employee signed – awaiting employer signature": "Angajatul a semnat – se așteaptă semnătura angajatorului",
+  "Fully signed": "Complet semnat",
+
   // Deductions confirmation
   "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "Confirm că am examinat și luat în considerare toate deducerile salariale aplicabile pentru acest contract.",
 };
@@ -391,6 +456,72 @@ export const FORM_LABELS_TH: Record<string, string> = {
 
   // Workplace varies
   "Workplace Varies Between Different Days": "สถานที่ทำงานเปลี่ยนแปลงในแต่ละวัน",
+
+  // Numbered job type / experience level labels
+  "Job Type 1": "ประเภทงาน 1",
+  "Experience Level 1": "ระดับประสบการณ์ 1",
+  "Pick job type 2...": "เลือกประเภทงาน 2...",
+  "Pick job type 3...": "เลือกประเภทงาน 3...",
+  "Duplicate: same as Job Type 1 – not necessary": "ซ้ำ: เหมือนกับประเภทงาน 1 – ไม่จำเป็น",
+  "Duplicate: same as Job Type 2 – not necessary": "ซ้ำ: เหมือนกับประเภทงาน 2 – ไม่จำเป็น",
+
+  // Section 5 additional
+  "3) and 4)": "3) และ 4)",
+
+  // Section 8 salary
+  "above official rate": "เหนืออัตราอย่างเป็นทางการ",
+  "Official rate not applied": "ไม่ได้ใช้อัตราอย่างเป็นทางการ",
+  "You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it?": "คุณยังไม่ได้ใช้อัตราอย่างเป็นทางการของข้อตกลงร่วมสำหรับทุกประเภทงาน คุณแน่ใจหรือไม่ว่าต้องการดำเนินต่อโดยไม่ใช้?",
+  "Go back": "กลับ",
+  "Continue anyway": "ดำเนินต่อ",
+  "Before continuing": "ก่อนดำเนินต่อ",
+  "Would you also like to include any of the following salary options?": "คุณต้องการรวมตัวเลือกเงินเดือนต่อไปนี้ด้วยหรือไม่?",
+  "Other salary benefits": "สวัสดิการเงินเดือนอื่น",
+  "Basic pay / Grundlön (SEK/hr)": "ค่าจ้างพื้นฐาน / Grundlön (SEK/hr)",
+  "Premium pay / Premielön (SEK/hr)": "ค่าจ้างพิเศษ / Premielön (SEK/hr)",
+  "Basic salary / Grundlön (SEK/mån)": "เงินเดือนพื้นฐาน / Grundlön (SEK/mån)",
+  "Premium salary / Premielön (SEK/mån)": "เงินเดือนพิเศษ / Premielön (SEK/mån)",
+  "In cash": "เงินสด",
+
+  // Section 9 training (additional)
+  "Mandatory training (if appropriate) to which the employee is entitled:": "การฝึกอบรมภาคบังคับ (ถ้ามี) ที่ลูกจ้างมีสิทธิ์:",
+  "Forestry care and management training program": "โปรแกรมฝึกอบรมการดูแลและจัดการป่าไม้",
+  "Forestry vocational board – safety & project handling certification": "คณะกรรมการวิชาชีพป่าไม้ – ใบรับรองความปลอดภัยและการจัดการโครงการ",
+  "Additional training": "การฝึกอบรมอื่นๆ",
+  "Additional training requirements": "ข้อกำหนดการฝึกอบรมเพิ่มเติม",
+  "Describe additional training...": "อธิบายการฝึกอบรมเพิ่มเติม...",
+
+  // Section 10 social security
+  "The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).": "นายจ้างจ่ายเงินสมทบของนายจ้างให้รัฐตามกฎหมายประกันสังคมของสวีเดน (2000:980)",
+  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "ลูกจ้างมีสิทธิ์ได้รับเงินค่าป่วยตามกฎหมายค่าป่วยของสวีเดน (1991:1047) และสวัสดิการตามข้อตกลงร่วมต่อไปนี้:",
+
+  // Section 11 miscellaneous
+  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "ระบุข้อกำหนดและเงื่อนไขอื่นๆ สำหรับการจ้างงาน เช่น ค่าจ้างและสวัสดิการเพิ่มเติมจากข้อตกลงร่วมที่ใช้บังคับ",
+  "Enter additional terms and conditions...": "ระบุข้อกำหนดและเงื่อนไขเพิ่มเติม...",
+
+  // Section 13 deductions
+  "Net Salary Deductions": "การหักเงินเดือนสุทธิ",
+  "Define recurring or one-time deductions from the employee's net salary.": "กำหนดการหักเงินเดือนสุทธิของลูกจ้างแบบเป็นประจำหรือครั้งเดียว",
+  "Remove": "ลบ",
+  "Amount (SEK)": "จำนวนเงิน (SEK)",
+  "Frequency": "ความถี่",
+  "Monthly": "รายเดือน",
+  "One-time deduction": "ครั้งเดียว",
+  "Per km": "ต่อกิโลเมตร",
+  "Per season": "ต่อฤดูกาล",
+  "Total Monthly Deductions": "ยอดรวมการหักรายเดือน",
+  "One-time deductions": "การหักครั้งเดียว",
+  "Optional description...": "คำอธิบายเพิ่มเติม...",
+
+  // Section 14 signing
+  "Signing": "การลงนาม",
+  "Contract Preview": "ตัวอย่างสัญญา",
+  "E-Signing": "การลงนามอิเล็กทรอนิกส์",
+  "Send this contract for electronic signing, or use the Print button above to print and sign on paper.": "ส่งสัญญานี้เพื่อลงนามอิเล็กทรอนิกส์ หรือใช้ปุ่มพิมพ์ด้านบนเพื่อพิมพ์และลงนามบนกระดาษ",
+  "Not yet sent for signing": "ยังไม่ได้ส่งเพื่อลงนาม",
+  "Awaiting employee signature": "รอลายเซ็นลูกจ้าง",
+  "Employee signed – awaiting employer signature": "ลูกจ้างลงนามแล้ว – รอลายเซ็นนายจ้าง",
+  "Fully signed": "ลงนามครบถ้วน",
 
   // Deductions confirmation
   "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "ฉันยืนยันว่าได้ตรวจสอบและพิจารณาการหักเงินเดือนทั้งหมดที่เกี่ยวข้องสำหรับสัญญานี้แล้ว",
