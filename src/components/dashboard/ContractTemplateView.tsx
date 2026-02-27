@@ -469,26 +469,25 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
               const buildEmployeeFormData = (emp: Employee) => {
                 const pi = emp.personal_info || {};
                 return {
-                  employeeFirstName: emp.first_name || pi.firstName || "",
-                  employeeMiddleName: emp.middle_name || pi.middleName || "",
-                  employeeLastName: emp.last_name || pi.lastName || "",
-                  employeeAddress: pi.address || "",
-                  employeePostcode: pi.postcode || "",
-                  employeeCity: emp.city || pi.city || "",
-                  employeeCountry: emp.country || pi.country || "",
-                  employeePhone: emp.phone || pi.phone || "",
-                  employeeEmail: emp.email || pi.email || "",
-                  employeeDob: pi.dob || pi.dateOfBirth || "",
-                  employeeNationality: pi.nationality || "",
-                  employeePassport: pi.passportNumber || "",
-                  employeeTaxCountry: pi.taxCountry || "",
-                  employeeBank: pi.bankName || "",
-                  employeeBankAccount: pi.bankAccount || "",
-                  employeeIban: pi.iban || "",
-                  employeeBic: pi.bic || "",
-                  employeeEmergencyName: pi.emergencyName || "",
-                  employeeEmergencyPhone: pi.emergencyPhone || "",
-                  employeeEmergencyRelation: pi.emergencyRelation || "",
+                  // Keys must match what ContractDetailsStep reads from fd.*
+                  firstName: emp.first_name || pi.firstName || "",
+                  middleName: emp.middle_name || pi.middleName || "",
+                  lastName: emp.last_name || pi.lastName || "",
+                  preferredName: pi.preferredName || pi.preferred_name || "",
+                  address: pi.address || pi.address1 || "",
+                  address2: pi.address2 || "",
+                  zipCode: pi.postcode || pi.zipCode || pi.zip_code || "",
+                  city: emp.city || pi.city || "",
+                  stateProvince: pi.stateProvince || pi.state_province || "",
+                  country: emp.country || pi.country || "",
+                  mobile: emp.phone || pi.mobilePhone || pi.phone || "",
+                  email: emp.email || pi.email || "",
+                  birthday: pi.birthday || pi.dob || pi.dateOfBirth || null,
+                  countryOfBirth: pi.countryOfBirth || pi.country_of_birth || "",
+                  citizenship: pi.nationality || pi.citizenship || "",
+                  emergencyFirstName: pi.emergencyName?.split(" ")[0] || "",
+                  emergencyLastName: pi.emergencyName?.split(" ").slice(1).join(" ") || "",
+                  emergencyMobile: pi.emergencyPhone || "",
                 };
               };
 
@@ -497,7 +496,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                 const { data: rec } = await supabase.from("contracts").select("form_data").eq("id", cId).single();
                 const fd = (rec?.form_data as Record<string, any>) || {};
                 // Only prefill if employee fields are missing
-                if (!fd.employeeFirstName && !fd.employeeLastName) {
+                if (!fd.firstName && !fd.lastName) {
                   const empFields = buildEmployeeFormData(emp);
                   await supabase.from("contracts").update({
                     form_data: { ...fd, ...empFields },
@@ -521,7 +520,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                   setContractId(existing.id);
                   const { data: ex } = await supabase.from("contracts").select("form_data").eq("id", existing.id).single();
                   const fd = (ex?.form_data as Record<string, any>) || {};
-                  const empFields = (!fd.employeeFirstName && !fd.employeeLastName) ? buildEmployeeFormData(selectedEmployee) : {};
+                  const empFields = (!fd.firstName && !fd.lastName) ? buildEmployeeFormData(selectedEmployee) : {};
                   await supabase.from("contracts").update({
                     company_id: selectedCompanyId,
                     form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage },
@@ -547,7 +546,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                 // Update language + prefill employee data if missing
                 const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
                 const fd = (existing?.form_data as Record<string, any>) || {};
-                const empFields = selectedEmployee && (!fd.employeeFirstName && !fd.employeeLastName) ? buildEmployeeFormData(selectedEmployee) : {};
+                const empFields = selectedEmployee && (!fd.firstName && !fd.lastName) ? buildEmployeeFormData(selectedEmployee) : {};
                 await supabase.from("contracts").update({ form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage } }).eq("id", contractId);
               }
               goNext(3);
