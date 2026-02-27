@@ -362,8 +362,29 @@ export function AuditLogView() {
                       >
                         <TableCell className="text-xs text-muted-foreground">
                           <div className="flex items-center gap-1.5">
-                            <Clock className="w-3 h-3" />
-                            {format(new Date(log.created_at), "MMM d, HH:mm:ss")}
+                            <Clock className="w-3 h-3 shrink-0" />
+                            <div className="flex flex-col">
+                              <span>
+                                {new Date(log.created_at).toLocaleString(undefined, {
+                                  month: "short", day: "numeric",
+                                  hour: "2-digit", minute: "2-digit", second: "2-digit",
+                                  hour12: false, timeZoneName: "short",
+                                })}
+                              </span>
+                              {(() => {
+                                const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                                const utcLabel = new Date(log.created_at).toLocaleString("en-US", {
+                                  hour: "2-digit", minute: "2-digit", second: "2-digit",
+                                  hour12: false, timeZone: "UTC", timeZoneName: "short",
+                                });
+                                if (localTz === "UTC") return null;
+                                return (
+                                  <span className="text-[10px] text-muted-foreground/60">
+                                    {utcLabel}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
