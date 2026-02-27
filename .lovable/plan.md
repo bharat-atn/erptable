@@ -1,32 +1,41 @@
 
 
-## Problem
-The Contract Data Registry only stores English and Swedish labels for positions and skill groups. The user needs Romanian, Thai, and Ukrainian translations for all registry data, and the registry UI itself should support these languages.
+## Plan: Add Ukrainian Language Support to Contract System
 
-## Database Changes
-Add new columns to two tables:
+The contract translation system currently supports EN, SV, RO, and TH. Ukrainian (UK) needs to be added to both the contract document translations and the form wizard translations, plus the helper functions need to handle `"UK/SE"`.
 
-**`positions` table** — add `label_ro`, `label_th`, `label_uk`, `type_label_ro`, `type_label_th`, `type_label_uk` (all `text NOT NULL DEFAULT ''`)
+### 1. Update `src/lib/contract-translations.ts`
+- Add `uk` field to `LabelSet` interface
+- Update `L()` helper to accept 5th param (Ukrainian)
+- Add Ukrainian translations to all ~80 label entries in `CONTRACT_LABELS`
+- Update `bilingualLabel()` and `primaryText()` to handle `"UK/SE"` case
 
-**`skill_groups` table** — add `label_ro`, `label_th`, `label_uk` (all `text NOT NULL DEFAULT ''`)
+### 2. Update `src/lib/form-translations.ts`
+- Add new `FORM_LABELS_UK: Record<string, string>` with Ukrainian translations for all ~260 form labels (matching RO and TH dictionaries)
+- Update `getFormLabel()`, `getFormSectionLabel()`, and `getFormBilingual()` to handle `"UK/SE"` case
 
-## Code Changes
+### 3. Populate position/skill group translations in database
+- Use the insert tool to UPDATE existing positions with Romanian, Thai, and Ukrainian translations for all position labels and type labels
+- Use the insert tool to UPDATE existing skill groups with Romanian, Thai, and Ukrainian translations
 
-**`src/components/dashboard/ContractDataRegistryView.tsx`**:
+### Technical Details
 
-1. **PositionsTab**: Expand the add/edit forms to include Romanian, Thai, and Ukrainian label inputs alongside English and Swedish. Update the grid layout to show all 5 language columns. Update insert/update mutations to include the new fields.
+**Ukrainian translations scope for contract-translations.ts** (~80 labels):
+- Contract header, legal disclaimer
+- §1-§13 section titles and field labels
+- Employment form types, frequency labels, deduction types
+- Signature section labels
 
-2. **SkillGroupsTab**: Same treatment — add RO, TH, UK input fields for add/edit, expand the table grid to display all languages.
+**Ukrainian translations scope for form-translations.ts** (~260 labels):
+- All section headers, field labels, button labels
+- Employment form descriptions, helper text
+- Salary section labels, training labels
+- Deduction labels, signing status messages
 
-3. **SalariesPeriodsTab**: Update the agreement lookup table and CSV export to include the additional language labels from the joined positions/skill_groups data.
+**Database updates** for positions table (~15 positions):
+- Translate `label_ro`, `label_th`, `label_uk` for each position
+- Translate `type_label_ro`, `type_label_th`, `type_label_uk` for each type group
 
-4. **BackupRestoreTab**: Include the new columns in the CSV export headers and data rows.
-
-**`src/integrations/supabase/types.ts`**: Will auto-update after migration.
-
-## Technical Notes
-- Ukrainian language code: `uk` (ISO 639-1)
-- All new columns default to empty string so existing data won't break
-- The positions table grid will be wider; we may use a compact layout or horizontal scroll for the 5-language display
-- The "Add New Item" cards will stack language inputs in a 2- or 3-column grid
+**Database updates** for skill_groups table (~5 groups):
+- Translate `label_ro`, `label_th`, `label_uk` for each skill group
 
