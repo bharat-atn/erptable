@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { RefreshCw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function VersionUpdateBanner() {
+interface VersionUpdateBannerProps {
+  onVersionUpdate?: () => void;
+}
+
+export function VersionUpdateBanner({ onVersionUpdate }: VersionUpdateBannerProps) {
   const [initialVersion, setInitialVersion] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const initialSet = useRef(false);
@@ -42,7 +46,9 @@ export function VersionUpdateBanner() {
   if (!hasNewVersion || dismissed) return null;
 
   const handleUpdate = () => {
-    window.location.reload();
+    setInitialVersion(latestVersion?.version_tag ?? null);
+    setDismissed(true);
+    onVersionUpdate?.();
   };
 
   return (

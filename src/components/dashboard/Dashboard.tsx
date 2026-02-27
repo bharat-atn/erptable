@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Sidebar, screenSizes, type ScreenSizeOption } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
 import { EmployeeRegisterView } from "./EmployeeRegisterView";
@@ -48,6 +49,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const [preselectedEmployeeId, setPreselectedEmployeeId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const queryClient = useQueryClient();
 
   // Auto-collapse sidebar when simulated screen is tablet-sized or smaller
   useEffect(() => {
@@ -119,7 +121,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
           userRole={userRole}
         />
         <main className="flex-1 min-w-0 overflow-auto flex flex-col">
-          <VersionUpdateBanner />
+          <VersionUpdateBanner onVersionUpdate={() => queryClient.invalidateQueries()} />
           <div className="flex items-center justify-end px-6 pt-4 pb-0">
             <TopVersionBadge />
           </div>
