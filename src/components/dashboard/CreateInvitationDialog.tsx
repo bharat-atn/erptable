@@ -42,6 +42,7 @@ const LANGUAGE_OPTIONS = [
   { value: "en_sv", label: "English + Swedish / Engelska + Svenska" },
   { value: "ro_en", label: "Romanian + English / Română + Engleză" },
   { value: "th_en", label: "Thai + English / ไทย + อังกฤษ" },
+  { value: "uk_en", label: "Ukrainian + English / Українська + Англійська" },
 ];
 
 type EmailResult = {
