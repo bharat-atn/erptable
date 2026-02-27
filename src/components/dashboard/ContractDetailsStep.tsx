@@ -128,31 +128,7 @@ export function ContractDetailsStep({
     },
   });
 
-  // Group active positions by type for the dropdown (language-aware)
-  const jobTypeGroups = activePositions.reduce<Array<{ group: string; items: Array<{ label: string; value: string }> }>>((acc, pos: any) => {
-    const primaryTypeLabel = contractLanguage === "SE" ? pos.type_label_sv
-      : contractLanguage === "RO/SE" ? (pos.type_label_ro || pos.type_label_en)
-      : contractLanguage === "TH/SE" ? (pos.type_label_th || pos.type_label_en)
-      : contractLanguage === "UK/SE" ? (pos.type_label_uk || pos.type_label_en)
-      : pos.type_label_en;
-    const groupLabel = contractLanguage === "SE"
-      ? `Typ ${pos.type_number}: ${pos.type_label_sv}`
-      : `Type ${pos.type_number}: ${primaryTypeLabel}${pos.type_label_sv ? ` / ${pos.type_label_sv}` : ''}`;
-    let group = acc.find(g => g.group === groupLabel);
-    if (!group) {
-      group = { group: groupLabel, items: [] };
-      acc.push(group);
-    }
-    const primaryLabel = contractLanguage === "SE" ? pos.label_sv
-      : contractLanguage === "RO/SE" ? (pos.label_ro || pos.label_en)
-      : contractLanguage === "TH/SE" ? (pos.label_th || pos.label_en)
-      : contractLanguage === "UK/SE" ? (pos.label_uk || pos.label_en)
-      : pos.label_en;
-    const displayLabel = contractLanguage === "SE" ? pos.label_sv : `${primaryLabel} / ${pos.label_sv}`;
-    // Always store value as EN/SV for consistency
-    group.items.push({ label: displayLabel, value: `${pos.label_en} / ${pos.label_sv}` });
-    return acc;
-  }, []);
+  // jobTypeGroups moved below contractLanguage state declaration
 
   const [section1Open, setSection1Open] = useState(false);
   const [section21Open, setSection21Open] = useState(true);
@@ -242,6 +218,31 @@ export function ContractDetailsStep({
   const [monthlyPremium3, setMonthlyPremium3] = useState("");
   const [companyPremiumPercent, setCompanyPremiumPercent] = useState("0");
   const [contractLanguage, setContractLanguage] = useState("EN/SE");
+
+  // Group active positions by type for the dropdown (language-aware)
+  const jobTypeGroups = activePositions.reduce<Array<{ group: string; items: Array<{ label: string; value: string }> }>>((acc, pos: any) => {
+    const primaryTypeLabel = contractLanguage === "SE" ? pos.type_label_sv
+      : contractLanguage === "RO/SE" ? (pos.type_label_ro || pos.type_label_en)
+      : contractLanguage === "TH/SE" ? (pos.type_label_th || pos.type_label_en)
+      : contractLanguage === "UK/SE" ? (pos.type_label_uk || pos.type_label_en)
+      : pos.type_label_en;
+    const groupLabel = contractLanguage === "SE"
+      ? `Typ ${pos.type_number}: ${pos.type_label_sv}`
+      : `Type ${pos.type_number}: ${primaryTypeLabel}${pos.type_label_sv ? ` / ${pos.type_label_sv}` : ''}`;
+    let group = acc.find(g => g.group === groupLabel);
+    if (!group) {
+      group = { group: groupLabel, items: [] };
+      acc.push(group);
+    }
+    const primaryLabel = contractLanguage === "SE" ? pos.label_sv
+      : contractLanguage === "RO/SE" ? (pos.label_ro || pos.label_en)
+      : contractLanguage === "TH/SE" ? (pos.label_th || pos.label_en)
+      : contractLanguage === "UK/SE" ? (pos.label_uk || pos.label_en)
+      : pos.label_en;
+    const displayLabel = contractLanguage === "SE" ? pos.label_sv : `${primaryLabel} / ${pos.label_sv}`;
+    group.items.push({ label: displayLabel, value: `${pos.label_en} / ${pos.label_sv}` });
+    return acc;
+  }, []);
   const [pieceWorkPay, setPieceWorkPay] = useState(false);
   const [otherSalaryBenefits, setOtherSalaryBenefits] = useState(false);
   const [showSalaryPrompt, setShowSalaryPrompt] = useState(false);
