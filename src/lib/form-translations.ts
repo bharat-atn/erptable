@@ -1,6 +1,6 @@
 /**
  * Form-level translations for the contract wizard (ContractDetailsStep).
- * Maps English labels → Romanian & Thai equivalents.
+ * Maps English labels → Romanian, Thai & Ukrainian equivalents.
  * Swedish labels are already provided inline and stay as-is.
  */
 
@@ -527,6 +527,267 @@ export const FORM_LABELS_TH: Record<string, string> = {
   "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "ฉันยืนยันว่าได้ตรวจสอบและพิจารณาการหักเงินเดือนทั้งหมดที่เกี่ยวข้องสำหรับสัญญานี้แล้ว",
 };
 
+export const FORM_LABELS_UK: Record<string, string> = {
+  // Section headers
+  "Employer Information": "Інформація про роботодавця",
+  "Name and Address Information": "Інформація про ім'я та адресу",
+  "Birth and Contact Information": "Інформація про народження та контакти",
+  "Emergency Contact Information": "Контактна інформація для екстрених випадків",
+  "Employment Details": "Деталі працевлаштування",
+  "Collective Agreement": "Колективний договір",
+  "Form of Employment": "Форма зайнятості",
+  "Working Time & Organisation": "Робочий час та організація",
+  "Holidays": "Відпустка",
+  "Salary": "Заробітна плата",
+  "Training": "Навчання",
+  "Social Security": "Соціальне забезпечення",
+  "Miscellaneous": "Різне",
+  "Notes": "Примітки",
+  "Salary Deductions": "Утримання із заробітної плати",
+
+  // Field labels
+  "Employer": "Роботодавець",
+  "Organization Number": "Реєстраційний номер",
+  "Address": "Адреса",
+  "Postcode": "Поштовий індекс",
+  "City": "Місто",
+  "First Name": "Ім'я",
+  "Middle Name": "По батькові",
+  "Last Name": "Прізвище",
+  "Preferred Name": "Бажане ім'я",
+  "Address 1": "Адреса 1",
+  "Address 2": "Адреса 2",
+  "ZIP / Postal Code": "Поштовий індекс",
+  "State / Province": "Область / Регіон",
+  "Country": "Країна",
+  "Birthday": "Дата народження",
+  "Country of Birth?": "Країна народження?",
+  "Citizenship?": "Громадянство?",
+  "Mobile Phone Number": "Номер мобільного телефону",
+  "Email": "Електронна пошта",
+  "Emergency Contact First Name": "Ім'я контактної особи для екстрених випадків",
+  "Emergency Contact Last Name": "Прізвище контактної особи для екстрених випадків",
+  "Emergency Contact Mobile Phone Number": "Мобільний номер контактної особи для екстрених випадків",
+  "Employed as / Main Duties": "Посада / Основні обов'язки",
+  "How many job types?": "Скільки типів роботи?",
+  "Job Type": "Тип роботи",
+  "Experience Level": "Рівень досвіду",
+  "Posting Location": "Місце відрядження",
+  "Main Workplace": "Основне робоче місце",
+  "Workplace Varies?": "Робоче місце змінюється?",
+  "Job Type 2": "Тип роботи 2",
+  "Experience Level 2": "Рівень досвіду 2",
+  "Job Type 3": "Тип роботи 3",
+  "Experience Level 3": "Рівень досвіду 3",
+  "Employment Form": "Форма зайнятості",
+  "From Date": "З дати",
+  "Until Date": "До дати",
+  "Reason for Fixed-Term": "Причина строкового договору",
+  "Replacing Employee": "Заміна працівника",
+  "Position": "Посада",
+  "End Around": "Закінчення приблизно",
+  "Full-time / Part-time": "Повна / часткова зайнятість",
+  "Working Hours per Week": "Робочих годин на тиждень",
+  "Part-time Percentage": "Відсоток часткової зайнятості",
+  "Work Schedule": "Графік роботи",
+  "Annual Leave Days": "Дні щорічної відпустки",
+  "Paid Leave": "Оплачувана відпустка",
+  "Unpaid Leave": "Неоплачувана відпустка",
+  "Salary Type": "Тип заробітної плати",
+  "Number of Job Types": "Кількість типів роботи",
+  "Hourly Basic Rate": "Базова погодинна ставка",
+  "Hourly Premium": "Погодинна надбавка",
+  "Monthly Basic Rate": "Базова місячна ставка",
+  "Monthly Premium": "Щомісячна надбавка",
+  "Company Premium": "Премія компанії",
+  "Piece Work Pay": "Відрядна оплата",
+  "Other Benefits": "Інші пільги",
+  "Payment Method": "Спосіб оплати",
+  "Overtime Compensation": "Компенсація за понаднормову роботу",
+  "Notice Period": "Строк попередження",
+  "Mandatory Training": "Обов'язкове навчання",
+  "Other Training": "Інше навчання",
+  "Miscellaneous Notes": "Різні примітки",
+  "Deduction Type": "Тип утримання",
+  "Deduction Amount": "Сума утримання",
+  "Deduction Frequency": "Частота утримання",
+  "Deduction Note": "Примітка до утримання",
+  "Add Deduction": "Додати утримання",
+  "Apply Rate": "Застосувати ставку",
+  "Official Rate": "Офіційна ставка",
+  "From": "З",
+  "Until": "До",
+  "Start Date": "Дата початку",
+  "End Date": "Дата закінчення",
+  "Salary per Month": "Заробітна плата за місяць",
+  "Salary per Hour": "Заробітна плата за годину",
+  "Duration & Timing": "Тривалість та час",
+  "Scheduling": "Планування",
+
+  // Progress bar labels
+  "Parties": "Сторони",
+  "Employment": "Зайнятість",
+  "Compensation": "Компенсація",
+  "Others": "Інше",
+  "Review & Sign": "Перевірка та підпис",
+
+  // Button labels
+  "Back": "Назад",
+  "Next Step": "Наступний крок",
+  "Exit": "Вихід",
+  "Reset": "Скинути",
+  "Skip": "Пропустити",
+  "Continue": "Продовжити",
+  "Print": "Друк",
+  "Applied": "Застосовано",
+
+  // Section 3 helper text
+  "How many different job types will the employee have? Select to continue.": "Скільки різних типів роботи матиме працівник? Виберіть, щоб продовжити.",
+  "Required – please select the number of job types": "Обов'язково – виберіть кількість типів роботи",
+  "Select number of job types...": "Виберіть кількість типів роботи...",
+  "1 – Only one": "1 – Лише один",
+  "2 – Two job types": "2 – Два типи роботи",
+  "3 – Three job types": "3 – Три типи роботи",
+  "Required": "Обов'язково",
+  "Pick the job type...": "Виберіть тип роботи...",
+  "Choose experience level...": "Виберіть рівень досвіду...",
+  "Duplicate: same as": "Дублікат: такий самий як",
+  "not necessary": "не потрібно",
+  "Used, for example, to calculate travel time compensation": "Використовується, наприклад, для розрахунку компенсації часу в дорозі",
+  "Workplace (place where the work is to be performed) varies between different days": "Робоче місце (місце виконання роботи) змінюється в різні дні",
+  "Yes": "Так",
+  "No": "Ні",
+  "Select country...": "Виберіть країну...",
+  "Pick a date": "Виберіть дату",
+
+  // Section 4 text
+  "Collective agreement": "Колективний договір",
+  "The employment arrangement is covered by the collective agreement known as Skogsavtalet [Forest Agreement] between the GS trade union and Gröna arbetsgivare.": "Трудові відносини регулюються колективним договором Skogsavtalet [Лісова угода] між профспілкою GS та Gröna arbetsgivare.",
+
+  // Section 5 employment form options
+  "Permanent employment from": "Безстрокове працевлаштування з",
+  "Probationary period (max. 6 months) from": "Випробувальний термін (макс. 6 місяців) з",
+  "General fixed-term employment from": "Загальне строкове працевлаштування з",
+  "Temporary replacement employment from": "Тимчасова заміна з",
+  "Seasonal employment from": "Сезонне працевлаштування з",
+  "When the employee has reached the age of 69 from": "Коли працівник досяг віку 69 років з",
+  "until": "до",
+  "from": "з",
+  "Select date": "Виберіть дату",
+  "end around": "закінчення приблизно",
+  "The season is expected to end around": "Очікується, що сезон закінчиться приблизно",
+  "See also annex for repeated periods of employment on a general fixed-term basis.": "Дивіться також додаток щодо повторних періодів працевлаштування на загальній строковій основі.",
+  "The employment ends when the holder of the regular position returns to work. But no later than:": "Працевлаштування закінчується, коли власник постійної посади повертається на роботу. Але не пізніше:",
+  "No later than": "Не пізніше",
+  "SINK: The period exceeds 6 months": "SINK: Період перевищує 6 місяців",
+  "When SINK taxation applies, the seasonal employment period must not exceed 6 months. Please adjust the start or end date.": "При застосуванні оподаткування SINK період сезонного працевлаштування не повинен перевищувати 6 місяців. Будь ласка, скоригуйте дату початку або закінчення.",
+
+  // Section 6 working time
+  "Full time 38/40 hours per week (excl. public holidays)": "Повна зайнятість 38/40 годин на тиждень (без державних свят)",
+  "Part time": "Часткова зайнятість",
+  "per cent of full time": "відсотків від повної зайнятості",
+
+  // Section 7 holidays
+  "Holiday Entitlement": "Право на відпустку",
+
+  // Section 8 salary
+  "Percentage above the official Skogsavtalet rate": "Відсоток вище офіційної ставки Skogsavtalet",
+  "Hourly Pay": "Погодинна оплата",
+  "Monthly Salary": "Місячна заробітна плата",
+  "Basic pay": "Базова оплата",
+  "Premium pay": "Преміальна оплата",
+  "Basic salary": "Базова заробітна плата",
+  "Premium salary": "Преміальна заробітна плата",
+  "Piece-work pay": "Відрядна оплата",
+  "Other salary benefits by separate agreement": "Інші зарплатні пільги за окремою угодою",
+  "Into the specified account": "На вказаний рахунок",
+  "Cash payment": "Оплата готівкою",
+  "Not selected": "Не вибрано",
+  "Select Job Type and Experience Level in Section 3 first": "Спочатку виберіть тип роботи та рівень досвіду в розділі 3",
+  "Set employee birth date in Section 2 first": "Спочатку вкажіть дату народження працівника в розділі 2",
+  "No matching rate found in agreement data": "Відповідну ставку не знайдено в даних угоди",
+
+  // Place of employment
+  "Place of Employment": "Місце роботи",
+  "The main rule": "Основне правило",
+  "The place of employment is the place where the employee performs the main part of his work.": "Місце роботи — це місце, де працівник виконує основну частину своєї роботи.",
+  "The alternative rule": "Альтернативне правило",
+  "If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks.": "Якщо робота виконується під час переміщення або на робочих місцях, що постійно змінюються, місцем роботи є місце, де працівник забирає та залишає робочі матеріали або готує та завершує робочі завдання.",
+  "The exception rule": "Правило-виняток",
+  "If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment.": "Якщо робота виконується протягом обмеженого часу на кожній локації, що стосується певних робіт у будівельній галузі та подібних галузях, місце проживання є місцем роботи.",
+
+  // Workplace varies
+  "Workplace Varies Between Different Days": "Робоче місце змінюється в різні дні",
+
+  // Numbered job type / experience level labels
+  "Job Type 1": "Тип роботи 1",
+  "Experience Level 1": "Рівень досвіду 1",
+  "Pick job type 2...": "Виберіть тип роботи 2...",
+  "Pick job type 3...": "Виберіть тип роботи 3...",
+  "Duplicate: same as Job Type 1 – not necessary": "Дублікат: такий самий як Тип роботи 1 – не потрібно",
+  "Duplicate: same as Job Type 2 – not necessary": "Дублікат: такий самий як Тип роботи 2 – не потрібно",
+
+  // Section 5 additional
+  "3) and 4)": "3) та 4)",
+
+  // Section 8 salary cards & labels
+  "above official rate": "вище офіційної ставки",
+  "Official rate not applied": "Офіційну ставку не застосовано",
+  "You have not applied the official collective agreement rate for all job types. Are you sure you want to continue without applying it?": "Ви не застосували офіційну ставку колективного договору для всіх типів роботи. Ви впевнені, що хочете продовжити без її застосування?",
+  "Go back": "Назад",
+  "Continue anyway": "Продовжити все одно",
+  "Before continuing": "Перед продовженням",
+  "Would you also like to include any of the following salary options?": "Чи бажаєте ви також включити будь-які з наступних варіантів заробітної плати?",
+  "Other salary benefits": "Інші зарплатні пільги",
+  "Basic pay / Grundlön (SEK/hr)": "Базова оплата / Grundlön (SEK/год)",
+  "Premium pay / Premielön (SEK/hr)": "Преміальна оплата / Premielön (SEK/год)",
+  "Basic salary / Grundlön (SEK/mån)": "Базова заробітна плата / Grundlön (SEK/міс)",
+  "Premium salary / Premielön (SEK/mån)": "Преміальна заробітна плата / Premielön (SEK/міс)",
+  "In cash": "Готівкою",
+
+  // Section 9 training (additional)
+  "Mandatory training (if appropriate) to which the employee is entitled:": "Обов'язкове навчання (за необхідності), на яке працівник має право:",
+  "Forestry care and management training program": "Програма навчання з догляду та управління лісовим господарством",
+  "Forestry vocational board – safety & project handling certification": "Професійна рада лісового господарства – сертифікація з безпеки та управління проєктами",
+  "Additional training": "Додаткове навчання",
+  "Additional training requirements": "Додаткові вимоги до навчання",
+  "Describe additional training...": "Опишіть додаткове навчання...",
+
+  // Section 10 social security (additional)
+  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "Працівники мають право на оплату лікарняних відповідно до Закону Швеції про оплату лікарняних (1991:1047) та наступних пільг за колективним договором:",
+
+  // Section 11 miscellaneous
+  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "Зазначте будь-які інші умови працевлаштування, наприклад, оплату та пільги додатково до чинного колективного договору.",
+  "Enter additional terms and conditions...": "Введіть додаткові умови...",
+
+  // Section 13 deductions
+  "Net Salary Deductions": "Утримання із чистої заробітної плати",
+  "Define recurring or one-time deductions from the employee's net salary.": "Визначте регулярні або одноразові утримання з чистої заробітної плати працівника.",
+  "Remove": "Видалити",
+  "Amount (SEK)": "Сума (SEK)",
+  "Frequency": "Частота",
+  "Monthly": "Щомісячно",
+  "One-time": "Одноразово",
+  "Per km": "За км",
+  "Per season": "За сезон",
+  "Total Monthly Deductions": "Загальні щомісячні утримання",
+  "One-time deductions": "Одноразові утримання",
+  "Optional description...": "Необов'язковий опис...",
+
+  // Section 14 signing
+  "Signing": "Підписання",
+  "Contract Preview": "Попередній перегляд договору",
+  "E-Signing": "Електронний підпис",
+  "Send this contract for electronic signing, or use the Print button above to print and sign on paper.": "Надішліть цей договір для електронного підпису або скористайтеся кнопкою Друк вище, щоб роздрукувати та підписати на папері.",
+  "Not yet sent for signing": "Ще не відправлено на підпис",
+  "Awaiting employee signature": "Очікується підпис працівника",
+  "Employee signed – awaiting employer signature": "Працівник підписав – очікується підпис роботодавця",
+  "Fully signed": "Повністю підписано",
+
+  // Deductions confirmation
+  "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "Я підтверджую, що переглянув(-ла) та врахував(-ла) всі застосовні утримання із заробітної плати для цього договору.",
+};
+
 /**
  * Get translated label based on language code.
  * Returns the translation for the primary language, falling back to English.
@@ -537,6 +798,8 @@ export function getFormLabel(en: string, lang: string): string {
       return FORM_LABELS_RO[en] || en;
     case "TH/SE":
       return FORM_LABELS_TH[en] || en;
+    case "UK/SE":
+      return FORM_LABELS_UK[en] || en;
     case "SE":
       // For SE-only, we don't show English at all — caller handles this
       return en;
@@ -562,6 +825,10 @@ export function getFormSectionLabel(en: string, sv: string, lang: string): strin
       const th = FORM_LABELS_TH[en] || en;
       return `${th} / ${sv}`;
     }
+    case "UK/SE": {
+      const uk = FORM_LABELS_UK[en] || en;
+      return `${uk} / ${sv}`;
+    }
     case "EN/SE":
     default:
       return `${en} / ${sv}`;
@@ -574,6 +841,7 @@ export function getFormSectionLabel(en: string, sv: string, lang: string): strin
  * For SE: "Swedish text"
  * For RO/SE: "Romanian text / Swedish text"
  * For TH/SE: "Thai text / Swedish text"
+ * For UK/SE: "Ukrainian text / Swedish text"
  */
 export function getFormBilingual(en: string, sv: string, lang: string): string {
   switch (lang) {
@@ -586,6 +854,10 @@ export function getFormBilingual(en: string, sv: string, lang: string): string {
     case "TH/SE": {
       const th = FORM_LABELS_TH[en] || en;
       return `${th} / ${sv}`;
+    }
+    case "UK/SE": {
+      const uk = FORM_LABELS_UK[en] || en;
+      return `${uk} / ${sv}`;
     }
     case "EN/SE":
     default:
