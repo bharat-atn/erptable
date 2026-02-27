@@ -71,6 +71,30 @@ export type Database = {
           },
         ]
       }
+      app_launcher_config: {
+        Row: {
+          apps: Json
+          created_at: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          apps?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          apps?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       app_versions: {
         Row: {
           created_at: string
