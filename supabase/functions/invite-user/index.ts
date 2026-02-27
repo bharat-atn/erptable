@@ -24,7 +24,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Parse body first (can only be read once)
     const body = await req.json();
     const { email, full_name, role, temp_password, app_access } = body;
 
@@ -37,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate caller
+    // Validate caller is admin
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -69,18 +68,58 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if user already exists
+    // Check if user already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
+    const existingUser = existingUsers?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
     let userId: string;
+    let action: string;
 
     if (existingUser) {
+      // ── Existing auth user: update role directly ──
       userId = existingUser.id;
       console.log("Existing user found:", userId);
-    } else {
-      // Create user
-      const password = temp_password || crypto.randomUUID() + "!Aa1";
+
+      await adminClient.from("user_roles").delete().eq("user_id", userId);
+      const { error: roleError } = await adminClient
+        .from("user_roles")
+        .insert({ user_id: userId, role });
+
+      if (roleError) {
+        console.error("Role insert failed:", roleError.message);
+        return new Response(JSON.stringify({ error: roleError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Update profile to approved
+      await adminClient
+        .from("profiles")
+        .update({ role: "approved", full_name: full_name || email, email })
+        .eq("user_id", userId);
+
+      // Handle app access
+      if (Array.isArray(app_access)) {
+        await adminClient.from("user_app_access").delete().eq("user_id", userId);
+        if (app_access.length > 0) {
+          const rows = app_access.map((app_id: string) => ({
+            user_id: userId,
+            app_id,
+            granted_by: caller.id,
+          }));
+          await adminClient.from("user_app_access").insert(rows);
+        }
+      }
+
+      // Remove any pending assignment for this email
+      await adminClient.from("pending_role_assignments").delete().eq("email", email.toLowerCase());
+
+      action = "updated";
+
+    } else if (temp_password) {
+      // ── New user WITH fallback password: create auth user ──
+      const password = temp_password;
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
         email,
         password,
@@ -95,44 +134,59 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
       userId = newUser.user.id;
-      console.log("New user created:", userId);
-    }
+      console.log("New user created with password:", userId);
 
-    // Delete existing roles, then insert the new one
-    await adminClient.from("user_roles").delete().eq("user_id", userId);
-    const { error: roleError } = await adminClient
-      .from("user_roles")
-      .insert({ user_id: userId, role });
+      await adminClient.from("user_roles").delete().eq("user_id", userId);
+      await adminClient.from("user_roles").insert({ user_id: userId, role });
+      await adminClient
+        .from("profiles")
+        .update({ role: "approved", full_name: full_name || email, email })
+        .eq("user_id", userId);
 
-    if (roleError) {
-      console.error("Role upsert failed:", roleError.message);
-      return new Response(JSON.stringify({ error: roleError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Update profile to approved + store email
-    await adminClient
-      .from("profiles")
-      .update({ role: "approved", full_name: full_name || email, email })
-      .eq("user_id", userId);
-
-    // Handle app access grants
-    if (Array.isArray(app_access)) {
-      await adminClient.from("user_app_access").delete().eq("user_id", userId);
-      if (app_access.length > 0) {
-        const rows = app_access.map((app_id: string) => ({
-          user_id: userId,
-          app_id,
-          granted_by: caller.id,
-        }));
-        await adminClient.from("user_app_access").insert(rows);
+      if (Array.isArray(app_access)) {
+        await adminClient.from("user_app_access").delete().eq("user_id", userId);
+        if (app_access.length > 0) {
+          const rows = app_access.map((app_id: string) => ({
+            user_id: userId,
+            app_id,
+            granted_by: caller.id,
+          }));
+          await adminClient.from("user_app_access").insert(rows);
+        }
       }
-    }
 
-    const action = existingUser ? "updated" : "created";
+      action = "created";
+
+    } else {
+      // ── New user, NO password: store pending assignment ──
+      // When they sign in via Google (or any method), handle_new_user trigger auto-assigns role
+      const { error: pendingError } = await adminClient
+        .from("pending_role_assignments")
+        .upsert(
+          {
+            email: email.toLowerCase(),
+            role,
+            full_name: full_name || email,
+            app_access: Array.isArray(app_access) ? app_access : [],
+            invited_by: caller.id,
+          },
+          { onConflict: "email" }
+        );
+
+      if (pendingError) {
+        console.error("Pending assignment failed:", pendingError.message);
+        return new Response(JSON.stringify({ error: pendingError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      userId = "pending";
+      action = "invited";
+      console.log("Pending role assignment stored for:", email);
+    }
 
     // Audit log
     try {
@@ -151,12 +205,12 @@ Deno.serve(async (req) => {
 
     console.log("Invite success:", email, action);
 
+    const message = action === "invited"
+      ? `Invitation stored for ${email} (role: ${role}). They will be auto-approved when they first sign in.`
+      : `User ${email} ${action} with role ${role}.${temp_password && action === "created" ? " A fallback password was also set." : ""}`;
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        user_id: userId,
-        message: `User ${email} ${action} with role ${role}. They can sign in with Google.${temp_password && !existingUser ? " A fallback password was also set." : ""}`,
-      }),
+      JSON.stringify({ success: true, user_id: userId, message }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
