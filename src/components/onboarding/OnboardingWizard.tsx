@@ -36,12 +36,12 @@ const FALLBACK_BANKS = [
 const COUNTRY_NAMES = countries.map(c => c.name);
 
 /* ─── Priority countries for phone prefix dropdowns ─── */
-const PRIORITY_COUNTRY_CODES = ["RO", "TH", "SE"];
+const PRIORITY_COUNTRY_CODES = ["RO", "TH", "UA", "SE"];
 const priorityCountries = countries.filter(c => PRIORITY_COUNTRY_CODES.includes(c.code));
 const otherCountries = countries.filter(c => !PRIORITY_COUNTRY_CODES.includes(c.code));
 
 /* ─── Priority country names for country selectors ─── */
-const PRIORITY_COUNTRY_NAMES = ["Romania", "Thailand", "Sweden"];
+const PRIORITY_COUNTRY_NAMES = ["Romania", "Thailand", "Ukraine", "Sweden"];
 const priorityCountryNames = COUNTRY_NAMES.filter(n => PRIORITY_COUNTRY_NAMES.includes(n));
 const otherCountryNames = COUNTRY_NAMES.filter(n => !PRIORITY_COUNTRY_NAMES.includes(n));
 
@@ -174,7 +174,7 @@ function loadTemplateLogo(): LogoSettings | null {
   } catch { return null; }
 }
 
-export type OnboardingLanguage = "sv" | "en" | "en_sv" | "ro_en" | "th_en";
+export type OnboardingLanguage = "sv" | "en" | "en_sv" | "ro_en" | "th_en" | "uk_en";
 
 interface OnboardingWizardProps {
   formData: Partial<PersonalInfo>;
@@ -222,6 +222,19 @@ const LANG_LABELS: Record<string, Record<string, string>> = {
     "Bank Name": "ชื่อธนาคาร", "BIC Code": "รหัส BIC", "Bank Account Number": "หมายเลขบัญชีธนาคาร",
     "ID / Passport Document": "เอกสาร ID / หนังสือเดินทาง", "Work Permit Document": "เอกสารใบอนุญาตทำงาน",
   },
+  uk: {
+    "First Name": "Ім'я", "Middle Name": "По батькові", "Last Name": "Прізвище",
+    "Preferred Name": "Бажане ім'я", "Address 1": "Адреса 1", "Address 2": "Адреса 2",
+    "ZIP / Postal Code": "Поштовий індекс", "City": "Місто", "State / Province": "Область / Регіон",
+    "Country": "Країна", "Date of Birth": "Дата народження", "Country of Birth": "Країна народження",
+    "Citizenship": "Громадянство", "Mobile Phone": "Мобільний телефон", "Email": "Електронна пошта",
+    "Swedish Personal Number": "Шведський особистий номер", "Swedish Coordination Number": "Шведський координаційний номер",
+    "Emergency Contact – First Name": "Контакт для екстрених випадків – Ім'я", "Emergency Contact – Last Name": "Контакт для екстрених випадків – Прізвище",
+    "Emergency Contact – Mobile Phone": "Контакт для екстрених випадків – Телефон",
+    "Select Country": "Виберіть країну", "Toggle your Bank": "Виберіть банк",
+    "Bank Name": "Назва банку", "BIC Code": "Код BIC", "Bank Account Number": "Номер банківського рахунку",
+    "ID / Passport Document": "Документ посвідчення особи / Паспорт", "Work Permit Document": "Дозвіл на роботу",
+  },
   sv: {
     "First Name": "Förnamn", "Middle Name": "Mellannamn", "Last Name": "Efternamn",
     "Preferred Name": "Tilltalnamn", "Address 1": "Adress 1", "Address 2": "Adress 2",
@@ -253,6 +266,9 @@ function FieldLabel({ en, sv, required = true }: { en: string; sv?: string; requ
   } else if (lang === "th_en") {
     const th = LANG_LABELS.th[en];
     text = th ? `${th} / ${en}` : en;
+  } else if (lang === "uk_en") {
+    const uk = LANG_LABELS.uk[en];
+    text = uk ? `${uk} / ${en}` : en;
   } else {
     // en_sv default
     const svLabel = sv || LANG_LABELS.sv[en] || "";
@@ -280,6 +296,13 @@ const SECTION_TITLES_TH: Record<string, string> = {
   "Emergency Contact": "ผู้ติดต่อฉุกเฉิน",
   "Bank Information": "ข้อมูลธนาคาร",
   "ID / Passport & Work Permit Information": "ข้อมูล ID / หนังสือเดินทางและใบอนุญาตทำงาน",
+};
+const SECTION_TITLES_UK: Record<string, string> = {
+  "Name and Address Information": "Інформація про ім'я та адресу",
+  "Birth and Contact Information": "Інформація про народження та контакти",
+  "Emergency Contact": "Контакт для екстрених випадків",
+  "Bank Information": "Банківська інформація",
+  "ID / Passport & Work Permit Information": "Інформація про посвідчення / паспорт та дозвіл на роботу",
 };
 
 function SectionHeader({
@@ -314,6 +337,9 @@ function SectionHeader({
   } else if (lang === "th_en") {
     const th = SECTION_TITLES_TH[titleEn] || titleEn;
     sectionTitle = number ? `ส่วนที่ ${number}: ${th} / Section ${number}: ${titleEn}` : `${th} / ${titleEn}`;
+  } else if (lang === "uk_en") {
+    const uk = SECTION_TITLES_UK[titleEn] || titleEn;
+    sectionTitle = number ? `Розділ ${number}: ${uk} / Section ${number}: ${titleEn}` : `${uk} / ${titleEn}`;
   } else {
     sectionTitle = number
       ? `Section ${number}: ${titleEn} / Sektion ${number}: ${titleSv}`
@@ -647,6 +673,7 @@ export function OnboardingWizard({
           {language === "en_sv" && "Please fill out the following information in full / Vänligen fyll i följande information fullständigt"}
           {language === "ro_en" && "Vă rugăm să completați toate informațiile de mai jos / Please fill out the following information in full"}
           {language === "th_en" && "กรุณากรอกข้อมูลต่อไปนี้ให้ครบถ้วน / Please fill out the following information in full"}
+          {language === "uk_en" && "Будь ласка, заповніть наступну інформацію повністю / Please fill out the following information in full"}
         </p>
 
         {isPreview && (

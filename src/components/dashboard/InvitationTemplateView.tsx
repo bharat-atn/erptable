@@ -36,6 +36,7 @@ interface TemplateField {
   label_sv: string;
   label_ro: string;
   label_th: string;
+  label_uk: string;
   is_visible: boolean;
   is_required: boolean;
   sort_order: number;
@@ -363,11 +364,12 @@ export function InvitationTemplateView({ onShowPreview }: InvitationTemplateView
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0 pb-4 px-5">
-                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 pb-2 mb-2 border-b border-border">
+                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 pb-2 mb-2 border-b border-border overflow-x-auto">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">English Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Swedish Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Romanian Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Thai Label</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Ukrainian Label</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 text-center">Visible</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50 text-center">Required</span>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-foreground/50">Field Type</span>
@@ -381,7 +383,7 @@ export function InvitationTemplateView({ onShowPreview }: InvitationTemplateView
                         <div
                           key={field.id}
                           className={cn(
-                            "grid grid-cols-[1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 items-center py-2.5 rounded-lg px-2 -mx-2 transition-colors",
+                            "grid grid-cols-[1fr_1fr_1fr_1fr_1fr_80px_80px_120px] gap-3 items-center py-2.5 rounded-lg px-2 -mx-2 transition-colors",
                             !field.is_visible && "opacity-50",
                             isEdited && "bg-primary/5"
                           )}
@@ -404,6 +406,11 @@ export function InvitationTemplateView({ onShowPreview }: InvitationTemplateView
                           <Input
                             value={field.label_th}
                             onChange={(e) => updateField(rawField.id, { label_th: e.target.value })}
+                            className="h-9 text-sm"
+                          />
+                          <Input
+                            value={field.label_uk}
+                            onChange={(e) => updateField(rawField.id, { label_uk: e.target.value })}
                             className="h-9 text-sm"
                           />
                           <div className="flex justify-center">

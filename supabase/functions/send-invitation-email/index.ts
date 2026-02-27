@@ -62,6 +62,17 @@ const translations: Record<string, {
     expires: (d) => `คำเชิญนี้จะหมดอายุในวันที่ <strong>${d}</strong> หากมีคำถามใด ๆ กรุณาติดต่อฝ่ายทรัพยากรบุคคล`,
     footer: (c) => `อีเมลนี้ส่งจากระบบ HR ของ ${c} หากคุณไม่ได้คาดหวังอีเมลนี้ กรุณาเพิกเฉย`,
   },
+  uk: {
+    subject: (c: string) => `Запрошення на реєстрацію — ${c}`,
+    welcome: (c: string) => `Ласкаво просимо до ${c}`,
+    subtitle: "Запрошення на реєстрацію",
+    greeting: (n: string) => `Шановний(-а) ${n},`,
+    body: (c: string) => `Вас запрошено пройти реєстрацію в <strong>${c}</strong>. Будь ласка, натисніть кнопку нижче, щоб заповнити ваші особисті дані.`,
+    button: "Пройти реєстрацію",
+    fallbackLink: "Якщо кнопка не працює, скопіюйте та вставте це посилання у браузер:",
+    expires: (d: string) => `Це запрошення дійсне до <strong>${d}</strong>. Якщо у вас є запитання, зверніться до відділу кадрів.`,
+    footer: (c: string) => `Цей лист надіслано з HR-системи ${c}. Якщо ви не очікували цього листа, проігноруйте його.`,
+  },
 };
 
 // Map language codes to primary + secondary translations
@@ -77,6 +88,8 @@ function getTranslations(lang: string) {
       return [translations.ro, translations.en];
     case "th_en":
       return [translations.th, translations.en];
+    case "uk_en":
+      return [translations.uk, translations.en];
     default:
       return [translations.en];
   }
