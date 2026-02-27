@@ -544,6 +544,7 @@ export type Database = {
           label_ro: string
           label_sv: string
           label_th: string
+          label_uk: string
           section: string
           sort_order: number
           updated_at: string
@@ -559,6 +560,7 @@ export type Database = {
           label_ro?: string
           label_sv: string
           label_th?: string
+          label_uk?: string
           section: string
           sort_order?: number
           updated_at?: string
@@ -574,6 +576,7 @@ export type Database = {
           label_ro?: string
           label_sv?: string
           label_th?: string
+          label_uk?: string
           section?: string
           sort_order?: number
           updated_at?: string

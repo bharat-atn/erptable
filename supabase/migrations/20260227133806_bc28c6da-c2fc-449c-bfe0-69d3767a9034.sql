@@ -1,0 +1,1 @@
+ALTER TABLE invitation_template_fields ADD COLUMN label_uk text NOT NULL DEFAULT '';
