@@ -2,84 +2,48 @@
 
 ## Problem
 
-The `invite-user` edge function pre-creates auth users via `admin.createUser()` with an **email identity**. When the invited person then signs in with **Google OAuth**, Supabase treats it as a different identity and creates a **new auth user** with no roles. The invited user lands on the "Pending Approval" screen even though the admin already approved them.
+Dorin was invited using the **old** `invite-user` code, which pre-created an auth user for `dorinlazea@gmail.com` with an **email identity** (user_id `e4f82c48...`). This auth user has role `org_admin` and status `approved` -- but Dorin has **never signed in** (`last_sign_in_at: null`).
 
-Evidence from the database:
-- `dorinlazea@gmail.com` (created by admin) — provider: `email`, role: `org_admin`, **never signed in**
-- `dorin.lazea@ljunganforestry.se` (created by Google OAuth) — provider: `google`, **no role**, signed in Feb 25
+When Dorin tries to sign in with **Google OAuth** using the same Gmail address, Supabase sees the email is already taken by an email-provider account and either rejects the sign-in or creates a second auth user with no roles. Either way, he can't get in.
 
-These are two separate auth users for the same person because the identities never linked.
+The new `pending_role_assignments` system prevents this for **future** invitations, but the old pre-created auth user still blocks Dorin.
 
 ## Solution
 
-Stop pre-creating auth users. Instead, store pending role assignments in a new table, and auto-assign roles when the user first signs in (via any method).
+Two parts: (A) fix Dorin's specific case now, and (B) add a safety net so any user who signs in and has a pending assignment gets auto-approved, even if the `handle_new_user` trigger didn't fire (e.g., because an old auth user already existed).
 
-## Changes
+### 1. Create a cleanup edge function
 
-### 1. Create `pending_role_assignments` table (migration)
+Create a new `cleanup-orphan-user` edge function that an admin can invoke. It will:
+- Accept an email address
+- Use `admin.auth.admin.listUsers()` to find the pre-created auth user
+- Delete the auth user via `admin.auth.admin.deleteUser()`
+- Insert a `pending_role_assignment` row with the user's existing role and app_access (preserved from the old data before deletion)
+- This way, when Dorin signs in fresh via Google, the `handle_new_user` trigger fires and auto-assigns his role
 
-```sql
-CREATE TABLE public.pending_role_assignments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text NOT NULL,
-  role app_role NOT NULL,
-  full_name text,
-  app_access text[] DEFAULT '{}',
-  invited_by uuid,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE(email)
-);
+### 2. Add client-side pending role check on sign-in
 
-ALTER TABLE public.pending_role_assignments ENABLE ROW LEVEL SECURITY;
+Modify `Index.tsx` so that when a user has a session but **no role**, it calls a new edge function `check-pending-role` that:
+- Reads the authenticated user's email
+- Checks `pending_role_assignments` for a match
+- If found, assigns the role, updates profile, copies app access, and deletes the pending row
+- Returns the assigned role
 
-CREATE POLICY "Admins can manage pending assignments"
-  ON public.pending_role_assignments FOR ALL
-  USING (has_role(auth.uid(), 'admin'::app_role));
-```
+This acts as a safety net for cases where the database trigger didn't fire (e.g., identity linking instead of new user creation).
 
-### 2. Update `handle_new_user` trigger function
+### 3. Clean up Dorin's data
 
-After creating the profile, check `pending_role_assignments` for a matching email. If found:
-- Insert the role into `user_roles`
-- Update the profile to `approved`
-- Copy app access into `user_app_access`
-- Delete the pending assignment
+After deploying, the admin calls the cleanup function for `dorinlazea@gmail.com`. The pre-created auth user is deleted, a pending assignment is created with role `org_admin` and his 5 app_access entries. Dorin signs in via Google, gets auto-approved.
 
-### 3. Rewrite `invite-user` edge function
+Also clean up the other orphan: `dorin.lazea@ljunganforestry.se` (user_id `f2e38b2c...`, role `pending`, never signed in) -- this can simply be deleted as it's a separate work email that won't be used.
 
-- **Existing auth user**: Keep current behavior (update role directly)
-- **New user (no auth account yet)**: Insert into `pending_role_assignments` instead of calling `admin.createUser()`. Return success with a message like "Invitation stored. User will be auto-approved when they first sign in."
-- If a fallback password is provided, still call `admin.createUser()` (email/password users need a pre-created account)
+## Implementation Steps
 
-### 4. Fix `send-role-notification` import
+1. **New edge function `check-pending-role`** -- authenticated users call this; it checks `pending_role_assignments` by email and auto-assigns if found. Add `verify_jwt = false` in config.toml but validate auth header in code.
 
-Change `import { createClient } from "https://esm.sh/@supabase/supabase-js@2"` to `import { createClient } from "npm:@supabase/supabase-js@2"` for Deno runtime stability.
+2. **New edge function `cleanup-orphan-user`** -- admin-only; accepts email, preserves role + app_access into `pending_role_assignments`, then deletes the orphaned auth user.
 
-### 5. Clean up orphaned data
+3. **Update `Index.tsx`** -- when `role` is null after loading, call `check-pending-role` before showing `PendingApproval`. If a role is returned, trigger a re-fetch.
 
-Provide guidance on merging or cleaning the duplicate user entries (e.g., `dorin.lazea@ljunganforestry.se` has no role).
-
-```text
-Flow: Before (broken)
-┌─────────┐    admin.createUser()    ┌──────────────┐
-│  Admin   │ ──────────────────────► │ Auth user    │ (email identity)
-│  invites │                         │ + role       │
-└─────────┘                         └──────────────┘
-                                           ✕ no link
-┌─────────┐    Google OAuth          ┌──────────────┐
-│  Invited │ ──────────────────────► │ NEW auth user│ (google identity)
-│  user    │                         │ NO role      │ ← stuck
-└─────────┘                         └──────────────┘
-
-Flow: After (fixed)
-┌─────────┐    pending_role_         ┌──────────────┐
-│  Admin   │ ──assignments──────────►│ Table row    │
-│  invites │                         │ email + role │
-└─────────┘                         └──────────────┘
-                                           │
-┌─────────┐    Google OAuth          ┌─────▼────────┐
-│  Invited │ ──────────────────────► │ Auth user    │
-│  user    │    handle_new_user      │ + auto role  │ ← works
-└─────────┘    trigger checks table  └──────────────┘
-```
+4. **Update `UserManagementView.tsx`** -- add a "Clean up orphan" action or call the cleanup function automatically for users with `last_sign_in_at: null` who were pre-created by the old system.
 
