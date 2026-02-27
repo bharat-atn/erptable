@@ -20,7 +20,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { getFormLabel, getFormSectionLabel } from "@/lib/form-translations";
+import { getFormLabel, getFormSectionLabel, getFormBilingual } from "@/lib/form-translations";
 import { Building2, ChevronDown, ArrowLeft, ArrowRight, User, ShieldCheck, Users, Briefcase, DollarSign, MoreHorizontal, CheckCircle, Check, AlertTriangle, Cloud, CloudOff, Loader2, Lightbulb, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -504,83 +504,83 @@ export function ContractDetailsStep({
       if (data?.season_year) setSeasonYear(data.season_year);
       if (!data?.form_data) { setInitialLoaded(true); return; }
       const fd = data.form_data as Record<string, any>;
-      if (fd.firstName) setFirstName(fd.firstName);
-      if (fd.middleName) setMiddleName(fd.middleName);
-      if (fd.lastName) setLastName(fd.lastName);
-      if (fd.preferredName) setPreferredName(fd.preferredName);
-      if (fd.address) setAddress(fd.address);
-      if (fd.address2) setAddress2(fd.address2);
-      if (fd.zipCode) setZipCode(fd.zipCode);
-      if (fd.city) setCity(fd.city);
-      if (fd.stateProvince) setStateProvince(fd.stateProvince);
-      if (fd.country) setCountry(fd.country);
+      if (fd.firstName !== undefined) setFirstName(fd.firstName);
+      if (fd.middleName !== undefined) setMiddleName(fd.middleName);
+      if (fd.lastName !== undefined) setLastName(fd.lastName);
+      if (fd.preferredName !== undefined) setPreferredName(fd.preferredName);
+      if (fd.address !== undefined) setAddress(fd.address);
+      if (fd.address2 !== undefined) setAddress2(fd.address2);
+      if (fd.zipCode !== undefined) setZipCode(fd.zipCode);
+      if (fd.city !== undefined) setCity(fd.city);
+      if (fd.stateProvince !== undefined) setStateProvince(fd.stateProvince);
+      if (fd.country !== undefined) setCountry(fd.country);
       if (fd.birthday) setBirthday(new Date(fd.birthday));
-      if (fd.countryOfBirth) setCountryOfBirth(fd.countryOfBirth);
-      if (fd.citizenship) setCitizenship(fd.citizenship);
-      if (fd.mobile) setMobile(fd.mobile);
-      if (fd.email) setEmail(fd.email);
-      if (fd.emergencyFirstName) setEmergencyFirstName(fd.emergencyFirstName);
-      if (fd.emergencyLastName) setEmergencyLastName(fd.emergencyLastName);
-      if (fd.emergencyMobile) setEmergencyMobile(fd.emergencyMobile);
-      if (fd.mainDuties) setMainDuties(fd.mainDuties);
-      if (fd.jobType) setJobType(fd.jobType);
-      if (fd.experienceLevel) setExperienceLevel(fd.experienceLevel);
-      if (fd.numberOfJobTypes) setNumberOfJobTypes(fd.numberOfJobTypes);
+      if (fd.countryOfBirth !== undefined) setCountryOfBirth(fd.countryOfBirth);
+      if (fd.citizenship !== undefined) setCitizenship(fd.citizenship);
+      if (fd.mobile !== undefined) setMobile(fd.mobile);
+      if (fd.email !== undefined) setEmail(fd.email);
+      if (fd.emergencyFirstName !== undefined) setEmergencyFirstName(fd.emergencyFirstName);
+      if (fd.emergencyLastName !== undefined) setEmergencyLastName(fd.emergencyLastName);
+      if (fd.emergencyMobile !== undefined) setEmergencyMobile(fd.emergencyMobile);
+      if (fd.mainDuties !== undefined) setMainDuties(fd.mainDuties);
+      if (fd.jobType !== undefined) setJobType(fd.jobType);
+      if (fd.experienceLevel !== undefined) setExperienceLevel(fd.experienceLevel);
+      if (fd.numberOfJobTypes !== undefined) setNumberOfJobTypes(fd.numberOfJobTypes);
       else if (fd.jobType3) setNumberOfJobTypes("3");
       else if (fd.jobType2) setNumberOfJobTypes("2");
       else if (fd.jobType) setNumberOfJobTypes("1");
-      if (fd.jobType2) setJobType2(fd.jobType2);
-      if (fd.experienceLevel2) setExperienceLevel2(fd.experienceLevel2);
-      if (fd.jobType3) setJobType3(fd.jobType3);
-      if (fd.experienceLevel3) setExperienceLevel3(fd.experienceLevel3);
-      if (fd.postingLocation) setPostingLocation(fd.postingLocation);
-      if (fd.workplaceVaries) setWorkplaceVaries(fd.workplaceVaries);
-      if (fd.mainWorkplace) setMainWorkplace(fd.mainWorkplace);
-      if (fd.stationing) setStationing(fd.stationing);
-      if (fd.employmentForm) setEmploymentForm(fd.employmentForm);
+      if (fd.jobType2 !== undefined) setJobType2(fd.jobType2);
+      if (fd.experienceLevel2 !== undefined) setExperienceLevel2(fd.experienceLevel2);
+      if (fd.jobType3 !== undefined) setJobType3(fd.jobType3);
+      if (fd.experienceLevel3 !== undefined) setExperienceLevel3(fd.experienceLevel3);
+      if (fd.postingLocation !== undefined) setPostingLocation(fd.postingLocation);
+      if (fd.workplaceVaries !== undefined) setWorkplaceVaries(fd.workplaceVaries);
+      if (fd.mainWorkplace !== undefined) setMainWorkplace(fd.mainWorkplace);
+      if (fd.stationing !== undefined) setStationing(fd.stationing);
+      if (fd.employmentForm !== undefined) setEmploymentForm(fd.employmentForm);
       if (fd.permanentFromDate) setPermanentFromDate(new Date(fd.permanentFromDate));
       if (fd.probationFromDate) setProbationFromDate(new Date(fd.probationFromDate));
       if (fd.probationUntilDate) setProbationUntilDate(new Date(fd.probationUntilDate));
       if (fd.fixedTermFromDate) setFixedTermFromDate(new Date(fd.fixedTermFromDate));
       if (fd.fixedTermUntilDate) setFixedTermUntilDate(new Date(fd.fixedTermUntilDate));
       if (fd.tempReplacementFromDate) setTempReplacementFromDate(new Date(fd.tempReplacementFromDate));
-      if (fd.tempReplacementPosition) setTempReplacementPosition(fd.tempReplacementPosition);
+      if (fd.tempReplacementPosition !== undefined) setTempReplacementPosition(fd.tempReplacementPosition);
       if (fd.tempReplacementNoLaterThan) setTempReplacementNoLaterThan(new Date(fd.tempReplacementNoLaterThan));
       if (fd.seasonalFromDate) setSeasonalFromDate(new Date(fd.seasonalFromDate));
       if (fd.seasonalEndAround) setSeasonalEndAround(new Date(fd.seasonalEndAround));
       if (fd.sinkEnabled != null) setSinkEnabled(fd.sinkEnabled);
       if (fd.age69FromDate) setAge69FromDate(new Date(fd.age69FromDate));
       if (fd.age69UntilDate) setAge69UntilDate(new Date(fd.age69UntilDate));
-      if (fd.workingTime) setWorkingTime(fd.workingTime);
-      if (fd.partTimePercent) setPartTimePercent(fd.partTimePercent);
-      if (fd.annualLeaveDays) setAnnualLeaveDays(fd.annualLeaveDays);
-      if (fd.salaryType) setSalaryType(fd.salaryType);
-      if (fd.hourlyBasic) setHourlyBasic(fd.hourlyBasic);
-      if (fd.hourlyPremium) setHourlyPremium(fd.hourlyPremium);
-      if (fd.monthlyBasic) setMonthlyBasic(fd.monthlyBasic);
-      if (fd.monthlyPremium) setMonthlyPremium(fd.monthlyPremium);
-      if (fd.hourlyBasic2) setHourlyBasic2(fd.hourlyBasic2);
-      if (fd.hourlyPremium2) setHourlyPremium2(fd.hourlyPremium2);
-      if (fd.monthlyBasic2) setMonthlyBasic2(fd.monthlyBasic2);
-      if (fd.monthlyPremium2) setMonthlyPremium2(fd.monthlyPremium2);
-      if (fd.hourlyBasic3) setHourlyBasic3(fd.hourlyBasic3);
-      if (fd.hourlyPremium3) setHourlyPremium3(fd.hourlyPremium3);
-      if (fd.monthlyBasic3) setMonthlyBasic3(fd.monthlyBasic3);
-      if (fd.monthlyPremium3) setMonthlyPremium3(fd.monthlyPremium3);
+      if (fd.workingTime !== undefined) setWorkingTime(fd.workingTime);
+      if (fd.partTimePercent !== undefined) setPartTimePercent(fd.partTimePercent);
+      if (fd.annualLeaveDays !== undefined) setAnnualLeaveDays(fd.annualLeaveDays);
+      if (fd.salaryType !== undefined) setSalaryType(fd.salaryType);
+      if (fd.hourlyBasic !== undefined) setHourlyBasic(fd.hourlyBasic);
+      if (fd.hourlyPremium !== undefined) setHourlyPremium(fd.hourlyPremium);
+      if (fd.monthlyBasic !== undefined) setMonthlyBasic(fd.monthlyBasic);
+      if (fd.monthlyPremium !== undefined) setMonthlyPremium(fd.monthlyPremium);
+      if (fd.hourlyBasic2 !== undefined) setHourlyBasic2(fd.hourlyBasic2);
+      if (fd.hourlyPremium2 !== undefined) setHourlyPremium2(fd.hourlyPremium2);
+      if (fd.monthlyBasic2 !== undefined) setMonthlyBasic2(fd.monthlyBasic2);
+      if (fd.monthlyPremium2 !== undefined) setMonthlyPremium2(fd.monthlyPremium2);
+      if (fd.hourlyBasic3 !== undefined) setHourlyBasic3(fd.hourlyBasic3);
+      if (fd.hourlyPremium3 !== undefined) setHourlyPremium3(fd.hourlyPremium3);
+      if (fd.monthlyBasic3 !== undefined) setMonthlyBasic3(fd.monthlyBasic3);
+      if (fd.monthlyPremium3 !== undefined) setMonthlyPremium3(fd.monthlyPremium3);
       if (fd.companyPremiumPercent !== undefined) setCompanyPremiumPercent(fd.companyPremiumPercent);
-      if (fd.contractLanguage) setContractLanguage(fd.contractLanguage);
-      if (fd.rateApplied) setRateApplied(fd.rateApplied);
-      if (fd.rateApplied2) setRateApplied2(fd.rateApplied2);
-      if (fd.rateApplied3) setRateApplied3(fd.rateApplied3);
+      if (fd.contractLanguage !== undefined) setContractLanguage(fd.contractLanguage);
+      if (fd.rateApplied !== undefined) setRateApplied(fd.rateApplied);
+      if (fd.rateApplied2 !== undefined) setRateApplied2(fd.rateApplied2);
+      if (fd.rateApplied3 !== undefined) setRateApplied3(fd.rateApplied3);
       if (fd.pieceWorkPay !== undefined) setPieceWorkPay(fd.pieceWorkPay);
       if (fd.otherSalaryBenefits !== undefined) setOtherSalaryBenefits(fd.otherSalaryBenefits);
-      if (fd.paymentMethod) setPaymentMethod(fd.paymentMethod);
+      if (fd.paymentMethod !== undefined) setPaymentMethod(fd.paymentMethod);
       if (fd.trainingSkotselskolan !== undefined) setTrainingSkotselskolan(fd.trainingSkotselskolan);
       if (fd.trainingSYN !== undefined) setTrainingSYN(fd.trainingSYN);
       if (fd.trainingOtherEnabled !== undefined) setTrainingOtherEnabled(fd.trainingOtherEnabled);
-      if (fd.trainingOtherText) setTrainingOtherText(fd.trainingOtherText);
-      if (fd.miscellaneousText) setMiscellaneousText(fd.miscellaneousText);
-      if (fd.salaryDeductions) setSalaryDeductions(fd.salaryDeductions);
+      if (fd.trainingOtherText !== undefined) setTrainingOtherText(fd.trainingOtherText);
+      if (fd.miscellaneousText !== undefined) setMiscellaneousText(fd.miscellaneousText);
+      if (fd.salaryDeductions !== undefined) setSalaryDeductions(fd.salaryDeductions);
       if (fd.deductionsConfirmed !== undefined) setDeductionsConfirmed(fd.deductionsConfirmed);
       if (fd.schedulingData) setSchedulingData(fd.schedulingData);
       setInitialLoaded(true);
@@ -1068,12 +1068,15 @@ export function ContractDetailsStep({
   const minBirthDate = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
   const maxBirthDate = new Date(today.getFullYear() - 16, today.getMonth(), today.getDate());
 
+  // Shorthand for bilingual text
+  const bl = (en: string, sv: string) => getFormBilingual(en, sv, contractLanguage);
+
   const progressSteps = [
-    { id: "parties", label: "Parties", icon: Users, sections: ["employee"] },
-    { id: "employment", label: "Employment", icon: Briefcase, sections: ["section-3", "section-4", "section-5", "section-6"] },
-    { id: "compensation", label: "Compensation", icon: DollarSign, sections: ["section-7", "section-8"] },
-    { id: "others", label: "Others", icon: MoreHorizontal, sections: ["section-9", "section-10", "section-11", "section-12", "section-13"] },
-    { id: "review", label: "Review & Sign", icon: CheckCircle, sections: ["section-scheduling", "section-14"] },
+    { id: "parties", label: bl("Parties", "Parter"), icon: Users, sections: ["employee"] },
+    { id: "employment", label: bl("Employment", "Anställning"), icon: Briefcase, sections: ["section-3", "section-4", "section-5", "section-6"] },
+    { id: "compensation", label: bl("Compensation", "Kompensation"), icon: DollarSign, sections: ["section-7", "section-8"] },
+    { id: "others", label: bl("Others", "Övrigt"), icon: MoreHorizontal, sections: ["section-9", "section-10", "section-11", "section-12", "section-13"] },
+    { id: "review", label: bl("Review & Sign", "Granska & Signera"), icon: CheckCircle, sections: ["section-scheduling", "section-14"] },
   ];
 
   // Determine which progress step is active based on activeSection
@@ -1092,10 +1095,7 @@ export function ContractDetailsStep({
         <CardTitle className="text-base font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
-            Employment contract for workers{" "}
-            <span className="text-muted-foreground font-normal text-sm">
-              / Anställningsavtal för arbetare
-            </span>
+            {bl("Employment contract for workers", "Anställningsavtal för arbetare")}
           </div>
           <div className="flex items-center gap-3">
             {/* Auto-save indicator */}
@@ -1120,7 +1120,7 @@ export function ContractDetailsStep({
               )}
             </span>
             <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/5" onClick={onBack}>
-              Exit / Avsluta
+              {bl("Exit", "Avsluta")}
             </Button>
           </div>
         </CardTitle>
@@ -1171,11 +1171,11 @@ export function ContractDetailsStep({
           <div className="flex justify-between pt-3">
             <Button variant="back" onClick={onBack}>
               <ArrowLeft className="w-4 h-4 mr-1" />
-              Back / Tillbaka
+              {bl("Back", "Tillbaka")}
             </Button>
             {showNextButton && (
               <Button className="px-8" onClick={handleCurrentSectionNext} disabled={isNextDisabled}>
-                Next Step / Nästa
+                {bl("Next Step", "Nästa")}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             )}
@@ -1454,11 +1454,11 @@ export function ContractDetailsStep({
               <div className="space-y-1.5">
                 {renderLabel("Number of Job Types", "Antal befattningstyper")}
                 <p className="text-xs text-muted-foreground -mt-1">
-                  How many different job types will the employee have? Select to continue. / Hur många olika befattningstyper ska den anställde ha? Välj för att fortsätta.
+                  {bl("How many different job types will the employee have? Select to continue.", "Hur många olika befattningstyper ska den anställde ha? Välj för att fortsätta.")}
                 </p>
                 {!numberOfJobTypes && (
-                  <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" /> Required – please select the number of job types / Obligatoriskt – välj antal befattningstyper
+                   <p className="text-xs text-destructive font-medium flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> {bl("Required – please select the number of job types", "Obligatoriskt – välj antal befattningstyper")}
                   </p>
                 )}
                 <div className="flex items-center gap-2">
@@ -1469,12 +1469,12 @@ export function ContractDetailsStep({
                     if (val === "2") { setJobType3(""); setExperienceLevel3(""); }
                   }}>
                     <SelectTrigger className={cn("h-11 text-sm font-medium w-full md:w-64", !numberOfJobTypes && "border-destructive ring-2 ring-destructive/40 bg-destructive/5 shadow-sm shadow-destructive/10")}>
-                      <SelectValue placeholder="⚠ Select number of job types... / Välj antal..." />
+                      <SelectValue placeholder={`⚠ ${bl("Select number of job types...", "Välj antal...")}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">1 – Only one / Bara en</SelectItem>
-                      <SelectItem value="2">2 – Two job types / Två befattningstyper</SelectItem>
-                      <SelectItem value="3">3 – Three job types / Tre befattningstyper</SelectItem>
+                      <SelectItem value="1">{bl("1 – Only one", "1 – Bara en")}</SelectItem>
+                      <SelectItem value="2">{bl("2 – Two job types", "2 – Två befattningstyper")}</SelectItem>
+                      <SelectItem value="3">{bl("3 – Three job types", "3 – Tre befattningstyper")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {numberOfJobTypes && (
@@ -1488,7 +1488,7 @@ export function ContractDetailsStep({
                       }}
                       className="text-xs text-destructive hover:text-destructive/80 underline whitespace-nowrap"
                     >
-                      Reset / Återställ
+                      {bl("Reset", "Återställ")}
                     </button>
                   )}
                 </div>
@@ -1499,18 +1499,18 @@ export function ContractDetailsStep({
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                   {/* Job Type 1 */}
                   <div className="pt-2 border-t border-border/50">
-                    <span className="text-sm font-semibold text-muted-foreground">Job Type 1 / Befattningstyp 1</span>
+                    <span className="text-sm font-semibold text-muted-foreground">{bl("Job Type 1", "Befattningstyp 1")}</span>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                       <div className="space-y-1.5">
                         {renderLabel("Job Type 1", "Befattningstyp 1")}
                         {!jobType && (
                           <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                             <AlertTriangle className="w-3 h-3" /> {bl("Required", "Obligatoriskt")}
                           </p>
                         )}
                         <Select value={jobType} onValueChange={setJobType} required>
                           <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                            <SelectValue placeholder="Pick the job type... / Välj arbetsuppgift..." />
+                            <SelectValue placeholder={bl("Pick the job type...", "Välj arbetsuppgift...")} />
                           </SelectTrigger>
                           <SelectContent>
                             {jobTypeGroups.map((group) => (
@@ -1532,12 +1532,12 @@ export function ContractDetailsStep({
                         {renderLabel("Experience Level 1", "Erfarenhetsnivå 1")}
                         {jobType && !experienceLevel && (
                           <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                             <AlertTriangle className="w-3 h-3" /> {bl("Required", "Obligatoriskt")}
                           </p>
                         )}
                         <Select value={experienceLevel} onValueChange={setExperienceLevel} required>
                           <SelectTrigger className={cn("h-11 text-sm font-medium", jobType && !experienceLevel && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                            <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
+                            <SelectValue placeholder={bl("Choose experience level...", "Välj erfarenhetsnivå...")} />
                           </SelectTrigger>
                           <SelectContent>
                             {EXPERIENCE_LEVELS.map((level) => (
@@ -1554,13 +1554,13 @@ export function ContractDetailsStep({
                   {/* Job Type 2 */}
                   {(numberOfJobTypes === "2" || numberOfJobTypes === "3") && (
                     <div className="pt-2 border-t border-border/50">
-                      <span className="text-sm font-semibold text-muted-foreground">Job Type 2 / Befattningstyp 2</span>
+                      <span className="text-sm font-semibold text-muted-foreground">{bl("Job Type 2", "Befattningstyp 2")}</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <div className="space-y-1.5">
                           {renderLabel("Job Type 2", "Befattningstyp 2")}
                           <Select value={jobType2} onValueChange={setJobType2}>
                             <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                              <SelectValue placeholder="Pick job type 2... / Välj befattningstyp 2..." />
+                              <SelectValue placeholder={bl("Pick job type 2...", "Välj befattningstyp 2...")} />
                             </SelectTrigger>
                             <SelectContent>
                               {jobTypeGroups.map((group) => (
@@ -1579,7 +1579,7 @@ export function ContractDetailsStep({
                           </Select>
                           {jobType2 && jobType2 === jobType && (
                             <p className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-1">
-                              <AlertTriangle className="w-3 h-3" /> Duplicate: same as Job Type 1 – not necessary / Dublett: samma som Befattningstyp 1 – inte nödvändigt
+                            <AlertTriangle className="w-3 h-3" /> {bl("Duplicate: same as Job Type 1 – not necessary", "Dublett: samma som Befattningstyp 1 – inte nödvändigt")}
                             </p>
                           )}
                         </div>
@@ -1587,12 +1587,12 @@ export function ContractDetailsStep({
                           {renderLabel("Experience Level 2", "Erfarenhetsnivå 2")}
                           {jobType2 && !experienceLevel2 && (
                             <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                              <AlertTriangle className="w-3 h-3" /> {bl("Required", "Obligatoriskt")}
                             </p>
                           )}
                           <Select value={experienceLevel2} onValueChange={setExperienceLevel2}>
                             <SelectTrigger className={cn("h-11 text-sm font-medium", jobType2 && !experienceLevel2 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                              <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
+                              <SelectValue placeholder={bl("Choose experience level...", "Välj erfarenhetsnivå...")} />
                             </SelectTrigger>
                             <SelectContent>
                               {EXPERIENCE_LEVELS.map((level) => (
@@ -1610,13 +1610,13 @@ export function ContractDetailsStep({
                   {/* Job Type 3 */}
                   {numberOfJobTypes === "3" && (
                     <div className="pt-2 border-t border-border/50">
-                      <span className="text-sm font-semibold text-muted-foreground">Job Type 3 / Befattningstyp 3</span>
+                      <span className="text-sm font-semibold text-muted-foreground">{bl("Job Type 3", "Befattningstyp 3")}</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                         <div className="space-y-1.5">
                           {renderLabel("Job Type 3", "Befattningstyp 3")}
                           <Select value={jobType3} onValueChange={setJobType3}>
                             <SelectTrigger className={cn("h-11 text-sm font-medium", !jobType3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                              <SelectValue placeholder="Pick job type 3... / Välj befattningstyp 3..." />
+                              <SelectValue placeholder={bl("Pick job type 3...", "Välj befattningstyp 3...")} />
                             </SelectTrigger>
                             <SelectContent>
                               {jobTypeGroups.map((group) => (
@@ -1635,7 +1635,7 @@ export function ContractDetailsStep({
                           </Select>
                           {jobType3 && (jobType3 === jobType || jobType3 === jobType2) && (
                             <p className="text-xs text-amber-600 font-medium flex items-center gap-1 mt-1">
-                              <AlertTriangle className="w-3 h-3" /> Duplicate: same as {jobType3 === jobType ? "Job Type 1" : "Job Type 2"} – not necessary / Dublett: samma som {jobType3 === jobType ? "Befattningstyp 1" : "Befattningstyp 2"} – inte nödvändigt
+                              <AlertTriangle className="w-3 h-3" /> {bl(`Duplicate: same as ${jobType3 === jobType ? "Job Type 1" : "Job Type 2"} – not necessary`, `Dublett: samma som ${jobType3 === jobType ? "Befattningstyp 1" : "Befattningstyp 2"} – inte nödvändigt`)}
                             </p>
                           )}
                         </div>
@@ -1643,12 +1643,12 @@ export function ContractDetailsStep({
                           {renderLabel("Experience Level 3", "Erfarenhetsnivå 3")}
                           {jobType3 && !experienceLevel3 && (
                             <p className="text-xs text-destructive font-medium flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3" /> Required / Obligatoriskt
+                              <AlertTriangle className="w-3 h-3" /> {bl("Required", "Obligatoriskt")}
                             </p>
                           )}
                           <Select value={experienceLevel3} onValueChange={setExperienceLevel3}>
                             <SelectTrigger className={cn("h-11 text-sm font-medium", jobType3 && !experienceLevel3 && "border-destructive ring-1 ring-destructive/30 bg-destructive/5")}>
-                              <SelectValue placeholder="Choose experience level... / Välj erfarenhetsnivå..." />
+                              <SelectValue placeholder={bl("Choose experience level...", "Välj erfarenhetsnivå...")} />
                             </SelectTrigger>
                             <SelectContent>
                               {EXPERIENCE_LEVELS.map((level) => (
@@ -1668,7 +1668,7 @@ export function ContractDetailsStep({
               <div className="space-y-1.5">
                 {renderLabel("Posting Location", "Stationeringsort")}
                 <p className="text-xs text-muted-foreground -mt-1">
-                  Used, for example, to calculate travel time compensation / Används till exempel för att beräkna restidsersättning
+                  {bl("Used, for example, to calculate travel time compensation", "Används till exempel för att beräkna restidsersättning")}
                 </p>
                 {renderField(postingLocation, setPostingLocation)}
               </div>
@@ -1677,7 +1677,7 @@ export function ContractDetailsStep({
               <div className="space-y-2">
                 {renderLabel("Workplace Varies Between Different Days", "Arbetsplatsen varierar mellan olika dagar")}
                 <p className="text-xs text-muted-foreground -mt-1">
-                  Workplace (place where the work is to be performed) varies between different days / Arbetsplats (plats där arbetet ska utföras) varierar mellan olika dagar
+                  {bl("Workplace (place where the work is to be performed) varies between different days", "Arbetsplats (plats där arbetet ska utföras) varierar mellan olika dagar")}
                 </p>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -1688,7 +1688,7 @@ export function ContractDetailsStep({
                       onChange={() => setWorkplaceVaries("yes")}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-sm font-medium">Yes / Ja</span>
+                    <span className="text-sm font-medium">{bl("Yes", "Ja")}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1698,7 +1698,7 @@ export function ContractDetailsStep({
                       onChange={() => setWorkplaceVaries("no")}
                       className="w-4 h-4 accent-primary"
                     />
-                    <span className="text-sm font-medium">No / Nej</span>
+                    <span className="text-sm font-medium">{bl("No", "Nej")}</span>
                   </label>
                 </div>
                 {workplaceVaries === "no" && (
@@ -1724,8 +1724,8 @@ export function ContractDetailsStep({
                       {stationing === "main" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The main rule / Huvudregeln:</span>{" "}
-                      The place of employment is the place where the employee performs the main part of his work. / Stationeringsorten är den plats där arbetstagaren utför huvuddelen av sitt arbete.
+                      <span className="font-semibold underline">{bl("The main rule", "Huvudregeln")}:</span>{" "}
+                      {bl("The place of employment is the place where the employee performs the main part of his work.", "Stationeringsorten är den plats där arbetstagaren utför huvuddelen av sitt arbete.")}
                     </div>
                   </label>
 
@@ -1740,8 +1740,8 @@ export function ContractDetailsStep({
                       {stationing === "alternative" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The alternative rule / Alternativregeln:</span>{" "}
-                      If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks. / Om arbetet utförs under förflyttning eller på arbetsplatser som ständigt växlar, är stationeringsorten i stället den plats där arbetstagaren hämtar och lämnar arbetsmaterial eller förbereder och avslutar sina arbetsuppgifter.
+                      <span className="font-semibold underline">{bl("The alternative rule", "Alternativregeln")}:</span>{" "}
+                      {bl("If the work is performed while moving or at workplaces that are constantly changing, the place of work is instead the place where the employee picks up and leaves work materials or prepares and finishes his work tasks.", "Om arbetet utförs under förflyttning eller på arbetsplatser som ständigt växlar, är stationeringsorten i stället den plats där arbetstagaren hämtar och lämnar arbetsmaterial eller förbereder och avslutar sina arbetsuppgifter.")}
                     </div>
                   </label>
 
@@ -1756,8 +1756,8 @@ export function ContractDetailsStep({
                       {stationing === "exception" && <div className="w-2 h-2 rounded-sm bg-primary-foreground" />}
                     </div>
                     <div className="text-sm">
-                      <span className="font-semibold underline">The exception rule / Undantagsregeln:</span>{" "}
-                      If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment. / Om arbetet pågår under begränsad tid på varje plats, vilket gäller för vissa arbeten inom byggnads- och anläggningsbranschen och liknande branscher, är bostaden stationeringsort.
+                      <span className="font-semibold underline">{bl("The exception rule", "Undantagsregeln")}:</span>{" "}
+                      {bl("If the work takes place for a limited time at each location, which applies to certain works in the building and construction industry and similar industries, the residence is a place of employment.", "Om arbetet pågår under begränsad tid på varje plats, vilket gäller för vissa arbeten inom byggnads- och anläggningsbranschen och liknande branscher, är bostaden stationeringsort.")}
                     </div>
                   </label>
                 </div>
@@ -1822,7 +1822,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "permanent" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "permanent" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">Permanent employment from / Tillsvidareanställning från</span>
+                  <span className="text-sm font-semibold">{bl("Permanent employment from", "Tillsvidareanställning från")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium ml-auto", !permanentFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1850,7 +1850,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "probationary" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "probationary" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">Probationary period (max. 6 months) from / Provanställning (max 6 mån) från</span>
+                  <span className="text-sm font-semibold">{bl("Probationary period (max. 6 months) from", "Provanställning (max 6 mån) från")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1862,7 +1862,7 @@ export function ContractDetailsStep({
                       <Calendar mode="single" selected={probationFromDate} onSelect={setProbationFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
-                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !probationUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1890,7 +1890,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "fixed_term" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "fixed_term" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">General fixed-term employment from / Allmän visstidsanställning från</span>
+                  <span className="text-sm font-semibold">{bl("General fixed-term employment from", "Allmän visstidsanställning från")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1902,7 +1902,7 @@ export function ContractDetailsStep({
                       <Calendar mode="single" selected={fixedTermFromDate} onSelect={setFixedTermFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
-                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !fixedTermUntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1933,7 +1933,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "temporary_replacement" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "temporary_replacement" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">Temporary replacement employment from / Vikariat från</span>
+                  <span className="text-sm font-semibold">{bl("Temporary replacement employment from", "Vikariat från")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !tempReplacementFromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -1988,7 +1988,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "seasonal" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "seasonal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">Seasonal employment from / Säsongsanställning från</span>
+                  <span className="text-sm font-semibold">{bl("Seasonal employment from", "Säsongsanställning från")}</span>
                   <div className="ml-auto flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <label htmlFor="sink-toggle" className="text-xs font-bold tracking-wide text-muted-foreground cursor-pointer select-none">SINK</label>
                     <Switch
@@ -2010,7 +2010,7 @@ export function ContractDetailsStep({
                       <Calendar mode="single" selected={seasonalFromDate} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
-                  <span className="text-sm text-muted-foreground">The season is expected to end around / Säsongen förväntas sluta omkring</span>
+                  <span className="text-sm text-muted-foreground">{bl("The season is expected to end around", "Säsongen förväntas sluta omkring")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !seasonalEndAround && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -2053,7 +2053,7 @@ export function ContractDetailsStep({
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "age69" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "age69" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
-                  <span className="text-sm font-semibold">When the employee has reached the age of 69 from / När den anställde har fyllt 69 år från</span>
+                  <span className="text-sm font-semibold">{bl("When the employee has reached the age of 69 from", "När den anställde har fyllt 69 år från")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69FromDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -2065,7 +2065,7 @@ export function ContractDetailsStep({
                       <Calendar mode="single" selected={age69FromDate} onSelect={setAge69FromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
-                  <span className="text-sm text-muted-foreground">until / till</span>
+                  <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className={cn("h-9 text-sm font-medium", !age69UntilDate && "text-muted-foreground")} onClick={(e) => e.stopPropagation()}>
@@ -2120,7 +2120,7 @@ export function ContractDetailsStep({
                   )}
                 </div>
                 <span className="text-sm font-semibold">
-                  Full time 38/40 hours per week (excl. public holidays) / Heltid 38/40 timmar per vecka (exkl. helgdagar)
+                  {bl("Full time 38/40 hours per week (excl. public holidays)", "Heltid 38/40 timmar per vecka (exkl. helgdagar)")}
                 </span>
               </div>
 
@@ -2147,7 +2147,7 @@ export function ContractDetailsStep({
                     "text-sm font-semibold",
                     workingTime !== "parttime" && "text-muted-foreground"
                   )}>
-                    Part time / Deltid
+                    {bl("Part time", "Deltid")}
                   </span>
                   {workingTime === "parttime" ? (
                     <div className="flex items-center gap-2">
