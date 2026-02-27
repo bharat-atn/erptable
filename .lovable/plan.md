@@ -1,28 +1,32 @@
 
 
 ## Problem
+The Contract Data Registry only stores English and Swedish labels for positions and skill groups. The user needs Romanian, Thai, and Ukrainian translations for all registry data, and the registry UI itself should support these languages.
 
-The "Click here to update" button uses `window.location.reload()` which causes a full browser-level page reload — the entire page goes white/blank momentarily, feeling like the app is "closing down." This is jarring for users.
+## Database Changes
+Add new columns to two tables:
 
-## Solution
+**`positions` table** — add `label_ro`, `label_th`, `label_uk`, `type_label_ro`, `type_label_th`, `type_label_uk` (all `text NOT NULL DEFAULT ''`)
 
-Replace the hard `window.location.reload()` with a softer in-app refresh approach:
+**`skill_groups` table** — add `label_ro`, `label_th`, `label_uk` (all `text NOT NULL DEFAULT ''`)
 
-1. **Invalidate all React Query caches** — clears stale data so fresh data is fetched
-2. **Reset the version tracking state** — so the banner disappears and the new version becomes the baseline
-3. **Use React Router's navigation** to re-mount the current view without a full browser reload
+## Code Changes
 
-This keeps the app shell (sidebar, layout) intact and just refreshes the content, feeling like a seamless update rather than a shutdown.
+**`src/components/dashboard/ContractDataRegistryView.tsx`**:
 
-## Changes
+1. **PositionsTab**: Expand the add/edit forms to include Romanian, Thai, and Ukrainian label inputs alongside English and Swedish. Update the grid layout to show all 5 language columns. Update insert/update mutations to include the new fields.
 
-**`src/components/dashboard/VersionUpdateBanner.tsx`**:
-- Accept a new prop `onVersionUpdate` callback
-- Replace `window.location.reload()` with: reset `initialVersion` to the new version, dismiss banner, and call `onVersionUpdate()`
+2. **SkillGroupsTab**: Same treatment — add RO, TH, UK input fields for add/edit, expand the table grid to display all languages.
 
-**`src/components/dashboard/Dashboard.tsx`**:
-- Import `useQueryClient` from `@tanstack/react-query`
-- Pass an `onVersionUpdate` handler to `VersionUpdateBanner` that calls `queryClient.invalidateQueries()` to refresh all cached data
+3. **SalariesPeriodsTab**: Update the agreement lookup table and CSV export to include the additional language labels from the joined positions/skill_groups data.
 
-This way clicking "update" will refresh all data queries and dismiss the banner without the browser-level page teardown.
+4. **BackupRestoreTab**: Include the new columns in the CSV export headers and data rows.
+
+**`src/integrations/supabase/types.ts`**: Will auto-update after migration.
+
+## Technical Notes
+- Ukrainian language code: `uk` (ISO 639-1)
+- All new columns default to empty string so existing data won't break
+- The positions table grid will be wider; we may use a compact layout or horizontal scroll for the 5-language display
+- The "Add New Item" cards will stack language inputs in a 2- or 3-column grid
 
