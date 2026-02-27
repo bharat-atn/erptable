@@ -1,0 +1,1 @@
+DELETE FROM public.user_app_access WHERE user_id = '74b6dad0-3c2d-48e6-8ae0-97354597aa19' AND app_id = 'user-management';
