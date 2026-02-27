@@ -180,43 +180,41 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
               </CardContent>
             </Card>
 
-            {/* Place & Date */}
-            <Card>
-              <CardContent className="pt-4 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
-                  Place and Date / Plats och datum
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="employer-signing-place" className="text-sm">Place / Plats *</Label>
-                    <Input
-                      id="employer-signing-place"
-                      value={signingPlace}
-                      onChange={(e) => setSigningPlace(e.target.value)}
-                      placeholder="e.g. Stockholm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="employer-signing-date" className="text-sm">Date / Datum</Label>
-                    <Input
-                      id="employer-signing-date"
-                      type="date"
-                      value={signingDate}
-                      onChange={(e) => setSigningDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Employer signature */}
+            {/* Place, Date & Employer Signature — merged into one card */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Employer Signature / Arbetsgivarens underskrift</CardTitle>
+                <CardTitle className="text-base">Place, Date & Signature / Plats, datum & underskrift</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                    Place and Date / Plats och datum
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="employer-signing-place" className="text-sm">Place / Plats *</Label>
+                      <Input
+                        id="employer-signing-place"
+                        value={signingPlace}
+                        onChange={(e) => setSigningPlace(e.target.value)}
+                        placeholder="e.g. Stockholm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="employer-signing-date" className="text-sm">Date / Datum</Label>
+                      <Input
+                        id="employer-signing-date"
+                        type="date"
+                        value={signingDate}
+                        onChange={(e) => setSigningDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border pt-4 space-y-3">
                 {!placeValid && (
-                  <p className="text-sm text-amber-600">
+                  <p className="text-sm text-warning">
                     Please enter the signing place above before signing.
                   </p>
                 )}
@@ -302,6 +300,7 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
                     <Loader2 className="w-4 h-4 animate-spin" /> Submitting signature...
                   </div>
                 )}
+                </div>
               </CardContent>
             </Card>
           </div>

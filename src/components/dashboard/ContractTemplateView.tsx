@@ -465,6 +465,46 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
             </Card>}
 
           {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={async () => {
+              // Helper: build employee fields for form_data from employee record
+              const buildEmployeeFormData = (emp: Employee) => {
+                const pi = emp.personal_info || {};
+                return {
+                  employeeFirstName: emp.first_name || pi.firstName || "",
+                  employeeMiddleName: emp.middle_name || pi.middleName || "",
+                  employeeLastName: emp.last_name || pi.lastName || "",
+                  employeeAddress: pi.address || "",
+                  employeePostcode: pi.postcode || "",
+                  employeeCity: emp.city || pi.city || "",
+                  employeeCountry: emp.country || pi.country || "",
+                  employeePhone: emp.phone || pi.phone || "",
+                  employeeEmail: emp.email || pi.email || "",
+                  employeeDob: pi.dob || pi.dateOfBirth || "",
+                  employeeNationality: pi.nationality || "",
+                  employeePassport: pi.passportNumber || "",
+                  employeeTaxCountry: pi.taxCountry || "",
+                  employeeBank: pi.bankName || "",
+                  employeeBankAccount: pi.bankAccount || "",
+                  employeeIban: pi.iban || "",
+                  employeeBic: pi.bic || "",
+                  employeeEmergencyName: pi.emergencyName || "",
+                  employeeEmergencyPhone: pi.emergencyPhone || "",
+                  employeeEmergencyRelation: pi.emergencyRelation || "",
+                };
+              };
+
+              // Pre-populate form_data with employee info on contract creation/reuse
+              const prefillEmployeeData = async (cId: string, emp: Employee) => {
+                const { data: rec } = await supabase.from("contracts").select("form_data").eq("id", cId).single();
+                const fd = (rec?.form_data as Record<string, any>) || {};
+                // Only prefill if employee fields are missing
+                if (!fd.employeeFirstName && !fd.employeeLastName) {
+                  const empFields = buildEmployeeFormData(emp);
+                  await supabase.from("contracts").update({
+                    form_data: { ...fd, ...empFields },
+                  }).eq("id", cId);
+                }
+              };
+
               // Create or reuse contract when entering step 4
               if (!contractId && selectedEmployee && selectedCompanyId) {
                 // Check for existing draft/active contract for this employee
@@ -478,16 +518,16 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                   .maybeSingle();
 
                 if (existing) {
-                  // Reuse the existing draft contract
                   setContractId(existing.id);
-                  // Update company/language on the existing draft
                   const { data: ex } = await supabase.from("contracts").select("form_data").eq("id", existing.id).single();
                   const fd = (ex?.form_data as Record<string, any>) || {};
+                  const empFields = (!fd.employeeFirstName && !fd.employeeLastName) ? buildEmployeeFormData(selectedEmployee) : {};
                   await supabase.from("contracts").update({
                     company_id: selectedCompanyId,
-                    form_data: { ...fd, contractLanguage: selectedLanguage },
+                    form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage },
                   }).eq("id", existing.id);
                 } else {
+                  const empFields = buildEmployeeFormData(selectedEmployee);
                   const { data, error } = await supabase
                     .from("contracts")
                     .insert({
@@ -495,7 +535,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                       company_id: selectedCompanyId,
                       season_year: new Date().getFullYear().toString(),
                       status: "draft",
-                      form_data: { contractLanguage: selectedLanguage },
+                      form_data: { ...empFields, contractLanguage: selectedLanguage },
                     })
                     .select("id")
                     .single();
@@ -504,10 +544,11 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                   }
                 }
               } else if (contractId) {
-                // Update language in existing contract's form_data
+                // Update language + prefill employee data if missing
                 const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
                 const fd = (existing?.form_data as Record<string, any>) || {};
-                await supabase.from("contracts").update({ form_data: { ...fd, contractLanguage: selectedLanguage } }).eq("id", contractId);
+                const empFields = selectedEmployee && (!fd.employeeFirstName && !fd.employeeLastName) ? buildEmployeeFormData(selectedEmployee) : {};
+                await supabase.from("contracts").update({ form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage } }).eq("id", contractId);
               }
               goNext(3);
             }} />}
