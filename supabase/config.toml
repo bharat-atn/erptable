@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.send-role-notification]
 verify_jwt = false
+
+[functions.check-pending-role]
+verify_jwt = false
+
+[functions.cleanup-orphan-user]
+verify_jwt = false

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -14,6 +14,8 @@ const Index = () => {
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [apps, setApps] = useState<AppDefinition[]>(loadApps);
   const { role, loading: roleLoading } = useUserRole();
+  const [checkingPending, setCheckingPending] = useState(false);
+  const [pendingChecked, setPendingChecked] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -25,10 +27,13 @@ const Index = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (!session) setActiveApp(null);
+      if (!session) {
+        setActiveApp(null);
+        setPendingChecked(false);
+      }
 
       if (event === "SIGNED_IN" && session?.user) {
-        // Log auth event
+        setPendingChecked(false);
         supabase.rpc("log_auth_event", {
           _action: "LOGIN",
           _user_id: session.user.id,
@@ -36,7 +41,6 @@ const Index = () => {
           _summary: `${session.user.email} logged in`,
         }).then();
 
-        // Update last_sign_in_at on profile
         supabase
           .from("profiles")
           .update({ last_sign_in_at: new Date().toISOString() })
@@ -48,7 +52,30 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (loading || (session && roleLoading)) {
+  // Safety net: check pending role assignment when user has session but no role
+  useEffect(() => {
+    if (!session || roleLoading || role || pendingChecked || checkingPending) return;
+
+    setCheckingPending(true);
+    supabase.functions
+      .invoke("check-pending-role")
+      .then(({ data, error }) => {
+        if (!error && data?.role) {
+          // Role was assigned — force a page reload to re-fetch everything
+          window.location.reload();
+        } else {
+          setPendingChecked(true);
+        }
+      })
+      .catch(() => {
+        setPendingChecked(true);
+      })
+      .finally(() => {
+        setCheckingPending(false);
+      });
+  }, [session, roleLoading, role, pendingChecked, checkingPending]);
+
+  if (loading || (session && roleLoading) || (session && !role && !pendingChecked)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -60,7 +87,6 @@ const Index = () => {
     return <AuthForm onSuccess={() => {}} />;
   }
 
-  // No role assigned = pending approval
   if (!role) {
     return <PendingApproval />;
   }
