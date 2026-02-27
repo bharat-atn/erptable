@@ -1,36 +1,85 @@
 
 
-## Authentication & User Management Flow — Verification Report
+## Problem
 
-### What is in place and working correctly
+The `invite-user` edge function pre-creates auth users via `admin.createUser()` with an **email identity**. When the invited person then signs in with **Google OAuth**, Supabase treats it as a different identity and creates a **new auth user** with no roles. The invited user lands on the "Pending Approval" screen even though the admin already approved them.
 
-1. **Google Sign-In (primary)**: Uses `lovable.auth.signInWithOAuth("google")` with `redirect_uri: window.location.origin`. This is correct per the Lovable Cloud OAuth docs — the redirect must match the current origin for the OAuth callback to complete.
+Evidence from the database:
+- `dorinlazea@gmail.com` (created by admin) — provider: `email`, role: `org_admin`, **never signed in**
+- `dorin.lazea@ljunganforestry.se` (created by Google OAuth) — provider: `google`, **no role**, signed in Feb 25
 
-2. **Email/Password Sign-In (secondary)**: Uses `supabase.auth.signInWithPassword()`. Correctly implemented with collapsible UI.
+These are two separate auth users for the same person because the identities never linked.
 
-3. **Email/Password Sign-Up**: Uses `supabase.auth.signUp()`. Shows confirmation message to check email.
+## Solution
 
-4. **Forgot Password**: Uses `supabase.auth.resetPasswordForEmail()` with `redirectTo: getAppOrigin() + "/reset-password"` — correctly points to the published domain.
+Stop pre-creating auth users. Instead, store pending role assignments in a new table, and auto-assign roles when the user first signs in (via any method).
 
-5. **Reset Password Page** (`/reset-password`): Listens for `PASSWORD_RECOVERY` event, shows form, calls `supabase.auth.updateUser({ password })`. Route registered in `App.tsx`.
+## Changes
 
-6. **Role-based access**: `useUserRole` hook fetches from `user_roles` table with priority ordering. No role = pending approval screen.
+### 1. Create `pending_role_assignments` table (migration)
 
-7. **Pending Approval**: Shows clean "Account Pending Approval" screen with sign-out button.
+```sql
+CREATE TABLE public.pending_role_assignments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  role app_role NOT NULL,
+  full_name text,
+  app_access text[] DEFAULT '{}',
+  invited_by uuid,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(email)
+);
 
-8. **Invite User (admin)**: Edge function creates user via `admin.createUser()`, assigns role, sets profile to approved, grants app access. Supports optional fallback password.
+ALTER TABLE public.pending_role_assignments ENABLE ROW LEVEL SECURITY;
 
-9. **Role Assignment + Notification**: Uses `assign_user_role` RPC (SECURITY DEFINER). Sends approval email via Resend with `loginUrl: "https://erptable.lovable.app"` — correctly hardcoded.
+CREATE POLICY "Admins can manage pending assignments"
+  ON public.pending_role_assignments FOR ALL
+  USING (has_role(auth.uid(), 'admin'::app_role));
+```
 
-10. **Approval Email Content**: Includes instructions for both Google and email/password users ("Click Forgot password? to set your own password").
+### 2. Update `handle_new_user` trigger function
 
-11. **Self-demotion protection**: Handled by the `assign_user_role` RPC.
+After creating the profile, check `pending_role_assignments` for a matching email. If found:
+- Insert the role into `user_roles`
+- Update the profile to `approved`
+- Copy app access into `user_app_access`
+- Delete the pending assignment
 
-12. **Audit logging**: Auth events, role changes, and invitations are all logged.
+### 3. Rewrite `invite-user` edge function
 
-### Issues Found — None Critical
+- **Existing auth user**: Keep current behavior (update role directly)
+- **New user (no auth account yet)**: Insert into `pending_role_assignments` instead of calling `admin.createUser()`. Return success with a message like "Invitation stored. User will be auto-approved when they first sign in."
+- If a fallback password is provided, still call `admin.createUser()` (email/password users need a pre-created account)
 
-All flows are properly connected. No broken links, no missing routes, no incorrect redirects remaining.
+### 4. Fix `send-role-notification` import
 
-**Verdict: The system is complete and secure.** All authentication paths (Google sign-in, email/password sign-in, sign-up, forgot password, password reset, admin invitation, role assignment, approval notification) are wired up correctly. No code changes needed.
+Change `import { createClient } from "https://esm.sh/@supabase/supabase-js@2"` to `import { createClient } from "npm:@supabase/supabase-js@2"` for Deno runtime stability.
+
+### 5. Clean up orphaned data
+
+Provide guidance on merging or cleaning the duplicate user entries (e.g., `dorin.lazea@ljunganforestry.se` has no role).
+
+```text
+Flow: Before (broken)
+┌─────────┐    admin.createUser()    ┌──────────────┐
+│  Admin   │ ──────────────────────► │ Auth user    │ (email identity)
+│  invites │                         │ + role       │
+└─────────┘                         └──────────────┘
+                                           ✕ no link
+┌─────────┐    Google OAuth          ┌──────────────┐
+│  Invited │ ──────────────────────► │ NEW auth user│ (google identity)
+│  user    │                         │ NO role      │ ← stuck
+└─────────┘                         └──────────────┘
+
+Flow: After (fixed)
+┌─────────┐    pending_role_         ┌──────────────┐
+│  Admin   │ ──assignments──────────►│ Table row    │
+│  invites │                         │ email + role │
+└─────────┘                         └──────────────┘
+                                           │
+┌─────────┐    Google OAuth          ┌─────▼────────┐
+│  Invited │ ──────────────────────► │ Auth user    │
+│  user    │    handle_new_user      │ + auto role  │ ← works
+└─────────┘    trigger checks table  └──────────────┘
+```
 
