@@ -1,10 +1,102 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { Resend } from "npm:resend@4.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Super Admin",
+  org_admin: "Admin",
+  user: "Standard User",
+  team_leader: "Team Leader",
+  hr_manager: "HR Manager",
+  project_manager: "Project Manager",
+  payroll_manager: "Payroll Manager",
+};
+
+function buildInviteEmailHtml(userName: string, roleName: string, loginUrl: string) {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <h1 style="color: #1a1a1a; font-size: 22px; margin: 0;">You've Been Invited to ERP Table</h1>
+        <p style="color: #666; font-size: 14px; margin-top: 8px;">An administrator has invited you to join the system</p>
+      </div>
+
+      <p style="color: #333; font-size: 15px; line-height: 1.6;">
+        Hi ${userName},
+      </p>
+      <p style="color: #333; font-size: 15px; line-height: 1.6;">
+        You have been invited to ERP Table with the role of <strong>${roleName}</strong>. Click the button below to sign in and get started.
+      </p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${loginUrl}" 
+           style="display: inline-block; background-color: #1a1a1a; color: #ffffff; 
+                  padding: 14px 32px; text-decoration: none; border-radius: 6px; 
+                  font-size: 15px; font-weight: 500;">
+          Sign In Now
+        </a>
+      </div>
+
+      <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+        <p style="color: #333; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">How to sign in:</p>
+        <ul style="color: #555; font-size: 14px; line-height: 1.8; padding-left: 20px; margin: 0;">
+          <li><strong>Google account?</strong> Click "Sign in with Google" — it's the fastest option.</li>
+          <li><strong>Other email (iCloud, Outlook, etc.)?</strong> Click "Use email &amp; password instead", then click <strong>"Forgot password?"</strong> to set your own password.</li>
+        </ul>
+      </div>
+
+      <p style="color: #666; font-size: 13px; line-height: 1.5;">
+        If the button doesn't work, copy and paste this link into your browser:<br/>
+        <a href="${loginUrl}" style="color: #2563eb; word-break: break-all;">${loginUrl}</a>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 24px 0;" />
+      <p style="font-size: 11px; color: #999; text-align: center;">
+        This is an automated invitation from ERP Table HR. If you did not expect this email, please disregard it.
+      </p>
+    </div>
+  `;
+}
+
+async function sendInviteEmail(email: string, fullName: string, role: string, loginUrl: string): Promise<{ sent: boolean; error?: string }> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) {
+    console.log("RESEND_API_KEY not configured, skipping invite email");
+    return { sent: false, error: "Email service not configured" };
+  }
+
+  const roleName = ROLE_LABELS[role] || role;
+  const displayName = fullName || email;
+  const html = buildInviteEmailHtml(displayName, roleName, loginUrl);
+  const plainText = `Hi ${displayName},\n\nYou have been invited to ERP Table with the role of ${roleName}. Sign in here: ${loginUrl}\n\nHow to sign in:\n- Google account? Click "Sign in with Google".\n- Other email? Click "Use email & password instead", then click "Forgot password?" to set your own password.\n\nThis is an automated invitation from ERP Table HR.`;
+
+  try {
+    const resend = new Resend(resendApiKey);
+    const { error } = await resend.emails.send({
+      from: "ERP Table HR <hr@mail.erptable.com>",
+      reply_to: "hr@mail.erptable.com",
+      to: [email],
+      subject: `${displayName} — You're Invited to ERP Table`,
+      html,
+      text: plainText,
+      headers: {
+        "X-Entity-Ref-ID": `user-invite-${Date.now()}`,
+      },
+    });
+    if (error) {
+      console.error("Resend error:", error);
+      return { sent: false, error: error.message };
+    }
+    return { sent: true };
+  } catch (err) {
+    console.error("Email send failed:", err);
+    return { sent: false, error: err.message };
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -25,9 +117,9 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const body = await req.json();
-    const { email, full_name, role, temp_password, app_access } = body;
+    const { email, full_name, role, temp_password, app_access, resend_only } = body;
 
-    console.log("Invite user request:", { email, role, full_name });
+    console.log("Invite user request:", { email, role, full_name, resend_only });
 
     if (!email || !role) {
       return new Response(JSON.stringify({ error: "Email and role are required" }), {
@@ -68,12 +160,46 @@ Deno.serve(async (req) => {
       });
     }
 
+    const loginUrl = "https://erptable.lovable.app";
+
+    // ── Resend-only mode: just re-send the invite email ──
+    if (resend_only) {
+      const emailResult = await sendInviteEmail(email, full_name || email, role, loginUrl);
+      
+      // Audit log
+      try {
+        await adminClient.from("audit_log").insert({
+          user_id: caller.id,
+          user_email: caller.email,
+          action: "INVITE_EMAIL_RESENT",
+          table_name: "pending_role_assignments",
+          record_id: email,
+          summary: `Invite email resent to ${email} (${ROLE_LABELS[role] || role}) by ${caller.email}`,
+          new_data: { email, role, full_name, email_sent: emailResult.sent },
+        });
+      } catch (e) {
+        console.error("Audit log failed:", e);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: emailResult.sent
+            ? `Invite email resent to ${email}`
+            : `Resend failed: ${emailResult.error}`,
+          email_sent: emailResult.sent,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Check if user already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
     let userId: string;
     let action: string;
+    let emailResult = { sent: false, error: "not attempted" };
 
     if (existingUser) {
       // ── Existing auth user: update role directly ──
@@ -161,7 +287,6 @@ Deno.serve(async (req) => {
 
     } else {
       // ── New user, NO password: store pending assignment ──
-      // When they sign in via Google (or any method), handle_new_user trigger auto-assigns role
       const { error: pendingError } = await adminClient
         .from("pending_role_assignments")
         .upsert(
@@ -186,6 +311,10 @@ Deno.serve(async (req) => {
       userId = "pending";
       action = "invited";
       console.log("Pending role assignment stored for:", email);
+
+      // Send invite email
+      emailResult = await sendInviteEmail(email, full_name || email, role, loginUrl);
+      console.log("Invite email result:", emailResult);
     }
 
     // Audit log
@@ -196,8 +325,8 @@ Deno.serve(async (req) => {
         action: "USER_INVITED",
         table_name: "user_roles",
         record_id: userId,
-        summary: `User ${email} ${action} with role "${role}" by ${caller.email}`,
-        new_data: { email, role, full_name, action, app_access },
+        summary: `User ${email} ${action} with role "${role}" by ${caller.email}${emailResult.sent ? " (email sent)" : ""}`,
+        new_data: { email, role, full_name, action, app_access, email_sent: emailResult.sent },
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);
@@ -206,11 +335,11 @@ Deno.serve(async (req) => {
     console.log("Invite success:", email, action);
 
     const message = action === "invited"
-      ? `Invitation stored for ${email} (role: ${role}). They will be auto-approved when they first sign in.`
+      ? `Invitation stored for ${email} (role: ${role}). ${emailResult.sent ? "An invite email has been sent." : "They will be auto-approved when they first sign in."}`
       : `User ${email} ${action} with role ${role}.${temp_password && action === "created" ? " A fallback password was also set." : ""}`;
 
     return new Response(
-      JSON.stringify({ success: true, user_id: userId, message }),
+      JSON.stringify({ success: true, user_id: userId, message, email_sent: emailResult.sent }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
