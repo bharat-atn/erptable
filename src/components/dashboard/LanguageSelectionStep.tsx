@@ -11,7 +11,7 @@ interface LanguageOption {
 }
 
 /** Languages that have actual contract translations ready */
-const TRANSLATED_CODES = new Set(["EN/SE", "SE", "RO/SE", "TH/SE"]);
+const TRANSLATED_CODES = new Set(["EN/SE", "SE", "RO/SE", "TH/SE", "UK/SE"]);
 
 const ALL_LANGUAGES: LanguageOption[] = [
   { code: "EN/SE", label: "English/Swedish" },
