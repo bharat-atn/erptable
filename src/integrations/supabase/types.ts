@@ -1167,6 +1167,8 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      is_org_admin: { Args: { _org_id: string }; Returns: boolean }
+      is_org_member: { Args: { _org_id: string }; Returns: boolean }
       is_org_member_current: { Args: { _org_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       log_auth_event: {
