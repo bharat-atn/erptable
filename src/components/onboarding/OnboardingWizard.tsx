@@ -39,8 +39,14 @@ const COUNTRY_NAMES = countries.map((c) => c.name);
 
 /* ─── Priority countries for phone prefix dropdowns ─── */
 const PRIORITY_COUNTRY_CODES = ["RO", "TH", "UA", "SE"];
-const priorityCountries = countries.filter(c => PRIORITY_COUNTRY_CODES.includes(c.code));
-const otherCountries = countries.filter(c => !PRIORITY_COUNTRY_CODES.includes(c.code));
+const seenDialCodes = new Set<string>();
+const uniquePhonePrefixOptions = countries.filter((c) => {
+  if (seenDialCodes.has(c.dialCode)) return false;
+  seenDialCodes.add(c.dialCode);
+  return true;
+});
+const priorityPhonePrefixOptions = uniquePhonePrefixOptions.filter((c) => PRIORITY_COUNTRY_CODES.includes(c.code));
+const otherPhonePrefixOptions = uniquePhonePrefixOptions.filter((c) => !PRIORITY_COUNTRY_CODES.includes(c.code));
 
 /* ─── Priority country names for country selectors ─── */
 const PRIORITY_COUNTRY_NAMES = ["Romania", "Thailand", "Ukraine", "Sweden"];
@@ -456,9 +462,17 @@ export function OnboardingWizard({
   const templateLogo = loadTemplateLogo();
   const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
-  const availableBankCountries = Object.keys(banksByCountry).length > 0
-    ? Object.keys(banksByCountry).sort((a, b) => a.localeCompare(b))
-    : [...priorityCountryNames, ...otherCountryNames];
+const availableBankCountries = (() => {
+    const fetchedCountries = Object.keys(banksByCountry);
+    if (fetchedCountries.length > 0) {
+      const mergedCountries = selectedBankCountry && !fetchedCountries.includes(selectedBankCountry)
+        ? [...fetchedCountries, selectedBankCountry]
+        : fetchedCountries;
+      return mergedCountries.sort((a, b) => a.localeCompare(b));
+    }
+
+    return [...priorityCountryNames, ...otherCountryNames];
+  })();
   const bankList = selectedBankCountry
     ? (
         banksByCountry[selectedBankCountry]?.length
@@ -953,14 +967,14 @@ export function OnboardingWizard({
                   >
                     <SelectTrigger tabIndex={16} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {priorityCountries.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
+                      {priorityPhonePrefixOptions.map((c) => (
+                        <SelectItem key={`phone-priority-${c.dialCode}`} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
                       ))}
                       <div className="border-t border-border my-1" />
-                      {otherCountries.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
+                      {otherPhonePrefixOptions.map((c) => (
+                        <SelectItem key={`phone-other-${c.dialCode}`} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
                       ))}
@@ -1040,14 +1054,14 @@ export function OnboardingWizard({
                   >
                     <SelectTrigger tabIndex={21} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {priorityCountries.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
+                      {priorityPhonePrefixOptions.map((c) => (
+                        <SelectItem key={`emergency-priority-${c.dialCode}`} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
                       ))}
                       <div className="border-t border-border my-1" />
-                      {otherCountries.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
+                      {otherPhonePrefixOptions.map((c) => (
+                        <SelectItem key={`emergency-other-${c.dialCode}`} value={c.dialCode}>
                           {c.flag} {c.dialCode}
                         </SelectItem>
                       ))}
