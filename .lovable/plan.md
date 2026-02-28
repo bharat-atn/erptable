@@ -1,37 +1,41 @@
 
 
-## Plan: Dual Organization Setup + Org Membership Management in User Management
+## Enhance Create Organization with AI Company Lookup
 
-### Current State
-- One organization exists: "Ljungan Skogsvård AB" (production, id: `9bf5a0b6-...`)
-- 6 members are assigned to it
-- User Management has no org membership controls
+### Problem
+The Create Organization dialog is bare -- just name, slug, and type. No company details like org number, address, or website are collected. The existing `lookup-company` edge function already does exactly what's needed (Firecrawl + AI lookup).
 
-### Step 1: Create Sandbox Organization (Data Insert)
-Insert a second organization cloned from the existing one:
-- Name: "Ljungan Skogsvård AB" with `org_type: sandbox`, slug: `ljungan-sandbox`
-- Same `created_by` as the original
-- Add all 6 current members to the new sandbox org with same roles
+### Step 1: Add columns to `organizations` table
+Database migration to add:
+- `org_number` (text, nullable)
+- `address` (text, nullable)
+- `postcode` (text, nullable)
+- `city` (text, nullable)
+- `country` (text, nullable, default 'Sweden')
+- `phone` (text, nullable)
+- `email` (text, nullable)
+- `website` (text, nullable)
 
-### Step 2: Add Org Membership Tab to User Management
-Add an "Organizations" column or section in `UserManagementView.tsx` that shows which organizations each user belongs to, with controls to:
-- View org memberships per user (badges showing org name + type)
-- Add a user to an organization (dialog with org selector + role picker)
-- Remove a user from an organization
+### Step 2: Rewrite Create Organization dialog in OrganizationPicker.tsx
+- Add a "Lookup" button next to the Name field that calls the existing `lookup-company` edge function
+- On lookup success, auto-fill: org_number, address, postcode, city, country, website, phone, email
+- Auto-generate slug from the company name
+- Show a lookup status indicator (loading spinner, success with source badge, or error)
+- Add input fields for all new fields, pre-filled but editable
+- Keep the Production/Sandbox type selector
+- Show confidence indicators (verified/unverified badge) like the Company Register does
 
-This requires:
-- Fetching `org_members` joined with `organizations` in the user management queries
-- A new "Manage Orgs" action per user row
-- A dialog to add/remove org memberships
+### Step 3: Update handleCreate to save new fields
+Insert the additional columns when creating the organization.
 
-### Step 3: Update OrganizationPicker Display
-The existing org now shows as "Ljungan Skogsvård AB" for both. We need to differentiate them visually — the picker already renders `Production` / `Sandbox` badges from `org_type`, so this works automatically.
+### Step 4: Update OrgContext types
+Add the new fields to the `Organization` interface so they're available downstream.
 
 ### Files Changed
-1. **Database insert** — Create sandbox org + clone member assignments
-2. **`src/components/dashboard/UserManagementView.tsx`** — Add org membership column and management dialog
-3. **`src/components/dashboard/OrganizationPicker.tsx`** — No changes needed (already shows org_type badges)
+1. **Database migration** -- Add 8 columns to `organizations` table
+2. **`src/components/dashboard/OrganizationPicker.tsx`** -- Expand create dialog with AI lookup and new fields
+3. **`src/contexts/OrgContext.tsx`** -- Update Organization interface with new fields
 
 ### Architecture Note
-Infrastructure (menus, translations, sidebar registry, app launcher config) is shared code — identical across all orgs. Only data tables (employees, contracts, companies, invitations, etc.) are org-scoped via RLS with `org_id`. This is already the architecture in place.
+Reuses the existing `lookup-company` edge function -- no new backend code needed. The same Firecrawl + AI pipeline that powers Company Register now powers org creation.
 
