@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -166,9 +166,10 @@ interface InviteDialogProps {
   onClose: () => void;
   onSuccess: () => void;
   apps: AppDefinition[];
+  allOrgs: { id: string; name: string; org_type: string }[];
 }
 
-function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps) {
+function InviteUserDialog({ open, onClose, onSuccess, apps, allOrgs }: InviteDialogProps) {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<AppRole>("user");
@@ -178,6 +179,16 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+  const [selectedOrgs, setSelectedOrgs] = useState<Set<string>>(new Set());
+
+  const toggleOrg = (orgId: string) => {
+    setSelectedOrgs((prev) => {
+      const next = new Set(prev);
+      if (next.has(orgId)) next.delete(orgId);
+      else next.add(orgId);
+      return next;
+    });
+  };
 
   // Fetch role-based app access and auto-set when role changes
   const { data: roleAppAccess } = useQuery({
@@ -221,6 +232,7 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
         full_name: fullName.trim(),
         role,
         app_access: Array.from(selectedApps),
+        org_ids: Array.from(selectedOrgs),
       };
       if (showFallback) {
         body.temp_password = tempPassword;
@@ -251,6 +263,7 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
     setResult(null);
     setShowFallback(false);
     setSelectedApps(new Set());
+    setSelectedOrgs(new Set());
     onClose();
   };
 
@@ -338,6 +351,29 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Organization Access */}
+            <div className="space-y-2">
+              <Label>Organization Access</Label>
+              <div className="rounded-lg border border-border p-3 space-y-2">
+                {allOrgs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground italic">No organizations available</p>
+                ) : (
+                  allOrgs.map((org) => (
+                    <label key={org.id} className="flex items-center gap-3 p-1.5 rounded hover:bg-muted/50 cursor-pointer">
+                      <Checkbox
+                        checked={selectedOrgs.has(org.id)}
+                        onCheckedChange={() => toggleOrg(org.id)}
+                      />
+                      <span className="text-sm">{org.name}</span>
+                      <Badge variant={org.org_type === "production" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 ml-auto">
+                        {org.org_type}
+                      </Badge>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
 
             {/* App Access */}
@@ -932,6 +968,7 @@ export function UserManagementView() {
       key: "organizations",
       header: "Organizations",
       sortable: false,
+      accessor: (row) => row.orgMemberships.map(m => m.org_name).join(", ") || "none",
       render: (row) => {
         if (row.isPendingInvitation) {
           return <span className="text-xs text-muted-foreground italic">—</span>;
@@ -939,26 +976,28 @@ export function UserManagementView() {
         const memberships = row.orgMemberships;
         if (memberships.length === 0) {
           return (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs gap-1 text-muted-foreground"
+            <button
+              className="inline-flex items-center gap-1.5 text-xs text-amber-600 hover:text-amber-700 transition-colors"
               onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
             >
-              <Plus className="w-3 h-3" /> Add
-            </Button>
+              <AlertTriangle className="w-3 h-3" />
+              <span>No access</span>
+              <Plus className="w-3 h-3" />
+            </button>
           );
         }
         return (
-          <div className="flex items-center gap-1 flex-wrap">
+          <div
+            className="flex items-center gap-1 flex-wrap cursor-pointer"
+            onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
+          >
             {memberships.map((m) => (
               <Badge
                 key={m.id}
                 variant={m.org_type === "production" ? "default" : "secondary"}
-                className="text-[10px] px-1.5 py-0 cursor-pointer"
-                onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
+                className="text-[10px] px-1.5 py-0"
               >
-                {m.org_type === "production" ? "Prod" : "Sandbox"}
+                {m.org_name}
               </Badge>
             ))}
           </div>
@@ -1017,6 +1056,11 @@ export function UserManagementView() {
         { value: "payroll_manager", label: "Payroll Manager" },
         { value: "pending", label: "No Role" },
       ],
+    },
+    {
+      key: "organizations",
+      label: "Organization",
+      options: allOrgs.map(o => ({ value: o.name, label: o.name })),
     },
   ];
 
@@ -1171,6 +1215,7 @@ export function UserManagementView() {
         onClose={() => setInviteOpen(false)}
         onSuccess={invalidateAll}
         apps={apps}
+        allOrgs={allOrgs}
       />
 
       {editNameDialog && (

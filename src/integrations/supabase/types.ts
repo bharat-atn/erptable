@@ -871,6 +871,7 @@ export type Database = {
           full_name: string | null
           id: string
           invited_by: string | null
+          org_ids: string[] | null
           role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
@@ -880,6 +881,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           invited_by?: string | null
+          org_ids?: string[] | null
           role: Database["public"]["Enums"]["app_role"]
         }
         Update: {
@@ -889,6 +891,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           invited_by?: string | null
+          org_ids?: string[] | null
           role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []

@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const body = await req.json();
-    const { email, full_name, role, temp_password, app_access, resend_only } = body;
+    const { email, full_name, role, temp_password, app_access, resend_only, org_ids } = body;
 
     console.log("Invite user request:", { email, role, full_name, resend_only });
 
@@ -238,6 +238,16 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Handle org memberships
+      if (Array.isArray(org_ids) && org_ids.length > 0) {
+        const orgRows = org_ids.map((oid: string) => ({
+          org_id: oid,
+          user_id: userId,
+          role: "member",
+        }));
+        await adminClient.from("org_members").upsert(orgRows, { onConflict: "org_id,user_id" });
+      }
+
       // Remove any pending assignment for this email
       await adminClient.from("pending_role_assignments").delete().eq("email", email.toLowerCase());
 
@@ -283,6 +293,16 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Handle org memberships
+      if (Array.isArray(org_ids) && org_ids.length > 0) {
+        const orgRows = org_ids.map((oid: string) => ({
+          org_id: oid,
+          user_id: userId,
+          role: "member",
+        }));
+        await adminClient.from("org_members").upsert(orgRows, { onConflict: "org_id,user_id" });
+      }
+
       action = "created";
 
     } else {
@@ -295,6 +315,7 @@ Deno.serve(async (req) => {
             role,
             full_name: full_name || email,
             app_access: Array.isArray(app_access) ? app_access : [],
+            org_ids: Array.isArray(org_ids) ? org_ids : [],
             invited_by: caller.id,
           },
           { onConflict: "email" }
