@@ -486,17 +486,28 @@ export function OnboardingWizard({
     return merged;
   }, [banksByCountry]);
 
-  const availableBankCountries = (() => {
-    const fetchedCountries = Object.keys(effectiveBanksByCountry);
-    if (fetchedCountries.length > 0) {
-      const mergedCountries = selectedBankCountry && !fetchedCountries.includes(selectedBankCountry)
-        ? [...fetchedCountries, selectedBankCountry]
-        : fetchedCountries;
-      return mergedCountries.sort((a, b) => a.localeCompare(b));
-    }
+  const availableBankCountries = useMemo(() => {
+    const merged: string[] = [];
+    const seen = new Set<string>();
 
-    return [...priorityCountryNames, ...otherCountryNames];
-  })();
+    const addCountry = (country: string) => {
+      const normalized = country.trim().toLowerCase();
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      merged.push(country);
+    };
+
+    priorityCountryNames.forEach(addCountry);
+    otherCountryNames.forEach(addCountry);
+
+    Object.keys(effectiveBanksByCountry)
+      .sort((a, b) => a.localeCompare(b))
+      .forEach(addCountry);
+
+    if (selectedBankCountry) addCountry(selectedBankCountry);
+
+    return merged;
+  }, [effectiveBanksByCountry, selectedBankCountry]);
 
   const bankList = selectedBankCountry
     ? (effectiveBanksByCountry[selectedBankCountry] || []).map((b) => b.name)
