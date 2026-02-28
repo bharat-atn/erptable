@@ -1,28 +1,38 @@
 
+## Fix Plan: Super-admin bypass not triggering after login
 
-## Super Admin Org Bypass + Membership-Filtered Org Picker
+1. Update `src/contexts/OrgContext.tsx` to make org loading auth-aware:
+   - At start of `fetchOrgs`, call `supabase.auth.getSession()`.
+   - If no authenticated user: clear `orgs`, clear `currentOrgId`, remove `sessionStorage.currentOrgId`, set `loading=false`, return.
+   - Always set `loading=true` at fetch start and `loading=false` in `finally`.
 
-### Current State
-- All users (including super admins) see the Organization Picker when no org is selected
-- The `organizations` table RLS already filters: super admins see all orgs, others see only orgs they're members of via `is_org_member(id)`
-- `org_members` SELECT RLS: `user_id = auth.uid() OR is_super_admin()` — already correct
+2. Refetch organizations on auth changes inside `OrgProvider`:
+   - Add `supabase.auth.onAuthStateChange` listener.
+   - On `SIGNED_IN` / `TOKEN_REFRESHED`: run `fetchOrgs()` so org list and super-admin status are evaluated with authenticated context.
+   - On `SIGNED_OUT`: hard-reset org state (`orgs=[]`, `currentOrgId=null`, remove sessionStorage key).
 
-### What Needs to Change
+3. Fix org auto-selection logic in `fetchOrgs`:
+   - Keep bypass only for super admin (`is_super_admin()` true): auto-select saved org if valid, otherwise first org.
+   - Remove the non-super-admin auto-select path for `enriched.length === 1` so admins/managers/org users must pick an org.
+   - For non-super-admin users: if no valid saved org, keep `currentOrgId=null` to force picker.
 
-**1. Auto-bypass org picker for super admins** (`src/contexts/OrgContext.tsx`)
-- In `fetchOrgs`, after loading orgs: if user is super admin (`is_super_admin()` check), auto-select the first org (or saved org) without requiring manual pick
-- This means the `orgId` will already be set before `Index.tsx` reaches the picker check
+4. Update `src/pages/Index.tsx` loading gate:
+   - Read `loading` from `useOrg()` (e.g. `const { orgId, loading: orgLoading } = useOrg()`).
+   - Include `orgLoading` in the top spinner condition so UI waits for post-login org refresh before deciding between picker/app launcher.
 
-**2. Update Index.tsx flow** (`src/pages/Index.tsx`)
-- Pass `isAdmin` to OrgContext or handle in Index: if `isAdmin` and `orgs.length > 0` but no `orgId`, auto-select first org and skip picker
-- Non-admin users still see the picker, but only orgs they belong to (already enforced by RLS)
+5. Keep membership-filtered picker behavior as-is:
+   - No DB/RLS change needed; picker list already follows memberships managed in User Management.
+   - This fix ensures that membership-filtered query runs after auth, so users see correct orgs.
 
-**3. No database changes needed**
-- RLS on `organizations` already filters by membership for non-admins
-- `org_members` already only shows own memberships to non-admins
-- The User Management "Manage Orgs" dialog already controls which orgs users can access
+## Technical details
+- Files to change:
+  - `src/contexts/OrgContext.tsx` (primary fix)
+  - `src/pages/Index.tsx` (loading synchronization)
+- No migration needed.
+- No backend function change needed.
 
-### Files Changed
-1. **`src/contexts/OrgContext.tsx`** — Add super admin detection; auto-select first org for admins
-2. **`src/pages/Index.tsx`** — Skip org picker when `isAdmin` and orgs are available (auto-select handled by context)
-
+## Verification checklist
+1. Log in as super admin: should go directly to App Launcher (no org picker stop).
+2. Log in as org_admin/manager-level user: should see Organization Picker and must select org.
+3. Confirm picker shows only organizations assigned via User Management memberships.
+4. Sign out and sign in again as non-super-admin: should be required to pick org again.
