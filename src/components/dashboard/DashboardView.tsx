@@ -9,6 +9,7 @@ import { RecentInvitationsTable } from "./RecentInvitationsTable";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Mail, FileCheck, AlertCircle, PenTool, Send, Database, RotateCcw, Loader2, Trash2 } from "lucide-react";
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -184,6 +185,7 @@ function SandboxToolsCard() {
   const [restoring, setRestoring] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const isSuperAdmin = role === "admin";
   const isSandbox = orgType === "sandbox";
@@ -225,7 +227,7 @@ function SandboxToolsCard() {
   };
 
   const handleReset = async () => {
-    if (!confirm("This will DELETE all sandbox data and seed fresh records. Continue?")) return;
+    setShowResetConfirm(false);
     setResetting(true);
     try {
       const { data, error } = await supabase.functions.invoke("seed-sandbox-data", {
@@ -241,29 +243,42 @@ function SandboxToolsCard() {
   };
 
   return (
-    <Card className="border-2 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Database className="w-4 h-4 text-amber-600" />
-          Sandbox Tools
-          <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300">Super Admin</Badge>
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">Manage sandbox test data. These actions only affect the sandbox organization.</p>
-      </CardHeader>
-      <CardContent className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={handleRestore} disabled={restoring} className="gap-1.5">
-          {restoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-          Restore from Audit
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleSeed} disabled={seeding} className="gap-1.5">
-          {seeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
-          Seed New Dataset
-        </Button>
-        <Button variant="destructive" size="sm" onClick={handleReset} disabled={resetting} className="gap-1.5">
-          {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-          Reset & Reseed
-        </Button>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="border-2 border-amber-300 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-700">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Database className="w-4 h-4 text-amber-600" />
+            Sandbox Tools
+            <Badge variant="outline" className="text-xs bg-amber-100 text-amber-700 border-amber-300">Super Admin</Badge>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Manage sandbox test data. These actions only affect the sandbox organization.</p>
+        </CardHeader>
+        <CardContent className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={handleRestore} disabled={restoring} className="gap-1.5">
+            {restoring ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
+            Restore from Audit
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSeed} disabled={seeding} className="gap-1.5">
+            {seeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Database className="w-3.5 h-3.5" />}
+            Seed New Dataset
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setShowResetConfirm(true)} disabled={resetting} className="gap-1.5">
+            {resetting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+            Reset & Reseed
+          </Button>
+        </CardContent>
+      </Card>
+
+      <DeleteConfirmDialog
+        open={showResetConfirm}
+        onOpenChange={setShowResetConfirm}
+        title="Reset Sandbox Data"
+        itemName="all sandbox data"
+        description="This will DELETE all sandbox employees, invitations, and contracts, then seed fresh test records."
+        onConfirm={handleReset}
+        isLoading={resetting}
+        requireTypedConfirmation={false}
+      />
+    </>
   );
 }
