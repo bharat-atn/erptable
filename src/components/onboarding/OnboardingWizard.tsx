@@ -23,17 +23,19 @@ import { toast } from "sonner";
 import { countries, findCountryByName } from "@/lib/countries";
 import { supabase } from "@/integrations/supabase/client";
 
-const FALLBACK_BANKS = [
-  "BANCA TRANSILVANIA S.A.",
-  "Banca Comercială Română S.A.",
-  "BRD - Groupe Société Générale S.A.",
-  "CEC BANK S.A.",
-  "ING Bank NV, Amsterdam - Bucharest Branch",
-  "UniCredit Bank S.A.",
-  "RAIFFEISEN BANK S.A.",
-];
+const FALLBACK_BANKS_BY_COUNTRY: Record<string, { name: string; bic_code: string | null }[]> = {
+  Romania: [
+    "BANCA TRANSILVANIA S.A.",
+    "Banca Comercială Română S.A.",
+    "BRD - Groupe Société Générale S.A.",
+    "CEC BANK S.A.",
+    "ING Bank NV, Amsterdam - Bucharest Branch",
+    "UniCredit Bank S.A.",
+    "RAIFFEISEN BANK S.A.",
+  ].map((name) => ({ name, bic_code: null })),
+};
 
-const COUNTRY_NAMES = countries.map(c => c.name);
+const COUNTRY_NAMES = countries.map((c) => c.name);
 
 /* ─── Priority countries for phone prefix dropdowns ─── */
 const PRIORITY_COUNTRY_CODES = ["RO", "TH", "UA", "SE"];
@@ -454,7 +456,16 @@ export function OnboardingWizard({
   const templateLogo = loadTemplateLogo();
   const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
-  const bankList = selectedBankCountry ? (banksByCountry[selectedBankCountry] || []).map((b) => b.name) : [];
+  const availableBankCountries = Object.keys(banksByCountry).length > 0
+    ? Object.keys(banksByCountry).sort((a, b) => a.localeCompare(b))
+    : [...priorityCountryNames, ...otherCountryNames];
+  const bankList = selectedBankCountry
+    ? (
+        banksByCountry[selectedBankCountry]?.length
+          ? banksByCountry[selectedBankCountry]
+          : FALLBACK_BANKS_BY_COUNTRY[selectedBankCountry] || []
+      ).map((b) => b.name)
+    : [];
 
   useEffect(() => {
     supabase
@@ -462,7 +473,12 @@ export function OnboardingWizard({
       .select("name, country, bic_code")
       .eq("is_active", true)
       .order("name")
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          setBanksByCountry(FALLBACK_BANKS_BY_COUNTRY);
+          return;
+        }
+
         if (data && data.length > 0) {
           const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
           for (const b of data) {
@@ -471,7 +487,10 @@ export function OnboardingWizard({
             grouped[c].push({ name: b.name, bic_code: b.bic_code });
           }
           setBanksByCountry(grouped);
+          return;
         }
+
+        setBanksByCountry(FALLBACK_BANKS_BY_COUNTRY);
       });
   }, []);
   const [s1Open, setS1Open] = useState(true);
@@ -1082,7 +1101,7 @@ export function OnboardingWizard({
                     <SelectValue placeholder="Choose country / Välj land" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.keys(banksByCountry).sort().map((c) => (
+                    {availableBankCountries.map((c) => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
