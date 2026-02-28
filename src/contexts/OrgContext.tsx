@@ -52,12 +52,33 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(true);
 
-  const fetchOrgs = useCallback(async () => {
-    const { data } = await supabase
-      .from("organizations")
-      .select("id, name, slug, org_type, logo_url, created_by, org_number, address, postcode, city, country, phone, email, website");
+  const setOrgContext = async (orgId: string) => {
+    await supabase.rpc("set_org_context", { _org_id: orgId });
+    setCurrentOrgId(orgId);
+    sessionStorage.setItem("currentOrgId", orgId);
+  };
 
-    if (data && data.length > 0) {
+  const fetchOrgs = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Check auth session first
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        setOrgs([]);
+        setCurrentOrgId(null);
+        sessionStorage.removeItem("currentOrgId");
+        return;
+      }
+
+      const { data } = await supabase
+        .from("organizations")
+        .select("id, name, slug, org_type, logo_url, created_by, org_number, address, postcode, city, country, phone, email, website");
+
+      if (!data || data.length === 0) {
+        setOrgs([]);
+        return;
+      }
+
       // Get member counts
       const { data: members } = await supabase
         .from("org_members")
@@ -77,29 +98,28 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       // Check if user is super admin
       const { data: isSuperAdmin } = await supabase.rpc("is_super_admin");
 
-      // Auto-select if only one org or if saved org still valid
       const savedId = sessionStorage.getItem("currentOrgId");
-      if (savedId && enriched.some((o: Organization) => o.id === savedId)) {
-        await setOrgContext(savedId);
-      } else if (enriched.length === 1) {
-        await setOrgContext(enriched[0].id);
-      } else if (isSuperAdmin && enriched.length > 0) {
-        // Super admins bypass the picker — auto-select first org
-        await setOrgContext(enriched[0].id);
-      } else {
-        setCurrentOrgId(null);
-        sessionStorage.removeItem("currentOrgId");
-      }
-    }
-    setLoading(false);
-  }, []);
 
-  const setOrgContext = async (orgId: string) => {
-    // Set the Postgres session variable
-    await supabase.rpc("set_org_context", { _org_id: orgId });
-    setCurrentOrgId(orgId);
-    sessionStorage.setItem("currentOrgId", orgId);
-  };
+      if (isSuperAdmin) {
+        // Super admins bypass picker — auto-select saved or first org
+        if (savedId && enriched.some((o: Organization) => o.id === savedId)) {
+          await setOrgContext(savedId);
+        } else if (enriched.length > 0) {
+          await setOrgContext(enriched[0].id);
+        }
+      } else {
+        // Non-super-admins: only restore saved org, otherwise force picker
+        if (savedId && enriched.some((o: Organization) => o.id === savedId)) {
+          await setOrgContext(savedId);
+        } else {
+          setCurrentOrgId(null);
+          sessionStorage.removeItem("currentOrgId");
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const switchOrg = useCallback(async (orgId: string) => {
     await setOrgContext(orgId);
@@ -112,6 +132,20 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchOrgs();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        fetchOrgs();
+      } else if (event === "SIGNED_OUT") {
+        setOrgs([]);
+        setCurrentOrgId(null);
+        sessionStorage.removeItem("currentOrgId");
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [fetchOrgs]);
 
   const currentOrg = orgs.find((o) => o.id === currentOrgId);
