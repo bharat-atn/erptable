@@ -1204,6 +1204,14 @@ export type Database = {
           type: Database["public"]["Enums"]["invitation_type"]
         }[]
       }
+      get_onboarding_banks_by_token: {
+        Args: { _token: string }
+        Returns: {
+          bic_code: string
+          country: string
+          name: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
