@@ -1,24 +1,37 @@
 
 
-## Fix: Infinite Recursion in org_members RLS Policies
+## Plan: Dual Organization Setup + Org Membership Management in User Management
 
-### Root Cause
-The `org_members` table's SELECT policy references itself via a subquery (`EXISTS (SELECT 1 FROM org_members ...)`), causing Postgres error `42P17: infinite recursion detected`. This blocks ALL organization queries, which is why "No Organizations Available" appears.
+### Current State
+- One organization exists: "Ljungan Skogsvård AB" (production, id: `9bf5a0b6-...`)
+- 6 members are assigned to it
+- User Management has no org membership controls
 
-### Database Migration
+### Step 1: Create Sandbox Organization (Data Insert)
+Insert a second organization cloned from the existing one:
+- Name: "Ljungan Skogsvård AB" with `org_type: sandbox`, slug: `ljungan-sandbox`
+- Same `created_by` as the original
+- Add all 6 current members to the new sandbox org with same roles
 
-Drop and recreate all 4 `org_members` policies to avoid self-referencing subqueries:
+### Step 2: Add Org Membership Tab to User Management
+Add an "Organizations" column or section in `UserManagementView.tsx` that shows which organizations each user belongs to, with controls to:
+- View org memberships per user (badges showing org name + type)
+- Add a user to an organization (dialog with org selector + role picker)
+- Remove a user from an organization
 
-1. **SELECT** — `user_id = auth.uid() OR is_super_admin()` (direct column check, no subquery)
-2. **INSERT** — Keep super_admin OR check the inserting user is owner/admin of that org, but use `auth.uid()` directly on the row being inserted plus a `SECURITY DEFINER` helper function `is_org_admin(_org_id uuid)` that bypasses RLS
-3. **UPDATE** — Same pattern: helper function `is_org_admin`
-4. **DELETE** — Same pattern: helper function `is_org_admin`
+This requires:
+- Fetching `org_members` joined with `organizations` in the user management queries
+- A new "Manage Orgs" action per user row
+- A dialog to add/remove org memberships
 
-The helper function `is_org_admin(_org_id uuid)` will be `SECURITY DEFINER` (bypasses RLS) and checks if `auth.uid()` has `owner` or `admin` role in the given org.
-
-Also fix the `organizations` SELECT policy which has the same recursive subquery through `org_members`.
+### Step 3: Update OrganizationPicker Display
+The existing org now shows as "Ljungan Skogsvård AB" for both. We need to differentiate them visually — the picker already renders `Production` / `Sandbox` badges from `org_type`, so this works automatically.
 
 ### Files Changed
+1. **Database insert** — Create sandbox org + clone member assignments
+2. **`src/components/dashboard/UserManagementView.tsx`** — Add org membership column and management dialog
+3. **`src/components/dashboard/OrganizationPicker.tsx`** — No changes needed (already shows org_type badges)
 
-- **Database migration only** — no frontend code changes needed; the OrganizationPicker and OrgContext are already correct, they just can't fetch data due to the 500 error.
+### Architecture Note
+Infrastructure (menus, translations, sidebar registry, app launcher config) is shared code — identical across all orgs. Only data tables (employees, contracts, companies, invitations, etc.) are org-scoped via RLS with `org_id`. This is already the architecture in place.
 
