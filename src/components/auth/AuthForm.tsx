@@ -64,7 +64,10 @@ export function AuthForm({ onSuccess }: AuthFormProps) {
 
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
-        ...(loginHint ? { extraParams: { login_hint: loginHint } } : {}),
+        extraParams: {
+          prompt: "select_account",
+          ...(loginHint ? { login_hint: loginHint } : {}),
+        },
       });
       if (error) throw error;
     } catch (error: any) {
