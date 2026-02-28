@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Plus, GitBranch, Clock, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useOrg } from "@/contexts/OrgContext";
 
 type ReleaseType = "alpha" | "beta" | "rc" | "release";
 
@@ -49,7 +50,7 @@ export function VersionManagementView() {
   const [releaseType, setReleaseType] = useState<ReleaseType>("alpha");
   const [notes, setNotes] = useState("");
   const queryClient = useQueryClient();
-
+  const { orgId } = useOrg();
   const { data: versions = [], isLoading } = useQuery<AppVersion[]>({
     queryKey: ["app-versions"],
     queryFn: async () => {
@@ -84,6 +85,7 @@ export function VersionManagementView() {
         sequence_number: seq,
         status: "published",
         notes,
+        org_id: orgId,
       } as any);
       if (error) throw error;
       return tag;
