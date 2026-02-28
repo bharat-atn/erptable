@@ -246,7 +246,7 @@ export function BankListView() {
         bic_code: input.bic_code || null,
         country: input.country || null,
         sort_order: banks.length + 1,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -305,7 +305,7 @@ export function BankListView() {
           bic_code: row.bic_code || null,
           country: row.country || null,
           sort_order: banks.length + added + 1,
-        });
+        } as any);
         if (!error) added++;
       }
       return added;

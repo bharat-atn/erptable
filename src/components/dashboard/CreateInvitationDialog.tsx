@@ -115,7 +115,7 @@ export function CreateInvitationDialog() {
             middle_name: middleName.trim() || null,
             last_name: lastName.trim() || null,
             status: "INVITED" as const,
-          }])
+          } as any])
           .select("id")
           .single();
 
@@ -130,7 +130,7 @@ export function CreateInvitationDialog() {
           type: type as "NEW_HIRE" | "CONTRACT_RENEWAL",
           status: "PENDING" as const,
           language,
-        }])
+        } as any])
         .select()
         .single();
 

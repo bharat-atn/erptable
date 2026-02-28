@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { OrgProvider } from "@/contexts/OrgContext";
 import Index from "./pages/Index";
 import OnboardingPortal from "./pages/OnboardingPortal";
 import ContractSigning from "./pages/ContractSigning";
@@ -16,20 +17,22 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/onboard/:token" element={<OnboardingPortal />} />
-          <Route path="/sign/:token" element={<ContractSigning />} />
-          <Route path="/sign-simulation/:contractId" element={<SigningSimulation />} />
-          <Route path="/schedule-view/:contractId" element={<ScheduleView />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <OrgProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/onboard/:token" element={<OnboardingPortal />} />
+            <Route path="/sign/:token" element={<ContractSigning />} />
+            <Route path="/sign-simulation/:contractId" element={<SigningSimulation />} />
+            <Route path="/schedule-view/:contractId" element={<ScheduleView />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </OrgProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -156,7 +156,7 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
     // Insert in batches of 50
     for (let i = 0; i < insertData.length; i += 50) {
       const batch = insertData.slice(i, i + 50);
-      const { error } = await supabase.from("employees").insert(batch);
+      const { error } = await supabase.from("employees").insert(batch as any);
       if (error) {
         failed += batch.length;
       } else {
