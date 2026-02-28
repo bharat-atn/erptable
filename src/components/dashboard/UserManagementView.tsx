@@ -5,13 +5,14 @@ import { EnhancedTable, ColumnDef, FilterOption } from "@/components/ui/enhanced
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -409,6 +410,159 @@ function InviteUserDialog({ open, onClose, onSuccess, apps }: InviteDialogProps)
   );
 }
 
+// ─── Manage Orgs Dialog ─────────────────────────────────────────────
+
+interface OrgMembership {
+  id: string;
+  org_id: string;
+  role: string;
+  org_name: string;
+  org_type: string;
+}
+
+interface ManageOrgsDialogProps {
+  open: boolean;
+  onClose: () => void;
+  userId: string;
+  userName: string;
+  memberships: OrgMembership[];
+  allOrgs: { id: string; name: string; org_type: string }[];
+  onRefresh: () => void;
+}
+
+function ManageOrgsDialog({ open, onClose, userId, userName, memberships, allOrgs, onRefresh }: ManageOrgsDialogProps) {
+  const [adding, setAdding] = useState(false);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [selectedRole, setSelectedRole] = useState("member");
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  const availableOrgs = allOrgs.filter(o => !memberships.some(m => m.org_id === o.id));
+
+  const handleAdd = async () => {
+    if (!selectedOrgId) return;
+    setAdding(true);
+    try {
+      const { error } = await supabase.from("org_members").insert({
+        org_id: selectedOrgId,
+        user_id: userId,
+        role: selectedRole,
+      });
+      if (error) throw error;
+      toast({ title: "Added to organization" });
+      setSelectedOrgId("");
+      setSelectedRole("member");
+      onRefresh();
+    } catch (err: any) {
+      toast({ title: "Failed to add", description: err.message, variant: "destructive" });
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleRemove = async (membershipId: string) => {
+    setRemoving(membershipId);
+    try {
+      const { error } = await supabase.from("org_members").delete().eq("id", membershipId);
+      if (error) throw error;
+      toast({ title: "Removed from organization" });
+      onRefresh();
+    } catch (err: any) {
+      toast({ title: "Failed to remove", description: err.message, variant: "destructive" });
+    } finally {
+      setRemoving(null);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Manage Organizations
+          </DialogTitle>
+          <DialogDescription>
+            Manage organization memberships for {userName}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* Current memberships */}
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Current Memberships</Label>
+            {memberships.length === 0 ? (
+              <p className="text-sm text-muted-foreground italic">No organization memberships</p>
+            ) : (
+              <div className="space-y-2">
+                {memberships.map((m) => (
+                  <div key={m.id} className="flex items-center justify-between p-2 rounded-lg border border-border bg-muted/30">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium">{m.org_name}</span>
+                      <Badge variant={m.org_type === "production" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
+                        {m.org_type}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">({m.role})</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemove(m.id)}
+                      disabled={removing === m.id}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add to org */}
+          {availableOrgs.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Add to Organization</Label>
+              <div className="flex gap-2">
+                <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                  <SelectTrigger className="flex-1 h-8 text-xs">
+                    <SelectValue placeholder="Select organization…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableOrgs.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name} ({org.org_type})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger className="w-[100px] h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="owner">Owner</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-8 gap-1" onClick={handleAdd} disabled={adding || !selectedOrgId}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Add
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Merged User Row Type ───────────────────────────────────────────
 
 interface PendingInvitation {
@@ -432,6 +586,7 @@ interface UserRow {
   last_sign_in_at: string | null;
   appCount: number;
   isPendingInvitation?: boolean;
+  orgMemberships: OrgMembership[];
 }
 
 // ─── Main View ──────────────────────────────────────────────────────
@@ -445,6 +600,7 @@ export function UserManagementView() {
   const [cleaningUp, setCleaningUp] = useState<string | null>(null);
   
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
+  const [manageOrgsDialog, setManageOrgsDialog] = useState<{ userId: string; userName: string } | null>(null);
   const apps = useMemo(() => loadApps(), []);
 
   useEffect(() => {
@@ -489,6 +645,42 @@ export function UserManagementView() {
     },
   });
 
+  const { data: allOrgs = [] } = useQuery({
+    queryKey: ["admin-all-orgs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("organizations").select("id, name, org_type");
+      if (error) throw error;
+      return data as { id: string; name: string; org_type: string }[];
+    },
+  });
+
+  const { data: allOrgMembers = [] } = useQuery({
+    queryKey: ["admin-org-members"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("org_members").select("id, org_id, user_id, role");
+      if (error) throw error;
+      return data as { id: string; org_id: string; user_id: string; role: string }[];
+    },
+  });
+
+  const orgMembershipMap = useMemo(() => {
+    const m = new Map<string, OrgMembership[]>();
+    allOrgMembers.forEach((om) => {
+      const org = allOrgs.find(o => o.id === om.org_id);
+      if (!org) return;
+      const list = m.get(om.user_id) || [];
+      list.push({
+        id: om.id,
+        org_id: om.org_id,
+        role: om.role,
+        org_name: org.name,
+        org_type: org.org_type,
+      });
+      m.set(om.user_id, list);
+    });
+    return m;
+  }, [allOrgMembers, allOrgs]);
+
   const roleMap = useMemo(() => {
     const priority = ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"];
     const m = new Map<string, string>();
@@ -523,10 +715,10 @@ export function UserManagementView() {
         created_at: p.created_at,
         last_sign_in_at: p.last_sign_in_at,
         appCount: 0,
+        orgMemberships: orgMembershipMap.get(p.user_id) || [],
       };
     });
 
-    // Add pending invitations (users who haven't signed in yet)
     const existingEmails = new Set(profiles.map((p) => p.email?.toLowerCase()));
     const invitedRows: UserRow[] = pendingInvitations
       .filter((inv) => !existingEmails.has(inv.email.toLowerCase()))
@@ -541,11 +733,12 @@ export function UserManagementView() {
         last_sign_in_at: null,
         appCount: inv.app_access?.length ?? 0,
         isPendingInvitation: true,
+        orgMemberships: [],
       }));
 
     return [...profileRows, ...invitedRows];
   },
-  [profiles, roleMap, accessMap, pendingInvitations]);
+  [profiles, roleMap, accessMap, pendingInvitations, orgMembershipMap]);
 
   const assignRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
@@ -736,6 +929,43 @@ export function UserManagementView() {
       ),
     },
     {
+      key: "organizations",
+      header: "Organizations",
+      sortable: false,
+      render: (row) => {
+        if (row.isPendingInvitation) {
+          return <span className="text-xs text-muted-foreground italic">—</span>;
+        }
+        const memberships = row.orgMemberships;
+        if (memberships.length === 0) {
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-muted-foreground"
+              onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
+            >
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          );
+        }
+        return (
+          <div className="flex items-center gap-1 flex-wrap">
+            {memberships.map((m) => (
+              <Badge
+                key={m.id}
+                variant={m.org_type === "production" ? "default" : "secondary"}
+                className="text-[10px] px-1.5 py-0 cursor-pointer"
+                onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
+              >
+                {m.org_type === "production" ? "Prod" : "Sandbox"}
+              </Badge>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
       key: "assign",
       header: "Assign Role",
       hideable: false,
@@ -829,6 +1059,15 @@ export function UserManagementView() {
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          onClick={() => setManageOrgsDialog({ userId: row.user_id, userName: row.full_name })}
+          title="Manage organizations"
+        >
+          <Building2 className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={() => setEditNameDialog({ userId: row.user_id, currentName: row.full_name })}
           title="Edit name"
         >
@@ -876,6 +1115,8 @@ export function UserManagementView() {
     queryClient.invalidateQueries({ queryKey: ["admin-user-roles"] });
     queryClient.invalidateQueries({ queryKey: ["admin-app-access"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pending-invitations"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-org-members"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-orgs"] });
   };
 
   return (
@@ -938,6 +1179,20 @@ export function UserManagementView() {
           onClose={() => setEditNameDialog(null)}
           userId={editNameDialog.userId}
           currentName={editNameDialog.currentName}
+        />
+      )}
+
+      {manageOrgsDialog && (
+        <ManageOrgsDialog
+          open
+          onClose={() => setManageOrgsDialog(null)}
+          userId={manageOrgsDialog.userId}
+          userName={manageOrgsDialog.userName}
+          memberships={orgMembershipMap.get(manageOrgsDialog.userId) || []}
+          allOrgs={allOrgs}
+          onRefresh={() => {
+            queryClient.invalidateQueries({ queryKey: ["admin-org-members"] });
+          }}
         />
       )}
 
