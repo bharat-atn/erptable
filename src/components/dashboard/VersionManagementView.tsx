@@ -99,7 +99,6 @@ export function VersionManagementView() {
       });
       setDialogOpen(false);
       setNotes("");
-      setReleaseType("alpha");
       // Show a second reminder after a short delay
       setTimeout(() => {
         toast.info("🚀 Don't forget to publish!", {
@@ -132,7 +131,14 @@ export function VersionManagementView() {
             Track and manage application releases. Each version is tagged with a date-based identifier and release stage.
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-2">
+        <Button onClick={() => {
+          // Default release type to the most recent version's type
+          const lastType = versions[0]?.release_type as ReleaseType | undefined;
+          if (lastType && ["alpha", "beta", "rc", "release"].includes(lastType)) {
+            setReleaseType(lastType);
+          }
+          setDialogOpen(true);
+        }} className="gap-2">
           <Plus className="w-4 h-4" />
           New Release
         </Button>
