@@ -74,11 +74,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       }));
       setOrgs(enriched);
 
+      // Check if user is super admin
+      const { data: isSuperAdmin } = await supabase.rpc("is_super_admin");
+
       // Auto-select if only one org or if saved org still valid
       const savedId = sessionStorage.getItem("currentOrgId");
       if (savedId && enriched.some((o: Organization) => o.id === savedId)) {
         await setOrgContext(savedId);
       } else if (enriched.length === 1) {
+        await setOrgContext(enriched[0].id);
+      } else if (isSuperAdmin && enriched.length > 0) {
+        // Super admins bypass the picker — auto-select first org
         await setOrgContext(enriched[0].id);
       } else {
         setCurrentOrgId(null);
