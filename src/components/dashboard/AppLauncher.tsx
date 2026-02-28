@@ -247,7 +247,7 @@ export function getColor(colorIndex: number) {
 export { COLOR_OPTIONS };
 
 /** Returns true when running on the published production domain */
-function isPublishedEnvironment(): boolean {
+export function isPublishedEnvironment(): boolean {
   const host = window.location.hostname;
   return host === "erptable.lovable.app" || host === "ljungaverkforestry.lovable.app";
 }

@@ -31,17 +31,28 @@ import {
   Calendar,
   Clock,
   FlaskConical,
+  Camera,
+  Globe,
+  Lock,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { type AppDefinition, getIcon, getColor } from "./AppLauncher";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { type AppDefinition, getIcon, getColor, isPublishedEnvironment } from "./AppLauncher";
 import { toast } from "sonner";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import { useOrg } from "@/contexts/OrgContext";
 import { Badge } from "@/components/ui/badge";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
+import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 
 export interface ScreenSizeOption {
   label: string;
@@ -130,13 +141,17 @@ function SidebarItem({
   collapsed,
   onViewChange,
   badge,
+  translatedLabel,
 }: {
   item: MenuItem;
   isActive: boolean;
   collapsed?: boolean;
   onViewChange: (view: string) => void;
   badge?: number;
+  translatedLabel?: string;
 }) {
+  const label = translatedLabel || item.label;
+
   if (collapsed) {
     return (
       <Tooltip>
@@ -162,7 +177,7 @@ function SidebarItem({
           </button>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8}>
-          {item.label}
+          {label}
         </TooltipContent>
       </Tooltip>
     );
@@ -182,7 +197,7 @@ function SidebarItem({
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
       )}
       <item.icon className="w-4 h-4 shrink-0" />
-      <span className="flex-1 text-left truncate">{item.label}</span>
+      <span className="flex-1 text-left truncate">{label}</span>
       {badge && badge > 0 ? (
         <span className="w-5 h-5 rounded-full bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center shrink-0">
           {badge}
@@ -202,6 +217,7 @@ function DraggableGroup({
   onReorder,
   collapsed,
   badges,
+  t,
 }: {
   items: MenuItem[];
   groupKey: string;
@@ -210,6 +226,7 @@ function DraggableGroup({
   onReorder: (items: MenuItem[]) => void;
   collapsed?: boolean;
   badges?: Record<string, number>;
+  t?: (key: string) => string;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -282,11 +299,11 @@ function DraggableGroup({
           )}
         >
           {collapsed ? (
-            <SidebarItem item={item} isActive={activeView === item.id} collapsed onViewChange={onViewChange} badge={badges?.[item.id]} />
+            <SidebarItem item={item} isActive={activeView === item.id} collapsed onViewChange={onViewChange} badge={badges?.[item.id]} translatedLabel={t?.(`menu.${item.id}`)} />
           ) : (
             <div className="relative flex items-center">
               <div className="flex-1">
-                <SidebarItem item={item} isActive={activeView === item.id} onViewChange={onViewChange} badge={badges?.[item.id]} />
+                <SidebarItem item={item} isActive={activeView === item.id} onViewChange={onViewChange} badge={badges?.[item.id]} translatedLabel={t?.(`menu.${item.id}`)} />
               </div>
               <span
                 data-grip
@@ -325,12 +342,14 @@ function AppSwitcherHeader({
   apps,
   onSwitchApp,
   onBackToLauncher,
+  t,
 }: {
   collapsed: boolean;
   appId?: string | null;
   apps?: AppDefinition[];
   onSwitchApp?: (appId: string) => void;
   onBackToLauncher?: () => void;
+  t: (key: string) => string;
 }) {
   const [open, setOpen] = useState(false);
   const currentApp = apps?.find((a) => a.id === appId);
@@ -371,7 +390,7 @@ function AppSwitcherHeader({
             </button>
           </PopoverTrigger>
           <PopoverContent side="right" align="start" sideOffset={8} className="w-64 p-2">
-            <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">Switch Application</p>
+            <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">{t("ui.switchApp")}</p>
             <div className="space-y-0.5">
               {enabledApps.map((app) => {
                 const Icon = getIcon(app.iconName);
@@ -404,7 +423,7 @@ function AppSwitcherHeader({
                   className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
                 >
                   <LayoutGrid className="w-4 h-4" />
-                  <span>Back to All Apps</span>
+                  <span>{t("ui.backToAllApps")}</span>
                 </button>
               </>
             )}
@@ -436,7 +455,7 @@ function AppSwitcherHeader({
           </button>
         </PopoverTrigger>
         <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[var(--radix-popover-trigger-width)] p-2">
-          <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">Switch Application</p>
+          <p className="text-xs font-semibold text-muted-foreground px-2 py-1.5 uppercase tracking-wider">{t("ui.switchApp")}</p>
           <div className="space-y-0.5">
             {enabledApps.map((app) => {
               const Icon = getIcon(app.iconName);
@@ -469,7 +488,7 @@ function AppSwitcherHeader({
                 className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
               >
                 <LayoutGrid className="w-4 h-4" />
-                <span>Back to All Apps</span>
+                <span>{t("ui.backToAllApps")}</span>
               </button>
             </>
           )}
@@ -481,7 +500,7 @@ function AppSwitcherHeader({
 
 /* ─── Need Support Card ─────────────────────────────────────────── */
 
-function NeedSupportCard({ collapsed }: { collapsed: boolean }) {
+function NeedSupportCard({ collapsed, t }: { collapsed: boolean; t: (key: string) => string }) {
   const [dismissed, setDismissed] = useState(() => {
     return localStorage.getItem("sidebar-support-dismissed") === "true";
   });
@@ -507,9 +526,9 @@ function NeedSupportCard({ collapsed }: { collapsed: boolean }) {
             <HeadphonesIcon className="w-4 h-4 text-sidebar-accent-foreground" />
           </div>
           <div className="min-w-0">
-            <p className="text-[12px] font-semibold text-sidebar-foreground">Need Support</p>
+            <p className="text-[12px] font-semibold text-sidebar-foreground">{t("ui.needSupport")}</p>
             <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">
-              Contact with one of our experts to get support.
+              {t("ui.needSupportDesc")}
             </p>
           </div>
         </div>
@@ -518,17 +537,201 @@ function NeedSupportCard({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+/* ─── User Profile Dialog ───────────────────────────────────────── */
+
+function UserProfileDialog({
+  open,
+  onOpenChange,
+  t,
+  lang,
+  onLangChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  t: (key: string) => string;
+  lang: UiLang;
+  onLangChange: (lang: UiLang) => void;
+}) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      setUserId(data.user.id);
+      setIsGoogleUser(data.user.app_metadata?.provider === "google");
+      // Fetch avatar
+      supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", data.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          setAvatarUrl((profile as any)?.avatar_url ?? null);
+        });
+    });
+  }, [open]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB"); return; }
+
+    setUploading(true);
+    const path = `avatars/${userId}.png`;
+    const { error: uploadError } = await supabase.storage
+      .from("signatures")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) { toast.error("Upload failed"); setUploading(false); return; }
+
+    const { data: { publicUrl } } = supabase.storage.from("signatures").getPublicUrl(path);
+    const urlWithBust = `${publicUrl}?t=${Date.now()}`;
+
+    await (supabase as any).from("profiles").update({ avatar_url: urlWithBust }).eq("user_id", userId);
+    setAvatarUrl(urlWithBust);
+    setUploading(false);
+    toast.success("Avatar updated");
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!userId) return;
+    await supabase.storage.from("signatures").remove([`avatars/${userId}.png`]);
+    await (supabase as any).from("profiles").update({ avatar_url: null }).eq("user_id", userId);
+    setAvatarUrl(null);
+    toast.success("Avatar removed");
+  };
+
+  const handleChangePassword = async () => {
+    if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords don't match"); return; }
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setChangingPassword(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password updated");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t("profile.title")}</DialogTitle>
+          <DialogDescription className="sr-only">Manage your profile settings</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 pt-2">
+          {/* Avatar */}
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("profile.avatar")}</Label>
+            <div className="flex items-center gap-4">
+              <Avatar className="w-16 h-16">
+                {avatarUrl && <AvatarImage src={avatarUrl} />}
+                <AvatarFallback className="text-lg bg-sidebar-accent text-sidebar-accent-foreground">
+                  <Camera className="w-5 h-5" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1.5">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  {t("profile.uploadAvatar")}
+                </Button>
+                {avatarUrl && (
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={handleRemoveAvatar}>
+                    {t("profile.removeAvatar")}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Language */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              {t("profile.language")}
+            </Label>
+            <Select value={lang} onValueChange={(v) => onLangChange(v as UiLang)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.flag} {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Password */}
+          {!isGoogleUser && (
+            <div className="space-y-3">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5" />
+                {t("profile.changePassword")}
+              </Label>
+              <Input
+                type="password"
+                placeholder={t("profile.newPassword")}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder={t("profile.confirmPassword")}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <Button
+                size="sm"
+                onClick={handleChangePassword}
+                disabled={changingPassword || !newPassword}
+              >
+                {changingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                {t("profile.updatePassword")}
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── User Profile Footer Card ──────────────────────────────────── */
 
-function UserProfileCard({ collapsed }: { collapsed: boolean }) {
+function UserProfileCard({ collapsed, onOpenProfile }: { collapsed: boolean; onOpenProfile: () => void }) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserEmail(data.user.email ?? null);
         setUserName(data.user.user_metadata?.full_name ?? data.user.email?.split("@")[0] ?? null);
+        // Fetch avatar
+        supabase
+          .from("profiles")
+          .select("avatar_url")
+          .eq("user_id", data.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            setAvatarUrl((profile as any)?.avatar_url ?? null);
+          });
       }
     });
   }, []);
@@ -537,10 +740,13 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="px-2 py-2 flex justify-center">
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground uppercase">
-              {userName?.[0] ?? "U"}
-            </div>
+          <div className="px-2 py-2 flex justify-center cursor-pointer" onClick={onOpenProfile}>
+            <Avatar className="w-8 h-8">
+              {avatarUrl && <AvatarImage src={avatarUrl} />}
+              <AvatarFallback className="text-xs font-semibold bg-sidebar-accent text-sidebar-accent-foreground uppercase">
+                {userName?.[0] ?? "U"}
+              </AvatarFallback>
+            </Avatar>
           </div>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8}>
@@ -553,10 +759,16 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="p-3">
-      <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
-        <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-xs font-semibold text-sidebar-accent-foreground uppercase shrink-0">
-          {userName?.[0] ?? "U"}
-        </div>
+      <div
+        className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer"
+        onClick={onOpenProfile}
+      >
+        <Avatar className="w-8 h-8 shrink-0">
+          {avatarUrl && <AvatarImage src={avatarUrl} />}
+          <AvatarFallback className="text-xs font-semibold bg-sidebar-accent text-sidebar-accent-foreground uppercase">
+            {userName?.[0] ?? "U"}
+          </AvatarFallback>
+        </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1">
             <p className="text-[13px] font-semibold text-sidebar-foreground truncate">{userName ?? "User"}</p>
@@ -570,111 +782,9 @@ function UserProfileCard({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/* ─── Version Badge ─────────────────────────────────────────────── */
-
-const releaseTypeColors: Record<string, string> = {
-  alpha: "text-amber-600",
-  beta: "text-blue-600",
-  rc: "text-orange-600",
-  release: "text-emerald-600",
-};
-
-const releaseTypeLabels: Record<string, string> = {
-  alpha: "Alpha",
-  beta: "Beta",
-  rc: "RC",
-  release: "Release",
-};
-
-function VersionBadge({ collapsed }: { collapsed: boolean }) {
-  const { data: latestVersion } = useQuery({
-    queryKey: ["latest-version"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("app_versions")
-        .select("*")
-        .eq("status", "published")
-        .order("release_date", { ascending: false })
-        .order("sequence_number", { ascending: false })
-        .limit(1)
-        .single();
-      if (error) return null;
-      return data as any;
-    },
-    refetchInterval: 60000,
-  });
-
-  if (!latestVersion) return null;
-
-  const typeColor = releaseTypeColors[latestVersion.release_type] ?? "text-muted-foreground";
-  const typeLabel = releaseTypeLabels[latestVersion.release_type] ?? latestVersion.release_type;
-  const timeGMT = new Date(latestVersion.release_time_utc).toLocaleTimeString("en-GB", { timeZone: "UTC", hour: "2-digit", minute: "2-digit" }) + " GMT";
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const timeLocal = new Date(latestVersion.release_time_utc).toLocaleTimeString("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit" }) + ` ${tz.split("/").pop()}`;
-
-  if (collapsed) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="px-1.5 py-1 flex justify-center">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", typeColor)}>
-              <Tag className="w-3.5 h-3.5" />
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8} className="max-w-[220px]">
-          <p className="font-mono font-semibold text-xs">{latestVersion.version_tag}</p>
-          <p className={cn("text-[10px] font-medium", typeColor)}>{typeLabel}</p>
-          {latestVersion.notes && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{latestVersion.notes}</p>}
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
-  return (
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs hover:bg-sidebar-accent/50 transition-colors cursor-pointer">
-          <Tag className={cn("w-3.5 h-3.5 shrink-0", typeColor)} />
-          <span className="font-mono font-semibold text-sidebar-foreground truncate">{latestVersion.version_tag}</span>
-          <span className={cn("text-[10px] font-medium ml-auto shrink-0", typeColor)}>{typeLabel}</span>
-        </button>
-      </HoverCardTrigger>
-      <HoverCardContent side="right" align="end" sideOffset={8} className="w-72">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-mono font-bold text-sm">{latestVersion.version_tag}</span>
-            <span className={cn("text-xs font-semibold px-2 py-0.5 rounded-full", 
-              latestVersion.release_type === "release" ? "bg-emerald-500/10 text-emerald-600" :
-              latestVersion.release_type === "rc" ? "bg-orange-500/10 text-orange-600" :
-              latestVersion.release_type === "beta" ? "bg-blue-500/10 text-blue-600" :
-              "bg-amber-500/10 text-amber-600"
-            )}>{typeLabel}</span>
-          </div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3" />
-              <span>Released {new Date(latestVersion.release_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-3 h-3" />
-              <span>{timeGMT} / {timeLocal}</span>
-            </div>
-          </div>
-          {latestVersion.notes && (
-            <div className="pt-1 border-t border-border">
-              <p className="text-xs text-muted-foreground leading-relaxed">{latestVersion.notes}</p>
-            </div>
-          )}
-        </div>
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
-
 /* ─── Organization Switcher ─────────────────────────────────────── */
 
-function OrgSwitcherCompact({ collapsed }: { collapsed: boolean }) {
+function OrgSwitcherCompact({ collapsed, t }: { collapsed: boolean; t: (key: string) => string }) {
   const { orgId, orgName, orgType, orgs, switchOrg } = useOrg();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -715,7 +825,7 @@ function OrgSwitcherCompact({ collapsed }: { collapsed: boolean }) {
           </div>
         </PopoverTrigger>
         <PopoverContent side="right" align="start" className="w-56 p-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">Switch Organization</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">{t("ui.switchOrg")}</p>
           {orgs.map((org) => {
             const cfg = orgTypeConfig[org.org_type] || orgTypeConfig.production;
             return (
@@ -753,7 +863,7 @@ function OrgSwitcherCompact({ collapsed }: { collapsed: boolean }) {
         </button>
       </PopoverTrigger>
       <PopoverContent side="right" align="start" className="w-60 p-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">Switch Organization</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 py-1">{t("ui.switchOrg")}</p>
         {orgs.map((org) => {
           const cfg = orgTypeConfig[org.org_type] || orgTypeConfig.production;
           return (
@@ -783,6 +893,9 @@ function OrgSwitcherCompact({ collapsed }: { collapsed: boolean }) {
 
 export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSizeChange, onBackToLauncher, collapsed = false, onCollapsedChange, appId, apps, onSwitchApp, userRole }: SidebarProps) {
   const isAdmin = userRole === "admin";
+  const { t, lang, setLang } = useUiLanguage();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const isPublished = isPublishedEnvironment();
 
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
@@ -863,10 +976,10 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         collapsed ? "w-14" : "w-48 lg:w-56 xl:w-60"
       )}>
         {/* Header Card – App Switcher */}
-        <AppSwitcherHeader collapsed={collapsed} appId={appId} apps={apps} onSwitchApp={onSwitchApp} onBackToLauncher={onBackToLauncher} />
+        <AppSwitcherHeader collapsed={collapsed} appId={appId} apps={apps} onSwitchApp={onSwitchApp} onBackToLauncher={onBackToLauncher} t={t} />
 
         {/* Organization Switcher */}
-        <OrgSwitcherCompact collapsed={collapsed} />
+        <OrgSwitcherCompact collapsed={collapsed} t={t} />
 
         <div className={cn("px-2 pb-1 shrink-0", collapsed ? "flex justify-center" : "flex justify-end")}>
           <Tooltip>
@@ -889,15 +1002,15 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
           <nav className={cn("py-2", collapsed ? "px-1.5" : "px-3")}>
             {appId === "user-management" ? (
               <>
-                <GroupLabel label="Management" collapsed={collapsed} />
-                <SidebarItem item={{ id: "user-management", label: "Users", icon: Users }} isActive={activeView === "user-management"} onViewChange={onViewChange} collapsed={collapsed} />
-                <SidebarItem item={{ id: "role-permissions", label: "Role Permissions", icon: Shield }} isActive={activeView === "role-permissions"} onViewChange={onViewChange} collapsed={collapsed} />
-                <SidebarItem item={{ id: "audit-log", label: "Audit Log", icon: Shield }} isActive={activeView === "audit-log"} onViewChange={onViewChange} collapsed={collapsed} />
-                <SidebarItem item={{ id: "settings", label: "Settings", icon: Settings }} isActive={activeView === "settings"} onViewChange={onViewChange} collapsed={collapsed} />
+                <GroupLabel label={t("group.management")} collapsed={collapsed} />
+                <SidebarItem item={{ id: "user-management", label: "Users", icon: Users }} isActive={activeView === "user-management"} onViewChange={onViewChange} collapsed={collapsed} translatedLabel={t("menu.user-management")} />
+                <SidebarItem item={{ id: "role-permissions", label: "Role Permissions", icon: Shield }} isActive={activeView === "role-permissions"} onViewChange={onViewChange} collapsed={collapsed} translatedLabel={t("menu.role-permissions")} />
+                <SidebarItem item={{ id: "audit-log", label: "Audit Log", icon: Shield }} isActive={activeView === "audit-log"} onViewChange={onViewChange} collapsed={collapsed} translatedLabel={t("menu.audit-log")} />
+                <SidebarItem item={{ id: "settings", label: "Settings", icon: Settings }} isActive={activeView === "settings"} onViewChange={onViewChange} collapsed={collapsed} translatedLabel={t("menu.settings")} />
               </>
             ) : (
               <>
-                <GroupLabel label="Main" collapsed={collapsed} />
+                <GroupLabel label={t("group.main")} collapsed={collapsed} />
                 <DraggableGroup
                   items={filteredMenuItems}
                   groupKey="menu"
@@ -906,11 +1019,12 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                   onReorder={handleMenuReorder}
                   collapsed={collapsed}
                   badges={{ contracts: pendingCount || 0 }}
+                  t={t}
                 />
 
                 {filteredSettingsItems.length > 0 && (
                   <>
-                    <GroupLabel label="Settings" collapsed={collapsed} />
+                    <GroupLabel label={t("group.settings")} collapsed={collapsed} />
                     <DraggableGroup
                       items={filteredSettingsItems}
                       groupKey="settings"
@@ -918,13 +1032,14 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                       onViewChange={onViewChange}
                       onReorder={handleSettingsReorder}
                       collapsed={collapsed}
+                      t={t}
                     />
                   </>
                 )}
 
                 {filteredConfigItems.length > 0 && (
                   <>
-                    <GroupLabel label="Others" collapsed={collapsed} />
+                    <GroupLabel label={t("group.others")} collapsed={collapsed} />
                     <DraggableGroup
                       items={filteredConfigItems}
                       groupKey="config"
@@ -932,6 +1047,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                       onViewChange={onViewChange}
                       onReorder={handleConfigReorder}
                       collapsed={collapsed}
+                      t={t}
                     />
                   </>
                 )}
@@ -940,48 +1056,50 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
           </nav>
         </ScrollArea>
 
-        {/* Screen Size Picker */}
-        {!collapsed ? (
-          <div className="px-3 pt-3 pb-1 border-t border-sidebar-border shrink-0">
-            <div className="flex items-center gap-1.5 px-1 pb-2">
-              <Monitor className="w-3.5 h-3.5 text-sidebar-foreground/50" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">Screen</span>
+        {/* Screen Size Picker — hidden on published environments */}
+        {!isPublished && (
+          !collapsed ? (
+            <div className="px-3 pt-3 pb-1 border-t border-sidebar-border shrink-0">
+              <div className="flex items-center gap-1.5 px-1 pb-2">
+                <Monitor className="w-3.5 h-3.5 text-sidebar-foreground/50" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">{t("ui.screen")}</span>
+              </div>
+              <div className="flex gap-0.5 bg-sidebar-accent/50 rounded-lg p-0.5">
+                {screenSizes.map((size) => (
+                  <Button
+                    key={size.label}
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "flex-1 h-6 px-0 text-[10px] font-medium rounded-md transition-all",
+                      activeScreenSize.label === size.label
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    )}
+                    onClick={() => onScreenSizeChange(size)}
+                  >
+                    {size.label}
+                  </Button>
+                ))}
+              </div>
             </div>
-            <div className="flex gap-0.5 bg-sidebar-accent/50 rounded-lg p-0.5">
-              {screenSizes.map((size) => (
-                <Button
-                  key={size.label}
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "flex-1 h-6 px-0 text-[10px] font-medium rounded-md transition-all",
-                    activeScreenSize.label === size.label
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
-                      : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                  )}
-                  onClick={() => onScreenSizeChange(size)}
-                >
-                  {size.label}
-                </Button>
-              ))}
+          ) : (
+            <div className="px-1.5 pt-2 pb-1 border-t border-sidebar-border shrink-0 flex justify-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="p-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors">
+                    <Monitor className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  {t("ui.screen")}: {activeScreenSize.label}
+                </TooltipContent>
+              </Tooltip>
             </div>
-          </div>
-        ) : (
-          <div className="px-1.5 pt-2 pb-1 border-t border-sidebar-border shrink-0 flex justify-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="p-2 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors">
-                  <Monitor className="w-4 h-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                Screen: {activeScreenSize.label}
-              </TooltipContent>
-            </Tooltip>
-          </div>
+          )
         )}
 
-        {/* Back to Launcher */}
+        {/* Back to Launcher — more prominent */}
         {onBackToLauncher && (
           <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "px-1.5 pt-2" : "px-3 pt-3")}>
             {collapsed ? (
@@ -989,29 +1107,24 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                 <TooltipTrigger asChild>
                   <button
                     onClick={onBackToLauncher}
-                    className="w-full flex items-center justify-center p-2 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                    className="w-full flex items-center justify-center p-2.5 rounded-lg text-sidebar-foreground bg-sidebar-accent/60 hover:bg-sidebar-accent transition-colors"
                   >
-                    <LayoutGrid className="w-4 h-4" />
+                    <LayoutGrid className="w-4.5 h-4.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={8}>All Apps</TooltipContent>
+                <TooltipContent side="right" sideOffset={8}>{t("ui.allApps")}</TooltipContent>
               </Tooltip>
             ) : (
               <button
                 onClick={onBackToLauncher}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold text-sidebar-foreground bg-sidebar-accent/50 hover:bg-sidebar-accent transition-colors"
               >
-                <LayoutGrid className="w-4 h-4" />
-                <span>All Apps</span>
+                <LayoutGrid className="w-4.5 h-4.5" />
+                <span>{t("ui.allApps")}</span>
               </button>
             )}
           </div>
         )}
-
-        {/* Version Badge */}
-        <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "px-1.5 pt-1" : "px-3 pt-2")}>
-          <VersionBadge collapsed={collapsed} />
-        </div>
 
         {/* Sign Out */}
         <div className={cn("border-t border-sidebar-border shrink-0", collapsed ? "p-1.5" : "px-3 pt-2")}>
@@ -1025,7 +1138,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                   <LogOut className="w-4 h-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>Sign Out</TooltipContent>
+              <TooltipContent side="right" sideOffset={8}>{t("ui.signOut")}</TooltipContent>
             </Tooltip>
           ) : (
             <button
@@ -1033,16 +1146,25 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span>{t("ui.signOut")}</span>
             </button>
           )}
         </div>
 
         {/* Need Support Card */}
-        <NeedSupportCard collapsed={collapsed} />
+        <NeedSupportCard collapsed={collapsed} t={t} />
 
         {/* User Profile Footer */}
-        <UserProfileCard collapsed={collapsed} />
+        <UserProfileCard collapsed={collapsed} onOpenProfile={() => setProfileOpen(true)} />
+
+        {/* Profile Settings Dialog */}
+        <UserProfileDialog
+          open={profileOpen}
+          onOpenChange={setProfileOpen}
+          t={t}
+          lang={lang}
+          onLangChange={setLang}
+        />
       </aside>
     </TooltipProvider>
   );
