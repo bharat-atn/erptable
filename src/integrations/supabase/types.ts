@@ -624,6 +624,71 @@ export type Database = {
           },
         ]
       }
+      org_members: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          org_type: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          org_type?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          org_type?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pending_role_assignments: {
         Row: {
           app_access: string[] | null
@@ -930,6 +995,8 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      is_org_member_current: { Args: { _org_id: string }; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       log_auth_event: {
         Args: {
           _action: string
@@ -939,6 +1006,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_org_context: { Args: { _org_id: string }; Returns: undefined }
       submit_employee_signature: {
         Args: { _signature_url: string; _token: string }
         Returns: undefined
