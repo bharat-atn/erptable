@@ -1,41 +1,28 @@
 
 
-## Enhance Create Organization with AI Company Lookup
+## Super Admin Org Bypass + Membership-Filtered Org Picker
 
-### Problem
-The Create Organization dialog is bare -- just name, slug, and type. No company details like org number, address, or website are collected. The existing `lookup-company` edge function already does exactly what's needed (Firecrawl + AI lookup).
+### Current State
+- All users (including super admins) see the Organization Picker when no org is selected
+- The `organizations` table RLS already filters: super admins see all orgs, others see only orgs they're members of via `is_org_member(id)`
+- `org_members` SELECT RLS: `user_id = auth.uid() OR is_super_admin()` — already correct
 
-### Step 1: Add columns to `organizations` table
-Database migration to add:
-- `org_number` (text, nullable)
-- `address` (text, nullable)
-- `postcode` (text, nullable)
-- `city` (text, nullable)
-- `country` (text, nullable, default 'Sweden')
-- `phone` (text, nullable)
-- `email` (text, nullable)
-- `website` (text, nullable)
+### What Needs to Change
 
-### Step 2: Rewrite Create Organization dialog in OrganizationPicker.tsx
-- Add a "Lookup" button next to the Name field that calls the existing `lookup-company` edge function
-- On lookup success, auto-fill: org_number, address, postcode, city, country, website, phone, email
-- Auto-generate slug from the company name
-- Show a lookup status indicator (loading spinner, success with source badge, or error)
-- Add input fields for all new fields, pre-filled but editable
-- Keep the Production/Sandbox type selector
-- Show confidence indicators (verified/unverified badge) like the Company Register does
+**1. Auto-bypass org picker for super admins** (`src/contexts/OrgContext.tsx`)
+- In `fetchOrgs`, after loading orgs: if user is super admin (`is_super_admin()` check), auto-select the first org (or saved org) without requiring manual pick
+- This means the `orgId` will already be set before `Index.tsx` reaches the picker check
 
-### Step 3: Update handleCreate to save new fields
-Insert the additional columns when creating the organization.
+**2. Update Index.tsx flow** (`src/pages/Index.tsx`)
+- Pass `isAdmin` to OrgContext or handle in Index: if `isAdmin` and `orgs.length > 0` but no `orgId`, auto-select first org and skip picker
+- Non-admin users still see the picker, but only orgs they belong to (already enforced by RLS)
 
-### Step 4: Update OrgContext types
-Add the new fields to the `Organization` interface so they're available downstream.
+**3. No database changes needed**
+- RLS on `organizations` already filters by membership for non-admins
+- `org_members` already only shows own memberships to non-admins
+- The User Management "Manage Orgs" dialog already controls which orgs users can access
 
 ### Files Changed
-1. **Database migration** -- Add 8 columns to `organizations` table
-2. **`src/components/dashboard/OrganizationPicker.tsx`** -- Expand create dialog with AI lookup and new fields
-3. **`src/contexts/OrgContext.tsx`** -- Update Organization interface with new fields
-
-### Architecture Note
-Reuses the existing `lookup-company` edge function -- no new backend code needed. The same Firecrawl + AI pipeline that powers Company Register now powers org creation.
+1. **`src/contexts/OrgContext.tsx`** — Add super admin detection; auto-select first org for admins
+2. **`src/pages/Index.tsx`** — Skip org picker when `isAdmin` and orgs are available (auto-select handled by context)
 
