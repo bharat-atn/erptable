@@ -486,27 +486,14 @@ export function OnboardingWizard({
     return merged;
   }, [banksByCountry]);
 
+  // Only show countries that have banks registered (from DB or fallback) — never all world countries
   const availableBankCountries = useMemo(() => {
-    const merged: string[] = [];
-    const seen = new Set<string>();
-
-    const addCountry = (country: string) => {
-      const normalized = country.trim().toLowerCase();
-      if (!normalized || seen.has(normalized)) return;
-      seen.add(normalized);
-      merged.push(country);
-    };
-
-    priorityCountryNames.forEach(addCountry);
-    otherCountryNames.forEach(addCountry);
-
-    Object.keys(effectiveBanksByCountry)
-      .sort((a, b) => a.localeCompare(b))
-      .forEach(addCountry);
-
-    if (selectedBankCountry) addCountry(selectedBankCountry);
-
-    return merged;
+    const bankCountries = Object.keys(effectiveBanksByCountry).sort((a, b) => a.localeCompare(b));
+    // Ensure the currently selected country is always in the list
+    if (selectedBankCountry && !bankCountries.some(c => c.trim().toLowerCase() === selectedBankCountry.trim().toLowerCase())) {
+      bankCountries.push(selectedBankCountry);
+    }
+    return bankCountries;
   }, [effectiveBanksByCountry, selectedBankCountry]);
 
   const banksForSelectedCountry = useMemo(() => {
