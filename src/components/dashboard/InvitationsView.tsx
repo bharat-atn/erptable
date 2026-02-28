@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,13 +71,16 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [viewSubmissionEmployeeId, setViewSubmissionEmployeeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { orgId } = useOrg();
 
   const { data: invitations, isLoading } = useQuery({
-    queryKey: ["invitations"],
+    queryKey: ["invitations", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invitations")
         .select(`*, employees (email, first_name, last_name)`)
+        .eq("org_id", orgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as InvitationRow[];

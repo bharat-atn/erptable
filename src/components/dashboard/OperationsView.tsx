@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -119,20 +120,23 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
   const queryClient = useQueryClient();
+  const { orgId } = useOrg();
 
   const { data: employees, isLoading } = useQuery({
-    queryKey: ["operations-employees"],
+    queryKey: ["operations-employees", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("employees").select("*").eq("org_id", orgId!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
   const { data: invitationStats } = useQuery({
-    queryKey: ["operations-invitation-stats"],
+    queryKey: ["operations-invitation-stats", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("invitations").select("id, status, type");
+      const { data, error } = await supabase.from("invitations").select("id, status, type").eq("org_id", orgId!);
       if (error) throw error;
       const sent = data?.filter((i) => i.status === "SENT").length || 0;
       const completed = data?.filter((i) => i.status === "ACCEPTED").length || 0;
@@ -143,9 +147,10 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
   });
 
   const { data: contracts } = useQuery({
-    queryKey: ["operations-contracts"],
+    queryKey: ["operations-contracts", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("contracts").select("id, employee_id, status, signing_status");
+      const { data, error } = await supabase.from("contracts").select("id, employee_id, status, signing_status").eq("org_id", orgId!);
       if (error) throw error;
       return data;
     },
@@ -175,10 +180,10 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
 
   const deleteEmployee = useMutation({
     mutationFn: async (id: string) => {
-      // Delete related invitations and contracts first (cascade)
-      await supabase.from("invitations").delete().eq("employee_id", id);
-      await supabase.from("contracts").delete().eq("employee_id", id);
-      const { error } = await supabase.from("employees").delete().eq("id", id);
+      // Delete related invitations and contracts first (cascade) - scoped by org_id
+      await supabase.from("invitations").delete().eq("employee_id", id).eq("org_id", orgId!);
+      await supabase.from("contracts").delete().eq("employee_id", id).eq("org_id", orgId!);
+      const { error } = await supabase.from("employees").delete().eq("id", id).eq("org_id", orgId!);
       if (error) throw error;
     },
     onSuccess: () => {

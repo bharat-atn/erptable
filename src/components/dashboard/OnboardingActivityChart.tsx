@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -14,18 +15,19 @@ import { format, subDays, startOfDay, eachDayOfInterval } from "date-fns";
 
 export function OnboardingActivityChart() {
   const [period, setPeriod] = useState("7days");
+  const { orgId } = useOrg();
 
   const days = period === "7days" ? 7 : period === "30days" ? 30 : 90;
 
   const { data: chartData } = useQuery({
-    queryKey: ["onboarding-activity", period],
+    queryKey: ["onboarding-activity", period, orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const since = subDays(new Date(), days).toISOString();
 
-      // Fetch invitations and employees created in the period
       const [invRes, empRes] = await Promise.all([
-        supabase.from("invitations").select("created_at").gte("created_at", since),
-        supabase.from("employees").select("created_at").gte("created_at", since),
+        supabase.from("invitations").select("created_at").eq("org_id", orgId!).gte("created_at", since),
+        supabase.from("employees").select("created_at").eq("org_id", orgId!).gte("created_at", since),
       ]);
 
       const interval = eachDayOfInterval({

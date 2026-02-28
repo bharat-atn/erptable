@@ -1,15 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 export function OnboardingStatusChart() {
+  const { orgId } = useOrg();
   const { data: statusData } = useQuery({
-    queryKey: ["onboarding-status-chart"],
+    queryKey: ["onboarding-status-chart", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
-        .select("status");
+        .select("status")
+        .eq("org_id", orgId!);
       if (error) throw error;
 
       const counts: Record<string, number> = {

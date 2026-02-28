@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -44,13 +45,16 @@ const statusLabels: Record<InvitationStatus, string> = {
 
 export function RecentInvitationsTable() {
   const [search, setSearch] = useState("");
+  const { orgId } = useOrg();
 
   const { data: invitations, isLoading } = useQuery({
-    queryKey: ["invitations-table"],
+    queryKey: ["invitations-table", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invitations")
         .select(`*, employees (email, first_name, last_name)`)
+        .eq("org_id", orgId!)
         .order("created_at", { ascending: false })
         .limit(10);
 

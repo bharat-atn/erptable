@@ -967,6 +967,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          current_org_id: string | null
           default_signature_url: string | null
           email: string | null
           full_name: string | null
@@ -978,6 +979,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_org_id?: string | null
           default_signature_url?: string | null
           email?: string | null
           full_name?: string | null
@@ -989,6 +991,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_org_id?: string | null
           default_signature_url?: string | null
           email?: string | null
           full_name?: string | null
@@ -998,7 +1001,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_org_id_fkey"
+            columns: ["current_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_app_access: {
         Row: {
@@ -1170,6 +1181,7 @@ export type Database = {
           start_date: string
         }[]
       }
+      get_current_org_id: { Args: never; Returns: string }
       get_invitation_by_token: {
         Args: { _token: string }
         Returns: {
@@ -1194,6 +1206,7 @@ export type Database = {
         Returns: boolean
       }
       is_hr_user: { Args: never; Returns: boolean }
+      is_org_active: { Args: { _org_id: string }; Returns: boolean }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_member: { Args: { _org_id: string }; Returns: boolean }
       is_org_member_current: { Args: { _org_id: string }; Returns: boolean }
