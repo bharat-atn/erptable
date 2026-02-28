@@ -19,6 +19,7 @@ interface OrgContextType {
   loading: boolean;
   switchOrg: (orgId: string) => Promise<void>;
   refreshOrgs: () => Promise<void>;
+  clearOrg: () => void;
 }
 
 const OrgContext = createContext<OrgContextType>({
@@ -29,6 +30,7 @@ const OrgContext = createContext<OrgContextType>({
   loading: true,
   switchOrg: async () => {},
   refreshOrgs: async () => {},
+  clearOrg: () => {},
 });
 
 export function useOrg() {
@@ -89,6 +91,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     await setOrgContext(orgId);
   }, []);
 
+  const clearOrg = useCallback(() => {
+    setCurrentOrgId(null);
+    sessionStorage.removeItem("currentOrgId");
+  }, []);
+
   useEffect(() => {
     fetchOrgs();
   }, [fetchOrgs]);
@@ -105,6 +112,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         loading,
         switchOrg,
         refreshOrgs: fetchOrgs,
+        clearOrg,
       }}
     >
       {children}
