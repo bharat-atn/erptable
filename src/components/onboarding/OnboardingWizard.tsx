@@ -203,6 +203,7 @@ interface OnboardingWizardProps {
   language?: OnboardingLanguage;
   showAiFill?: boolean;
   onAiFill?: (data: Record<string, any>) => void;
+  invitationToken?: string;
 }
 
 /* ─── Language label maps ─── */
@@ -412,6 +413,7 @@ export function OnboardingWizard({
   language = "en_sv",
   showAiFill = false,
   onAiFill,
+  invitationToken,
 }: OnboardingWizardProps) {
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -467,6 +469,12 @@ export function OnboardingWizard({
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
 
   const effectiveBanksByCountry = useMemo(() => {
+    // If we have token-fetched banks (real invitation), use ONLY those — no fallback mixing
+    if (invitationToken && Object.keys(banksByCountry).length > 0) {
+      return banksByCountry;
+    }
+
+    // Demo/preview mode: merge fallback + any DB banks
     const merged: Record<string, { name: string; bic_code: string | null }[]> = {};
 
     const mergeBanks = (source: Record<string, { name: string; bic_code: string | null }[]>) => {
@@ -484,12 +492,11 @@ export function OnboardingWizard({
     mergeBanks(banksByCountry);
 
     return merged;
-  }, [banksByCountry]);
+  }, [banksByCountry, invitationToken]);
 
-  // Only show countries that have banks registered (from DB or fallback) — never all world countries
+  // Only show countries that have banks registered — never all world countries
   const availableBankCountries = useMemo(() => {
     const bankCountries = Object.keys(effectiveBanksByCountry).sort((a, b) => a.localeCompare(b));
-    // Ensure the currently selected country is always in the list
     if (selectedBankCountry && !bankCountries.some(c => c.trim().toLowerCase() === selectedBankCountry.trim().toLowerCase())) {
       bankCountries.push(selectedBankCountry);
     }
@@ -509,7 +516,29 @@ export function OnboardingWizard({
 
   const bankList = banksForSelectedCountry.map((b) => b.name);
 
+
   useEffect(() => {
+    // Token mode: fetch banks via secure RPC that bypasses RLS
+    if (invitationToken) {
+      supabase
+        .rpc("get_onboarding_banks_by_token", { _token: invitationToken })
+        .then(({ data, error }) => {
+          if (error || !data || data.length === 0) {
+            setBanksByCountry({});
+            return;
+          }
+          const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
+          for (const b of data as { name: string; bic_code: string | null; country: string | null }[]) {
+            const c = b.country || "Other";
+            if (!grouped[c]) grouped[c] = [];
+            grouped[c].push({ name: b.name, bic_code: b.bic_code });
+          }
+          setBanksByCountry(grouped);
+        });
+      return;
+    }
+
+    // Authenticated / demo mode: direct table query
     supabase
       .from("banks")
       .select("name, country, bic_code")
@@ -520,7 +549,6 @@ export function OnboardingWizard({
           setBanksByCountry({});
           return;
         }
-
         const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
         for (const b of data) {
           const c = b.country || "Other";
@@ -529,7 +557,7 @@ export function OnboardingWizard({
         }
         setBanksByCountry(grouped);
       });
-  }, []);
+  }, [invitationToken]);
   const [s1Open, setS1Open] = useState(true);
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);

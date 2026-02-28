@@ -240,6 +240,7 @@ export default function OnboardingPortal() {
       workPermitFile={workPermitFile}
       onWorkPermitFileChange={handleWorkPermitFileChange}
       language={(invitation as any)?.language || "en_sv"}
+      invitationToken={token}
     />
   );
 }
