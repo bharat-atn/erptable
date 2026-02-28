@@ -72,7 +72,9 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const [viewSubmissionEmployeeId, setViewSubmissionEmployeeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
-  const onboardingBaseUrl = window.location.origin;
+  // Always use the published production URL for candidate-facing links
+  // Preview/dev URLs require Lovable platform auth and won't work for external recipients
+  const onboardingBaseUrl = "https://erptable.lovable.app";
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["invitations", orgId],
