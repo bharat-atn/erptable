@@ -16,7 +16,7 @@ const Index = () => {
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [apps, setApps] = useState<AppDefinition[]>(loadApps);
   const { role, loading: roleLoading, isAdmin } = useUserRole();
-  const { orgId } = useOrg();
+  const { orgId, loading: orgLoading } = useOrg();
   const [checkingPending, setCheckingPending] = useState(false);
   const [pendingChecked, setPendingChecked] = useState(false);
 
@@ -77,7 +77,7 @@ const Index = () => {
       });
   }, [session, roleLoading, role, pendingChecked, checkingPending]);
 
-  if (loading || (session && roleLoading) || (session && !role && !pendingChecked)) {
+  if (loading || (session && roleLoading) || (session && !role && !pendingChecked) || (session && orgLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
