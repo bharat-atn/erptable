@@ -889,27 +889,9 @@ const availableBankCountries = (() => {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel en="Swedish Coordination Number" sv="Svenskt samordningsnummer" required={false} />
-                  <Input
-                    tabIndex={12}
-                    value={formData.swedishCoordinationNumber || ""}
-                    onChange={(e) => {
-                      const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
-                      const v = digits.length === 12 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits;
-                      updateField("swedishCoordinationNumber", v);
-                    }}
-                    placeholder="YYYYMMDD-XXXX"
-                    maxLength={13}
-                    className="h-11 text-sm font-medium"
-                  />
-                  {formData.swedishCoordinationNumber && formData.swedishCoordinationNumber.length > 0 && formData.swedishCoordinationNumber.replace(/-/g, "").length !== 12 && (
-                    <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
                   <FieldLabel en="Swedish Personal Number" sv="Svenskt personnummer" required={false} />
                   <Input
-                    tabIndex={13}
+                    tabIndex={12}
                     value={formData.swedishPersonalNumber || ""}
                     onChange={(e) => {
                       const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
@@ -921,6 +903,24 @@ const availableBankCountries = (() => {
                     className="h-11 text-sm font-medium"
                   />
                   {formData.swedishPersonalNumber && formData.swedishPersonalNumber.length > 0 && formData.swedishPersonalNumber.replace(/-/g, "").length !== 12 && (
+                    <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <FieldLabel en="Swedish Coordination Number" sv="Svenskt samordningsnummer" required={false} />
+                  <Input
+                    tabIndex={13}
+                    value={formData.swedishCoordinationNumber || ""}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 12);
+                      const v = digits.length === 12 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits;
+                      updateField("swedishCoordinationNumber", v);
+                    }}
+                    placeholder="YYYYMMDD-XXXX"
+                    maxLength={13}
+                    className="h-11 text-sm font-medium"
+                  />
+                  {formData.swedishCoordinationNumber && formData.swedishCoordinationNumber.length > 0 && formData.swedishCoordinationNumber.replace(/-/g, "").length !== 12 && (
                     <p className="text-[11px] text-destructive">Must be exactly 12 digits</p>
                   )}
                 </div>
