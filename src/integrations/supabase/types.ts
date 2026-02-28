@@ -808,34 +808,58 @@ export type Database = {
       }
       organizations: {
         Row: {
+          address: string | null
+          city: string | null
+          country: string | null
           created_at: string
           created_by: string | null
+          email: string | null
           id: string
           logo_url: string | null
           name: string
+          org_number: string | null
           org_type: string
+          phone: string | null
+          postcode: string | null
           slug: string
           updated_at: string
+          website: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          email?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          org_number?: string | null
           org_type?: string
+          phone?: string | null
+          postcode?: string | null
           slug: string
           updated_at?: string
+          website?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           created_by?: string | null
+          email?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          org_number?: string | null
           org_type?: string
+          phone?: string | null
+          postcode?: string | null
           slug?: string
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }

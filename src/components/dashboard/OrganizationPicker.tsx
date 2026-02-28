@@ -1,18 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   Building2,
   Plus,
@@ -25,8 +16,8 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
-import { toast } from "sonner";
 import erpLogo from "@/assets/erp-table-logo.png";
+import { CreateOrganizationDialog } from "./CreateOrganizationDialog";
 
 interface OrganizationPickerProps {
   onOrgSelected: () => void;
@@ -37,10 +28,6 @@ interface OrganizationPickerProps {
 export function OrganizationPicker({ onOrgSelected, isAdmin, userEmail }: OrganizationPickerProps) {
   const { orgs, switchOrg, loading, refreshOrgs } = useOrg();
   const [createOpen, setCreateOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newSlug, setNewSlug] = useState("");
-  const [newType, setNewType] = useState<"production" | "sandbox">("production");
-  const [creating, setCreating] = useState(false);
 
   const handleSelect = async (orgId: string) => {
     await switchOrg(orgId);
@@ -62,47 +49,12 @@ export function OrganizationPicker({ onOrgSelected, isAdmin, userEmail }: Organi
 
   const handleSwitchAccount = async () => {
     await supabase.auth.signOut();
-    // After sign-out, the auth state change will show the login screen
   };
 
-  const handleCreate = async () => {
-    if (!newName.trim() || !newSlug.trim()) return;
-    setCreating(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { data: org, error } = await supabase
-        .from("organizations")
-        .insert({
-          name: newName.trim(),
-          slug: newSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-"),
-          org_type: newType,
-          created_by: user.id,
-        } as any)
-        .select("id")
-        .single();
-
-      if (error) throw error;
-
-      await supabase.from("org_members").insert({
-        org_id: org.id,
-        user_id: user.id,
-        role: "owner",
-      } as any);
-
-      toast.success(`Organization "${newName}" created!`);
-      setCreateOpen(false);
-      setNewName("");
-      setNewSlug("");
-      await refreshOrgs();
-      await switchOrg(org.id);
-      onOrgSelected();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create organization");
-    } finally {
-      setCreating(false);
-    }
+  const handleCreated = async (orgId: string) => {
+    await refreshOrgs();
+    await switchOrg(orgId);
+    onOrgSelected();
   };
 
   if (loading) {
@@ -124,7 +76,6 @@ export function OrganizationPicker({ onOrgSelected, isAdmin, userEmail }: Organi
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg">
-        {/* Card */}
         <div className="bg-card rounded-2xl border border-border shadow-xl ring-1 ring-border/50 overflow-hidden">
           {/* Header with logo */}
           <div className="flex flex-col items-center pt-8 pb-4 px-6 border-b border-border bg-muted/20">
@@ -224,67 +175,11 @@ export function OrganizationPicker({ onOrgSelected, isAdmin, userEmail }: Organi
         </div>
       </div>
 
-      {/* Create Dialog */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Organization</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Name</Label>
-              <Input
-                value={newName}
-                onChange={(e) => {
-                  setNewName(e.target.value);
-                  if (!newSlug || newSlug === newName.toLowerCase().replace(/[^a-z0-9]+/g, "-")) {
-                    setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-"));
-                  }
-                }}
-                placeholder="My Company"
-              />
-            </div>
-            <div>
-              <Label>Slug</Label>
-              <Input
-                value={newSlug}
-                onChange={(e) => setNewSlug(e.target.value)}
-                placeholder="my-company"
-              />
-            </div>
-            <div>
-              <Label>Type</Label>
-              <div className="flex gap-2 mt-1">
-                <Button
-                  variant={newType === "production" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setNewType("production")}
-                  className="gap-1.5"
-                >
-                  <Building2 className="w-4 h-4" />
-                  Production
-                </Button>
-                <Button
-                  variant={newType === "sandbox" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setNewType("sandbox")}
-                  className="gap-1.5"
-                >
-                  <FlaskConical className="w-4 h-4" />
-                  Sandbox
-                </Button>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
-              {creating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateOrganizationDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={handleCreated}
+      />
     </div>
   );
 }
