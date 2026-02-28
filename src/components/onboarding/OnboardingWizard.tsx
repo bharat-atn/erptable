@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useMemo, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import { countries, findCountryByName } from "@/lib/countries";
 import { supabase } from "@/integrations/supabase/client";
 
 const FALLBACK_BANKS_BY_COUNTRY: Record<string, { name: string; bic_code: string | null }[]> = {
+  Sweden: ["Swedbank", "SEB", "Nordea", "Handelsbanken"].map((name) => ({ name, bic_code: null })),
   Romania: [
     "BANCA TRANSILVANIA S.A.",
     "Banca Comercială Română S.A.",
@@ -33,6 +34,8 @@ const FALLBACK_BANKS_BY_COUNTRY: Record<string, { name: string; bic_code: string
     "UniCredit Bank S.A.",
     "RAIFFEISEN BANK S.A.",
   ].map((name) => ({ name, bic_code: null })),
+  Thailand: ["Bangkok Bank", "Kasikornbank", "Krungthai Bank", "Siam Commercial Bank"].map((name) => ({ name, bic_code: null })),
+  Moldova: ["maib", "Moldindconbank", "OTP Bank Moldova", "Victoriabank"].map((name) => ({ name, bic_code: null })),
 };
 
 const COUNTRY_NAMES = countries.map((c) => c.name);
@@ -462,8 +465,29 @@ export function OnboardingWizard({
   const templateLogo = loadTemplateLogo();
   const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
-const availableBankCountries = (() => {
-    const fetchedCountries = Object.keys(banksByCountry);
+
+  const effectiveBanksByCountry = useMemo(() => {
+    const merged: Record<string, { name: string; bic_code: string | null }[]> = {};
+
+    const mergeBanks = (source: Record<string, { name: string; bic_code: string | null }[]>) => {
+      for (const [country, banks] of Object.entries(source)) {
+        if (!merged[country]) merged[country] = [];
+
+        for (const bank of banks) {
+          const exists = merged[country].some((b) => b.name.toLowerCase() === bank.name.toLowerCase());
+          if (!exists) merged[country].push(bank);
+        }
+      }
+    };
+
+    mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
+    mergeBanks(banksByCountry);
+
+    return merged;
+  }, [banksByCountry]);
+
+  const availableBankCountries = (() => {
+    const fetchedCountries = Object.keys(effectiveBanksByCountry);
     if (fetchedCountries.length > 0) {
       const mergedCountries = selectedBankCountry && !fetchedCountries.includes(selectedBankCountry)
         ? [...fetchedCountries, selectedBankCountry]
@@ -473,12 +497,9 @@ const availableBankCountries = (() => {
 
     return [...priorityCountryNames, ...otherCountryNames];
   })();
+
   const bankList = selectedBankCountry
-    ? (
-        banksByCountry[selectedBankCountry]?.length
-          ? banksByCountry[selectedBankCountry]
-          : FALLBACK_BANKS_BY_COUNTRY[selectedBankCountry] || []
-      ).map((b) => b.name)
+    ? (effectiveBanksByCountry[selectedBankCountry] || []).map((b) => b.name)
     : [];
 
   useEffect(() => {
@@ -488,23 +509,18 @@ const availableBankCountries = (() => {
       .eq("is_active", true)
       .order("name")
       .then(({ data, error }) => {
-        if (error) {
-          setBanksByCountry(FALLBACK_BANKS_BY_COUNTRY);
+        if (error || !data || data.length === 0) {
+          setBanksByCountry({});
           return;
         }
 
-        if (data && data.length > 0) {
-          const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
-          for (const b of data) {
-            const c = b.country || "Other";
-            if (!grouped[c]) grouped[c] = [];
-            grouped[c].push({ name: b.name, bic_code: b.bic_code });
-          }
-          setBanksByCountry(grouped);
-          return;
+        const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
+        for (const b of data) {
+          const c = b.country || "Other";
+          if (!grouped[c]) grouped[c] = [];
+          grouped[c].push({ name: b.name, bic_code: b.bic_code });
         }
-
-        setBanksByCountry(FALLBACK_BANKS_BY_COUNTRY);
+        setBanksByCountry(grouped);
       });
   }, []);
   const [s1Open, setS1Open] = useState(true);
@@ -1156,7 +1172,7 @@ const availableBankCountries = (() => {
                     onBankSelect(val);
                     // Auto-fill BIC code
                     if (val !== "other") {
-                      const match = (banksByCountry[selectedBankCountry] || []).find((b) => b.name === val);
+                      const match = (effectiveBanksByCountry[selectedBankCountry] || []).find((b) => b.name === val);
                       if (match?.bic_code) updateField("bicCode", match.bic_code);
                     }
                     // Collapse the list after selection
