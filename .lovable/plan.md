@@ -1,52 +1,39 @@
 
+Root cause confirmed
+- In invitation onboarding (public, no login), `OnboardingWizard` fetches banks directly from `banks` (`src/components/onboarding/OnboardingWizard.tsx`, current `useEffect` bank fetch).
+- Current bank read policy only allows authenticated org members (`supabase/migrations/20260228004314_d2197cac-50e9-404d-916b-467890cfb80b.sql`, banks policies), so invitation users get empty results.
+- Empty results trigger `FALLBACK_BANKS_BY_COUNTRY`, which is why only a small subset appears (for Sweden: 4 fallback banks) instead of the full configured registry (Sweden has 10 active banks).
 
-## Plan: Sidebar Bottom Cleanup + User Profile Panel + i18n Foundation
+Implementation plan
+1. Add a token-scoped backend read function
+- Create `get_onboarding_banks_by_token(_token text)` as `SECURITY DEFINER`.
+- Validate token (exists, not expired, not accepted/expired), resolve invitation org.
+- Return only active banks for that org (`name`, `bic_code`, `country`, ordered).
 
-### Summary of Changes
+2. Switch invitation onboarding to token-based bank retrieval
+- Add optional `invitationToken` prop to `OnboardingWizard`.
+- From `OnboardingPortal`, pass the URL token into wizard.
+- In wizard: if `invitationToken` exists, load banks via new function (not direct table select).
 
-1. **Hide Screen Size picker on published environments** -- use the existing `isPublishedEnvironment()` check to conditionally hide the screen size picker in the sidebar footer.
+3. Remove synthetic fallback for real invitation links
+- For token mode, do not inject fallback banks.
+- If no banks are returned, show explicit inline state: “No bank list configured for this invitation. Please contact HR.”
+- Keep fallback behavior only for demo/simulator mode (if needed).
 
-2. **Remove Version Badge from sidebar** -- the version is already shown via `TopVersionBadge` in the main content area. Remove the `VersionBadge` rendering from the sidebar bottom.
+4. Keep dropdown/list strictly registry-driven
+- Countries = unique countries from returned bank rows only.
+- Bank options = all returned banks for selected country.
+- Preserve BIC auto-fill from selected bank.
 
-3. **Make "All Apps" button more prominent** -- increase padding, font size, and add a subtle background so it stands out as a clear navigation action.
+5. Validate end-to-end before release
+- Test from an actual email link in a logged-out browser.
+- Confirm Sweden shows all 10 configured banks (and other countries match backend counts).
+- Confirm simulator/internal preview still works.
+- Confirm “Other Bank” still functions and submit flow remains valid.
 
-4. **User Profile Panel (clicking the chevron on user card)** -- when the user clicks the `ChevronRight` button on the `UserProfileCard`, open a `Dialog` or `Sheet` with:
-   - **Avatar upload**: Upload/change profile picture (store in `signatures` bucket under `avatars/{user_id}.png`, save URL to `profiles.avatar_url` column -- requires a migration to add the column).
-   - **Change password**: Form with current password validation + new password + confirm (only shown for non-Google users, using `supabase.auth.updateUser({ password })`).
-   - **Preferred language selector**: Dropdown to choose between English, Swedish, Romanian. Stored in `profiles.preferred_language` column (requires migration). This will be the foundation for sidebar/page i18n.
-
-5. **Database migration** -- add two columns to `profiles`:
-   - `avatar_url text` (nullable)
-   - `preferred_language text default 'en'` (nullable)
-
-6. **i18n foundation for Swedish and Romanian** -- create a `src/lib/ui-translations.ts` file with a dictionary for sidebar labels, group headers, and common page titles in EN/SV/RO. Create a React context or hook (`useUiLanguage`) that reads the user's `preferred_language` from their profile and exposes a `t(key)` function. Apply translations to sidebar group labels ("Main", "Settings", "Others") and menu item labels as a first pass.
-
-### Technical Details
-
-**Files to create:**
-- `src/lib/ui-translations.ts` -- translation dictionary for UI strings (sidebar labels, common buttons, page headers) in EN, SV, RO
-- `src/hooks/useUiLanguage.ts` -- hook that reads `preferred_language` from profile and returns `t(key)` helper
-
-**Files to modify:**
-- `src/components/dashboard/Sidebar.tsx`:
-  - Remove `VersionBadge` rendering (lines 1011-1014)
-  - Conditionally hide Screen Size picker using `isPublishedEnvironment()` (lines 943-982)
-  - Make "All Apps" button larger/more prominent (lines 984-1009)
-  - Update `UserProfileCard` to open a profile settings dialog on click
-  - Apply `t()` translations to group labels and menu item labels
-- `src/components/dashboard/AppLauncher.tsx` -- export `isPublishedEnvironment` so Sidebar can import it
-
-**Database migration:**
-```sql
-ALTER TABLE public.profiles 
-  ADD COLUMN IF NOT EXISTS avatar_url text,
-  ADD COLUMN IF NOT EXISTS preferred_language text DEFAULT 'en';
-```
-
-**Implementation order:**
-1. Database migration (add columns)
-2. Create translation dictionary + hook
-3. Sidebar cleanup (remove version, hide screen picker on prod, enlarge All Apps)
-4. Build User Profile Dialog (avatar upload, password change, language selector)
-5. Wire translations into sidebar labels
-
+Technical details
+- Backend/data access update only (no table schema changes).
+- Files:
+  - `supabase/migrations/*` (new function + grants)
+  - `src/pages/OnboardingPortal.tsx` (pass token)
+  - `src/components/onboarding/OnboardingWizard.tsx` (token-aware fetch + fallback split by mode)
