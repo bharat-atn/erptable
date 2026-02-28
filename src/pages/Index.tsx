@@ -95,7 +95,7 @@ const Index = () => {
 
   // Organization picker - show if no org selected
   if (!orgId) {
-    return <OrganizationPicker onOrgSelected={() => {}} isAdmin={isAdmin} />;
+    return <OrganizationPicker onOrgSelected={() => {}} isAdmin={isAdmin} userEmail={session.user?.email} />;
   }
 
   if (!activeApp) {

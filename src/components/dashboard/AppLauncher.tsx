@@ -57,6 +57,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TeaserDialog } from "./TeaserDialog";
+import { useOrg } from "@/contexts/OrgContext";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Users, DollarSign, TreePine, Smartphone, FileText, BarChart3, CalendarDays,
@@ -561,6 +562,8 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
     [editMode, apps]
   );
 
+  const { clearOrg } = useOrg();
+
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col items-center p-6 pt-16">
       <div className="w-full max-w-5xl">
@@ -605,6 +608,15 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
                 </Button>
               </>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => clearOrg()}
+              className="gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              Switch Org
+            </Button>
             <Button
               variant="outline"
               size="sm"
