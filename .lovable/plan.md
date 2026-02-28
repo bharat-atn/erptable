@@ -1,75 +1,52 @@
 
-## Goal
-Make company “vaults” waterproof so actions in one company cannot affect another, and restore the sandbox company dataset.
 
-## 1) Backend: make “current company” durable (not connection-local)
-1. Add `profiles.current_org_id uuid null references organizations(id)` (+ index).
-2. Update `public.set_org_context(_org_id uuid)` to:
-   - Validate membership (as today)
-   - Persist the active org by updating `profiles.current_org_id = _org_id` for `auth.uid()`
-   - (Optional) also keep `set_config('app.current_org_id', ...)` for same-request convenience, but do not rely on it.
-3. Add helper functions:
-   - `public.get_current_org_id()` → returns `profiles.current_org_id` for `auth.uid()`
-   - `public.is_org_active(_org_id uuid)` → `get_current_org_id() = _org_id` (NO super-admin bypass)
-   - Keep `public.is_super_admin()` as-is
+## Plan: Sidebar Bottom Cleanup + User Profile Panel + i18n Foundation
 
-## 2) Backend: split RLS into “read” vs “write” so deletes can’t cross orgs
-For each tenant table (at minimum: `employees`, `invitations`, `contracts`, `companies`, `contract_schedules`, and any other org-scoped data tables used by HR):
-1. Replace “FOR ALL” policies (notably on `contracts`) with separate policies:
-   - **SELECT policy**: allow super admins global read, and non-admins scoped read (member + active org)
-   - **INSERT/UPDATE/DELETE policies**: require `is_org_active(org_id)` (no super-admin bypass) so writes only apply to the currently selected company
-2. Ensure `WITH CHECK` for INSERT/UPDATE also requires `is_org_active(org_id)`.
+### Summary of Changes
 
-## 3) Frontend: scope all HR queries/mutations by selected org (default safe)
-1. Introduce a shared pattern:
-   - `const { orgId } = useOrg()`
-   - Add `.eq("org_id", orgId)` to all HR data queries and mutations
-   - Add `orgId` into React Query keys (e.g. `["contracts", orgId]`)
-   - Disable queries until `orgId` exists (`enabled: !!orgId`)
-2. Apply this across files that currently query without org scoping, including:
-   - `src/components/dashboard/OperationsView.tsx`
-   - `src/components/dashboard/DashboardView.tsx`
-   - `src/components/dashboard/InvitationsView.tsx`
-   - `src/components/dashboard/ContractsView.tsx`
-   - `src/components/dashboard/EmployeeRegisterView.tsx`
-   - `src/components/dashboard/CreateInvitationDialog.tsx`
-   - `src/components/dashboard/RecentInvitationsTable.tsx`
-   - `src/components/dashboard/OnboardingStatusChart.tsx`
-   - `src/components/dashboard/OnboardingActivityChart.tsx`
-   - plus any other views found via code search that read/write `employees/invitations/contracts/companies`
-3. Tighten delete cascades in UI to also include org scoping (defense-in-depth), e.g.:
-   - when deleting employee-related rows, delete `invitations/contracts` with both `employee_id` AND `org_id = orgId`.
+1. **Hide Screen Size picker on published environments** -- use the existing `isPublishedEnvironment()` check to conditionally hide the screen size picker in the sidebar footer.
 
-## 4) Super admin: keep global view, but make it explicit + safe
-1. Add a **Super Admin toggle** in HR views: “All companies” (default OFF).
-2. When OFF (default): UI is scoped to `orgId` (safe mode).
-3. When ON:
-   - Remove `.eq("org_id", orgId)` filters for reads
-   - Add an “Organization” column to tables
-   - Show a prominent warning banner
-   - Disable bulk-delete actions (or require extra typed confirmation including the org name + “ALL COMPANIES MODE”)
+2. **Remove Version Badge from sidebar** -- the version is already shown via `TopVersionBadge` in the main content area. Remove the `VersionBadge` rendering from the sidebar bottom.
 
-## 5) Restore sandbox data (best effort via audit, then seed)
-1. Create an admin-only backend function `restore-sandbox-from-audit` that:
-   - Attempts to reconstruct minimal records from `audit_log` for the sandbox org (where possible)
-   - Logs what it could/couldn’t restore (audit payloads may be incomplete by design)
-2. Add an admin-only backend function `seed-sandbox-data` that:
-   - Sets org context to the sandbox org
-   - Creates a fresh dataset (employees + invitations + draft contracts; optionally companies/banks) using existing generators (dummy/AI test-data function)
-3. Add a “Sandbox Tools” card (visible only to super admin when sandbox is selected) with:
-   - “Reset sandbox (delete sandbox data only)”
-   - “Restore from audit (best effort)”
-   - “Seed new sandbox dataset”
-   - Each action must show a destructive confirmation + progress UI.
+3. **Make "All Apps" button more prominent** -- increase padding, font size, and add a subtle background so it stands out as a clear navigation action.
 
-## 6) Verification (must-pass)
-1. Super admin, Production selected: delete a contract/invitation/employee → sandbox data unchanged.
-2. Super admin, toggle “All companies” ON: verify reads show both orgs, but deletes are blocked or require extra confirmation and still only apply to active org.
-3. Non-super-admin user: can only see/manage active org data; cannot read or mutate other org.
-4. Switch orgs: data displayed changes immediately; no “same data in both orgs” effect.
-5. Run “Seed sandbox dataset” and confirm HR views show sandbox-only records.
+4. **User Profile Panel (clicking the chevron on user card)** -- when the user clicks the `ChevronRight` button on the `UserProfileCard`, open a `Dialog` or `Sheet` with:
+   - **Avatar upload**: Upload/change profile picture (store in `signatures` bucket under `avatars/{user_id}.png`, save URL to `profiles.avatar_url` column -- requires a migration to add the column).
+   - **Change password**: Form with current password validation + new password + confirm (only shown for non-Google users, using `supabase.auth.updateUser({ password })`).
+   - **Preferred language selector**: Dropdown to choose between English, Swedish, Romanian. Stored in `profiles.preferred_language` column (requires migration). This will be the foundation for sidebar/page i18n.
 
-## Deliverables (files)
-- DB migrations: add `profiles.current_org_id`, helper functions, updated RLS policies.
-- Frontend updates: org-scoped queries + super-admin “All companies” toggle + safety UI.
-- Backend functions: `restore-sandbox-from-audit`, `seed-sandbox-data` (admin-only).
+5. **Database migration** -- add two columns to `profiles`:
+   - `avatar_url text` (nullable)
+   - `preferred_language text default 'en'` (nullable)
+
+6. **i18n foundation for Swedish and Romanian** -- create a `src/lib/ui-translations.ts` file with a dictionary for sidebar labels, group headers, and common page titles in EN/SV/RO. Create a React context or hook (`useUiLanguage`) that reads the user's `preferred_language` from their profile and exposes a `t(key)` function. Apply translations to sidebar group labels ("Main", "Settings", "Others") and menu item labels as a first pass.
+
+### Technical Details
+
+**Files to create:**
+- `src/lib/ui-translations.ts` -- translation dictionary for UI strings (sidebar labels, common buttons, page headers) in EN, SV, RO
+- `src/hooks/useUiLanguage.ts` -- hook that reads `preferred_language` from profile and returns `t(key)` helper
+
+**Files to modify:**
+- `src/components/dashboard/Sidebar.tsx`:
+  - Remove `VersionBadge` rendering (lines 1011-1014)
+  - Conditionally hide Screen Size picker using `isPublishedEnvironment()` (lines 943-982)
+  - Make "All Apps" button larger/more prominent (lines 984-1009)
+  - Update `UserProfileCard` to open a profile settings dialog on click
+  - Apply `t()` translations to group labels and menu item labels
+- `src/components/dashboard/AppLauncher.tsx` -- export `isPublishedEnvironment` so Sidebar can import it
+
+**Database migration:**
+```sql
+ALTER TABLE public.profiles 
+  ADD COLUMN IF NOT EXISTS avatar_url text,
+  ADD COLUMN IF NOT EXISTS preferred_language text DEFAULT 'en';
+```
+
+**Implementation order:**
+1. Database migration (add columns)
+2. Create translation dictionary + hook
+3. Sidebar cleanup (remove version, hide screen picker on prod, enlarge All Apps)
+4. Build User Profile Dialog (avatar upload, password change, language selector)
+5. Wire translations into sidebar labels
+
