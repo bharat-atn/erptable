@@ -8,6 +8,14 @@ interface Organization {
   org_type: string;
   logo_url: string | null;
   created_by: string | null;
+  org_number: string | null;
+  address: string | null;
+  postcode: string | null;
+  city: string | null;
+  country: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
   member_count?: number;
 }
 
@@ -47,7 +55,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const fetchOrgs = useCallback(async () => {
     const { data } = await supabase
       .from("organizations")
-      .select("id, name, slug, org_type, logo_url, created_by");
+      .select("id, name, slug, org_type, logo_url, created_by, org_number, address, postcode, city, country, phone, email, website");
 
     if (data && data.length > 0) {
       // Get member counts
