@@ -142,8 +142,9 @@ export function CreateInvitationDialog() {
 
       if (error) throw error;
 
-      // Now send the invitation email
-      const onboardingBaseUrl = window.location.origin;
+      // Always use the published production URL for candidate-facing links
+      // Preview/dev URLs require Lovable platform auth and won't work for external recipients
+      const onboardingBaseUrl = "https://erptable.lovable.app";
 
       try {
         const { data: emailData, error: emailError } = await supabase.functions.invoke(
