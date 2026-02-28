@@ -1,38 +1,30 @@
 
-## Fix Plan: Super-admin bypass not triggering after login
 
-1. Update `src/contexts/OrgContext.tsx` to make org loading auth-aware:
-   - At start of `fetchOrgs`, call `supabase.auth.getSession()`.
-   - If no authenticated user: clear `orgs`, clear `currentOrgId`, remove `sessionStorage.currentOrgId`, set `loading=false`, return.
-   - Always set `loading=true` at fetch start and `loading=false` in `finally`.
+## Summary
 
-2. Refetch organizations on auth changes inside `OrgProvider`:
-   - Add `supabase.auth.onAuthStateChange` listener.
-   - On `SIGNED_IN` / `TOKEN_REFRESHED`: run `fetchOrgs()` so org list and super-admin status are evaluated with authenticated context.
-   - On `SIGNED_OUT`: hard-reset org state (`orgs=[]`, `currentOrgId=null`, remove sessionStorage key).
+The User Management app is already restricted to Super Admins via `adminOnly: true` and `allowedRoles: ["admin"]` in the App Launcher. The existing "Organizations" column and "Manage Orgs" dialog already allow Super Admins to assign users to specific organizations. However, the current UI could be more prominent about this being the primary access control mechanism.
 
-3. Fix org auto-selection logic in `fetchOrgs`:
-   - Keep bypass only for super admin (`is_super_admin()` true): auto-select saved org if valid, otherwise first org.
-   - Remove the non-super-admin auto-select path for `enriched.length === 1` so admins/managers/org users must pick an org.
-   - For non-super-admin users: if no valid saved org, keep `currentOrgId=null` to force picker.
+The key insight: **org_members** is the gate that controls which organizations appear in a user's Organization Picker. If a user is not a member of an org, they cannot select it (enforced by RLS on the `organizations` table: `is_org_member(id)`). This is already working correctly.
 
-4. Update `src/pages/Index.tsx` loading gate:
-   - Read `loading` from `useOrg()` (e.g. `const { orgId, loading: orgLoading } = useOrg()`).
-   - Include `orgLoading` in the top spinner condition so UI waits for post-login org refresh before deciding between picker/app launcher.
+### What's Already In Place (No Changes Needed)
+- User Management visible only to Super Admin (`adminOnly: true`)
+- RLS on `organizations` filters by `is_org_member(id)` for non-admins
+- ManageOrgsDialog lets Super Admin add/remove users from organizations
 
-5. Keep membership-filtered picker behavior as-is:
-   - No DB/RLS change needed; picker list already follows memberships managed in User Management.
-   - This fix ensures that membership-filtered query runs after auth, so users see correct orgs.
+### Improvements to Make
 
-## Technical details
-- Files to change:
-  - `src/contexts/OrgContext.tsx` (primary fix)
-  - `src/pages/Index.tsx` (loading synchronization)
-- No migration needed.
-- No backend function change needed.
+**1. Make the Organizations column more informative** (`UserManagementView.tsx`)
+- Show the actual organization names (not just "Prod"/"Sandbox" badges)
+- Show org name + type badge so it's immediately clear which companies a user has access to
+- Make "No organizations" state more prominent with a warning indicator
 
-## Verification checklist
-1. Log in as super admin: should go directly to App Launcher (no org picker stop).
-2. Log in as org_admin/manager-level user: should see Organization Picker and must select org.
-3. Confirm picker shows only organizations assigned via User Management memberships.
-4. Sign out and sign in again as non-super-admin: should be required to pick org again.
+**2. Add organization assignment to the Invite User dialog** (`UserManagementView.tsx`)
+- When inviting a new user, allow the Super Admin to pre-select which organizations the user should be added to
+- After the user signs up and the pending role is assigned, automatically create `org_members` entries
+
+**3. Add organization filter to the users table** (`UserManagementView.tsx`)
+- Add a filter chip for "Organization" so Super Admins can quickly see which users belong to which company
+
+### Files Changed
+1. **`src/components/dashboard/UserManagementView.tsx`** — Enhance Organizations column display, add org selection to invite dialog, add org filter
+
