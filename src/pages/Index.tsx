@@ -3,8 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
 import { AppLauncher, loadApps, type AppDefinition } from "@/components/dashboard/AppLauncher";
+import { OrganizationPicker } from "@/components/dashboard/OrganizationPicker";
 import { PendingApproval } from "@/components/auth/PendingApproval";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useOrg } from "@/contexts/OrgContext";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
@@ -13,7 +15,8 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [activeApp, setActiveApp] = useState<string | null>(null);
   const [apps, setApps] = useState<AppDefinition[]>(loadApps);
-  const { role, loading: roleLoading } = useUserRole();
+  const { role, loading: roleLoading, isAdmin } = useUserRole();
+  const { orgId } = useOrg();
   const [checkingPending, setCheckingPending] = useState(false);
   const [pendingChecked, setPendingChecked] = useState(false);
 
@@ -61,7 +64,6 @@ const Index = () => {
       .invoke("check-pending-role")
       .then(({ data, error }) => {
         if (!error && data?.role) {
-          // Role was assigned — force a page reload to re-fetch everything
           window.location.reload();
         } else {
           setPendingChecked(true);
@@ -89,6 +91,11 @@ const Index = () => {
 
   if (!role) {
     return <PendingApproval />;
+  }
+
+  // Organization picker - show if no org selected
+  if (!orgId) {
+    return <OrganizationPicker onOrgSelected={() => {}} isAdmin={isAdmin} />;
   }
 
   if (!activeApp) {

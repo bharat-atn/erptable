@@ -128,7 +128,7 @@ export function EmployeeRegisterView() {
         first_name: dummy.first_name, last_name: dummy.last_name, middle_name: dummy.middle_name,
         email: dummy.email, phone: dummy.phone, city: dummy.city, country: dummy.country,
         status: dummy.status, personal_info: dummy.personal_info,
-      }]);
+      } as any]);
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["register-employees"] }); toast.success("Dummy employee added!"); },
@@ -286,7 +286,7 @@ export function EmployeeRegisterView() {
         onSubmit={(data) => {
           if (editEmployee) { updateEmployee.mutate({ ...data, id: editEmployee.id }); }
           else {
-            supabase.from("employees").insert([data]).then(({ error }) => {
+            supabase.from("employees").insert([data as any]).then(({ error }) => {
               if (error) { toast.error(error.message); return; }
               queryClient.invalidateQueries({ queryKey: ["register-employees"] });
               toast.success("Employee created!");

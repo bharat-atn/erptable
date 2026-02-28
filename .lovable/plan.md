@@ -31,49 +31,21 @@ Public RPC functions (`get_invitation_by_token`, `submit_onboarding`, `get_contr
 **F. Audit log org scoping**
 The `audit_trigger_func` must capture `org_id` from session context and store it on audit_log rows so each org's audit trail is isolated.
 
-### Implementation Steps (Ordered)
+### Implementation Status
 
-**Step 1: Database migration — Core tables**
-- Create `organizations` table (id, name, slug, org_type, logo_url, created_by, timestamps)
-- Create `org_members` table (org_id, user_id, role, timestamps) with UNIQUE(org_id, user_id)
-- Create `SECURITY DEFINER` function `set_org_context(org_id uuid)` that validates membership and calls `SET LOCAL app.current_org_id`
-- Create `SECURITY DEFINER` function `is_org_member_current()` that reads `current_setting('app.current_org_id')` and checks `org_members`
-- Create `SECURITY DEFINER` function `is_super_admin()` for bypass checks
-- RLS on both new tables
+- ✅ **Step 1**: Core tables (`organizations`, `org_members`) + security functions (`set_org_context`, `is_org_member_current`, `is_super_admin`)
+- ✅ **Step 2**: `org_id` added to all 16 data tables with indexes, auto-fill triggers, and backfill
+- ✅ **Step 3**: All RLS policies rewritten with org scoping + super admin bypass
+- ✅ **Step 4**: Triggers org-scoped (`generate_employee_code`, `generate_contract_code`, counters)
+- ✅ **Step 6**: `OrgProvider` context + `useOrg()` hook created
+- ✅ **Step 7**: Organization Picker page created
 
-**Step 2: Database migration — Add org_id to all data tables**
-- Add `org_id uuid REFERENCES organizations(id)` to all 16 data tables
-- Create indexes on every `org_id` column
-- Create `BEFORE INSERT` triggers to auto-populate `org_id` from session variable
-- Backfill: create a default organization from first company, assign all existing users as members, set all existing rows' `org_id`
-- Make `org_id` NOT NULL after backfill
-
-**Step 3: Database migration — Rewrite all RLS policies**
-- Every policy gets an additional `AND (is_super_admin() OR current_setting('app.current_org_id', true)::uuid = org_id)` gate
-- Public/token-based RPCs unchanged (they use token auth, not session context)
-- Audit log policies scoped by org_id
-
-**Step 4: Database migration — Org-scope existing triggers**
-- `employee_id_settings` and `contract_id_settings` become per-org (composite unique on org_id)
-- `generate_employee_code` and `generate_contract_code` filter by org_id
-- `contract_id_year_counters` gets org_id with composite unique on (org_id, year)
+### Remaining Steps
 
 **Step 5: Storage path migration**
 - Update `upload-employee-signature` edge function to store files under `/org_id/signatures/...`
 - Update employer signature upload to use org_id prefix
 - Add storage RLS policy checking path prefix matches user's org
-
-**Step 6: React — OrgContext provider and session setup**
-- Create `OrgProvider` context storing `currentOrgId` in `sessionStorage`
-- `useOrg()` hook returning `{ orgId, orgName, orgType, switchOrg, orgs }`
-- On org select, call `supabase.rpc('set_org_context', { _org_id })` before any data queries
-- Wrap the app in `OrgProvider`
-
-**Step 7: React — Organization Picker page**
-- New component between login and App Launcher
-- Cards showing org name, type badge, member count
-- "Create Organization" for admins
-- "Create Sandbox" with clone-from-production option
 
 **Step 8: React — Update all queries**
 - Every `.from('table')` call gets `.eq('org_id', orgId)` filter added
@@ -97,4 +69,3 @@ The `audit_trigger_func` must capture `org_id` from session context and store it
 4. Storage: path-based isolation with RLS on `storage.objects`
 5. Edge functions: server-side org validation independent of client
 6. Indexes: no performance degradation from org filtering
-

@@ -66,7 +66,7 @@ export function CompanyRegisterView() {
         const { error } = await supabase.from("companies").update(company).eq("id", company.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("companies").insert(company);
+        const { error } = await supabase.from("companies").insert(company as any);
         if (error) throw error;
       }
     },

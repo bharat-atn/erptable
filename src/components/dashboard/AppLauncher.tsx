@@ -231,7 +231,7 @@ async function saveAppsToDb(apps: AppDefinition[]) {
   } else {
     await supabase
       .from("app_launcher_config")
-      .insert({ apps: toSave as any });
+      .insert({ apps: toSave } as any);
   }
 }
 

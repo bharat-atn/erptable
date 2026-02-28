@@ -535,7 +535,7 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                       season_year: new Date().getFullYear().toString(),
                       status: "draft",
                       form_data: { ...empFields, contractLanguage: selectedLanguage },
-                    })
+                    } as any)
                     .select("id")
                     .single();
                   if (!error && data) {
