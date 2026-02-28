@@ -509,9 +509,18 @@ export function OnboardingWizard({
     return merged;
   }, [effectiveBanksByCountry, selectedBankCountry]);
 
-  const bankList = selectedBankCountry
-    ? (effectiveBanksByCountry[selectedBankCountry] || []).map((b) => b.name)
-    : [];
+  const banksForSelectedCountry = useMemo(() => {
+    if (!selectedBankCountry) return [];
+
+    const normalized = selectedBankCountry.trim().toLowerCase();
+    const matchedCountry = Object.keys(effectiveBanksByCountry).find(
+      (country) => country.trim().toLowerCase() === normalized
+    );
+
+    return matchedCountry ? effectiveBanksByCountry[matchedCountry] : [];
+  }, [effectiveBanksByCountry, selectedBankCountry]);
+
+  const bankList = banksForSelectedCountry.map((b) => b.name);
 
   useEffect(() => {
     supabase
@@ -1137,16 +1146,27 @@ export function OnboardingWizard({
               {/* Country selector */}
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
-                <Select value={selectedBankCountry} onValueChange={(val) => { setSelectedBankCountry(val); onBankSelect(""); setBankListExpanded(true); }}>
-                  <SelectTrigger tabIndex={23} className={cn("h-11 text-sm font-medium", fieldError(!selectedBankCountry))}>
-                    <SelectValue placeholder="Choose country / Välj land" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableBankCountries.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  tabIndex={23}
+                  aria-label="Select bank country"
+                  value={selectedBankCountry}
+                  onChange={(e) => {
+                    setSelectedBankCountry(e.target.value);
+                    onBankSelect("");
+                    setBankListExpanded(true);
+                  }}
+                  className={cn(
+                    "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    fieldError(!selectedBankCountry)
+                  )}
+                >
+                  <option value="" disabled>
+                    Choose country / Välj land
+                  </option>
+                  {availableBankCountries.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Bank radio list – only shown after country is selected */}
@@ -1183,7 +1203,7 @@ export function OnboardingWizard({
                     onBankSelect(val);
                     // Auto-fill BIC code
                     if (val !== "other") {
-                      const match = (effectiveBanksByCountry[selectedBankCountry] || []).find((b) => b.name === val);
+                      const match = banksForSelectedCountry.find((b) => b.name === val);
                       if (match?.bic_code) updateField("bicCode", match.bic_code);
                     }
                     // Collapse the list after selection
