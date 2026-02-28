@@ -143,13 +143,15 @@ export function CreateInvitationDialog() {
       if (error) throw error;
 
       // Now send the invitation email
+      const onboardingBaseUrl = window.location.origin;
+
       try {
         const { data: emailData, error: emailError } = await supabase.functions.invoke(
           "send-invitation-email",
           {
             body: {
               invitationId: data.id,
-              baseUrl: "https://erptable.lovable.app",
+              baseUrl: onboardingBaseUrl,
             },
           }
         );
@@ -160,7 +162,7 @@ export function CreateInvitationDialog() {
           setEmailResult({
             success: false,
             fallback: true,
-            onboardingLink: `https://erptable.lovable.app/onboard/${data.token}`,
+            onboardingLink: `${onboardingBaseUrl}/onboard/${data.token}`,
             recipientEmail: type === "CONTRACT_RENEWAL" ? selectedEmployee?.email : email,
             employeeName: type === "CONTRACT_RENEWAL"
               ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")
@@ -175,7 +177,7 @@ export function CreateInvitationDialog() {
         setEmailResult({
           success: false,
           fallback: true,
-          onboardingLink: `${window.location.origin}/onboard/${data.token}`,
+          onboardingLink: `${onboardingBaseUrl}/onboard/${data.token}`,
           recipientEmail: type === "CONTRACT_RENEWAL" ? selectedEmployee?.email : email,
           employeeName: type === "CONTRACT_RENEWAL"
             ? [selectedEmployee?.first_name, selectedEmployee?.last_name].filter(Boolean).join(" ")

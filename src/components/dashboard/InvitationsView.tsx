@@ -72,6 +72,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const [viewSubmissionEmployeeId, setViewSubmissionEmployeeId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
+  const onboardingBaseUrl = window.location.origin;
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["invitations", orgId],
@@ -111,7 +112,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         await supabase.functions.invoke("send-invitation-email", {
           body: {
             invitationId: invitation.id,
-            baseUrl: "https://erptable.lovable.app",
+            baseUrl: onboardingBaseUrl,
           },
         });
       } catch {
@@ -119,7 +120,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       }
 
       // Copy the link to clipboard
-      navigator.clipboard.writeText(`https://erptable.lovable.app/onboard/${invitation.token}`);
+      navigator.clipboard.writeText(`${onboardingBaseUrl}/onboard/${invitation.token}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
@@ -171,7 +172,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   });
 
   const copyLink = (token: string) => {
-    navigator.clipboard.writeText(`https://erptable.lovable.app/onboard/${token}`);
+    navigator.clipboard.writeText(`${onboardingBaseUrl}/onboard/${token}`);
     toast.success("Link copied to clipboard");
   };
 
