@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,18 +69,20 @@ export function CreateInvitationDialog() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const queryClient = useQueryClient();
+  const { orgId } = useOrg();
 
   const { data: employees } = useQuery({
-    queryKey: ["employees-for-renewal"],
+    queryKey: ["employees-for-renewal", orgId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
         .select("id, first_name, middle_name, last_name, email, employee_code, status")
+        .eq("org_id", orgId!)
         .order("first_name");
       if (error) throw error;
       return data;
     },
-    enabled: isOpen,
+    enabled: isOpen && !!orgId,
   });
 
   const selectedEmployee = employees?.find((e) => e.id === selectedEmployeeId);
@@ -101,6 +104,7 @@ export function CreateInvitationDialog() {
           .from("employees")
           .select("id")
           .eq("email", email)
+          .eq("org_id", orgId!)
           .maybeSingle();
 
         if (existingEmployee) {
@@ -115,6 +119,7 @@ export function CreateInvitationDialog() {
             middle_name: middleName.trim() || null,
             last_name: lastName.trim() || null,
             status: "INVITED" as const,
+            org_id: orgId,
           } as any])
           .select("id")
           .single();
@@ -130,6 +135,7 @@ export function CreateInvitationDialog() {
           type: type as "NEW_HIRE" | "CONTRACT_RENEWAL",
           status: "PENDING" as const,
           language,
+          org_id: orgId,
         } as any])
         .select()
         .single();

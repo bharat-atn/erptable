@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrg } from "@/contexts/OrgContext";
 import { supabase } from "@/integrations/supabase/client";
 import { generateDummyEmployee, type DummyCountry } from "@/lib/dummy-employees";
 import { toast } from "sonner";
@@ -120,6 +121,7 @@ export function EmployeeRegisterView() {
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const queryClient = useQueryClient();
+  const { orgId } = useOrg();
 
   const addDummyEmployee = useMutation({
     mutationFn: async (country: DummyCountry) => {
@@ -128,6 +130,7 @@ export function EmployeeRegisterView() {
         first_name: dummy.first_name, last_name: dummy.last_name, middle_name: dummy.middle_name,
         email: dummy.email, phone: dummy.phone, city: dummy.city, country: dummy.country,
         status: dummy.status, personal_info: dummy.personal_info,
+        org_id: orgId,
       } as any]);
       if (error) throw error;
     },
@@ -136,9 +139,10 @@ export function EmployeeRegisterView() {
   });
 
   const { data: employees, isLoading } = useQuery({
-    queryKey: ["register-employees"],
+    queryKey: ["register-employees", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("employees").select("*").in("status", ["ACTIVE", "INACTIVE"]).order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("employees").select("*").eq("org_id", orgId!).in("status", ["ACTIVE", "INACTIVE"]).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },

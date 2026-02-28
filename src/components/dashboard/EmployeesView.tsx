@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -19,13 +20,16 @@ const statusVariants: Record<EmployeeStatus, "pending" | "warning" | "success" |
 
 export function EmployeesView() {
   const [search, setSearch] = useState("");
+  const { orgId } = useOrg();
 
   const { data: employees, isLoading } = useQuery({
-    queryKey: ["employees"],
+    queryKey: ["employees", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("employees")
         .select("*")
+        .eq("org_id", orgId!)
         .in("status", ["ACTIVE", "INACTIVE"])
         .order("created_at", { ascending: false });
 

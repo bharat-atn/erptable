@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, ArrowRight, Trash2, PenTool, Send, Printer, Eye, AlertTriangle, RotateCcw, Play, Zap, RotateCw, ChevronDown } from "lucide-react";
@@ -72,6 +73,7 @@ function getContractMissingFields(fd: Record<string, any> | null): string[] {
 
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
   const queryClient = useQueryClient();
+  const { orgId } = useOrg();
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
@@ -107,11 +109,13 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
   });
   const { data: contracts, isLoading } = useQuery({
-    queryKey: ["contracts"],
+    queryKey: ["contracts", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contracts")
         .select(`*, employees (email, first_name, last_name), companies (name)`)
+        .eq("org_id", orgId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data as any[]).map(c => ({

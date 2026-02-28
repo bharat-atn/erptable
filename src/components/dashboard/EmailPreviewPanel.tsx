@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 
 const translations: Record<string, {
   subject: (company: string) => string;
@@ -141,12 +142,15 @@ interface EmailPreviewPanelProps {
 }
 
 export function EmailPreviewPanel({ language, recipientName, recipientEmail }: EmailPreviewPanelProps) {
+  const { orgId } = useOrg();
   const { data: company } = useQuery({
-    queryKey: ["company-for-preview"],
+    queryKey: ["company-for-preview", orgId],
+    enabled: !!orgId,
     queryFn: async () => {
       const { data } = await supabase
         .from("companies")
         .select("name")
+        .eq("org_id", orgId!)
         .limit(1)
         .single();
       return data?.name || "Ljungan Forestry";

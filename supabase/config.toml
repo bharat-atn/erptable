@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.cleanup-orphan-user]
 verify_jwt = false
+
+[functions.restore-sandbox-from-audit]
+verify_jwt = false
+
+[functions.seed-sandbox-data]
+verify_jwt = false
