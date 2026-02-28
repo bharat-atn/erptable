@@ -14,6 +14,7 @@ import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
 import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
+import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = string;
@@ -994,10 +995,22 @@ export function UserManagementView() {
             {memberships.map((m) => (
               <Badge
                 key={m.id}
-                variant={m.org_type === "production" ? "default" : "secondary"}
-                className="text-[10px] px-1.5 py-0"
+                variant={m.org_type === "production" ? "default" : "outline"}
+                className={cn(
+                  "text-[10px] px-1.5 py-0 gap-1",
+                  m.org_type === "sandbox" && "border-amber-400 text-amber-700 bg-amber-50"
+                )}
               >
+                {m.org_type === "sandbox" && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                )}
+                {m.org_type === "production" && (
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                )}
                 {m.org_name}
+                <span className="opacity-60 font-normal">
+                  {m.org_type === "sandbox" ? "sandbox" : "prod"}
+                </span>
               </Badge>
             ))}
           </div>
