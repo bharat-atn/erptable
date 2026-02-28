@@ -968,7 +968,7 @@ export function UserManagementView() {
       key: "organizations",
       header: "Organizations",
       sortable: false,
-      accessor: (row) => row.orgMemberships.map(m => m.org_name).join(", ") || "none",
+      accessor: (row) => row.orgMemberships.map(m => m.org_id).join(", ") || "none",
       render: (row) => {
         if (row.isPendingInvitation) {
           return <span className="text-xs text-muted-foreground italic">—</span>;
@@ -1060,7 +1060,7 @@ export function UserManagementView() {
     {
       key: "organizations",
       label: "Organization",
-      options: allOrgs.map(o => ({ value: o.name, label: o.name })),
+      options: allOrgs.map(o => ({ value: o.id, label: o.name })),
     },
   ];
 
