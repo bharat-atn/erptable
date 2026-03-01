@@ -1,22 +1,32 @@
 
 
-## Plan: Make Version Banner Work in Production with Hard Reset
+## Plan: Add Legal Duration Text Below Contract Dates
 
-### Problem
-Two issues:
-1. The "Click here to update" button currently does a soft React Query cache invalidation — it doesn't actually reload the app to pick up new deployed code. Users in the published environment won't get the new frontend bundle.
-2. The banner should work identically in both development and published environments (it already does since it queries the database, but the update action needs to be a real page reload).
+### What
+Add a bilingual legal notice below the Start Date / End Date fields in the Duration & Timing section of the Scheduling Step. The text states that the contract comes into force when work begins on site and ends when the mission is finished or weather no longer permits continuation.
 
-### Change
+### Changes
 
-**`src/components/dashboard/VersionUpdateBanner.tsx`**
-- Replace `handleUpdate` logic: instead of setting state and calling `onVersionUpdate()`, perform a **hard browser reload** via `window.location.reload()`. This forces the browser to fetch the latest deployed assets.
-- Remove the `onVersionUpdate` prop entirely since it's no longer needed.
-- Remove the `dismissed` state management from the update button (the reload handles it).
+**1. `src/components/dashboard/SchedulingStep.tsx`**
+- Add a `contractLanguage` prop to `SchedulingStepProps`.
+- Insert a styled info block between the date pickers (line ~401) and the Daily Schedule card (line ~403) containing the bilingual legal text.
+- Translate based on `contractLanguage`:
+  - **EN/SE**: English + Swedish
+  - **SE**: Swedish only
+  - **RO/SE**: Romanian + Swedish
+  - **TH/SE**: Thai + Swedish
+  - **UK/SE**: Ukrainian + Swedish
 
-**`src/components/dashboard/Dashboard.tsx`**
-- Remove the `onVersionUpdate` prop passed to `VersionUpdateBanner` (no longer exists).
+Translations:
+- **SV**: "Anställningsavtalet träder i kraft när arbetet på platsen påbörjas och upphör när det tilldelade uppdraget är slutfört eller om väderförhållandena inte längre tillåter att uppdraget fortsätter."
+- **EN**: "The employment contract comes into force when work on the site begins and finishes when the assigned mission is finished or if the weather conditions no longer allow the continuation of the mission."
+- **RO**: "Contractul de muncă intră în vigoare la începerea lucrărilor pe șantier și încetează la finalizarea misiunii atribuite sau dacă condițiile meteorologice nu mai permit continuarea misiunii."
+- **TH**: "สัญญาจ้างงานมีผลบังคับใช้เมื่อเริ่มทำงานในพื้นที่ และสิ้นสุดเมื่อภารกิจที่ได้รับมอบหมายเสร็จสิ้น หรือหากสภาพอากาศไม่เอื้ออำนวยให้ดำเนินภารกิจต่อไปได้"
+- **UK**: "Трудовий договір набуває чинності з початком роботи на об'єкті та припиняється після завершення призначеної місії або якщо погодні умови більше не дозволяють продовження місії."
 
-### Result
-When a new version is published and detected by the 30-second polling, the banner appears. Clicking "Click here to update" triggers `window.location.reload()` — a hard reset that loads the latest code bundle without closing or disrupting anything beyond a normal page refresh.
+**2. `src/components/dashboard/ContractDetailsStep.tsx`**
+- Pass `contractLanguage` to `<SchedulingStep>` (line ~3171).
+
+### Visual result
+Below the two date pickers, a subtle info block with the legal clause in the appropriate bilingual format, similar to other info blocks used throughout the contract wizard.
 
