@@ -54,41 +54,8 @@ import { Badge } from "@/components/ui/badge";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 import { Separator } from "@/components/ui/separator";
-import { countries } from "@/lib/countries";
-import { getOrderedNationalities, getFlagForCountry } from "@/lib/nationalities";
-
-// --- Phone helpers (same as LoginProfileDialog) ---
-const PRIORITY_DIAL_CODES_SIDEBAR = ["+46", "+40", "+66", "+380"];
-function getOrderedCountriesSidebar() {
-  const priority = countries.filter((c) => PRIORITY_DIAL_CODES_SIDEBAR.includes(c.dialCode));
-  priority.sort((a, b) => PRIORITY_DIAL_CODES_SIDEBAR.indexOf(a.dialCode) - PRIORITY_DIAL_CODES_SIDEBAR.indexOf(b.dialCode));
-  const rest = countries.filter((c) => !PRIORITY_DIAL_CODES_SIDEBAR.includes(c.dialCode));
-  return { priority, rest };
-}
-
-function parsePhoneSidebar(stored: string): { dialCode: string; localNumber: string } {
-  if (!stored) return { dialCode: "+46", localNumber: "" };
-  const sorted = [...countries].sort((a, b) => b.dialCode.length - a.dialCode.length);
-  for (const c of sorted) {
-    if (stored.startsWith(c.dialCode)) {
-      return { dialCode: c.dialCode, localNumber: stored.slice(c.dialCode.length).trim() };
-    }
-  }
-  return { dialCode: "+46", localNumber: stored };
-}
-
-// --- ISO date format helper ---
-const ISO_STORAGE_KEY_SIDEBAR = "iso-standards-settings";
-function getIsoDateFormatSidebar(): string {
-  try {
-    const saved = localStorage.getItem(ISO_STORAGE_KEY_SIDEBAR);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return parsed.date_format || "YYYY-MM-DD";
-    }
-  } catch {}
-  return "YYYY-MM-DD";
-}
+import { parsePhone, getOrderedCountries, getIsoDateFormat, combinePhone, formatDateForDisplay, parseDateToCanonical } from "@/lib/profile-utils";
+import { ProfileIdentityFields, type ProfileData } from "@/components/profile/ProfileIdentityFields";
 
 export interface ScreenSizeOption {
   label: string;
@@ -594,85 +561,76 @@ function UserProfileDialog({
   lang: UiLang;
   onLangChange: (lang: UiLang) => void;
 }) {
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState("");
   const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [dialCode, setDialCode] = useState("+46");
-  const [localNumber, setLocalNumber] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
-  const [nationality, setNationality] = useState("");
+
+  const [profileData, setProfileData] = useState<ProfileData>({
+    fullName: "",
+    avatarUrl: null,
+    lang: lang,
+    dateOfBirth: "",
+    dialCode: "+46",
+    localNumber: "",
+    nationality: "",
+  });
 
   useEffect(() => {
     if (!open) return;
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return;
       setUserId(data.user.id);
+      setUserEmail(data.user.email ?? "");
       setIsGoogleUser(data.user.app_metadata?.provider === "google");
       supabase
         .from("profiles")
-        .select("avatar_url, date_of_birth, phone_number, emergency_contact, nationality")
+        .select("full_name, avatar_url, date_of_birth, phone_number, emergency_contact, nationality, preferred_language")
         .eq("user_id", data.user.id)
         .single()
         .then(({ data: profile }) => {
           const p = profile as any;
-          setAvatarUrl(p?.avatar_url ?? null);
-          setDateOfBirth(p?.date_of_birth ?? "");
-          const { dialCode: dc, localNumber: ln } = parsePhoneSidebar(p?.phone_number ?? "");
-          setDialCode(dc);
-          setLocalNumber(ln);
-          setEmergencyContact(p?.emergency_contact ?? "");
-          setNationality(p?.nationality ?? "");
+          if (!p) return;
+          const { dialCode: dc, localNumber: ln } = parsePhone(p.phone_number ?? "");
+          setProfileData({
+            fullName: p.full_name ?? "",
+            avatarUrl: p.avatar_url ?? null,
+            lang: (p.preferred_language as UiLang) ?? lang,
+            dateOfBirth: p.date_of_birth ?? "",
+            dialCode: dc,
+            localNumber: ln,
+            nationality: p.nationality ?? "",
+          });
+          setEmergencyContact(p.emergency_contact ?? "");
         });
     });
-  }, [open]);
+  }, [open, lang]);
 
   const handleSaveProfileFields = async () => {
     if (!userId) return;
-    const combinedPhone = localNumber ? `${dialCode}${localNumber}` : null;
     await (supabase as any).from("profiles").update({
-      date_of_birth: dateOfBirth || null,
-      phone_number: combinedPhone,
+      full_name: profileData.fullName || null,
+      preferred_language: profileData.lang,
+      date_of_birth: profileData.dateOfBirth || null,
+      phone_number: combinePhone(profileData.dialCode, profileData.localNumber),
       emergency_contact: emergencyContact || null,
-      nationality: nationality || null,
+      nationality: profileData.nationality || null,
     }).eq("user_id", userId);
+    // Sync language to parent
+    if (profileData.lang !== lang) {
+      onLangChange(profileData.lang);
+    }
     toast.success("Profile updated");
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please select an image file"); return; }
-    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB"); return; }
-
-    setUploading(true);
-    const path = `avatars/${userId}.png`;
-    const { error: uploadError } = await supabase.storage
-      .from("signatures")
-      .upload(path, file, { upsert: true, contentType: file.type });
-
-    if (uploadError) { toast.error("Upload failed"); setUploading(false); return; }
-
-    const { data: { publicUrl } } = supabase.storage.from("signatures").getPublicUrl(path);
-    const urlWithBust = `${publicUrl}?t=${Date.now()}`;
-
-    await (supabase as any).from("profiles").update({ avatar_url: urlWithBust }).eq("user_id", userId);
-    setAvatarUrl(urlWithBust);
-    setUploading(false);
-    toast.success("Avatar updated");
   };
 
   const handleRemoveAvatar = async () => {
     if (!userId) return;
     await supabase.storage.from("signatures").remove([`avatars/${userId}.png`]);
     await (supabase as any).from("profiles").update({ avatar_url: null }).eq("user_id", userId);
-    setAvatarUrl(null);
+    setProfileData((prev) => ({ ...prev, avatarUrl: null }));
     toast.success("Avatar removed");
   };
 
@@ -696,130 +654,35 @@ function UserProfileDialog({
           <DialogDescription className="sr-only">Manage your profile settings</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 pt-2">
-          {/* Avatar */}
-          <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("profile.avatar")}</Label>
-            <div className="flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                {avatarUrl && <AvatarImage src={avatarUrl} />}
-                <AvatarFallback className="text-lg bg-sidebar-accent text-sidebar-accent-foreground">
-                  <Camera className="w-5 h-5" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-1.5">
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-                  {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-                  {t("profile.uploadAvatar")}
+        <div className="space-y-6 pt-2 max-h-[60vh] overflow-y-auto">
+          {userId && (
+            <>
+              <ProfileIdentityFields
+                userId={userId}
+                userEmail={userEmail}
+                data={profileData}
+                onChange={(patch) => setProfileData((prev) => ({ ...prev, ...patch }))}
+                showAvatar
+              />
+
+              {/* Remove avatar button */}
+              {profileData.avatarUrl && (
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={handleRemoveAvatar}>
+                  {t("profile.removeAvatar")}
                 </Button>
-                {avatarUrl && (
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={handleRemoveAvatar}>
-                    {t("profile.removeAvatar")}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
+              )}
 
-          {/* Language */}
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5" />
-              {t("profile.language")}
-            </Label>
-            <Select value={lang} onValueChange={(v) => onLangChange(v as UiLang)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LANGUAGE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.flag} {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Additional Profile Fields */}
-          <div className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("profile.personalInfo")}
-            </Label>
-            <div className="space-y-2">
-              {/* Date of Birth - text input with ISO format */}
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.dateOfBirth")}</Label>
-                <Input
-                  type="text"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  placeholder={getIsoDateFormatSidebar()}
-                  maxLength={10}
-                />
-              </div>
-              {/* Phone Number - dial code + local number */}
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.phoneNumber")}</Label>
-                <div className="flex gap-2">
-                  <Select value={dialCode} onValueChange={setDialCode}>
-                    <SelectTrigger className="w-[130px] shrink-0">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getOrderedCountriesSidebar().priority.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                      <Separator className="my-1" />
-                      {getOrderedCountriesSidebar().rest.map((c) => (
-                        <SelectItem key={c.code} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="tel"
-                    value={localNumber}
-                    onChange={(e) => setLocalNumber(e.target.value)}
-                    placeholder="70 123 4567"
-                    className="flex-1"
-                  />
-                </div>
-              </div>
               {/* Emergency Contact */}
-              <div>
+              <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">{t("profile.emergencyContact")}</Label>
                 <Input value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name & phone number" />
               </div>
-              {/* Nationality - dropdown with flags */}
-              <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.nationality")}</Label>
-                <Select value={nationality} onValueChange={setNationality}>
-                  <SelectTrigger><SelectValue placeholder="Select nationality" /></SelectTrigger>
-                  <SelectContent>
-                    {getOrderedNationalities().priority.map((n) => (
-                      <SelectItem key={n.nationality} value={n.nationality}>
-                        {getFlagForCountry(n.country)} {n.nationality}
-                      </SelectItem>
-                    ))}
-                    <Separator className="my-1" />
-                    {getOrderedNationalities().rest.map((n) => (
-                      <SelectItem key={n.nationality} value={n.nationality}>
-                        {getFlagForCountry(n.country)} {n.nationality}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+
               <Button size="sm" onClick={handleSaveProfileFields}>
                 {t("profile.saveChanges")}
               </Button>
-            </div>
-          </div>
+            </>
+          )}
 
           {/* Password */}
           {!isGoogleUser && (
