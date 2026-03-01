@@ -969,13 +969,18 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           current_org_id: string | null
+          date_of_birth: string | null
           default_signature_url: string | null
           email: string | null
+          emergency_contact: string | null
           full_name: string | null
           id: string
           last_sign_in_at: string | null
+          nationality: string | null
+          phone_number: string | null
           preferred_language: string | null
           role: string | null
+          skip_login_profile: boolean
           updated_at: string
           user_id: string
         }
@@ -983,13 +988,18 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_org_id?: string | null
+          date_of_birth?: string | null
           default_signature_url?: string | null
           email?: string | null
+          emergency_contact?: string | null
           full_name?: string | null
           id?: string
           last_sign_in_at?: string | null
+          nationality?: string | null
+          phone_number?: string | null
           preferred_language?: string | null
           role?: string | null
+          skip_login_profile?: boolean
           updated_at?: string
           user_id: string
         }
@@ -997,13 +1007,18 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           current_org_id?: string | null
+          date_of_birth?: string | null
           default_signature_url?: string | null
           email?: string | null
+          emergency_contact?: string | null
           full_name?: string | null
           id?: string
           last_sign_in_at?: string | null
+          nationality?: string | null
+          phone_number?: string | null
           preferred_language?: string | null
           role?: string | null
+          skip_login_profile?: boolean
           updated_at?: string
           user_id?: string
         }

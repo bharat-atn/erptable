@@ -343,6 +343,7 @@ function AppSwitcherHeader({
   onSwitchApp,
   onBackToLauncher,
   t,
+  userRole,
 }: {
   collapsed: boolean;
   appId?: string | null;
@@ -350,10 +351,15 @@ function AppSwitcherHeader({
   onSwitchApp?: (appId: string) => void;
   onBackToLauncher?: () => void;
   t: (key: string) => string;
+  userRole?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const currentApp = apps?.find((a) => a.id === appId);
-  const enabledApps = apps?.filter((a) => a.enabled) ?? [];
+  const enabledApps = (apps?.filter((a) => a.enabled) ?? []).filter((app) => {
+    if (app.adminOnly && userRole !== "admin") return false;
+    if (app.allowedRoles && app.allowedRoles.length > 0 && userRole && !app.allowedRoles.includes(userRole)) return false;
+    return true;
+  });
 
   const CurrentIcon = currentApp ? getIcon(currentApp.iconName) : null;
   const currentColor = currentApp ? getColor(currentApp.colorIndex) : null;
@@ -561,23 +567,43 @@ function UserProfileDialog({
   const [changingPassword, setChangingPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [nationality, setNationality] = useState("");
+
   useEffect(() => {
     if (!open) return;
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return;
       setUserId(data.user.id);
       setIsGoogleUser(data.user.app_metadata?.provider === "google");
-      // Fetch avatar
       supabase
         .from("profiles")
-        .select("avatar_url")
+        .select("avatar_url, date_of_birth, phone_number, emergency_contact, nationality")
         .eq("user_id", data.user.id)
         .single()
         .then(({ data: profile }) => {
-          setAvatarUrl((profile as any)?.avatar_url ?? null);
+          const p = profile as any;
+          setAvatarUrl(p?.avatar_url ?? null);
+          setDateOfBirth(p?.date_of_birth ?? "");
+          setPhoneNumber(p?.phone_number ?? "");
+          setEmergencyContact(p?.emergency_contact ?? "");
+          setNationality(p?.nationality ?? "");
         });
     });
   }, [open]);
+
+  const handleSaveProfileFields = async () => {
+    if (!userId) return;
+    await (supabase as any).from("profiles").update({
+      date_of_birth: dateOfBirth || null,
+      phone_number: phoneNumber || null,
+      emergency_contact: emergencyContact || null,
+      nationality: nationality || null,
+    }).eq("user_id", userId);
+    toast.success("Profile updated");
+  };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -674,6 +700,34 @@ function UserProfileDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Additional Profile Fields */}
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("profile.personalInfo") || "Personal Information"}
+            </Label>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("profile.dateOfBirth") || "Date of Birth"}</Label>
+                <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("profile.phoneNumber") || "Phone Number"}</Label>
+                <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+46 70 123 4567" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("profile.emergencyContact") || "Emergency Contact"}</Label>
+                <Input value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name & phone number" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">{t("profile.nationality") || "Nationality"}</Label>
+                <Input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Swedish" />
+              </div>
+              <Button size="sm" onClick={handleSaveProfileFields}>
+                {t("profile.saveChanges") || "Save Changes"}
+              </Button>
+            </div>
           </div>
 
           {/* Password */}
@@ -976,7 +1030,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         collapsed ? "w-14" : "w-48 lg:w-56 xl:w-60"
       )}>
         {/* Header Card – App Switcher */}
-        <AppSwitcherHeader collapsed={collapsed} appId={appId} apps={apps} onSwitchApp={onSwitchApp} onBackToLauncher={onBackToLauncher} t={t} />
+        <AppSwitcherHeader collapsed={collapsed} appId={appId} apps={apps} onSwitchApp={onSwitchApp} onBackToLauncher={onBackToLauncher} t={t} userRole={userRole} />
 
         {/* Organization Switcher */}
         <OrgSwitcherCompact collapsed={collapsed} t={t} />
