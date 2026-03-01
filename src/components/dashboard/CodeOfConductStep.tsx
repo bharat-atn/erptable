@@ -8,6 +8,7 @@ const LANGUAGES = [
   { code: "en", label: "English", labelEn: "English", flag: "🇬🇧", file: "/documents/code-of-conduct-en.pdf" },
   { code: "ro", label: "Română", labelEn: "Romanian", flag: "🇷🇴", file: "/documents/code-of-conduct-ro.pdf" },
   { code: "th", label: "ไทย", labelEn: "Thai", flag: "🇹🇭", file: "/documents/code-of-conduct-th.pdf" },
+  { code: "uk", label: "Українська", labelEn: "Ukrainian", flag: "🇺🇦", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
 interface CodeOfConductStepProps {
