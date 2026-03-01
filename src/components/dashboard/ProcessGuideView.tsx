@@ -29,6 +29,7 @@ const terminology = [
 
 interface WorkflowStep {
   role: "HR MANAGER" | "CANDIDATE" | "SYSTEM";
+  roleLabel?: string;
   title: string;
   desc: string;
   status: string;
@@ -41,34 +42,13 @@ const roleColors: Record<string, string> = {
   SYSTEM: "bg-[hsl(280,65%,60%)]/10 text-[hsl(280,65%,60%)]",
 };
 
-const newHireSteps: WorkflowStep[] = [
-  { role: "HR MANAGER", title: "Send Invitation", desc: "Create and send onboarding email link.", status: "INVITED", icon: Send },
-  { role: "CANDIDATE", title: "Data Submission", desc: "Fill in personal, bank & ID info via wizard.", status: "ONBOARDING", icon: UserPlus },
-  { role: "HR MANAGER", title: "Contract Review", desc: "Review submitted data and generate contract.", status: "ONBOARDING", icon: FileSignature },
-  { role: "SYSTEM", title: "Activation", desc: "Employee record set to active duty.", status: "ACTIVE", icon: Zap },
-];
-
-const renewalSteps: WorkflowStep[] = [
-  { role: "HR MANAGER", title: "Select Candidate", desc: "Pick returning employee from seasonal pool.", status: "SEASONAL_POOL", icon: Users },
-  { role: "HR MANAGER", title: "Send Renewal Invite", desc: "Send renewal link to update information.", status: "RENEWAL", icon: Send },
-  { role: "CANDIDATE", title: "Data Verification", desc: "Review and update personal details.", status: "RENEWAL", icon: CheckCircle },
-  { role: "CANDIDATE", title: "Contract Signing", desc: "Sign the new employment agreement.", status: "RENEWAL", icon: FileSignature },
-  { role: "SYSTEM", title: "Reactivation", desc: "Employee reactivated for the new season.", status: "ACTIVE", icon: Zap },
-];
-
-const terminationSteps: WorkflowStep[] = [
-  { role: "HR MANAGER", title: "Termination Notice", desc: "Initiate the termination process.", status: "ACTIVE", icon: XCircle },
-  { role: "SYSTEM", title: "Exit Processing", desc: "Revoke access and finalize paperwork.", status: "TERMINATING", icon: ShieldCheck },
-  { role: "SYSTEM", title: "Archive", desc: "Move to seasonal pool or permanent archive.", status: "TERMINATED", icon: Archive },
-];
-
 function StepCard({ step, index, total }: { step: WorkflowStep; index: number; total: number }) {
   const Icon = step.icon;
   return (
     <div className="flex items-start gap-3">
       <div className="flex-1 rounded-lg border border-border bg-card p-4 space-y-3">
         <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${roleColors[step.role]}`}>
-          {step.role}
+          {step.roleLabel ?? step.role}
         </span>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-muted flex items-center justify-center shrink-0">
@@ -114,6 +94,27 @@ const summaryFlows = [
 
 export function ProcessGuideView() {
   const { t } = useUiLanguage();
+
+  const newHireSteps: WorkflowStep[] = [
+    { role: "HR MANAGER", roleLabel: t("guide.hrManager"), title: t("guide.sendInvitation"), desc: t("guide.sendInvitationDesc"), status: t("status.invited").toUpperCase(), icon: Send },
+    { role: "CANDIDATE", roleLabel: t("guide.candidate"), title: t("guide.dataSubmission"), desc: t("guide.dataSubmissionDesc"), status: t("status.onboarding").toUpperCase(), icon: UserPlus },
+    { role: "HR MANAGER", roleLabel: t("guide.hrManager"), title: t("guide.contractReview"), desc: t("guide.contractReviewDesc"), status: t("status.onboarding").toUpperCase(), icon: FileSignature },
+    { role: "SYSTEM", roleLabel: t("guide.system"), title: t("guide.activation"), desc: t("guide.activationDesc"), status: t("status.active").toUpperCase(), icon: Zap },
+  ];
+
+  const renewalSteps: WorkflowStep[] = [
+    { role: "HR MANAGER", roleLabel: t("guide.hrManager"), title: t("guide.selectCandidate"), desc: t("guide.selectCandidateDesc"), status: t("guide.seasonalPool").toUpperCase(), icon: Users },
+    { role: "HR MANAGER", roleLabel: t("guide.hrManager"), title: t("guide.sendRenewalInvite"), desc: t("guide.sendRenewalInviteDesc"), status: t("guide.renewal").toUpperCase(), icon: Send },
+    { role: "CANDIDATE", roleLabel: t("guide.candidate"), title: t("guide.dataVerification"), desc: t("guide.dataVerificationDesc"), status: t("guide.renewal").toUpperCase(), icon: CheckCircle },
+    { role: "CANDIDATE", roleLabel: t("guide.candidate"), title: t("guide.contractSigning"), desc: t("guide.contractSigningDesc"), status: t("guide.renewal").toUpperCase(), icon: FileSignature },
+    { role: "SYSTEM", roleLabel: t("guide.system"), title: t("guide.reactivation"), desc: t("guide.reactivationDesc"), status: t("status.active").toUpperCase(), icon: Zap },
+  ];
+
+  const terminationSteps: WorkflowStep[] = [
+    { role: "HR MANAGER", roleLabel: t("guide.hrManager"), title: t("guide.terminationNotice"), desc: t("guide.terminationNoticeDesc"), status: t("status.active").toUpperCase(), icon: XCircle },
+    { role: "SYSTEM", roleLabel: t("guide.system"), title: t("guide.exitProcessing"), desc: t("guide.exitProcessingDesc"), status: t("guide.termination").toUpperCase(), icon: ShieldCheck },
+    { role: "SYSTEM", roleLabel: t("guide.system"), title: t("guide.archive"), desc: t("guide.archiveDesc"), status: t("status.inactive").toUpperCase(), icon: Archive },
+  ];
 
   const localTerminology = [
     { icon: Mail, title: t("guide.invitation"), desc: t("guide.invitationDesc") },
