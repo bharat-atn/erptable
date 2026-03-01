@@ -244,9 +244,13 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
     );
   };
 
+  const handleClose = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md [&>button]:hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+      <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Welcome Back</DialogTitle>
           <DialogDescription>Review your profile before continuing</DialogDescription>
