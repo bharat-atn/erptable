@@ -20,6 +20,7 @@ const COC_LANGUAGES = [
   { code: "en", label: "English", labelEn: "English", file: "/documents/code-of-conduct-en.pdf" },
   { code: "ro", label: "Română", labelEn: "Romanian", file: "/documents/code-of-conduct-ro.pdf" },
   { code: "th", label: "ไทย", labelEn: "Thai", file: "/documents/code-of-conduct-th.pdf" },
+  { code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
 interface ContractRow {
