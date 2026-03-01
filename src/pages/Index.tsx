@@ -23,8 +23,7 @@ const Index = () => {
 
   // Login profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [profileChecked, setProfileChecked] = useState(false);
-  const [isNewLogin, setIsNewLogin] = useState(false);
+  const [profileChecked, setProfileChecked] = useState(() => !!sessionStorage.getItem("profile_dialog_shown"));
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -40,13 +39,12 @@ const Index = () => {
         setActiveApp(null);
         setPendingChecked(false);
         setProfileChecked(false);
-        setIsNewLogin(false);
+        sessionStorage.removeItem("profile_dialog_shown");
       }
 
       if (event === "SIGNED_IN" && session?.user) {
         setPendingChecked(false);
         setProfileChecked(false);
-        setIsNewLogin(true);
         supabase.rpc("log_auth_event", {
           _action: "LOGIN",
           _user_id: session.user.id,
@@ -89,7 +87,7 @@ const Index = () => {
 
   // Check if we need to show the login profile dialog
   useEffect(() => {
-    if (!session || !role || !orgId || profileChecked || !isNewLogin) return;
+    if (!session || !role || !orgId || profileChecked) return;
     
     supabase
       .from("profiles")
@@ -103,7 +101,7 @@ const Index = () => {
         }
         setProfileChecked(true);
       });
-  }, [session, role, orgId, profileChecked, isNewLogin]);
+  }, [session, role, orgId, profileChecked]);
 
   if (loading || (session && roleLoading) || (session && !role && !pendingChecked) || (session && orgLoading)) {
     return (
@@ -133,7 +131,7 @@ const Index = () => {
         <AppLauncher onLaunchApp={(appId) => setActiveApp(appId)} userRole={role} />
         <LoginProfileDialog
           open={profileDialogOpen}
-          onContinue={() => setProfileDialogOpen(false)}
+          onContinue={() => { sessionStorage.setItem("profile_dialog_shown", "1"); setProfileDialogOpen(false); }}
           userId={session.user.id}
           userEmail={session.user.email ?? ""}
         />
