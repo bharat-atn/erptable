@@ -1,3 +1,14 @@
+import { countries } from "@/lib/countries";
+
+/** Build a flag lookup from countries list */
+const FLAG_MAP: Record<string, string> = {};
+countries.forEach((c) => { FLAG_MAP[c.name] = c.flag; });
+
+/** Get flag for a country name */
+export function getFlagForCountry(countryName: string): string {
+  return FLAG_MAP[countryName] || "🏳️";
+}
+
 /** Country-name → demonym mapping for nationality dropdown */
 export const NATIONALITIES: { country: string; nationality: string }[] = [
   { country: "Afghanistan", nationality: "Afghan" },
