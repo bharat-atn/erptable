@@ -35,6 +35,7 @@ import {
   Globe,
   Lock,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -567,7 +568,6 @@ function UserProfileDialog({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [emergencyContact, setEmergencyContact] = useState("");
 
   const [profileData, setProfileData] = useState<ProfileData>({
     fullName: "",
@@ -588,7 +588,7 @@ function UserProfileDialog({
       setIsGoogleUser(data.user.app_metadata?.provider === "google");
       supabase
         .from("profiles")
-        .select("full_name, avatar_url, date_of_birth, phone_number, emergency_contact, nationality, preferred_language")
+        .select("full_name, avatar_url, date_of_birth, phone_number, nationality, preferred_language")
         .eq("user_id", data.user.id)
         .single()
         .then(({ data: profile }) => {
@@ -604,7 +604,6 @@ function UserProfileDialog({
             localNumber: ln,
             nationality: p.nationality ?? "",
           });
-          setEmergencyContact(p.emergency_contact ?? "");
         });
     });
   }, [open, lang]);
@@ -616,7 +615,6 @@ function UserProfileDialog({
       preferred_language: profileData.lang,
       date_of_birth: profileData.dateOfBirth || null,
       phone_number: combinePhone(profileData.dialCode, profileData.localNumber),
-      emergency_contact: emergencyContact || null,
       nationality: profileData.nationality || null,
     }).eq("user_id", userId);
     // Sync language to parent
@@ -672,12 +670,6 @@ function UserProfileDialog({
                 </Button>
               )}
 
-              {/* Emergency Contact */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">{t("profile.emergencyContact")}</Label>
-                <Input value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name & phone number" />
-              </div>
-
               <Button size="sm" onClick={handleSaveProfileFields}>
                 {t("profile.saveChanges")}
               </Button>
@@ -685,34 +677,40 @@ function UserProfileDialog({
           )}
 
           {/* Password */}
-          {!isGoogleUser && (
-            <div className="space-y-3">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5" />
-                {t("profile.changePassword")}
-              </Label>
-              <Input
-                type="password"
-                placeholder={t("profile.newPassword")}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-              <Input
-                type="password"
-                placeholder={t("profile.confirmPassword")}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-              <Button
-                size="sm"
-                onClick={handleChangePassword}
-                disabled={changingPassword || !newPassword}
-              >
-                {changingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
-                {t("profile.updatePassword")}
-              </Button>
-            </div>
-          )}
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5" />
+              {t("profile.changePassword")}
+            </Label>
+            {isGoogleUser && (
+              <div className="rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                <span>
+                  You signed in with Google. Changing your password here only applies to email/password login and will not affect your Google sign-in.
+                </span>
+              </div>
+            )}
+            <Input
+              type="password"
+              placeholder={t("profile.newPassword")}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder={t("profile.confirmPassword")}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <Button
+              size="sm"
+              onClick={handleChangePassword}
+              disabled={changingPassword || !newPassword}
+            >
+              {changingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+              {t("profile.updatePassword")}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
