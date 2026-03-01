@@ -85,3 +85,17 @@ export const LANG_DEFAULTS: Record<string, { nationality: string; dialCode: stri
   ro: { nationality: "Romanian", dialCode: "+40" },
 };
 export const AUTO_SET_NATIONALITIES = Object.values(LANG_DEFAULTS).map((v) => v.nationality);
+
+// ─── Profile completeness guard ─────────────────────────────────
+/** Returns true when all required identity fields are present (non-empty). */
+export function isProfileIdentityComplete(data: {
+  dateOfBirth: string;
+  localNumber: string;
+  nationality: string;
+}): boolean {
+  return !!(
+    data.dateOfBirth?.trim() &&
+    data.localNumber?.replace(/[\s\-]/g, "").length >= 1 &&
+    data.nationality?.trim()
+  );
+}

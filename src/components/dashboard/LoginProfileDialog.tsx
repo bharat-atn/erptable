@@ -12,6 +12,7 @@ import {
   combinePhone,
   LANG_DEFAULTS,
   AUTO_SET_NATIONALITIES,
+  isProfileIdentityComplete,
 } from "@/lib/profile-utils";
 import {
   ProfileIdentityFields,
@@ -19,8 +20,8 @@ import {
   type ValidationResult,
 } from "@/components/profile/ProfileIdentityFields";
 
-// --- Validation fingerprint helpers ---
-const VALIDATION_KEY_PREFIX = "profile-validation-";
+// --- Validation fingerprint helpers (v2 = strict required fields) ---
+const VALIDATION_KEY_PREFIX = "profile-validation-v2-";
 
 function buildFingerprint(data: ProfileData): string {
   return `${data.dialCode}|${data.localNumber}|${data.nationality}|${data.lang}|${data.dateOfBirth}`;
@@ -154,7 +155,8 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
     }
   };
 
-  const hasErrors = validation && (!validation.phone.valid || !validation.dateOfBirth.valid);
+  const requiredComplete = isProfileIdentityComplete(profileData);
+  const hasErrors = validation && (!validation.phone.valid || !validation.dateOfBirth.valid || !validation.nationality.valid);
   const validationPassed = validation && !hasErrors;
   const needsValidation = !validation;
 
@@ -219,16 +221,16 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
             <Button
               variant={needsValidation ? "destructive" : "outline"}
               size="sm"
-              className={`w-full ${needsValidation ? "animate-pulse" : ""}`}
+              className={`w-full ${needsValidation && requiredComplete ? "animate-pulse" : ""}`}
               onClick={handleValidate}
-              disabled={validating}
+              disabled={validating || !requiredComplete}
             >
               {validating ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
               ) : (
                 <ShieldCheck className="w-3.5 h-3.5 mr-1" />
               )}
-              {validating ? "Validating…" : needsValidation ? "⚠ Validate Fields" : "Validate Fields"}
+              {validating ? "Validating…" : !requiredComplete ? "Fill required fields first" : needsValidation ? "⚠ Validate Fields" : "Validate Fields"}
             </Button>
 
             {/* Don't show again toggle */}
@@ -237,7 +239,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
               <Switch checked={skipOnLogin} onCheckedChange={setSkipOnLogin} />
             </div>
 
-            <Button className="w-full" onClick={handleContinue} disabled={!validationPassed || saving || validating}>
+            <Button className="w-full" onClick={handleContinue} disabled={!requiredComplete || !validationPassed || saving || validating}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Continue
             </Button>
