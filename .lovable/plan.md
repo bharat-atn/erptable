@@ -1,27 +1,32 @@
 
 
-## Plan: Add Ukrainian to Code of Conduct Language Selection
+## Plan: Enhance Audit Log Filtering
 
-### What
-Add Ukrainian (Українська) as a fifth language option in the Code of Conduct selection, across all three places where it appears. Also need to create/add the Ukrainian PDF document.
+### Current State
+The audit log has three filters: a text search, a category (table) dropdown, and an action dropdown. There is no way to filter by specific user or by date range.
 
 ### Changes
 
-**1. Create Ukrainian Code of Conduct PDF**
-- A file `public/documents/code-of-conduct-uk.pdf` needs to exist. Since we cannot generate a translated PDF programmatically, we will add the entry pointing to the file path. You will need to provide/upload the actual Ukrainian PDF document separately.
+**`src/components/dashboard/AuditLogView.tsx`** — Add two new filter controls and wire them into the query/filtering logic:
 
-**2. `src/components/dashboard/CodeOfConductStep.tsx`**
-- Add Ukrainian entry to the `LANGUAGES` array:
-  `{ code: "uk", label: "Українська", labelEn: "Ukrainian", flag: "🇺🇦", file: "/documents/code-of-conduct-uk.pdf" }`
+1. **User filter dropdown** — Extract unique `user_email` values from the fetched logs and populate a `Select` dropdown. Filter client-side (since all emails come from the 500-row fetch). Options: "All Users" + each distinct email found.
 
-**3. `src/pages/ContractSigning.tsx`**
-- Add Ukrainian entry to the `COC_LANGUAGES` array:
-  `{ code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" }`
+2. **Date range filter** — Add "From" and "To" date inputs (`<Input type="date" />`). Apply these as server-side filters on `created_at` using `.gte()` and `.lte()` in the query, so the 500-row limit is scoped to the selected date range.
 
-**4. `src/pages/SigningSimulation.tsx`**
-- Add Ukrainian entry to the `COC_LANGUAGES` array:
-  `{ code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" }`
+3. **Clear filters button** — A small button to reset all filters at once.
 
-### Note
-The grid uses `grid-cols-2`, so with 5 languages the last row will have one card — this is fine and consistent with the layout. The Ukrainian PDF file will need to be uploaded to `public/documents/code-of-conduct-uk.pdf` for the document link to work.
+### Filter Layout
+The filter bar will wrap to two rows on smaller screens:
+- Row 1: Search input, Category dropdown, Action dropdown
+- Row 2: User dropdown, Date From, Date To, Clear button
+
+### Implementation Details
+- Add `userFilter` state (default `"all"`)
+- Add `dateFrom` and `dateTo` state (default `""`)
+- Include `dateFrom`/`dateTo` in the `useQuery` key and apply `.gte("created_at", ...)` / `.lte("created_at", ...)` server-side
+- Apply `userFilter` client-side in `filteredLogs`
+- Derive unique users from `logs` via `useMemo`
+- Import `CalendarDays` icon from lucide-react for the date inputs
+
+No database changes required.
 
