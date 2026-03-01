@@ -49,6 +49,12 @@ const translations: Record<string, Record<UiLang, string>> = {
   "profile.updatePassword": { en: "Update Password", sv: "Uppdatera lösenord", ro: "Actualizează parola" },
   "profile.language": { en: "Preferred Language", sv: "Föredraget språk", ro: "Limba preferată" },
   "profile.save": { en: "Save", sv: "Spara", ro: "Salvează" },
+  "profile.personalInfo": { en: "Personal Information", sv: "Personuppgifter", ro: "Informații personale" },
+  "profile.dateOfBirth": { en: "Date of Birth", sv: "Födelsedatum", ro: "Data nașterii" },
+  "profile.phoneNumber": { en: "Phone Number", sv: "Telefonnummer", ro: "Număr de telefon" },
+  "profile.emergencyContact": { en: "Emergency Contact", sv: "Kontaktperson vid nödsituation", ro: "Contact de urgență" },
+  "profile.nationality": { en: "Nationality", sv: "Nationalitet", ro: "Naționalitate" },
+  "profile.saveChanges": { en: "Save Changes", sv: "Spara ändringar", ro: "Salvează modificările" },
 
   // ── Page titles & descriptions ──────────────────────────────────
   "page.dashboard.title": { en: "Dashboard", sv: "Översikt", ro: "Panou de control" },
