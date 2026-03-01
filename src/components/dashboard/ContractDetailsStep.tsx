@@ -3174,6 +3174,7 @@ export function ContractDetailsStep({
             onBack={onBack}
             onNext={onNext}
             contractId={contractId}
+            contractLanguage={contractLanguage}
           />
         )}
 
