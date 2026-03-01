@@ -12,6 +12,7 @@ import { Plus, GitBranch, Clock, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useOrg } from "@/contexts/OrgContext";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 type ReleaseType = "alpha" | "beta" | "rc" | "release";
 
@@ -46,6 +47,7 @@ function formatTimeLocal(utc: string) {
 }
 
 export function VersionManagementView() {
+  const { t } = useUiLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [releaseType, setReleaseType] = useState<ReleaseType>("alpha");
   const [notes, setNotes] = useState("");
@@ -125,10 +127,10 @@ export function VersionManagementView() {
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <GitBranch className="w-6 h-6" />
-            Version Management
+            {t("page.versionManagement.title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track and manage application releases. Each version is tagged with a date-based identifier and release stage.
+            {t("page.versionManagement.desc")}
           </p>
         </div>
         <Button onClick={() => {
@@ -140,13 +142,13 @@ export function VersionManagementView() {
           setDialogOpen(true);
         }} className="gap-2">
           <Plus className="w-4 h-4" />
-          New Release
+          {t("action.newRelease")}
         </Button>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Release History</CardTitle>
+          <CardTitle className="text-base">{t("version.releaseHistory")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-auto">

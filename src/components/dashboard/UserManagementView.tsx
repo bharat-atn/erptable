@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = string;
@@ -629,6 +630,7 @@ interface UserRow {
 // ─── Main View ──────────────────────────────────────────────────────
 
 export function UserManagementView() {
+  const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
@@ -1180,9 +1182,9 @@ export function UserManagementView() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+          <h1 className="text-2xl font-bold text-foreground">{t("page.userManagement.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            Manage user access, roles, and application permissions.
+            {t("page.userManagement.desc")}
             {pendingCount > 0 && (
               <span className="ml-2 text-amber-600 font-medium">{pendingCount} pending approval</span>
             )}
@@ -1194,11 +1196,11 @@ export function UserManagementView() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2" onClick={invalidateAll}>
             <RefreshCw className="w-4 h-4" />
-            Refresh
+            {t("action.refresh")}
           </Button>
           <Button size="sm" className="gap-2" onClick={() => setInviteOpen(true)}>
             <UserPlus className="w-4 h-4" />
-            Invite User
+            {t("action.inviteUser")}
           </Button>
         </div>
       </div>

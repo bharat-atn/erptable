@@ -18,6 +18,7 @@ import { OnboardingPreview } from "./OnboardingPreview";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { SubmissionView } from "./SubmissionViewDialog";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 type InvitationType = "NEW_HIRE" | "CONTRACT_RENEWAL";
 type InvitationStatus = "PENDING" | "SENT" | "ACCEPTED" | "EXPIRED";
@@ -66,6 +67,7 @@ interface InvitationsViewProps {
 }
 
 export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
+  const { t } = useUiLanguage();
   const [showPreview, setShowPreview] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<InvitationRow | null>(null);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
@@ -217,8 +219,8 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Invitations</h1>
-          <p className="text-muted-foreground text-sm">Manage employee onboarding invitations</p>
+          <h1 className="text-2xl font-semibold">{t("page.invitations.title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("page.invitations.desc")}</p>
         </div>
         <div className="flex items-center gap-3">
           {onShowPreview && (

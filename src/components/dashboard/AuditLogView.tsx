@@ -11,6 +11,7 @@ import { Shield, Search, Filter, Clock, User, FileText, Building2, Mail, Users, 
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 const TABLE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   employees: Users,
@@ -206,6 +207,7 @@ function DataDiff({ oldData, newData }: { oldData: any; newData: any }) {
 }
 
 export function AuditLogView() {
+  const { t } = useUiLanguage();
   const [search, setSearch] = useState("");
   const [tableFilter, setTableFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
@@ -251,10 +253,10 @@ export function AuditLogView() {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Shield className="w-6 h-6 text-primary" />
-          Audit Log
+          {t("page.auditLog.title")}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Track all changes, logins, and system activity
+          {t("page.auditLog.desc")}
         </p>
       </div>
 
@@ -317,9 +319,9 @@ export function AuditLogView() {
       {/* Log Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Recent Activity</CardTitle>
+          <CardTitle className="text-base">{t("audit.recentActivity")}</CardTitle>
           <CardDescription>
-            {filteredLogs.length} {filteredLogs.length === 1 ? "entry" : "entries"} found
+            {filteredLogs.length} {filteredLogs.length === 1 ? t("audit.entryFound") : t("audit.entriesFound")}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 const terminology = [
   { icon: Mail, title: "Invitation", desc: "Email link sent to a candidate to start the onboarding process." },
@@ -112,32 +113,49 @@ const summaryFlows = [
 ];
 
 export function ProcessGuideView() {
+  const { t } = useUiLanguage();
+
+  const localTerminology = [
+    { icon: Mail, title: t("guide.invitation"), desc: t("guide.invitationDesc") },
+    { icon: ClipboardList, title: t("guide.onboardingWizard"), desc: t("guide.onboardingWizardDesc") },
+    { icon: FileText, title: t("guide.contract"), desc: t("guide.contractDesc") },
+    { icon: Archive, title: t("guide.seasonalPool"), desc: t("guide.seasonalPoolDesc") },
+    { icon: RefreshCw, title: t("guide.renewal"), desc: t("guide.renewalDesc") },
+    { icon: XCircle, title: t("guide.termination"), desc: t("guide.terminationDesc") },
+  ];
+
+  const localSummaryFlows = [
+    { num: 1, label: t("guide.newHire"), steps: [t("stats.pendingInvites"), t("ops.onboarding"), t("ops.activeDuty")] },
+    { num: 2, label: t("guide.seasonalRenewal"), steps: [t("guide.seasonalPool"), t("guide.dataVerification"), t("ops.activeDuty")] },
+    { num: 3, label: t("guide.termination"), steps: [t("status.active"), t("guide.exitProcessing"), t("guide.archive")] },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Process Guide</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("page.processGuide.title")}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Complete reference for the employee lifecycle — terminology, workflows, and status tracking.
+          {t("page.processGuide.desc")}
         </p>
       </div>
 
       {/* Terminology */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">System Terminology</CardTitle>
+          <CardTitle className="text-base">{t("guide.systemTerminology")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {terminology.map((t) => {
-              const Icon = t.icon;
+            {localTerminology.map((item) => {
+              const Icon = item.icon;
               return (
-                <div key={t.title} className="flex items-start gap-3 rounded-lg border border-border p-3">
+                <div key={item.title} className="flex items-start gap-3 rounded-lg border border-border p-3">
                   <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-foreground">{t.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{t.desc}</p>
+                    <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               );
@@ -147,17 +165,17 @@ export function ProcessGuideView() {
       </Card>
 
       {/* Workflows */}
-      <WorkflowSection title="Flow 1 — New Hire" steps={newHireSteps} />
-      <WorkflowSection title="Flow 2 — Seasonal Pool to Renewal" steps={renewalSteps} />
-      <WorkflowSection title="Flow 3 — Termination" steps={terminationSteps} />
+      <WorkflowSection title={t("guide.flow1")} steps={newHireSteps} />
+      <WorkflowSection title={t("guide.flow2")} steps={renewalSteps} />
+      <WorkflowSection title={t("guide.flow3")} steps={terminationSteps} />
 
       {/* Summary */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-base">Complete Process Flow Summary</CardTitle>
+          <CardTitle className="text-base">{t("guide.flowSummary")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {summaryFlows.map((f) => (
+          {localSummaryFlows.map((f) => (
             <div key={f.num} className="flex items-center gap-2 flex-wrap">
               <Badge variant="default" className="text-[10px] shrink-0">Flow {f.num}</Badge>
               <span className="text-xs font-medium text-foreground">{f.label}:</span>

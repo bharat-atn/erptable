@@ -13,6 +13,7 @@ import { CompanyFormDialog, type CompanyFormData } from "./CompanyFormDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "sonner";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface Company {
   id: string;
@@ -46,6 +47,7 @@ const columns: ColumnDef<Company>[] = [
 ];
 
 export function CompanyRegisterView() {
+  const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -96,13 +98,13 @@ export function CompanyRegisterView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">
-            Company Register{" "}
+            {t("page.companyRegister.title")}{" "}
             <span className="text-muted-foreground font-normal text-lg">/ Företagsregister</span>
           </h1>
-          <p className="text-muted-foreground text-sm">Manage employer companies used in contracts</p>
+          <p className="text-muted-foreground text-sm">{t("page.companyRegister.desc")}</p>
         </div>
         <Button onClick={() => { setEditingCompany(null); setDialogOpen(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Add Company
+          <Plus className="w-4 h-4" /> {t("action.addCompany")}
         </Button>
       </div>
 

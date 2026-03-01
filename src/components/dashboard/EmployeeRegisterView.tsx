@@ -19,6 +19,7 @@ import { EmployeeFormDialog, EmployeeFormData } from "./EmployeeFormDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { Tables } from "@/integrations/supabase/types";
 import { CsvImportDialog } from "./CsvImportDialog";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
@@ -114,6 +115,7 @@ const statusFilterOptions = [
 ];
 
 export function EmployeeRegisterView() {
+  const { t } = useUiLanguage();
   const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null);
@@ -210,8 +212,8 @@ export function EmployeeRegisterView() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Employee Register</h1>
-          <p className="text-muted-foreground text-sm">Registered employees who have completed all onboarding steps.</p>
+          <h1 className="text-2xl font-semibold">{t("page.employeeRegister.title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("page.employeeRegister.desc")}</p>
         </div>
         <div className="flex items-center gap-2">
           <DropdownMenu>
@@ -227,13 +229,13 @@ export function EmployeeRegisterView() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button variant="outline" className="gap-2" onClick={exportCsv}>
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> {t("action.exportCsv")}
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => setCsvImportOpen(true)}>
-            <Upload className="w-4 h-4" /> Import CSV
+            <Upload className="w-4 h-4" /> {t("action.importCsv")}
           </Button>
           <Button className="gap-2" onClick={() => { setEditEmployee(null); setFormOpen(true); }}>
-            <Plus className="w-4 h-4" /> Add Employee
+            <Plus className="w-4 h-4" /> {t("action.addEmployee")}
           </Button>
         </div>
       </div>

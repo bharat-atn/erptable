@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface Bank {
   id: string;
@@ -211,6 +212,7 @@ function CsvImportPreview({
 /* ── Main View ──────────────────────────────────────────────────── */
 
 export function BankListView() {
+  const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editBank, setEditBank] = useState<Bank | null>(null);
@@ -384,10 +386,10 @@ export function BankListView() {
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <Landmark className="w-6 h-6 text-primary" />
-            Bank Information List
+            {t("page.bankList.title")}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Manage banks available in the invitation template for candidate onboarding
+            {t("page.bankList.desc")}
           </p>
         </div>
         <div className="flex items-center gap-2">
