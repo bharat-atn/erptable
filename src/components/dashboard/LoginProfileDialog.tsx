@@ -6,10 +6,49 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import { Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
+import { countries } from "@/lib/countries";
+import { getOrderedNationalities } from "@/lib/nationalities";
 import { toast } from "sonner";
+
+// --- ISO date format helper ---
+const ISO_STORAGE_KEY = "iso-standards-settings";
+function getIsoDateFormat(): string {
+  try {
+    const saved = localStorage.getItem(ISO_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.date_format || "YYYY-MM-DD";
+    }
+  } catch {}
+  return "YYYY-MM-DD";
+}
+
+// --- Phone: priority dial codes ---
+const PRIORITY_DIAL_CODES = ["+46", "+40", "+66", "+380"];
+function getOrderedCountries() {
+  const priority = countries.filter((c) => PRIORITY_DIAL_CODES.includes(c.dialCode));
+  // Sort priority by the order defined above
+  priority.sort((a, b) => PRIORITY_DIAL_CODES.indexOf(a.dialCode) - PRIORITY_DIAL_CODES.indexOf(b.dialCode));
+  const rest = countries.filter((c) => !PRIORITY_DIAL_CODES.includes(c.dialCode));
+  return { priority, rest };
+}
+
+// --- Parse stored phone into dialCode + local number ---
+function parsePhone(stored: string): { dialCode: string; localNumber: string } {
+  if (!stored) return { dialCode: "+46", localNumber: "" };
+  // Try to match a known dial code at the start
+  const sorted = [...countries].sort((a, b) => b.dialCode.length - a.dialCode.length);
+  for (const c of sorted) {
+    if (stored.startsWith(c.dialCode)) {
+      return { dialCode: c.dialCode, localNumber: stored.slice(c.dialCode.length).trim() };
+    }
+  }
+  return { dialCode: "+46", localNumber: stored };
+}
 
 interface LoginProfileDialogProps {
   open: boolean;
@@ -25,18 +64,20 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [lang, setLang] = useState<UiLang>("en");
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [emergencyContact, setEmergencyContact] = useState("");
+  const [dialCode, setDialCode] = useState("+46");
+  const [localNumber, setLocalNumber] = useState("");
   const [nationality, setNationality] = useState("");
   const [skipOnLogin, setSkipOnLogin] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isoDateFormat = getIsoDateFormat();
+
   useEffect(() => {
     if (!open || !userId) return;
     supabase
       .from("profiles")
-      .select("full_name, avatar_url, preferred_language, date_of_birth, phone_number, emergency_contact, nationality, skip_login_profile")
+      .select("full_name, avatar_url, preferred_language, date_of_birth, phone_number, nationality, skip_login_profile")
       .eq("user_id", userId)
       .single()
       .then(({ data }) => {
@@ -46,8 +87,9 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
           setAvatarUrl(p.avatar_url ?? null);
           setLang((p.preferred_language as UiLang) ?? "en");
           setDateOfBirth(p.date_of_birth ?? "");
-          setPhoneNumber(p.phone_number ?? "");
-          setEmergencyContact(p.emergency_contact ?? "");
+          const { dialCode: dc, localNumber: ln } = parsePhone(p.phone_number ?? "");
+          setDialCode(dc);
+          setLocalNumber(ln);
           setNationality(p.nationality ?? "");
           setSkipOnLogin(p.skip_login_profile ?? false);
         }
@@ -73,18 +115,21 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
 
   const handleContinue = async () => {
     setSaving(true);
+    const combinedPhone = localNumber ? `${dialCode}${localNumber}` : null;
     await (supabase as any).from("profiles").update({
       full_name: fullName || null,
       preferred_language: lang,
       date_of_birth: dateOfBirth || null,
-      phone_number: phoneNumber || null,
-      emergency_contact: emergencyContact || null,
+      phone_number: combinedPhone,
       nationality: nationality || null,
       skip_login_profile: skipOnLogin,
     }).eq("user_id", userId);
     setSaving(false);
     onContinue();
   };
+
+  const orderedCountries = getOrderedCountries();
+  const orderedNationalities = getOrderedNationalities();
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -144,24 +189,60 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Date of Birth</Label>
               <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+              <p className="text-[10px] text-muted-foreground">System format: {isoDateFormat}</p>
             </div>
 
-            {/* Phone */}
+            {/* Phone Number with dial code */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Phone Number</Label>
-              <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+46 70 123 4567" />
-            </div>
-
-            {/* Emergency Contact */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Emergency Contact</Label>
-              <Input value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name & phone number" />
+              <div className="flex gap-2">
+                <Select value={dialCode} onValueChange={setDialCode}>
+                  <SelectTrigger className="w-[130px] shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {orderedCountries.priority.map((c) => (
+                      <SelectItem key={c.code} value={c.dialCode}>
+                        {c.flag} {c.dialCode}
+                      </SelectItem>
+                    ))}
+                    <Separator className="my-1" />
+                    {orderedCountries.rest.map((c) => (
+                      <SelectItem key={c.code} value={c.dialCode}>
+                        {c.flag} {c.dialCode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="tel"
+                  value={localNumber}
+                  onChange={(e) => setLocalNumber(e.target.value)}
+                  placeholder="70 123 4567"
+                  className="flex-1"
+                />
+              </div>
             </div>
 
             {/* Nationality */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Nationality</Label>
-              <Input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Swedish" />
+              <Select value={nationality} onValueChange={setNationality}>
+                <SelectTrigger><SelectValue placeholder="Select nationality" /></SelectTrigger>
+                <SelectContent>
+                  {orderedNationalities.priority.map((n) => (
+                    <SelectItem key={n.nationality} value={n.nationality}>
+                      {n.nationality}
+                    </SelectItem>
+                  ))}
+                  <Separator className="my-1" />
+                  {orderedNationalities.rest.map((n) => (
+                    <SelectItem key={n.nationality} value={n.nationality}>
+                      {n.nationality}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Don't show again toggle */}
