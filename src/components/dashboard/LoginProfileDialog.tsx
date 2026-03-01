@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,12 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, CheckCircle2, AlertTriangle, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 import { countries } from "@/lib/countries";
 import { getOrderedNationalities } from "@/lib/nationalities";
 import { toast } from "sonner";
+import { format, parse } from "date-fns";
 
 // --- ISO date format helper ---
 const ISO_STORAGE_KEY = "iso-standards-settings";
@@ -27,11 +28,35 @@ function getIsoDateFormat(): string {
   return "YYYY-MM-DD";
 }
 
+/** Convert our ISO setting format token to date-fns token */
+function toDateFnsPattern(isoFmt: string): string {
+  return isoFmt
+    .replace("YYYY", "yyyy")
+    .replace("YY", "yy")
+    .replace("DD", "dd");
+}
+
+function formatDateWithIso(dateStr: string, isoFmt: string): string {
+  if (!dateStr) return "";
+  try {
+    const d = parse(dateStr, "yyyy-MM-dd", new Date());
+    return format(d, toDateFnsPattern(isoFmt));
+  } catch {
+    return dateStr;
+  }
+}
+
+// --- Language → nationality/dialCode mapping ---
+const LANG_DEFAULTS: Record<string, { nationality: string; dialCode: string }> = {
+  sv: { nationality: "Swedish", dialCode: "+46" },
+  ro: { nationality: "Romanian", dialCode: "+40" },
+};
+const AUTO_SET_NATIONALITIES = Object.values(LANG_DEFAULTS).map((v) => v.nationality);
+
 // --- Phone: priority dial codes ---
 const PRIORITY_DIAL_CODES = ["+46", "+40", "+66", "+380"];
 function getOrderedCountries() {
   const priority = countries.filter((c) => PRIORITY_DIAL_CODES.includes(c.dialCode));
-  // Sort priority by the order defined above
   priority.sort((a, b) => PRIORITY_DIAL_CODES.indexOf(a.dialCode) - PRIORITY_DIAL_CODES.indexOf(b.dialCode));
   const rest = countries.filter((c) => !PRIORITY_DIAL_CODES.includes(c.dialCode));
   return { priority, rest };
@@ -40,7 +65,6 @@ function getOrderedCountries() {
 // --- Parse stored phone into dialCode + local number ---
 function parsePhone(stored: string): { dialCode: string; localNumber: string } {
   if (!stored) return { dialCode: "+46", localNumber: "" };
-  // Try to match a known dial code at the start
   const sorted = [...countries].sort((a, b) => b.dialCode.length - a.dialCode.length);
   for (const c of sorted) {
     if (stored.startsWith(c.dialCode)) {
@@ -48,6 +72,17 @@ function parsePhone(stored: string): { dialCode: string; localNumber: string } {
     }
   }
   return { dialCode: "+46", localNumber: stored };
+}
+
+// --- Validation types ---
+interface FieldValidation {
+  valid: boolean;
+  message: string;
+}
+interface ValidationResult {
+  phone: FieldValidation;
+  nationality: FieldValidation;
+  dateOfBirth: FieldValidation;
 }
 
 interface LoginProfileDialogProps {
@@ -70,6 +105,10 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
   const [skipOnLogin, setSkipOnLogin] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Validation state
+  const [validating, setValidating] = useState(false);
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
 
   const isoDateFormat = getIsoDateFormat();
 
@@ -97,6 +136,23 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
       });
   }, [open, userId]);
 
+  // Auto-set nationality + dialCode when language changes
+  const handleLangChange = useCallback(
+    (newLang: UiLang) => {
+      setLang(newLang);
+      const mapping = LANG_DEFAULTS[newLang];
+      if (mapping) {
+        // Auto-set nationality if empty or was previously auto-set
+        if (!nationality || AUTO_SET_NATIONALITIES.includes(nationality)) {
+          setNationality(mapping.nationality);
+        }
+        setDialCode(mapping.dialCode);
+      }
+      setValidation(null);
+    },
+    [nationality],
+  );
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -113,7 +169,37 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
     setUploading(false);
   };
 
+  // AI validation
+  const handleValidate = async () => {
+    setValidating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-profile-fields", {
+        body: { dialCode, localNumber, nationality, preferredLanguage: lang, dateOfBirth },
+      });
+      if (error) throw error;
+      if (data?.fields) {
+        setValidation(data.fields);
+      }
+    } catch (err) {
+      console.error("Validation failed:", err);
+      toast.error("Validation service unavailable");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const hasErrors = validation && (!validation.phone.valid || !validation.dateOfBirth.valid);
+
   const handleContinue = async () => {
+    // Auto-validate before continue if not yet validated
+    if (!validation) {
+      await handleValidate();
+      return; // user sees results first
+    }
+    if (hasErrors) {
+      toast.error("Please fix validation errors before continuing");
+      return;
+    }
     setSaving(true);
     const combinedPhone = localNumber ? `${dialCode}${localNumber}` : null;
     await (supabase as any).from("profiles").update({
@@ -130,6 +216,24 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
 
   const orderedCountries = getOrderedCountries();
   const orderedNationalities = getOrderedNationalities();
+
+  const ValidationIcon = ({ field }: { field?: FieldValidation }) => {
+    if (!field) return null;
+    return field.valid ? (
+      <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
+    ) : (
+      <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
+    );
+  };
+
+  const ValidationMsg = ({ field }: { field?: FieldValidation }) => {
+    if (!field) return null;
+    return (
+      <p className={`text-[10px] ${field.valid ? "text-success" : "text-destructive"}`}>
+        {field.message}
+      </p>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
@@ -175,7 +279,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
             {/* Language */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Preferred Language</Label>
-              <Select value={lang} onValueChange={(v) => setLang(v as UiLang)}>
+              <Select value={lang} onValueChange={(v) => handleLangChange(v as UiLang)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {LANGUAGE_OPTIONS.map((opt) => (
@@ -187,16 +291,28 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
 
             {/* Date of Birth */}
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Date of Birth</Label>
-              <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
-              <p className="text-[10px] text-muted-foreground">System format: {isoDateFormat}</p>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Date of Birth</Label>
+                <ValidationIcon field={validation?.dateOfBirth} />
+              </div>
+              <Input type="date" value={dateOfBirth} onChange={(e) => { setDateOfBirth(e.target.value); setValidation(null); }} />
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-muted-foreground">
+                  Format: {isoDateFormat}
+                  {dateOfBirth ? ` → ${formatDateWithIso(dateOfBirth, isoDateFormat)}` : ""}
+                </p>
+              </div>
+              <ValidationMsg field={validation?.dateOfBirth} />
             </div>
 
             {/* Phone Number with dial code */}
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Phone Number</Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Phone Number</Label>
+                <ValidationIcon field={validation?.phone} />
+              </div>
               <div className="flex gap-2">
-                <Select value={dialCode} onValueChange={setDialCode}>
+                <Select value={dialCode} onValueChange={(v) => { setDialCode(v); setValidation(null); }}>
                   <SelectTrigger className="w-[130px] shrink-0">
                     <SelectValue />
                   </SelectTrigger>
@@ -217,17 +333,21 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
                 <Input
                   type="tel"
                   value={localNumber}
-                  onChange={(e) => setLocalNumber(e.target.value)}
+                  onChange={(e) => { setLocalNumber(e.target.value); setValidation(null); }}
                   placeholder="70 123 4567"
                   className="flex-1"
                 />
               </div>
+              <ValidationMsg field={validation?.phone} />
             </div>
 
             {/* Nationality */}
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Nationality</Label>
-              <Select value={nationality} onValueChange={setNationality}>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs text-muted-foreground">Nationality</Label>
+                <ValidationIcon field={validation?.nationality} />
+              </div>
+              <Select value={nationality} onValueChange={(v) => { setNationality(v); setValidation(null); }}>
                 <SelectTrigger><SelectValue placeholder="Select nationality" /></SelectTrigger>
                 <SelectContent>
                   {orderedNationalities.priority.map((n) => (
@@ -243,7 +363,24 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
                   ))}
                 </SelectContent>
               </Select>
+              <ValidationMsg field={validation?.nationality} />
             </div>
+
+            {/* Validate button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={handleValidate}
+              disabled={validating}
+            >
+              {validating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+              ) : (
+                <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+              )}
+              {validating ? "Validating…" : "Validate Fields"}
+            </Button>
 
             {/* Don't show again toggle */}
             <div className="flex items-center justify-between pt-2 border-t border-border">
@@ -251,7 +388,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
               <Switch checked={skipOnLogin} onCheckedChange={setSkipOnLogin} />
             </div>
 
-            <Button className="w-full" onClick={handleContinue} disabled={saving}>
+            <Button className="w-full" onClick={handleContinue} disabled={saving || validating}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Continue
             </Button>

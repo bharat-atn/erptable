@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.seed-sandbox-data]
 verify_jwt = false
+
+[functions.validate-profile-fields]
+verify_jwt = false
