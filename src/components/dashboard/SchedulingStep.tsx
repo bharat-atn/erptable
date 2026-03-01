@@ -113,13 +113,14 @@ interface SchedulingStepProps {
   onBack: () => void;
   onNext: () => void;
   contractId: string;
+  contractLanguage?: string;
 }
 
 type FilterMode = "all" | "holidays" | "vacation" | "workdays";
 
 const SEASON_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032];
 
-export function SchedulingStep({ initialData, onChange, onBack, onNext, contractId }: SchedulingStepProps) {
+export function SchedulingStep({ initialData, onChange, onBack, onNext, contractId, contractLanguage }: SchedulingStepProps) {
   const [data, setData] = useState<SchedulingData>(initialData);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [saving, setSaving] = useState(false);
@@ -399,6 +400,23 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
               update(updates);
             }} />
           </div>
+
+          {/* Legal duration clause */}
+          {(() => {
+            const lang = contractLanguage || "EN/SE";
+            const sv = "Anställningsavtalet träder i kraft när arbetet på platsen påbörjas och upphör när det tilldelade uppdraget är slutfört eller om väderförhållandena inte längre tillåter att uppdraget fortsätter.";
+            const en = "The employment contract comes into force when work on the site begins and finishes when the assigned mission is finished or if the weather conditions no longer allow the continuation of the mission.";
+            const ro = "Contractul de muncă intră în vigoare la începerea lucrărilor pe șantier și încetează la finalizarea misiunii atribuite sau dacă condițiile meteorologice nu mai permit continuarea misiunii.";
+            const th = "สัญญาจ้างงานมีผลบังคับใช้เมื่อเริ่มทำงานในพื้นที่ และสิ้นสุดเมื่อภารกิจที่ได้รับมอบหมายเสร็จสิ้น หรือหากสภาพอากาศไม่เอื้ออำนวยให้ดำเนินภารกิจต่อไปได้";
+            const uk = "Трудовий договір набуває чинності з початком роботи на об'єкті та припиняється після завершення призначеної місії або якщо погодні умови більше не дозволяють продовження місії.";
+            const primary = lang === "SE" ? "" : lang === "RO/SE" ? ro : lang === "TH/SE" ? th : lang === "UK/SE" ? uk : en;
+            return (
+              <div className="bg-muted/50 border border-border rounded-md p-3 text-xs text-muted-foreground space-y-1">
+                {primary && <p className="italic">{primary}</p>}
+                <p className={primary ? "italic text-muted-foreground/70" : "italic"}>{sv}</p>
+              </div>
+            );
+          })()}
 
           {/* Daily Schedule */}
           <Card className="border-2 border-dashed border-border">
