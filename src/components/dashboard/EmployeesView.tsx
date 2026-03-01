@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Users, User, Search, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 
@@ -19,9 +20,9 @@ const statusVariants: Record<EmployeeStatus, "pending" | "warning" | "success" |
 };
 
 export function EmployeesView() {
+  const { t } = useUiLanguage();
   const [search, setSearch] = useState("");
   const { orgId } = useOrg();
-
   const { data: employees, isLoading } = useQuery({
     queryKey: ["employees", orgId],
     enabled: !!orgId,
@@ -47,9 +48,9 @@ export function EmployeesView() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold">Employees</h1>
+        <h1 className="text-2xl font-semibold">{t("page.employees.title")}</h1>
         <p className="text-muted-foreground text-sm">
-          View and manage all employees in your organization
+          {t("page.employees.desc")}
         </p>
       </div>
 
@@ -57,7 +58,7 @@ export function EmployeesView() {
         <CardHeader className="flex flex-row items-center justify-between pb-4">
           <CardTitle className="text-base font-medium flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            All Employees
+            All {t("page.employees.title")}
           </CardTitle>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -79,10 +80,10 @@ export function EmployeesView() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Employee</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Email</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Joined</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t("table.employee")}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t("table.email")}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t("table.status")}</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">{t("table.joined")}</th>
                 </tr>
               </thead>
               <tbody>

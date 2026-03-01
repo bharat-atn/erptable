@@ -38,6 +38,7 @@ import { SortableTable, type ColumnDef } from "@/components/ui/sortable-table";
 import type { Tables } from "@/integrations/supabase/types";
 import { EmployeeFormDialog, type EmployeeFormData } from "./EmployeeFormDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
@@ -114,6 +115,7 @@ const operationsColumns: ColumnDef<Employee>[] = [
 type StatusFilter = "ALL" | "INVITED" | "RENEWAL" | "ONBOARDING" | "ACTIVE" | "SEASONAL" | "INACTIVE";
 
 export function OperationsView({ onNavigate }: OperationsViewProps) {
+  const { t } = useUiLanguage();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
@@ -248,8 +250,8 @@ export function OperationsView({ onNavigate }: OperationsViewProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold">Operations</h1>
-        <p className="text-muted-foreground text-sm">Manage workflows and employee lifecycle.</p>
+        <h1 className="text-2xl font-semibold">{t("page.operations.title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("page.operations.desc")}</p>
       </div>
 
       {/* Stats Cards */}

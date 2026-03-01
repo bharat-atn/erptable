@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface DashboardViewProps {
   onNavigate?: (view: string) => void;
@@ -21,6 +22,7 @@ interface DashboardViewProps {
 
 export function DashboardView({ onNavigate }: DashboardViewProps) {
   const { orgId } = useOrg();
+  const { t } = useUiLanguage();
 
   const { data: stats } = useQuery({
     queryKey: ["dashboard-stats", orgId],
@@ -83,9 +85,9 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold">{t("page.dashboard.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Overview of onboarding metrics and activities.
+            {t("page.dashboard.desc")}
           </p>
         </div>
         <CreateInvitationDialog />
@@ -115,7 +117,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
               className="shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200"
               onClick={() => onNavigate?.("contracts")}
             >
-              Go to Contracts
+              {t("action.goToContracts")}
             </Button>
           </div>
         </div>
@@ -124,7 +126,7 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatsCard
-          title="Total Employees"
+          title={t("stats.totalEmployees")}
           value={stats?.totalEmployees || 0}
           subtitle={`${stats?.activeEmployees || 0} active`}
           subtitleColor={stats?.activeEmployees ? "green" : "default"}
@@ -132,32 +134,32 @@ export function DashboardView({ onNavigate }: DashboardViewProps) {
           iconColor="blue"
         />
         <StatsCard
-          title="Emails Sent"
+          title={t("stats.emailsSent")}
           value={stats?.emailsSent || 0}
-          subtitle={`${stats?.pendingInvites || 0} awaiting response`}
+          subtitle={`${stats?.pendingInvites || 0} ${t("stats.awaitingResponse")}`}
           subtitleColor={stats?.pendingInvites ? "yellow" : "default"}
           icon={Send}
           iconColor="blue"
         />
         <StatsCard
-          title="Pending Invites"
+          title={t("stats.pendingInvites")}
           value={stats?.pendingInvites || 0}
-          subtitle={`${stats?.expiringSoon || 0} expiring soon`}
+          subtitle={`${stats?.expiringSoon || 0} ${t("stats.expiringSoon")}`}
           icon={Mail}
           iconColor="yellow"
         />
         <StatsCard
-          title="Signed Contracts"
+          title={t("stats.signedContracts")}
           value={stats?.signedContracts || 0}
-          subtitle={stats?.signedContracts ? `${stats.signedContracts} completed` : "No contracts signed yet"}
+          subtitle={stats?.signedContracts ? `${stats.signedContracts} ${t("stats.completed")}` : "—"}
           subtitleColor={stats?.signedContracts ? "green" : "default"}
           icon={FileCheck}
           iconColor="green"
         />
         <StatsCard
-          title="Failed/Expired"
+          title={t("stats.failedExpired")}
           value={stats?.failedExpired || 0}
-          subtitle={stats?.failedExpired ? "Requires attention" : "All good"}
+          subtitle={stats?.failedExpired ? t("stats.requiresAttention") : t("stats.allGood")}
           subtitleColor={stats?.failedExpired ? "red" : "default"}
           icon={AlertCircle}
           iconColor="red"

@@ -18,6 +18,7 @@ import { EmployerSigningDialog } from "./EmployerSigningDialog";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
 import { RedoConfirmDialog } from "./RedoConfirmDialog";
 import { toast } from "sonner";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 export type ResumeMode = "start" | "fasttrack" | "resume";
 
 interface ContractsViewProps {
@@ -72,6 +73,7 @@ function getContractMissingFields(fd: Record<string, any> | null): string[] {
 }
 
 export function ContractsView({ onContinueContract }: ContractsViewProps) {
+  const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
   const [deleteTarget, setDeleteTarget] = useState<ContractRow | null>(null);
@@ -227,8 +229,8 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-semibold">Contracts</h1>
-        <p className="text-muted-foreground text-sm">View and manage employee contracts</p>
+        <h1 className="text-2xl font-semibold">{t("page.contracts.title")}</h1>
+        <p className="text-muted-foreground text-sm">{t("page.contracts.desc")}</p>
       </div>
 
       <EnhancedTable<ContractWithStatus>
