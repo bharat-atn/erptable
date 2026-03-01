@@ -163,7 +163,7 @@ export function ProfileIdentityFields({
       {/* Date of Birth */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground">Date of Birth</Label>
+          <Label className="text-xs text-muted-foreground">Date of Birth <span className="text-destructive">*</span></Label>
           <ValidationIcon field={validation?.dateOfBirth} />
         </div>
         <Input
@@ -182,7 +182,7 @@ export function ProfileIdentityFields({
       {/* Phone Number */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground">Phone Number</Label>
+          <Label className="text-xs text-muted-foreground">Phone Number <span className="text-destructive">*</span></Label>
           <ValidationIcon field={validation?.phone} />
         </div>
         <div className="flex gap-2">
@@ -214,7 +214,7 @@ export function ProfileIdentityFields({
       {/* Nationality */}
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-muted-foreground">Nationality</Label>
+          <Label className="text-xs text-muted-foreground">Nationality <span className="text-destructive">*</span></Label>
           <ValidationIcon field={validation?.nationality} />
         </div>
         <Select value={data.nationality} onValueChange={(v) => { onChange({ nationality: v }); onFieldChange?.(); }}>

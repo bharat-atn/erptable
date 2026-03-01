@@ -14,29 +14,71 @@ serve(async (req) => {
   try {
     const { dialCode, localNumber, nationality, preferredLanguage, dateOfBirth } = await req.json();
 
-    // --- Deterministic date-of-birth validation (no AI needed) ---
-    let dobField = { valid: true, message: "No date of birth provided." };
-    if (dateOfBirth) {
-      const [year, month, day] = dateOfBirth.split("-").map(Number);
-      const dob = new Date(year, month - 1, day);
-      const today = new Date();
-      const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      
-      let age = todayLocal.getFullYear() - dob.getFullYear();
-      const monthDiff = todayLocal.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && todayLocal.getDate() < dob.getDate())) {
-        age--;
-      }
+    // ── Deterministic required-field checks (no AI needed) ──────
 
-      if (age < 16) {
-        dobField = { valid: false, message: `Age is ${age}. Must be at least 16 years old.` };
-      } else if (age > 80) {
-        dobField = { valid: false, message: `Age is ${age}. Must be 80 or younger.` };
+    // 1. Date of birth — REQUIRED
+    let dobField = { valid: false, message: "Date of birth is required." };
+    if (dateOfBirth && typeof dateOfBirth === "string" && dateOfBirth.trim()) {
+      const parts = dateOfBirth.trim().split("-");
+      if (parts.length !== 3 || !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth.trim())) {
+        dobField = { valid: false, message: "Date of birth must be in YYYY-MM-DD format." };
       } else {
-        dobField = { valid: true, message: `Age ${age} is within valid range (16-80).` };
+        const [year, month, day] = parts.map(Number);
+        const dob = new Date(year, month - 1, day);
+        const today = new Date();
+        const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        let age = todayLocal.getFullYear() - dob.getFullYear();
+        const monthDiff = todayLocal.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && todayLocal.getDate() < dob.getDate())) {
+          age--;
+        }
+
+        if (age < 16) {
+          dobField = { valid: false, message: `Age is ${age}. Must be at least 16 years old.` };
+        } else if (age > 80) {
+          dobField = { valid: false, message: `Age is ${age}. Must be 80 or younger.` };
+        } else {
+          dobField = { valid: true, message: `Age ${age} is within valid range (16-80).` };
+        }
       }
     }
 
+    // 2. Phone — REQUIRED
+    const cleanedPhone = (localNumber ?? "").replace(/[\s\-]/g, "");
+    let phoneField = { valid: false, message: "Phone number is required." };
+    if (cleanedPhone.length > 0) {
+      if (!/^\d+$/.test(cleanedPhone)) {
+        phoneField = { valid: false, message: "Phone number must contain only digits." };
+      } else if (cleanedPhone.length < 6) {
+        phoneField = { valid: false, message: `Phone number too short (${cleanedPhone.length} digits).` };
+      } else if (cleanedPhone.length > 15) {
+        phoneField = { valid: false, message: `Phone number too long (${cleanedPhone.length} digits).` };
+      } else {
+        phoneField = { valid: true, message: `Phone number has ${cleanedPhone.length} digits.` };
+      }
+    }
+
+    // 3. Nationality — REQUIRED
+    let nationalityField = { valid: false, message: "Nationality is required." };
+    if (nationality && typeof nationality === "string" && nationality.trim()) {
+      nationalityField = { valid: true, message: `Nationality: ${nationality.trim()}` };
+    }
+
+    // Short-circuit: if any required field is missing/invalid, return immediately (no AI call)
+    if (!dobField.valid || !phoneField.valid || !nationalityField.valid) {
+      return new Response(JSON.stringify({
+        fields: {
+          phone: phoneField,
+          nationality: nationalityField,
+          dateOfBirth: dobField,
+        }
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── AI consistency checks (phone format + nationality/language match) ──
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -44,7 +86,7 @@ serve(async (req) => {
 
 Fields to validate:
 - Phone dial code: "${dialCode}"
-- Phone local number: "${localNumber}"
+- Phone local number: "${cleanedPhone}"
 - Nationality: "${nationality}"
 - Preferred language code: "${preferredLanguage}"
 
@@ -55,7 +97,6 @@ Rules:
    - Thailand (+66): local numbers are 8-9 digits
    - Ukraine (+380): local numbers are 9 digits
    - For other countries, use standard ITU phone number length rules.
-   - Strip spaces/dashes before counting digits. If empty, mark as valid with message "No phone number provided".
 
 2. NATIONALITY: Check if nationality is consistent with the preferred language and dial code. 
    - sv language should typically match Swedish nationality and +46
@@ -106,23 +147,22 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 
     const aiResult = await response.json();
     const raw = aiResult.choices?.[0]?.message?.content ?? "{}";
-
-    // Strip markdown fences if present
     const cleaned = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
 
     let fields;
     try {
       const parsed = JSON.parse(cleaned);
       fields = {
-        phone: parsed.phone ?? { valid: true, message: "Validation unavailable" },
-        nationality: parsed.nationality ?? { valid: true, message: "Validation unavailable" },
+        phone: parsed.phone ?? phoneField,
+        nationality: parsed.nationality ?? nationalityField,
         dateOfBirth: dobField,
       };
     } catch {
       console.error("Failed to parse AI response:", cleaned);
+      // Fallback: use deterministic results (still strict)
       fields = {
-        phone: { valid: true, message: "Validation unavailable" },
-        nationality: { valid: true, message: "Validation unavailable" },
+        phone: phoneField,
+        nationality: nationalityField,
         dateOfBirth: dobField,
       };
     }
