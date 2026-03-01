@@ -11,7 +11,7 @@ import { Camera, Loader2, CheckCircle2, AlertTriangle, ShieldCheck } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 import { countries } from "@/lib/countries";
-import { getOrderedNationalities } from "@/lib/nationalities";
+import { getOrderedNationalities, getFlagForCountry } from "@/lib/nationalities";
 import { toast } from "sonner";
 import { format, parse } from "date-fns";
 
@@ -124,12 +124,21 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
         if (p) {
           setFullName(p.full_name ?? "");
           setAvatarUrl(p.avatar_url ?? null);
-          setLang((p.preferred_language as UiLang) ?? "en");
+          const profileLang = (p.preferred_language as UiLang) ?? "en";
+          setLang(profileLang);
           setDateOfBirth(p.date_of_birth ?? "");
           const { dialCode: dc, localNumber: ln } = parsePhone(p.phone_number ?? "");
           setDialCode(dc);
           setLocalNumber(ln);
-          setNationality(p.nationality ?? "");
+          // Auto-set nationality from language if not already set
+          const existingNat = p.nationality ?? "";
+          const mapping = LANG_DEFAULTS[profileLang];
+          if (!existingNat && mapping) {
+            setNationality(mapping.nationality);
+            setDialCode(mapping.dialCode);
+          } else {
+            setNationality(existingNat);
+          }
           setSkipOnLogin(p.skip_login_profile ?? false);
         }
         setLoading(false);
@@ -296,12 +305,11 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
                 <ValidationIcon field={validation?.dateOfBirth} />
               </div>
               <Input type="date" value={dateOfBirth} onChange={(e) => { setDateOfBirth(e.target.value); setValidation(null); }} />
-              <div className="flex items-center justify-between">
+              {dateOfBirth && (
                 <p className="text-[10px] text-muted-foreground">
-                  Format: {isoDateFormat}
-                  {dateOfBirth ? ` → ${formatDateWithIso(dateOfBirth, isoDateFormat)}` : ""}
+                  {formatDateWithIso(dateOfBirth, isoDateFormat)} ({isoDateFormat})
                 </p>
-              </div>
+              )}
               <ValidationMsg field={validation?.dateOfBirth} />
             </div>
 
@@ -352,13 +360,13 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
                 <SelectContent>
                   {orderedNationalities.priority.map((n) => (
                     <SelectItem key={n.nationality} value={n.nationality}>
-                      {n.nationality}
+                      {getFlagForCountry(n.country)} {n.nationality}
                     </SelectItem>
                   ))}
                   <Separator className="my-1" />
                   {orderedNationalities.rest.map((n) => (
                     <SelectItem key={n.nationality} value={n.nationality}>
-                      {n.nationality}
+                      {getFlagForCountry(n.country)} {n.nationality}
                     </SelectItem>
                   ))}
                 </SelectContent>
