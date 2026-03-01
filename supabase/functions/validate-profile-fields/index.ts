@@ -14,6 +14,29 @@ serve(async (req) => {
   try {
     const { dialCode, localNumber, nationality, preferredLanguage, dateOfBirth } = await req.json();
 
+    // --- Deterministic date-of-birth validation (no AI needed) ---
+    let dobField = { valid: true, message: "No date of birth provided." };
+    if (dateOfBirth) {
+      const [year, month, day] = dateOfBirth.split("-").map(Number);
+      const dob = new Date(year, month - 1, day);
+      const today = new Date();
+      const todayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+      let age = todayLocal.getFullYear() - dob.getFullYear();
+      const monthDiff = todayLocal.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && todayLocal.getDate() < dob.getDate())) {
+        age--;
+      }
+
+      if (age < 16) {
+        dobField = { valid: false, message: `Age is ${age}. Must be at least 16 years old.` };
+      } else if (age > 80) {
+        dobField = { valid: false, message: `Age is ${age}. Must be 80 or younger.` };
+      } else {
+        dobField = { valid: true, message: `Age ${age} is within valid range (16-80).` };
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -24,7 +47,6 @@ Fields to validate:
 - Phone local number: "${localNumber}"
 - Nationality: "${nationality}"
 - Preferred language code: "${preferredLanguage}"
-- Date of birth: "${dateOfBirth}"
 
 Rules:
 1. PHONE: Check if the local number length and format are valid for the given dial code country. For example:
@@ -40,14 +62,10 @@ Rules:
    - ro language should typically match Romanian nationality and +40
    - Flag inconsistencies as warnings, not errors.
 
-3. DATE_OF_BIRTH: Check if the person would be between 16 and 80 years old today (${new Date().toISOString().split("T")[0]}).
-   - If empty, mark as valid with message "No date of birth provided".
-
 Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 {
   "phone": { "valid": true/false, "message": "..." },
-  "nationality": { "valid": true/false, "message": "..." },
-  "dateOfBirth": { "valid": true/false, "message": "..." }
+  "nationality": { "valid": true/false, "message": "..." }
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -94,13 +112,18 @@ Return ONLY valid JSON (no markdown, no explanation) in this exact format:
 
     let fields;
     try {
-      fields = JSON.parse(cleaned);
+      const parsed = JSON.parse(cleaned);
+      fields = {
+        phone: parsed.phone ?? { valid: true, message: "Validation unavailable" },
+        nationality: parsed.nationality ?? { valid: true, message: "Validation unavailable" },
+        dateOfBirth: dobField,
+      };
     } catch {
       console.error("Failed to parse AI response:", cleaned);
       fields = {
         phone: { valid: true, message: "Validation unavailable" },
         nationality: { valid: true, message: "Validation unavailable" },
-        dateOfBirth: { valid: true, message: "Validation unavailable" },
+        dateOfBirth: dobField,
       };
     }
 
