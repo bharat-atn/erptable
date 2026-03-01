@@ -12,7 +12,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw, UserCog } from "lucide-react";
+import { getOrderedNationalities } from "@/lib/nationalities";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
@@ -160,6 +161,188 @@ function EditNameDialog({ open, onClose, userId, currentName }: EditNameDialogPr
   );
 }
 
+
+// ─── Edit Profile Dialog (full CRUD) ────────────────────────────────
+
+interface EditProfileDialogProps {
+  open: boolean;
+  onClose: () => void;
+  userId: string;
+  userName: string;
+}
+
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "sv", label: "Svenska" },
+  { value: "ro", label: "Română" },
+  { value: "th", label: "ไทย" },
+  { value: "uk", label: "Українська" },
+];
+
+function EditProfileDialog({ open, onClose, userId, userName }: EditProfileDialogProps) {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    phone_number: "",
+    date_of_birth: "",
+    nationality: "",
+    preferred_language: "en",
+    emergency_contact: "",
+    skip_login_profile: false,
+  });
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ["admin-profile-detail", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        full_name: profile.full_name || "",
+        email: profile.email || "",
+        phone_number: profile.phone_number || "",
+        date_of_birth: profile.date_of_birth || "",
+        nationality: profile.nationality || "",
+        preferred_language: profile.preferred_language || "en",
+        emergency_contact: profile.emergency_contact || "",
+        skip_login_profile: profile.skip_login_profile ?? false,
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          full_name: form.full_name.trim() || null,
+          phone_number: form.phone_number.trim() || null,
+          date_of_birth: form.date_of_birth || null,
+          nationality: form.nationality || null,
+          preferred_language: form.preferred_language,
+          emergency_contact: form.emergency_contact.trim() || null,
+          skip_login_profile: form.skip_login_profile,
+        })
+        .eq("user_id", userId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profile-detail", userId] });
+      toast({ title: "Profile updated successfully" });
+      onClose();
+    } catch (err: any) {
+      toast({ title: "Failed to update profile", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserCog className="w-4 h-4" />
+            Edit Profile — {userName}
+          </DialogTitle>
+          <DialogDescription>Update all profile fields for this user.</DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="py-8 text-center text-muted-foreground text-sm">Loading profile…</div>
+        ) : (
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Full Name</Label>
+              <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Full name" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Email <span className="text-muted-foreground text-xs">(read-only)</span></Label>
+              <Input value={form.email} disabled className="opacity-60" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Date of Birth</Label>
+              <Input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Phone Number</Label>
+              <Input value={form.phone_number} onChange={(e) => set("phone_number", e.target.value)} placeholder="+46 70 123 4567" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Nationality</Label>
+              <Select value={form.nationality} onValueChange={(v) => set("nationality", v)}>
+                <SelectTrigger><SelectValue placeholder="Select nationality…" /></SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {(() => {
+                    const { priority, rest } = getOrderedNationalities();
+                    return [...priority, ...rest].map((n) => (
+                      <SelectItem key={n.nationality} value={n.nationality}>{n.nationality}</SelectItem>
+                    ));
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Preferred Language</Label>
+              <Select value={form.preferred_language} onValueChange={(v) => set("preferred_language", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {LANGUAGE_OPTIONS.map((l) => (
+                    <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Emergency Contact</Label>
+              <Input value={form.emergency_contact} onChange={(e) => set("emergency_contact", e.target.value)} placeholder="Name & phone number" />
+            </div>
+
+            <div className="flex items-center justify-between rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">Welcome Back Dialog</p>
+                <p className="text-xs text-muted-foreground">
+                  {form.skip_login_profile ? "Skipped — user won't see profile review" : "Active — user will see profile review on login"}
+                </p>
+              </div>
+              <Checkbox
+                checked={!form.skip_login_profile}
+                onCheckedChange={(checked) => set("skip_login_profile", !checked)}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || isLoading}>
+            {saving ? "Saving…" : "Save Changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Invite User Dialog ─────────────────────────────────────────────
 
@@ -640,6 +823,9 @@ export function UserManagementView() {
   
   const [editNameDialog, setEditNameDialog] = useState<{ userId: string; currentName: string } | null>(null);
   const [manageOrgsDialog, setManageOrgsDialog] = useState<{ userId: string; userName: string } | null>(null);
+  const [editProfileDialog, setEditProfileDialog] = useState<{ userId: string; userName: string } | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const apps = useMemo(() => loadApps(), []);
 
   useEffect(() => {
@@ -1127,26 +1313,10 @@ export function UserManagementView() {
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          onClick={() => setEditNameDialog({ userId: row.user_id, currentName: row.full_name })}
-          title="Edit name"
+          onClick={() => setEditProfileDialog({ userId: row.user_id, userName: row.full_name })}
+          title="Edit profile"
         >
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-primary"
-          onClick={async () => {
-            const { error } = await supabase.from("profiles").update({ skip_login_profile: false }).eq("user_id", row.user_id);
-            if (error) {
-              toast({ title: "Failed to reset", description: error.message, variant: "destructive" });
-            } else {
-              toast({ title: "Profile review re-enabled", description: `${row.full_name} will see the Welcome Back dialog on next login.` });
-            }
-          }}
-          title="Re-enable Welcome Back profile review on next login"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
+          <UserCog className="w-3.5 h-3.5" />
         </Button>
         {isOrphan && (
           <Button
@@ -1239,6 +1409,48 @@ export function UserManagementView() {
         rowActions={rowActions}
         defaultSortKey="created_at"
         defaultSortDirection="asc"
+        enableSelection
+        onSelectionChange={setSelectedKeys}
+        bulkActions={(keys, clearSelection) => {
+          const selectedUsers = userRows.filter((u) => keys.includes(u.id));
+          const nonSelfUsers = selectedUsers.filter((u) => u.user_id !== currentUserId);
+          return (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{keys.length} selected</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={async () => {
+                  const profileUsers = nonSelfUsers.filter((u) => !u.isPendingInvitation);
+                  if (profileUsers.length === 0) {
+                    toast({ title: "No eligible users", description: "Cannot reset welcome dialog for pending invitations or yourself." });
+                    return;
+                  }
+                  const promises = profileUsers.map((u) =>
+                    supabase.from("profiles").update({ skip_login_profile: false }).eq("user_id", u.user_id)
+                  );
+                  await Promise.all(promises);
+                  toast({ title: `Welcome dialog re-enabled for ${profileUsers.length} user(s)` });
+                  clearSelection();
+                }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Welcome
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setBulkDeleteOpen(true)}
+                disabled={nonSelfUsers.length === 0}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete ({nonSelfUsers.length})
+              </Button>
+            </div>
+          );
+        }}
       />
 
       <InviteUserDialog
@@ -1303,6 +1515,41 @@ export function UserManagementView() {
           }
         }}
         isLoading={deleteProfileMutation.isPending || deletePendingInvitationMutation.isPending}
+        requireTypedConfirmation
+      />
+
+      {editProfileDialog && (
+        <EditProfileDialog
+          open
+          onClose={() => setEditProfileDialog(null)}
+          userId={editProfileDialog.userId}
+          userName={editProfileDialog.userName}
+        />
+      )}
+
+      <DeleteConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(open) => !open && setBulkDeleteOpen(false)}
+        title="Bulk Delete Users"
+        itemName={`${selectedKeys.length} selected user(s)`}
+        description="This will permanently remove profiles and/or pending invitations for all selected users. This action cannot be undone."
+        onConfirm={async () => {
+          const selected = userRows.filter((u) => selectedKeys.includes(u.id) && u.user_id !== currentUserId);
+          for (const user of selected) {
+            if (user.isPendingInvitation) {
+              await supabase.from("pending_role_assignments").delete().eq("id", user.user_id);
+            } else if (user.role) {
+              await supabase.from("user_roles").delete().eq("user_id", user.user_id);
+              await supabase.from("profiles").update({ role: "pending" }).eq("user_id", user.user_id);
+            } else {
+              await supabase.from("profiles").delete().eq("user_id", user.user_id);
+            }
+          }
+          invalidateAll();
+          setSelectedKeys([]);
+          setBulkDeleteOpen(false);
+          toast({ title: `${selected.length} user(s) processed` });
+        }}
         requireTypedConfirmation
       />
     </div>
