@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw } from "lucide-react";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
@@ -1131,6 +1131,22 @@ export function UserManagementView() {
           title="Edit name"
         >
           <Pencil className="w-3.5 h-3.5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-primary"
+          onClick={async () => {
+            const { error } = await supabase.from("profiles").update({ skip_login_profile: false }).eq("user_id", row.user_id);
+            if (error) {
+              toast({ title: "Failed to reset", description: error.message, variant: "destructive" });
+            } else {
+              toast({ title: "Profile review re-enabled", description: `${row.full_name} will see the Welcome Back dialog on next login.` });
+            }
+          }}
+          title="Re-enable Welcome Back profile review on next login"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
         </Button>
         {isOrphan && (
           <Button
