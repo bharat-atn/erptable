@@ -1,39 +1,23 @@
 
 
-## Plan: Smart Profile Dialog with AI Validation
+## Plan: Fix date format and enforce validation before continue
 
-### 1. Auto-set nationality when language changes
+### Problem 1: Date of Birth format
+The native `<input type="date">` always renders dates in the browser's locale format (e.g., `02/12/1958` in US browsers), ignoring our ISO setting. The fix is to replace it with a plain text `<Input>` that uses a placeholder matching the ISO format (e.g., `YYYY-MM-DD`) and stores the value in that same format. We'll add a pattern and validate the format on input.
 
-In `LoginProfileDialog.tsx`, when the user changes their preferred language, auto-fill nationality if it's currently empty or matches a previous auto-set value:
-- `sv` → "Swedish", dial code → "+46"
-- `ro` → "Romanian", dial code → "+40"  
-- `en` → no change
-- (Thai `th` and Ukrainian `uk` are not UI languages currently, so no mapping needed)
+### Problem 2: Enforce "Validate Fields" before "Continue"
+- The "Continue" button should be **disabled and visually muted** until validation has passed successfully (no errors).
+- When the user changes any field after a successful validation, reset validation state — this re-disables "Continue" and highlights "Validate Fields".
+- The "Validate Fields" button should have a **prominent visual cue** (e.g., a pulsing border or red/orange outline) when validation is required but hasn't been done yet, so users understand they need to click it.
+- Remove the auto-validate-on-continue behavior; the user must explicitly click "Validate Fields" first.
 
-### 2. Display date of birth using ISO format
+### Changes in `src/components/dashboard/LoginProfileDialog.tsx`
 
-The native `<input type="date">` always renders in the browser's locale format regardless of our ISO setting. Replace with a formatted text display showing the stored date in the configured ISO format (e.g., DD/MM/YYYY), plus keep the native date input for editing. Use `date-fns` `format()` to render the date in the configured format pattern.
+1. **Date input**: Replace `<Input type="date">` with `<Input type="text">` using the ISO format as placeholder. The value is stored as `YYYY-MM-DD` internally. Show the format hint as placeholder text.
 
-### 3. Create edge function for profile field validation
+2. **Continue button**: Disable unless `validation` exists and `hasErrors` is false. Add muted styling when disabled.
 
-Create a new edge function `validate-profile-fields` that uses AI to validate the consistency and correctness of:
-- Phone number length/format for the selected dial code country
-- Whether nationality, language, and phone prefix are consistent
-- Whether date of birth is reasonable (age 16-80)
+3. **Validate button**: Add attention styling (e.g., `border-orange-400 animate-pulse` or `ring-2 ring-destructive`) when `validation` is null (needs validation). This draws the user's eye.
 
-**File:** `supabase/functions/validate-profile-fields/index.ts`
-- Accepts: `{ dialCode, localNumber, nationality, preferredLanguage, dateOfBirth }`
-- Returns: `{ fields: { phone: {valid, message}, nationality: {valid, message}, dateOfBirth: {valid, message} } }`
-
-### 4. Add validation UI to LoginProfileDialog
-
-In `LoginProfileDialog.tsx`:
-- Add a "Validate" button or auto-validate on blur/before Continue
-- Show validation status icons (check/warning) next to each field
-- Block "Continue" if critical validation errors exist
-- Show AI feedback messages inline under each field
-
-### Files to change
-- `src/components/dashboard/LoginProfileDialog.tsx` — Auto-nationality, ISO date display, validation UI
-- New: `supabase/functions/validate-profile-fields/index.ts` — AI validation edge function
+4. **Remove auto-validate from handleContinue**: The continue handler should only proceed if validation passed; it should not trigger validation itself.
 
