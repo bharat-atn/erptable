@@ -1,25 +1,39 @@
 
 
-## Plan: Improve LoginProfileDialog fields
+## Plan: Smart Profile Dialog with AI Validation
 
-### 1. Date of Birth - Use ISO date format from system settings
+### 1. Auto-set nationality when language changes
 
-Read the ISO date format setting from localStorage (same as `IsoStandardsView` uses) and display the date accordingly. The native `<input type="date">` always uses YYYY-MM-DD internally, but we'll format the displayed value using the system's configured format and use a text input with a date pattern or a formatted display.
+In `LoginProfileDialog.tsx`, when the user changes their preferred language, auto-fill nationality if it's currently empty or matches a previous auto-set value:
+- `sv` → "Swedish", dial code → "+46"
+- `ro` → "Romanian", dial code → "+40"  
+- `en` → no change
+- (Thai `th` and Ukrainian `uk` are not UI languages currently, so no mapping needed)
 
-**Approach**: Keep the `<input type="date">` (browser-native, always stores YYYY-MM-DD which is ISO 8601) but add a helper label showing the configured format from localStorage ISO settings.
+### 2. Display date of birth using ISO format
 
-### 2. Phone Number - Replace plain text input with country dial code selector
+The native `<input type="date">` always renders in the browser's locale format regardless of our ISO setting. Replace with a formatted text display showing the stored date in the configured ISO format (e.g., DD/MM/YYYY), plus keep the native date input for editing. Use `date-fns` `format()` to render the date in the configured format pattern.
 
-Replace the simple phone number text input with a two-part input: a Select dropdown for the country dial code prefix (using the existing `countries` list from `src/lib/countries.ts`) plus a text input for the number. Priority countries at the top of the list: Sweden (+46), Romania (+40), Thailand (+66), Ukraine (+380), followed by a separator, then the rest alphabetically.
+### 3. Create edge function for profile field validation
 
-### 3. Remove Emergency Contact field
+Create a new edge function `validate-profile-fields` that uses AI to validate the consistency and correctness of:
+- Phone number length/format for the selected dial code country
+- Whether nationality, language, and phone prefix are consistent
+- Whether date of birth is reasonable (age 16-80)
 
-Remove the emergency contact input and its associated state/save logic entirely from `LoginProfileDialog.tsx`.
+**File:** `supabase/functions/validate-profile-fields/index.ts`
+- Accepts: `{ dialCode, localNumber, nationality, preferredLanguage, dateOfBirth }`
+- Returns: `{ fields: { phone: {valid, message}, nationality: {valid, message}, dateOfBirth: {valid, message} } }`
 
-### 4. Nationality - Replace text input with searchable country/nationality Select
+### 4. Add validation UI to LoginProfileDialog
 
-Replace the free-text nationality input with a Select dropdown listing world nationalities. Priority entries at top: Swedish, Romanian, Thai, Ukrainian, followed by a separator, then all others alphabetically. We'll derive nationality names from the existing `countries` list (mapping country name to demonym).
+In `LoginProfileDialog.tsx`:
+- Add a "Validate" button or auto-validate on blur/before Continue
+- Show validation status icons (check/warning) next to each field
+- Block "Continue" if critical validation errors exist
+- Show AI feedback messages inline under each field
 
 ### Files to change
-- `src/components/dashboard/LoginProfileDialog.tsx` - All four changes above
+- `src/components/dashboard/LoginProfileDialog.tsx` — Auto-nationality, ISO date display, validation UI
+- New: `supabase/functions/validate-profile-fields/index.ts` — AI validation edge function
 
