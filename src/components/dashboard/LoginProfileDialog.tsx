@@ -280,7 +280,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Welcome Back</DialogTitle>
