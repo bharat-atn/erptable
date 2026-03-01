@@ -53,6 +53,42 @@ import { useOrg } from "@/contexts/OrgContext";
 import { Badge } from "@/components/ui/badge";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
+import { Separator } from "@/components/ui/separator";
+import { countries } from "@/lib/countries";
+import { getOrderedNationalities, getFlagForCountry } from "@/lib/nationalities";
+
+// --- Phone helpers (same as LoginProfileDialog) ---
+const PRIORITY_DIAL_CODES_SIDEBAR = ["+46", "+40", "+66", "+380"];
+function getOrderedCountriesSidebar() {
+  const priority = countries.filter((c) => PRIORITY_DIAL_CODES_SIDEBAR.includes(c.dialCode));
+  priority.sort((a, b) => PRIORITY_DIAL_CODES_SIDEBAR.indexOf(a.dialCode) - PRIORITY_DIAL_CODES_SIDEBAR.indexOf(b.dialCode));
+  const rest = countries.filter((c) => !PRIORITY_DIAL_CODES_SIDEBAR.includes(c.dialCode));
+  return { priority, rest };
+}
+
+function parsePhoneSidebar(stored: string): { dialCode: string; localNumber: string } {
+  if (!stored) return { dialCode: "+46", localNumber: "" };
+  const sorted = [...countries].sort((a, b) => b.dialCode.length - a.dialCode.length);
+  for (const c of sorted) {
+    if (stored.startsWith(c.dialCode)) {
+      return { dialCode: c.dialCode, localNumber: stored.slice(c.dialCode.length).trim() };
+    }
+  }
+  return { dialCode: "+46", localNumber: stored };
+}
+
+// --- ISO date format helper ---
+const ISO_STORAGE_KEY_SIDEBAR = "iso-standards-settings";
+function getIsoDateFormatSidebar(): string {
+  try {
+    const saved = localStorage.getItem(ISO_STORAGE_KEY_SIDEBAR);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return parsed.date_format || "YYYY-MM-DD";
+    }
+  } catch {}
+  return "YYYY-MM-DD";
+}
 
 export interface ScreenSizeOption {
   label: string;
@@ -568,7 +604,8 @@ function UserProfileDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dialCode, setDialCode] = useState("+46");
+  const [localNumber, setLocalNumber] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
   const [nationality, setNationality] = useState("");
 
@@ -587,7 +624,9 @@ function UserProfileDialog({
           const p = profile as any;
           setAvatarUrl(p?.avatar_url ?? null);
           setDateOfBirth(p?.date_of_birth ?? "");
-          setPhoneNumber(p?.phone_number ?? "");
+          const { dialCode: dc, localNumber: ln } = parsePhoneSidebar(p?.phone_number ?? "");
+          setDialCode(dc);
+          setLocalNumber(ln);
           setEmergencyContact(p?.emergency_contact ?? "");
           setNationality(p?.nationality ?? "");
         });
@@ -596,9 +635,10 @@ function UserProfileDialog({
 
   const handleSaveProfileFields = async () => {
     if (!userId) return;
+    const combinedPhone = localNumber ? `${dialCode}${localNumber}` : null;
     await (supabase as any).from("profiles").update({
       date_of_birth: dateOfBirth || null,
-      phone_number: phoneNumber || null,
+      phone_number: combinedPhone,
       emergency_contact: emergencyContact || null,
       nationality: nationality || null,
     }).eq("user_id", userId);
@@ -705,27 +745,78 @@ function UserProfileDialog({
           {/* Additional Profile Fields */}
           <div className="space-y-3">
             <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("profile.personalInfo") || "Personal Information"}
+              {t("profile.personalInfo")}
             </Label>
             <div className="space-y-2">
+              {/* Date of Birth - text input with ISO format */}
               <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.dateOfBirth") || "Date of Birth"}</Label>
-                <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+                <Label className="text-xs text-muted-foreground">{t("profile.dateOfBirth")}</Label>
+                <Input
+                  type="text"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  placeholder={getIsoDateFormatSidebar()}
+                  maxLength={10}
+                />
               </div>
+              {/* Phone Number - dial code + local number */}
               <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.phoneNumber") || "Phone Number"}</Label>
-                <Input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+46 70 123 4567" />
+                <Label className="text-xs text-muted-foreground">{t("profile.phoneNumber")}</Label>
+                <div className="flex gap-2">
+                  <Select value={dialCode} onValueChange={setDialCode}>
+                    <SelectTrigger className="w-[130px] shrink-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getOrderedCountriesSidebar().priority.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
+                      <Separator className="my-1" />
+                      {getOrderedCountriesSidebar().rest.map((c) => (
+                        <SelectItem key={c.code} value={c.dialCode}>
+                          {c.flag} {c.dialCode}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="tel"
+                    value={localNumber}
+                    onChange={(e) => setLocalNumber(e.target.value)}
+                    placeholder="70 123 4567"
+                    className="flex-1"
+                  />
+                </div>
               </div>
+              {/* Emergency Contact */}
               <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.emergencyContact") || "Emergency Contact"}</Label>
+                <Label className="text-xs text-muted-foreground">{t("profile.emergencyContact")}</Label>
                 <Input value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} placeholder="Name & phone number" />
               </div>
+              {/* Nationality - dropdown with flags */}
               <div>
-                <Label className="text-xs text-muted-foreground">{t("profile.nationality") || "Nationality"}</Label>
-                <Input value={nationality} onChange={(e) => setNationality(e.target.value)} placeholder="e.g. Swedish" />
+                <Label className="text-xs text-muted-foreground">{t("profile.nationality")}</Label>
+                <Select value={nationality} onValueChange={setNationality}>
+                  <SelectTrigger><SelectValue placeholder="Select nationality" /></SelectTrigger>
+                  <SelectContent>
+                    {getOrderedNationalities().priority.map((n) => (
+                      <SelectItem key={n.nationality} value={n.nationality}>
+                        {getFlagForCountry(n.country)} {n.nationality}
+                      </SelectItem>
+                    ))}
+                    <Separator className="my-1" />
+                    {getOrderedNationalities().rest.map((n) => (
+                      <SelectItem key={n.nationality} value={n.nationality}>
+                        {getFlagForCountry(n.country)} {n.nationality}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button size="sm" onClick={handleSaveProfileFields}>
-                {t("profile.saveChanges") || "Save Changes"}
+                {t("profile.saveChanges")}
               </Button>
             </div>
           </div>
