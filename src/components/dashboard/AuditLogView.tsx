@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Shield, Search, Filter, Clock, User, FileText, Building2, Mail, Users, LogIn, LogOut, KeyRound, Settings, UserPlus, UserMinus, Pencil, Trash2, Plus } from "lucide-react";
+import { Shield, Search, Filter, Clock, User, FileText, Building2, Mail, Users, LogIn, LogOut, KeyRound, Settings, UserPlus, UserMinus, Pencil, Trash2, Plus, CalendarDays, X } from "lucide-react";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -211,10 +211,24 @@ export function AuditLogView() {
   const [search, setSearch] = useState("");
   const [tableFilter, setTableFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");
+  const [userFilter, setUserFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
+  const hasActiveFilters = search || tableFilter !== "all" || actionFilter !== "all" || userFilter !== "all" || dateFrom || dateTo;
+
+  const clearAllFilters = () => {
+    setSearch("");
+    setTableFilter("all");
+    setActionFilter("all");
+    setUserFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  };
+
   const { data: logs, isLoading } = useQuery({
-    queryKey: ["audit-log", tableFilter, actionFilter],
+    queryKey: ["audit-log", tableFilter, actionFilter, dateFrom, dateTo],
     queryFn: async () => {
       let query = supabase
         .from("audit_log")
@@ -228,6 +242,12 @@ export function AuditLogView() {
       if (actionFilter !== "all") {
         query = query.eq("action", actionFilter);
       }
+      if (dateFrom) {
+        query = query.gte("created_at", `${dateFrom}T00:00:00`);
+      }
+      if (dateTo) {
+        query = query.lte("created_at", `${dateTo}T23:59:59`);
+      }
 
       const { data, error } = await query;
       if (error) throw error;
@@ -236,7 +256,16 @@ export function AuditLogView() {
     refetchInterval: 15000,
   });
 
+  const uniqueUsers = useMemo(() => {
+    const emails = new Set<string>();
+    (logs ?? []).forEach((log) => {
+      if (log.user_email) emails.add(log.user_email);
+    });
+    return Array.from(emails).sort();
+  }, [logs]);
+
   const filteredLogs = (logs ?? []).filter((log) => {
+    if (userFilter !== "all" && log.user_email !== userFilter) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -312,6 +341,44 @@ export function AuditLogView() {
                 <SelectItem value="USER_INVITED">User Invited</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="w-[220px]">
+                <User className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="All Users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Users</SelectItem>
+                {uniqueUsers.map((email) => (
+                  <SelectItem key={email} value={email}>{email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-3.5 h-3.5 text-muted-foreground" />
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-[150px]"
+                placeholder="From"
+              />
+              <span className="text-muted-foreground text-xs">–</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-[150px]"
+                placeholder="To"
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearAllFilters} className="gap-1 text-muted-foreground">
+                <X className="w-3.5 h-3.5" />
+                Clear filters
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
