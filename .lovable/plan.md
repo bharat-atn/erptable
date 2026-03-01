@@ -1,58 +1,27 @@
 
-Goal: Make the Welcome Back flow stable, keep birthday formatting aligned with ISO settings, and make sidebar Profile use the same database-backed data model/UI logic as Welcome Back.
 
-Implementation steps:
-1) Stabilize the Welcome Back close (X) behavior
-- Update `src/components/ui/dialog.tsx` to support an optional prop like `hideDefaultClose` (default false) so dialogs can fully control close UI when needed.
-- In `src/components/dashboard/LoginProfileDialog.tsx`, hide default close and render an explicit, always-visible top-right close button with strong contrast and fixed hit area.
-- Keep `onOpenChange` fallback (`!isOpen => signOut`) and explicitly prevent outside/Escape accidental dismiss so only the visible X controls exit.
+## Plan: Translate All Workflow Step Cards in Process Guide
 
-2) Make date handling deterministic and ISO-driven across dialogs
-- Add shared date helpers in a new utility (e.g. `src/lib/profile-date-utils.ts`):
-  - read current ISO date format setting from `iso-standards-settings`
-  - format DB ISO date (`YYYY-MM-DD`) to display format
-  - parse display format back to ISO canonical format
-  - strict validation for supported formats (`YYYY-MM-DD`, `DD/MM/YYYY`, `MM/DD/YYYY`, `DD.MM.YYYY`)
-- Use canonical ISO value for all saves, validation payloads, and fingerprint cache.
-- Use display value only for UI, so displayed date stays consistent with configured ISO setting and does not “flip back” unexpectedly.
+### Problem
+The Process Guide has three workflow sections (New Hire, Renewal, Termination) where step titles, descriptions, role labels, and status badges are hardcoded in English. The terminology cards and summary section already use `t()` correctly — these workflow cards were missed.
 
-3) Remove divergence between Welcome Back and Sidebar Profile
-- Extract shared profile identity form block (new component, e.g. `src/components/profile/ProfileIdentityFields.tsx`) for:
-  - full name
-  - email (read-only)
-  - preferred language
-  - date of birth (shared parser/formatter)
-  - phone (dial code + local number)
-  - nationality (same dropdown + flags)
-- Reuse this shared block in:
-  - `LoginProfileDialog` (with Validate + Continue + skip toggle)
-  - `Sidebar` `UserProfileDialog` (with Save Changes and optional extra sections like password/emergency contact)
-- Ensure both dialogs load/save the same profile columns with the same transform rules (`full_name`, `preferred_language`, `date_of_birth`, `phone_number`, `nationality`, `skip_login_profile`, `avatar_url`).
+### Changes
 
-4) Align wording/translations so text is consistent
-- Add/use translation keys for Welcome Back labels/buttons/messages currently hardcoded in English.
-- Reuse the same text keys in both dialogs where fields overlap.
+#### 1. `src/lib/ui-translations.ts`
+Add translation keys for:
+- **Role labels** (3): `guide.role.hrManager`, `guide.role.candidate`, `guide.role.system`
+- **New Hire steps** (4 titles + 4 descs): `guide.step.sendInvitation` (already exists as `guide.sendInvitation`), `guide.step.dataSubmission`, `guide.step.contractReview`, `guide.step.activation` — plus their `Desc` variants
+- **Renewal steps** (5 titles + 5 descs): `guide.step.selectCandidate`, `guide.step.sendRenewalInvite`, `guide.step.dataVerification`, `guide.step.contractSigning`, `guide.step.reactivation`
+- **Termination steps** (3 titles + 3 descs): `guide.step.terminationNotice`, `guide.step.exitProcessing`, `guide.step.archive`
 
-5) Regression-proofing
-- Keep one shared phone/date mapper utility instead of duplicate `parsePhone*` and ISO readers in multiple files.
-- Keep validation fingerprint based on canonical ISO date + canonical phone/nationality/lang values to avoid false invalidations.
+Many of these keys already exist (e.g. `guide.sendInvitation`, `guide.dataSubmission`, etc.) — reuse those where possible, add missing ones.
 
-Technical details:
-- Files to update:
-  - `src/components/dashboard/LoginProfileDialog.tsx`
-  - `src/components/dashboard/Sidebar.tsx`
-  - `src/components/ui/dialog.tsx`
-  - `src/lib/ui-translations.ts`
-- Files to add:
-  - `src/lib/profile-date-utils.ts`
-  - `src/components/profile/ProfileIdentityFields.tsx` (or equivalent shared component path)
-- Backend/database changes:
-  - None required (existing `profiles.date_of_birth` as `date` remains correct).
+#### 2. `src/components/dashboard/ProcessGuideView.tsx`
+- Move the three step arrays (`newHireSteps`, `renewalSteps`, `terminationSteps`) **inside** the `ProcessGuideView` component so they have access to `t()`.
+- Replace all hardcoded strings with `t()` calls.
+- Pass translated role labels to `StepCard` instead of raw English constants.
 
-Verification checklist:
-1. Welcome Back shows a visible X in top-right on every load.
-2. Clicking X reliably signs out and returns to login (not company picker/app).
-3. Date format follows current ISO setting in both Welcome Back and Sidebar Profile.
-4. Save in Sidebar Profile is reflected exactly in next Welcome Back open.
-5. Validate/Continue still works with age check and cached validation.
-6. Test end-to-end on both desktop and mobile viewport to confirm no UI regressions.
+### Files to modify
+- `src/lib/ui-translations.ts` — Add ~20 new translation keys (en/sv/ro)
+- `src/components/dashboard/ProcessGuideView.tsx` — Move step arrays inside component, wire `t()` calls
+
