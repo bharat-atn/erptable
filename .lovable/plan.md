@@ -1,23 +1,31 @@
 
 
-## Plan: Remember validation state across sessions
+## Plan: Fix Profile Settings Dialog — Missing Translations and Consistency with Login Dialog
 
 ### Problem
-Currently, every time the dialog opens, validation is `null` and the user must click "Validate Fields" even if nothing changed. If the data is identical to what was last validated, we should skip re-validation.
+The sidebar Profile Settings dialog has two issues:
+1. **Missing translation keys**: `profile.personalInfo`, `profile.dateOfBirth`, `profile.phoneNumber`, `profile.emergencyContact`, `profile.nationality`, and `profile.saveChanges` are referenced via `t()` but never defined in `ui-translations.ts`, so they render as raw key strings (visible in the screenshot).
+2. **Inconsistent with Login Profile Dialog**: The sidebar profile uses a native `<input type="date">` (browser-locale-dependent), a plain phone text input (no dial code selector), and a plain text input for nationality (no flag dropdown). The LoginProfileDialog already has proper ISO-format text input for dates, dial-code phone selector, and nationality dropdown with flags.
 
-### Approach
-Use `localStorage` to persist a fingerprint of the last successfully validated fields (per user). On dialog load, compare the loaded profile values against the stored fingerprint. If they match, auto-restore the validation as passed — enabling "Continue" immediately.
+### Changes
 
-### Changes in `src/components/dashboard/LoginProfileDialog.tsx`
+#### 1. `src/lib/ui-translations.ts`
+Add the 6 missing translation keys:
+- `profile.personalInfo` — "Personal Information" / "Personuppgifter" / "Informații personale"
+- `profile.dateOfBirth` — "Date of Birth" / "Födelsedatum" / "Data nașterii"
+- `profile.phoneNumber` — "Phone Number" / "Telefonnummer" / "Număr de telefon"
+- `profile.emergencyContact` — "Emergency Contact" / "Kontaktperson vid nödsituation" / "Contact de urgență"
+- `profile.nationality` — "Nationality" / "Nationalitet" / "Naționalitate"
+- `profile.saveChanges` — "Save Changes" / "Spara ändringar" / "Salvează modificările"
 
-1. **Define a fingerprint function** that creates a string hash from the validatable fields: `dialCode + localNumber + nationality + lang + dateOfBirth`.
-
-2. **On successful validation** (when `handleValidate` returns all-valid results), save the fingerprint and the validation result to `localStorage` under a key like `profile-validation-${userId}`.
-
-3. **On profile load** (in the existing `useEffect`), after setting all field states, compute the fingerprint from the loaded data and compare it to the stored one. If they match, restore the saved `ValidationResult` into state — so `validationPassed` is immediately `true` and the user can click "Continue" without re-validating.
-
-4. **On any field change** (already resets `validation` to `null`), this naturally invalidates the state. The fingerprint comparison only happens on load.
+#### 2. `src/components/dashboard/Sidebar.tsx` — `UserProfileDialog`
+Upgrade the profile fields section to match LoginProfileDialog:
+- **Date of Birth**: Replace `<Input type="date">` with `<Input type="text">` using ISO format placeholder (same as LoginProfileDialog).
+- **Phone Number**: Replace plain text input with dial-code `<Select>` + local number `<Input>`, using the same `parsePhone()` logic, priority dial codes, and country list as LoginProfileDialog.
+- **Nationality**: Replace plain text input with a `<Select>` dropdown using `getOrderedNationalities()` with flag emojis, same as LoginProfileDialog.
+- **Save handler**: Update `handleSaveProfileFields` to combine `dialCode + localNumber` before saving, matching the LoginProfileDialog pattern.
 
 ### Files to modify
-- `src/components/dashboard/LoginProfileDialog.tsx`
+- `src/lib/ui-translations.ts` — Add 6 missing keys
+- `src/components/dashboard/Sidebar.tsx` — Upgrade UserProfileDialog fields
 
