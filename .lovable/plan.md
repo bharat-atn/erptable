@@ -1,15 +1,22 @@
 
 
-## Plan: Clean Up Profile Settings Dialog
+## Plan: Make Version Banner Work in Production with Hard Reset
 
-### Changes to `src/components/dashboard/Sidebar.tsx` (UserProfileDialog)
+### Problem
+Two issues:
+1. The "Click here to update" button currently does a soft React Query cache invalidation — it doesn't actually reload the app to pick up new deployed code. Users in the published environment won't get the new frontend bundle.
+2. The banner should work identically in both development and published environments (it already does since it queries the database, but the update action needs to be a real page reload).
 
-1. **Remove emergency contact** — Delete the emergency contact field and its state (`emergencyContact`), the DB select/save of `emergency_contact`.
+### Change
 
-2. **Show password section to all users with Google warning** — Instead of hiding the password section for Google users (`!isGoogleUser`), always show it but:
-   - Add an alert/notice for Google users explaining that changing password only applies to email/password login and won't affect their Google sign-in.
-   - Keep the password inputs and button functional for all users (some may have both Google and email/password).
+**`src/components/dashboard/VersionUpdateBanner.tsx`**
+- Replace `handleUpdate` logic: instead of setting state and calling `onVersionUpdate()`, perform a **hard browser reload** via `window.location.reload()`. This forces the browser to fetch the latest deployed assets.
+- Remove the `onVersionUpdate` prop entirely since it's no longer needed.
+- Remove the `dismissed` state management from the update button (the reload handles it).
 
-### Files to modify
-- `src/components/dashboard/Sidebar.tsx` — Remove emergency contact, add Google auth warning to password section.
+**`src/components/dashboard/Dashboard.tsx`**
+- Remove the `onVersionUpdate` prop passed to `VersionUpdateBanner` (no longer exists).
+
+### Result
+When a new version is published and detected by the 30-second polling, the banner appears. Clicking "Click here to update" triggers `window.location.reload()` — a hard reset that loads the latest code bundle without closing or disrupting anything beyond a normal page refresh.
 
