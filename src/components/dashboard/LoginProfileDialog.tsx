@@ -15,6 +15,27 @@ import { getOrderedNationalities, getFlagForCountry } from "@/lib/nationalities"
 import { toast } from "sonner";
 import { format, parse } from "date-fns";
 
+// --- Validation fingerprint helpers ---
+const VALIDATION_KEY_PREFIX = "profile-validation-";
+
+function buildFingerprint(dialCode: string, localNumber: string, nationality: string, lang: string, dateOfBirth: string): string {
+  return `${dialCode}|${localNumber}|${nationality}|${lang}|${dateOfBirth}`;
+}
+
+function loadCachedValidation(userId: string, fingerprint: string): ValidationResult | null {
+  try {
+    const raw = localStorage.getItem(`${VALIDATION_KEY_PREFIX}${userId}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (cached.fingerprint === fingerprint) return cached.validation as ValidationResult;
+  } catch {}
+  return null;
+}
+
+function saveCachedValidation(userId: string, fingerprint: string, validation: ValidationResult) {
+  localStorage.setItem(`${VALIDATION_KEY_PREFIX}${userId}`, JSON.stringify({ fingerprint, validation }));
+}
+
 // --- ISO date format helper ---
 const ISO_STORAGE_KEY = "iso-standards-settings";
 function getIsoDateFormat(): string {
@@ -140,6 +161,15 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
             setNationality(existingNat);
           }
           setSkipOnLogin(p.skip_login_profile ?? false);
+
+          // Check cached validation fingerprint
+          const loadedDialCode = existingNat ? dc : (mapping?.dialCode ?? dc);
+          const loadedNationality = existingNat || mapping?.nationality || "";
+          const fp = buildFingerprint(loadedDialCode, ln, loadedNationality, profileLang, p.date_of_birth ?? "");
+          const cached = loadCachedValidation(userId, fp);
+          if (cached) {
+            setValidation(cached);
+          }
         }
         setLoading(false);
       });
@@ -188,6 +218,13 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
       if (error) throw error;
       if (data?.fields) {
         setValidation(data.fields);
+        // Cache if all valid
+        const result = data.fields as ValidationResult;
+        const allValid = result.phone.valid && result.dateOfBirth.valid;
+        if (allValid) {
+          const fp = buildFingerprint(dialCode, localNumber, nationality, lang, dateOfBirth);
+          saveCachedValidation(userId, fp, result);
+        }
       }
     } catch (err) {
       console.error("Validation failed:", err);
