@@ -198,17 +198,11 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
   };
 
   const hasErrors = validation && (!validation.phone.valid || !validation.dateOfBirth.valid);
+  const validationPassed = validation && !hasErrors;
+  const needsValidation = !validation;
 
   const handleContinue = async () => {
-    // Auto-validate before continue if not yet validated
-    if (!validation) {
-      await handleValidate();
-      return; // user sees results first
-    }
-    if (hasErrors) {
-      toast.error("Please fix validation errors before continuing");
-      return;
-    }
+    if (!validationPassed) return;
     setSaving(true);
     const combinedPhone = localNumber ? `${dialCode}${localNumber}` : null;
     await (supabase as any).from("profiles").update({
@@ -308,10 +302,16 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
                 <Label className="text-xs text-muted-foreground">Date of Birth</Label>
                 <ValidationIcon field={validation?.dateOfBirth} />
               </div>
-              <Input type="date" value={dateOfBirth} onChange={(e) => { setDateOfBirth(e.target.value); setValidation(null); }} />
+              <Input
+                type="text"
+                value={dateOfBirth}
+                onChange={(e) => { setDateOfBirth(e.target.value); setValidation(null); }}
+                placeholder={isoDateFormat}
+                maxLength={10}
+              />
               {dateOfBirth && (
                 <p className="text-[10px] text-muted-foreground">
-                  {formatDateWithIso(dateOfBirth, isoDateFormat)} ({isoDateFormat})
+                  Stored: {dateOfBirth}
                 </p>
               )}
               <ValidationMsg field={validation?.dateOfBirth} />
@@ -380,9 +380,9 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
 
             {/* Validate button */}
             <Button
-              variant="outline"
+              variant={needsValidation ? "destructive" : "outline"}
               size="sm"
-              className="w-full"
+              className={`w-full ${needsValidation ? "animate-pulse" : ""}`}
               onClick={handleValidate}
               disabled={validating}
             >
@@ -391,7 +391,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
               ) : (
                 <ShieldCheck className="w-3.5 h-3.5 mr-1" />
               )}
-              {validating ? "Validating…" : "Validate Fields"}
+              {validating ? "Validating…" : needsValidation ? "⚠ Validate Fields" : "Validate Fields"}
             </Button>
 
             {/* Don't show again toggle */}
@@ -400,7 +400,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
               <Switch checked={skipOnLogin} onCheckedChange={setSkipOnLogin} />
             </div>
 
-            <Button className="w-full" onClick={handleContinue} disabled={saving || validating}>
+            <Button className="w-full" onClick={handleContinue} disabled={!validationPassed || saving || validating}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Continue
             </Button>
