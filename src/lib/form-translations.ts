@@ -308,6 +308,10 @@ export const FORM_LABELS_RO: Record<string, string> = {
   "Travel Costs": "Costuri de călătorie",
   "Immigration Process Fees": "Taxe proces de imigrare",
   "Other Deduction": "Altă deducere",
+
+  // Salary below minimum warning
+  "salary_below_min_hourly": "Salariul de bază introdus ({value} SEK/oră) este sub minimul din contractul colectiv ({min} SEK/oră).",
+  "salary_below_min_monthly": "Salariul de bază introdus ({value} SEK/lună) este sub minimul din contractul colectiv ({min} SEK/lună).",
 };
 
 export const FORM_LABELS_TH: Record<string, string> = {
@@ -614,6 +618,10 @@ export const FORM_LABELS_TH: Record<string, string> = {
   "Travel Costs": "ค่าเดินทาง",
   "Immigration Process Fees": "ค่าธรรมเนียมกระบวนการตรวจคนเข้าเมือง",
   "Other Deduction": "การหักอื่นๆ",
+
+  // Salary below minimum warning
+  "salary_below_min_hourly": "ค่าจ้างพื้นฐานที่ป้อน ({value} SEK/ชม.) ต่ำกว่าค่าจ้างขั้นต่ำตามข้อตกลงร่วม ({min} SEK/ชม.)",
+  "salary_below_min_monthly": "เงินเดือนพื้นฐานที่ป้อน ({value} SEK/เดือน) ต่ำกว่าเงินเดือนขั้นต่ำตามข้อตกลงร่วม ({min} SEK/เดือน)",
 };
 
 export const FORM_LABELS_UK: Record<string, string> = {
@@ -919,6 +927,10 @@ export const FORM_LABELS_UK: Record<string, string> = {
   "Travel Costs": "Витрати на проїзд",
   "Immigration Process Fees": "Витрати на імміграційний процес",
   "Other Deduction": "Інше утримання",
+
+  // Salary below minimum warning
+  "salary_below_min_hourly": "Введена основна оплата ({value} SEK/год) нижча за мінімум колективного договору ({min} SEK/год).",
+  "salary_below_min_monthly": "Введена основна зарплата ({value} SEK/міс) нижча за мінімум колективного договору ({min} SEK/міс).",
 };
 
 /**
