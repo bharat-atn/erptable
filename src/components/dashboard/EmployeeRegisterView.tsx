@@ -128,15 +128,36 @@ export function EmployeeRegisterView() {
   const addDummyEmployee = useMutation({
     mutationFn: async (country: DummyCountry) => {
       const dummy = generateDummyEmployee(country);
-      const { error } = await supabase.from("employees").insert([{
+      // For register, only create ACTIVE or INACTIVE employees
+      const status = Math.random() > 0.3 ? "ACTIVE" : "INACTIVE";
+      const { data: inserted, error } = await supabase.from("employees").insert([{
         first_name: dummy.first_name, last_name: dummy.last_name, middle_name: dummy.middle_name,
         email: dummy.email, phone: dummy.phone, city: dummy.city, country: dummy.country,
-        status: dummy.status, personal_info: dummy.personal_info,
+        status, personal_info: dummy.personal_info,
         org_id: orgId,
-      } as any]);
+      } as any]).select("id").single();
       if (error) throw error;
+
+      // Also create a draft contract for the employee
+      if (inserted) {
+        // Try to find a company for this org
+        const { data: company } = await supabase.from("companies").select("id").eq("org_id", orgId!).limit(1).single();
+        await supabase.from("contracts").insert([{
+          employee_id: inserted.id,
+          org_id: orgId,
+          company_id: company?.id || null,
+          status: status === "ACTIVE" ? "signed" : "draft",
+          signing_status: status === "ACTIVE" ? "employer_signed" : "not_sent",
+          season_year: new Date().getFullYear().toString(),
+        } as any]);
+      }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["register-employees"] }); toast.success("Dummy employee added!"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      toast.success("Dummy employee added!");
+    },
     onError: (err: Error) => toast.error(err.message),
   });
 

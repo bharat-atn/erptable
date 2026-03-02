@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
+import { generateDummyEmployee, type DummyCountry } from "@/lib/dummy-employees";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
-import { MoreVertical, Copy, Send, Trash2, Eye, RefreshCw, RotateCcw, FileText } from "lucide-react";
+import { MoreVertical, Copy, Send, Trash2, Eye, RefreshCw, RotateCcw, FileText, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { OnboardingPreview } from "./OnboardingPreview";
@@ -77,6 +78,44 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   // Always use the published production URL for candidate-facing links
   // Preview/dev URLs require Lovable platform auth and won't work for external recipients
   const onboardingBaseUrl = "https://erptable.lovable.app";
+
+  const addDummyInvitation = useMutation({
+    mutationFn: async (country: DummyCountry) => {
+      const dummy = generateDummyEmployee(country);
+      // Create employee with INVITED status
+      const { data: emp, error: empErr } = await supabase.from("employees").insert([{
+        first_name: dummy.first_name,
+        last_name: dummy.last_name,
+        middle_name: dummy.middle_name,
+        email: dummy.email,
+        phone: dummy.phone,
+        city: dummy.city,
+        country: dummy.country,
+        status: "INVITED",
+        personal_info: dummy.personal_info,
+        org_id: orgId,
+      } as any]).select("id").single();
+      if (empErr) throw empErr;
+
+      // Create invitation
+      const langMap: Record<string, string> = { Sweden: "en_sv", Romania: "ro_en", Thailand: "th_en" };
+      const { error: invErr } = await supabase.from("invitations").insert([{
+        employee_id: emp.id,
+        org_id: orgId,
+        type: "NEW_HIRE",
+        language: langMap[country] || "en_sv",
+        status: "SENT",
+      } as any]);
+      if (invErr) throw invErr;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invitations"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+      queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
+      toast.success("Dummy invitation created!");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const { data: invitations, isLoading } = useQuery({
     queryKey: ["invitations", orgId],
@@ -223,6 +262,18 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
           <p className="text-muted-foreground text-sm">{t("page.invitations.desc")}</p>
         </div>
         <div className="flex items-center gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2" disabled={addDummyInvitation.isPending}>
+                <Users className="w-4 h-4" /> Add Dummy
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Sweden")}>🇸🇪 Swedish</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Romania")}>🇷🇴 Romanian</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Thailand")}>🇹🇭 Thai</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {onShowPreview && (
             <Button variant="default" onClick={onShowPreview} className="gap-2 min-w-[200px]">
               <Eye className="w-4 h-4" />
