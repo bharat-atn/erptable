@@ -116,18 +116,19 @@ export function IssueReportDialog({ open, onOpenChange }: IssueReportDialogProps
 
         <div className="space-y-4 py-2">
           {/* Screenshot instructions */}
-          <Alert className="bg-muted/50 border-border">
-            <AlertDescription className="text-xs space-y-1.5">
-              <p className="font-medium text-sm text-foreground">📸 How to capture a screenshot</p>
+          <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800">
+            <AlertDescription className="text-sm space-y-2">
+              <p className="font-semibold text-base text-primary">📸 Take a screenshot first!</p>
+              <p className="text-muted-foreground text-xs">A screenshot helps us understand and fix the issue much faster.</p>
               <div className="flex items-center gap-2">
-                <Apple className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span><kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">⇧</kbd> <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">⌘</kbd> <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">4</kbd> — drag to select an area</span>
+                <Apple className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                <span><kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">⇧</kbd> <kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">⌘</kbd> <kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">4</kbd> — drag to select an area</span>
               </div>
               <div className="flex items-center gap-2">
-                <Monitor className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span><kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">Win</kbd> + <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">Shift</kbd> + <kbd className="px-1 py-0.5 rounded bg-background border border-border text-[10px] font-mono">S</kbd> — opens Snipping Tool</span>
+                <Monitor className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                <span><kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">Win</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">Shift</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-background border-2 border-blue-300 dark:border-blue-700 text-xs font-mono font-semibold">S</kbd> — opens Snipping Tool</span>
               </div>
-              <p className="text-muted-foreground">Then attach the screenshot below using <strong>Attach Image</strong>.</p>
+              <p className="text-foreground font-medium text-xs">Then click <strong className="text-primary">Attach Image</strong> below ↓</p>
             </AlertDescription>
           </Alert>
 
