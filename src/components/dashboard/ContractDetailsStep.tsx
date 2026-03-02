@@ -2532,9 +2532,9 @@ export function ContractDetailsStep({
 
               {/* Reference notes */}
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-xs text-muted-foreground">
-                <p>** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.</p>
-                <p>* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.</p>
-                <p>Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.</p>
+                <p>{bl("** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.", "** Se avsnitt 7A i Skogsavtalet om lönekomponenter och att månadslönen utgörs av 174 timmars lön.")}</p>
+                <p>{bl("* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.", "* Möjligt för tidsbegränsat anställda i skogsarbete, se avsnitt 7A, stycke 2 i Skogsavtalet.")}</p>
+                <p>{bl("Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.", "Angående regler och ersättning för övertidsarbete, se §§ 5 och 8 i Skogsavtalet.")}</p>
               </div>
 
               {/* Payment method */}
@@ -2572,7 +2572,7 @@ export function ContractDetailsStep({
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.
+                    {bl("No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.", "Senast den 25:e varje månad i efterskott eller på ett fast datum som bestäms av arbetsgivaren. Om utbetalningsdagen infaller på en annan dag än måndag–fredag eller på en helg eller allmän helgdag, ska lönen normalt betalas ut på närmast föregående vardag.")}
                   </p>
                 </CardContent>
               </Card>
@@ -2645,7 +2645,7 @@ export function ContractDetailsStep({
                         {pieceWorkPay && <Check className="w-3 h-3 text-primary-foreground" />}
                       </div>
                       <span className={cn("text-sm font-medium", !pieceWorkPay && "text-muted-foreground")}>
-                        Piece-work pay / Ackordslön
+                        {bl("Piece-work pay", "Ackordslön")}
                       </span>
                     </div>
                   </div>
@@ -2820,30 +2820,30 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">🛡️</span>
-                    Social Security / Socialförsäkring
+                    {bl("Social Security", "Socialförsäkring")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-4">
                     <p className="text-sm leading-relaxed">
-                      The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).
+                      {bl("The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).", "Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980).")}
                     </p>
                     <p className="text-sm leading-relaxed italic text-muted-foreground">
-                      Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980).
+                      {contractLanguage !== "SE" && "Arbetsgivaren betalar arbetsgivaravgifter till staten i enlighet med socialförsäkringsbalken (2000:980)."}
                     </p>
                     <p className="text-sm leading-relaxed">
-                      Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:
+                      {bl("Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:", "Anställda arbetstagare har rätt till sjuklön enligt sjuklönelagen (1991:1047) och följande kollektivavtalsbaserade förmåner:")}
                     </p>
                     <p className="text-sm leading-relaxed italic text-muted-foreground">
-                      Anställda arbetstagare har rätt till sjuklön enligt sjuklönelagen (1991:1047) och följande kollektivavtalsbaserade förmåner:
+                      {contractLanguage !== "SE" && "Anställda arbetstagare har rätt till sjuklön enligt sjuklönelagen (1991:1047) och följande kollektivavtalsbaserade förmåner:"}
                     </p>
                     <ul className="text-sm leading-relaxed list-disc list-inside space-y-1.5 pl-2">
-                      <li>Contractual pension SAF-LO / <span className="italic text-muted-foreground">Avtalspension SAF-LO</span></li>
-                      <li>Contractual group health insurance (AGS) / <span className="italic text-muted-foreground">Avtalsgruppsjukförsäkring (AGS)</span></li>
-                      <li>Parental benefit supplement (FPT) / <span className="italic text-muted-foreground">Föräldrapenningtillägg (FPT)</span></li>
-                      <li>Employment transition fund (TSL) / <span className="italic text-muted-foreground">Omställningsförsäkring (TSL)</span></li>
-                      <li>Occupational injury insurance (TFA) / <span className="italic text-muted-foreground">Trygghetsförsäkring vid arbetsskada (TFA)</span></li>
-                      <li>Occupational group life insurance / <span className="italic text-muted-foreground">Tjänstegrupplivförsäkring</span></li>
+                      <li>{bl("Contractual pension SAF-LO", "Avtalspension SAF-LO")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Avtalspension SAF-LO</span>}</li>
+                      <li>{bl("Contractual group health insurance (AGS)", "Avtalsgruppsjukförsäkring (AGS)")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Avtalsgruppsjukförsäkring (AGS)</span>}</li>
+                      <li>{bl("Parental benefit supplement (FPT)", "Föräldrapenningtillägg (FPT)")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Föräldrapenningtillägg (FPT)</span>}</li>
+                      <li>{bl("Employment transition fund (TSL)", "Omställningsförsäkring (TSL)")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Omställningsförsäkring (TSL)</span>}</li>
+                      <li>{bl("Occupational injury insurance (TFA)", "Trygghetsförsäkring vid arbetsskada (TFA)")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Trygghetsförsäkring vid arbetsskada (TFA)</span>}</li>
+                      <li>{bl("Occupational group life insurance", "Tjänstegrupplivförsäkring")} {contractLanguage !== "SE" && <span className="italic text-muted-foreground">/ Tjänstegrupplivförsäkring</span>}</li>
                     </ul>
                   </div>
                 </CardContent>
@@ -2872,18 +2872,18 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📝</span>
-                    Miscellaneous / Övrigt
+                    {bl("Miscellaneous", "Övrigt")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement. / Ange övriga villkor för anställningen, t.ex. lön och förmåner utöver tillämpligt kollektivavtal.
+                    {bl("State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.", "Ange övriga villkor för anställningen, t.ex. lön och förmåner utöver tillämpligt kollektivavtal.")}
                   </p>
                   <textarea
                     value={miscellaneousText}
                     onChange={(e) => setMiscellaneousText(e.target.value)}
                     className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    placeholder="Enter additional terms and conditions... / Ange ytterligare villkor..."
+                    placeholder={bl("Enter additional terms and conditions...", "Ange ytterligare villkor...")}
                   />
                 </CardContent>
               </Card>
@@ -2911,63 +2911,63 @@ export function ContractDetailsStep({
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
                     <span className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-base">📋</span>
-                    Notes / Noter
+                    {bl("Notes", "Noter")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-4">
                     <ol className="list-decimal list-outside space-y-3 pl-5 text-sm leading-relaxed">
                       <li>
-                        The period of notice is set out in Section 4 of Skogsavtalet.
-                        <br /><span className="italic text-muted-foreground">Uppsägningstiden framgår av Skogsavtalet §4.</span>
+                        {bl("The period of notice is set out in Section 4 of Skogsavtalet.", "Uppsägningstiden framgår av Skogsavtalet §4.")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">Uppsägningstiden framgår av Skogsavtalet §4.</span></>}
                       </li>
                       <li>
-                        Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.
-                        <br /><span className="italic text-muted-foreground">Villkor för provanställningen samt dess avslutande framgår av Skogsavtalet §4.</span>
+                        {bl("Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.", "Villkor för provanställningen samt dess avslutande framgår av Skogsavtalet §4.")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">Villkor för provanställningen samt dess avslutande framgår av Skogsavtalet §4.</span></>}
                       </li>
                       <li>
-                        The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.
-                        <br /><span className="italic text-muted-foreground">De förutsättningar som gäller för att anställningen ska upphöra framgår av Skogsavtalet §4.</span>
+                        {bl("The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.", "De förutsättningar som gäller för att anställningen ska upphöra framgår av Skogsavtalet §4.")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">De förutsättningar som gäller för att anställningen ska upphöra framgår av Skogsavtalet §4.</span></>}
                       </li>
                       <li>
-                        If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.
-                        <br /><span className="italic text-muted-foreground">Om en arbetstagare varit anställd hos arbetsgivaren i allmän visstidsanställning i sammanlagt mer än två år under en femårsperiod övergår anställningen till en tillsvidareanställning.</span>
+                        {bl("If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.", "Om en arbetstagare varit anställd hos arbetsgivaren i allmän visstidsanställning i sammanlagt mer än två år under en femårsperiod övergår anställningen till en tillsvidareanställning.")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">Om en arbetstagare varit anställd hos arbetsgivaren i allmän visstidsanställning i sammanlagt mer än två år under en femårsperiod övergår anställningen till en tillsvidareanställning.</span></>}
                       </li>
                       <li>
-                        This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.
-                        <br /><span className="italic text-muted-foreground">Denna anställning upphör även om och när den ordinarie befattningshavarens anställning upphör enligt Skogsavtalet §4. Om en arbetstagare har varit anställd hos arbetsgivaren som vikarie i sammanlagt mer än två år under en femårsperiod, övergår anställningen till en tillsvidareanställning.</span>
+                        {bl("This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.", "Denna anställning upphör även om och när den ordinarie befattningshavarens anställning upphör enligt Skogsavtalet §4. Om en arbetstagare har varit anställd hos arbetsgivaren som vikarie i sammanlagt mer än två år under en femårsperiod, övergår anställningen till en tillsvidareanställning.")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">Denna anställning upphör även om och när den ordinarie befattningshavarens anställning upphör enligt Skogsavtalet §4. Om en arbetstagare har varit anställd hos arbetsgivaren som vikarie i sammanlagt mer än två år under en femårsperiod, övergår anställningen till en tillsvidareanställning.</span></>}
                       </li>
                       <li>
-                        The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).
-                        <br /><span className="italic text-muted-foreground">Begränsningsperioden får högst vara 16 veckor. Med stöd av lokal överenskommelse kan begränsningsperioden vara längre, dock längst 12 månader (årsarbetstid).</span>
+                        {bl("The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).", "Begränsningsperioden får högst vara 16 veckor. Med stöd av lokal överenskommelse kan begränsningsperioden vara längre, dock längst 12 månader (årsarbetstid).")}
+                        {contractLanguage !== "SE" && <><br /><span className="italic text-muted-foreground">Begränsningsperioden får högst vara 16 veckor. Med stöd av lokal överenskommelse kan begränsningsperioden vara längre, dock längst 12 månader (årsarbetstid).</span></>}
                       </li>
                     </ol>
 
                     <div className="border-t border-border pt-3 space-y-2">
                       <p className="text-sm leading-relaxed">
-                        Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).
+                        {bl("Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).", "I övrigt gäller för avslutande av anställningsförhållandet vad som följer av §§ LAS 8-10, 19, 20, 30, 33, 33c och 34-37.")}
                       </p>
-                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      {contractLanguage !== "SE" && <p className="text-sm leading-relaxed italic text-muted-foreground">
                         I övrigt gäller för avslutande av anställningsförhållandet vad som följer av §§ LAS 8-10, 19, 20, 30, 33, 33c och 34-37.
-                      </p>
+                      </p>}
                     </div>
 
                     <div className="border-t border-border pt-3 space-y-2">
                       <p className="text-sm leading-relaxed">
-                        Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).
+                        {bl("Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).", "Frister för underrättelse och väckande av talan vid tvist om avslut av anställning finns i §§ LAS 40-42.")}
                       </p>
-                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      {contractLanguage !== "SE" && <p className="text-sm leading-relaxed italic text-muted-foreground">
                         Frister för underrättelse och väckande av talan vid tvist om avslut av anställning finns i §§ LAS 40-42.
-                      </p>
+                      </p>}
                     </div>
 
                     <div className="border-t border-border pt-3 space-y-2">
                       <p className="text-sm leading-relaxed">
-                        Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).
+                        {bl("Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).", "Regler för varsel, information och förhandlingsskyldighet finns i §§ MBL 11-14.")}
                       </p>
-                      <p className="text-sm leading-relaxed italic text-muted-foreground">
+                      {contractLanguage !== "SE" && <p className="text-sm leading-relaxed italic text-muted-foreground">
                         Regler för varsel, information och förhandlingsskyldighet finns i §§ MBL 11-14.
-                      </p>
+                      </p>}
                     </div>
                   </div>
                 </CardContent>
@@ -3265,13 +3265,13 @@ export function ContractDetailsStep({
                       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-2">
                         <p className="text-sm font-medium text-destructive flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4" />
-                          Contract has {allMissingFields.length} missing required field(s)
+                          {bl(`Contract has ${allMissingFields.length} missing required field(s)`, `Avtalet har ${allMissingFields.length} obligatoriska fält som saknas`)}
                         </p>
                         <ul className="text-xs text-destructive/80 list-disc pl-5 space-y-0.5">
                           {allMissingFields.slice(0, 8).map((f, i) => <li key={i}>{f}</li>)}
-                          {allMissingFields.length > 8 && <li>...and {allMissingFields.length - 8} more</li>}
+                          {allMissingFields.length > 8 && <li>{bl(`...and ${allMissingFields.length - 8} more`, `...och ${allMissingFields.length - 8} till`)}</li>}
                         </ul>
-                        <p className="text-xs text-muted-foreground">Please go back and complete all required sections before sending for signing.</p>
+                        <p className="text-xs text-muted-foreground">{bl("Please go back and complete all required sections before sending for signing.", "Gå tillbaka och fyll i alla obligatoriska avsnitt innan du skickar för signering.")}</p>
                       </div>
                     )}
                     <Button
@@ -3280,9 +3280,9 @@ export function ContractDetailsStep({
                       disabled={sendingForSigning || allMissingFields.length > 0}
                     >
                       {sendingForSigning ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Preparing signing...</>
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {bl("Preparing signing...", "Förbereder signering...")}</>
                       ) : (
-                        "Send for E-Signing / Skicka för e-signering"
+                        bl("Send for E-Signing", "Skicka för e-signering")
                       )}
                     </Button>
                   </div>
@@ -3292,10 +3292,10 @@ export function ContractDetailsStep({
                 {signingStatus === "sent_to_employee" && (
                   <div className="space-y-3">
                     <div className="rounded-lg border border-border bg-accent/30 p-3 space-y-2">
-                      <p className="text-xs font-medium">Signing link (fallback) / Signeringslänk (reserv):</p>
+                      <p className="text-xs font-medium">{bl("Signing link (fallback)", "Signeringslänk (reserv)")}:</p>
                       <div className="flex gap-2">
                         <Input value={signingLink} readOnly className="h-8 text-xs" />
-                        <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(signingLink); toast.success("Link copied / Länk kopierad"); }}>Copy</Button>
+                        <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(signingLink); toast.success(bl("Link copied", "Länk kopierad")); }}>{bl("Copy", "Kopiera")}</Button>
                       </div>
                     </div>
                     <Button
@@ -3304,10 +3304,10 @@ export function ContractDetailsStep({
                       onClick={() => window.open(signingLink, "_blank")}
                     >
                       <Users className="w-4 h-4" />
-                      Open Signing Page / Öppna signeringssida
+                      {bl("Open Signing Page", "Öppna signeringssida")}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Opens the actual signing page the employee received. / Öppnar den faktiska signeringssidan som den anställde fick.
+                      {bl("Opens the actual signing page the employee received.", "Öppnar den faktiska signeringssidan som den anställde fick.")}
                     </p>
                   </div>
                 )}
@@ -3318,14 +3318,14 @@ export function ContractDetailsStep({
                     <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
                       <p className="text-sm font-medium text-primary flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
-                        Employee has signed. Now add the employer signature below.
+                        {bl("Employee has signed. Now add the employer signature below.", "Anställd har signerat. Lägg nu till arbetsgivarens underskrift nedan.")}
                       </p>
                     </div>
-                    <p className="text-sm font-medium">Employer Signature / Arbetsgivarens underskrift</p>
+                    <p className="text-sm font-medium">{bl("Employer Signature", "Arbetsgivarens underskrift")}</p>
                     <SignatureCanvas onSave={handleEmployerSign} disabled={submittingEmployerSig} />
                     {submittingEmployerSig && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                        <Loader2 className="w-4 h-4 animate-spin" /> {bl("Saving...", "Sparar...")}
                       </div>
                     )}
                   </div>
@@ -3335,10 +3335,9 @@ export function ContractDetailsStep({
                 {signingStatus === "employer_signed" && (
                   <div className="text-center py-6 space-y-3">
                     <CheckCircle className="w-12 h-12 text-primary mx-auto" />
-                    <p className="text-lg font-semibold text-primary">Contract Fully Signed / Avtal fullständigt signerat</p>
+                    <p className="text-lg font-semibold text-primary">{bl("Contract Fully Signed", "Avtal fullständigt signerat")}</p>
                     <p className="text-sm text-muted-foreground">
-                      Both parties have signed. You can print the final contract above. /
-                      <span className="italic"> Båda parter har signerat. Du kan skriva ut det slutliga avtalet ovan.</span>
+                      {bl("Both parties have signed. You can print the final contract above.", "Båda parter har signerat. Du kan skriva ut det slutliga avtalet ovan.")}
                     </p>
                   </div>
                 )}
