@@ -467,8 +467,6 @@ export function OnboardingWizard({
         updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
       }
       if (data.email) updateField("email", data.email);
-      if (data.bicCode) updateField("bicCode", data.bicCode);
-      if (data.bankAccountNumber) updateField("bankAccountNumber", data.bankAccountNumber.replace(/\D/g, ""));
       if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
       if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
       if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
@@ -483,17 +481,19 @@ export function OnboardingWizard({
         updateField("emergencyPhone", data.emergencyPhone);
       }
 
-      // Auto-select bank country but never auto-select a specific bank — user must pick manually
-      if (data.country) {
-        const bankCountry = Object.keys(effectiveBanksByCountry).find(
-          c => c.toLowerCase() === data.country.toLowerCase()
-        );
-        if (bankCountry) {
-          setSelectedBankCountry(bankCountry);
-          setBankListExpanded(true);
-          setS4Open(true);
-        }
-      }
+      // Always require manual bank selection after AI fill
+      const bankCountry = data.country
+        ? Object.keys(effectiveBanksByCountry).find(
+            c => c.toLowerCase() === data.country.toLowerCase()
+          ) || ""
+        : "";
+      setSelectedBankCountry(bankCountry);
+      onBankSelect("");
+      updateField("otherBankName", "");
+      updateField("bicCode", "");
+      updateField("bankAccountNumber", "");
+      setBankListExpanded(true);
+      setS4Open(true);
 
       // Ensure emergency contact section is visible
       setS3Open(true);

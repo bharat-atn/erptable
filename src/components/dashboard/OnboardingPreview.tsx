@@ -49,11 +49,9 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
     }
   };
 
-  const handleAiFill = (data: Record<string, any>) => {
-    if (data.bankName) {
-      setSelectedBank(data.bankName);
-      setIsOtherBank(false);
-    }
+  const handleAiFill = (_data: Record<string, any>) => {
+    setSelectedBank("");
+    setIsOtherBank(false);
   };
 
   const submitReal = useMutation({
