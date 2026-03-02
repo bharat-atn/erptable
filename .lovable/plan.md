@@ -1,29 +1,29 @@
 
 
-## Plan: Make Dummy Invitations Simulate Full Onboarding Completion
+## Plan: Add Ukrainian Worker to AI Test Data Generator + Fix Scroll/Button Layout
 
 ### Problem
-Currently, adding a dummy via the Invitations view only creates an employee (status `INVITED`) and an invitation (status `SENT`). The user wants the dummy to simulate the **complete** lifecycle: the candidate received the email, filled out the form, and submitted — so the invitation shows as **Completed** and the employee moves to `ONBOARDING` with a draft contract.
+1. The AI Test Data Generator only shows Romanian, Thai, and Swedish worker buttons — no Ukrainian option.
+2. The language selector in OnboardingPreview and SubmissionView is missing "Ukrainian + English".
+3. The generate-test-data edge function has no Ukrainian nationality support.
+4. The floating bottom controls (language selector + Admin View button) can overlap the form's submit button, making it inaccessible.
 
 ### Changes
 
-**`src/components/dashboard/InvitationsView.tsx`** — Update the `addDummyInvitation` mutation to simulate the full submission flow:
+**1. `src/components/onboarding/OnboardingWizard.tsx`**
+- Add "Ukrainian" to the nationality button list on line 782: `["Romanian", "Thai", "Swedish", "Ukrainian"]`
+- Add bottom padding to the form container (line 727-728) so the submit button is never hidden behind floating controls: add `pb-24` to ensure scroll clearance.
 
-1. Create the employee with status `ONBOARDING` (not `INVITED`) and full `personal_info` already populated (the dummy data already has this).
-2. Create the invitation with status `ACCEPTED` (not `SENT`) — this represents a completed submission.
-3. Fetch the org's company and create a draft contract linked to the employee, mirroring what `submit_onboarding` does in production.
-4. Update the `langMap` to include Ukraine: `{ Ukraine: "uk_en" }`.
-5. Invalidate the contracts query cache as well.
-6. Update the toast to say "Dummy submission created!" to clarify the full lifecycle was simulated.
+**2. `src/components/dashboard/OnboardingPreview.tsx`**
+- Add `<SelectItem value="uk_en">Ukrainian + English</SelectItem>` to the language selector (after line 74).
 
-**`src/lib/dummy-employees.ts`** — Add Ukraine as a supported dummy country:
+**3. `src/components/dashboard/SubmissionViewDialog.tsx`**
+- Add `<SelectItem value="uk_en">Ukrainian + English</SelectItem>` to the language selector (after line 81).
 
-1. Add `UKRAINE_DATA` with Ukrainian names, cities, addresses, phones, and postcodes.
-2. Add `"Ukraine"` to the `COUNTRY_MAP` and `DummyCountry` type.
-3. Add Ukraine-specific `personal_info` fields (country_of_birth, citizenship).
-
-**`src/components/dashboard/InvitationsView.tsx`** — Add Ukraine option to the dummy dropdown menu (🇺🇦 Ukrainian).
+**4. `supabase/functions/generate-test-data/index.ts`**
+- Add Ukrainian rules to the system prompt's country-specific validation section: phone prefix +380, 9 digits, Ukrainian cities/postcodes/provinces.
+- Add `"Ukrainian"` entry to the `nationalityMap` post-processing object: `{ country: "Ukraine", prefix: "+380" }`.
 
 ### Result
-Clicking "Add Dummy → 🇷🇴 Romanian" in Invitations will instantly create a fully-submitted dummy: employee in `ONBOARDING`, invitation `ACCEPTED` (Completed), and a draft contract — visible across Operations, Contracts, and Invitations views.
+The onboarding preview will show four AI test data buttons (Romanian, Thai, Swedish, Ukrainian), the language selectors will include Ukrainian + English, the edge function will generate proper Ukrainian test data, and the submit button will always remain visible above the floating controls.
 
