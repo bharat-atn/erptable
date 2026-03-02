@@ -192,8 +192,18 @@ export function ContractDetailsStep({
   const [seasonalFromDate, setSeasonalFromDate] = useState<Date | undefined>(undefined);
   const [seasonalEndAround, setSeasonalEndAround] = useState<Date | undefined>(undefined);
   const [sinkEnabled, setSinkEnabled] = useState(false);
+  const [sinkConfirmed, setSinkConfirmed] = useState(false);
+  const [sinkHighlight, setSinkHighlight] = useState(false);
+  const [showSinkQuestion, setShowSinkQuestion] = useState(false);
   const [age69FromDate, setAge69FromDate] = useState<Date | undefined>(undefined);
   const [age69UntilDate, setAge69UntilDate] = useState<Date | undefined>(undefined);
+
+  const handleEmploymentFormChange = (form: string) => {
+    setEmploymentForm(form);
+    setSinkConfirmed(false);
+    setShowSinkQuestion(false);
+    setSinkHighlight(false);
+  };
 
    // Section 6 state
   const [workingTime, setWorkingTime] = useState<"fulltime" | "parttime">("fulltime");
@@ -595,6 +605,7 @@ export function ContractDetailsStep({
       if (fd.seasonalFromDate) setSeasonalFromDate(new Date(fd.seasonalFromDate));
       if (fd.seasonalEndAround) setSeasonalEndAround(new Date(fd.seasonalEndAround));
       if (fd.sinkEnabled != null) setSinkEnabled(fd.sinkEnabled);
+      if (fd.sinkConfirmed != null) setSinkConfirmed(fd.sinkConfirmed);
       if (fd.age69FromDate) setAge69FromDate(new Date(fd.age69FromDate));
       if (fd.age69UntilDate) setAge69UntilDate(new Date(fd.age69UntilDate));
       if (fd.workingTime !== undefined) setWorkingTime(fd.workingTime);
@@ -813,7 +824,7 @@ export function ContractDetailsStep({
     tempReplacementPosition, tempReplacementNoLaterThan: tempReplacementNoLaterThan?.toISOString() ?? null,
     seasonalFromDate: seasonalFromDate?.toISOString() ?? null,
     seasonalEndAround: seasonalEndAround?.toISOString() ?? null,
-    sinkEnabled,
+    sinkEnabled, sinkConfirmed,
     age69FromDate: age69FromDate?.toISOString() ?? null,
     age69UntilDate: age69UntilDate?.toISOString() ?? null,
     workingTime, partTimePercent, annualLeaveDays,
@@ -836,7 +847,7 @@ export function ContractDetailsStep({
     mainDuties, jobType, experienceLevel, numberOfJobTypes, jobType2, experienceLevel2, jobType3, experienceLevel3, postingLocation, workplaceVaries, mainWorkplace, stationing,
     employmentForm, permanentFromDate, probationFromDate, probationUntilDate,
     fixedTermFromDate, fixedTermUntilDate, tempReplacementFromDate, tempReplacementPosition, tempReplacementNoLaterThan,
-    seasonalFromDate, seasonalEndAround, sinkEnabled, age69FromDate, age69UntilDate,
+    seasonalFromDate, seasonalEndAround, sinkEnabled, sinkConfirmed, age69FromDate, age69UntilDate,
     workingTime, partTimePercent, annualLeaveDays,
     salaryType, hourlyBasic, hourlyPremium, monthlyBasic, monthlyPremium, rateApplied,
     hourlyBasic2, hourlyPremium2, monthlyBasic2, monthlyPremium2, rateApplied2,
@@ -1022,6 +1033,9 @@ export function ContractDetailsStep({
       onNext();
     } else if (activeSection === "section-12") {
       onNext();
+    } else if (activeSection === "section-5" && employmentForm === "seasonal" && !sinkConfirmed) {
+      setShowSinkQuestion(true);
+      return;
     } else {
       handleValidatedNext();
     }
@@ -1879,7 +1893,7 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "permanent" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("permanent")}
+                onClick={() => handleEmploymentFormChange("permanent")}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "permanent" ? "border-primary" : "border-muted-foreground/40")}>
@@ -1907,7 +1921,7 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "probationary" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("probationary")}
+                onClick={() => handleEmploymentFormChange("probationary")}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "probationary" ? "border-primary" : "border-muted-foreground/40")}>
@@ -1947,7 +1961,7 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "fixed_term" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("fixed_term")}
+                onClick={() => handleEmploymentFormChange("fixed_term")}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "fixed_term" ? "border-primary" : "border-muted-foreground/40")}>
@@ -1990,7 +2004,7 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "temporary_replacement" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("temporary_replacement")}
+                onClick={() => handleEmploymentFormChange("temporary_replacement")}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "temporary_replacement" ? "border-primary" : "border-muted-foreground/40")}>
@@ -2045,19 +2059,22 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "seasonal" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("seasonal")}
+                onClick={() => handleEmploymentFormChange("seasonal")}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "seasonal" ? "border-primary" : "border-muted-foreground/40")}>
                     {employmentForm === "seasonal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                   </div>
                   <span className="text-sm font-semibold">{bl("Seasonal employment from", "Säsongsanställning från")}</span>
-                  <div className="ml-auto flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <label htmlFor="sink-toggle" className="text-xs font-bold tracking-wide text-muted-foreground cursor-pointer select-none">SINK</label>
+                  <div className={cn("ml-auto flex items-center gap-2 rounded-md px-2 py-1 transition-all duration-500", sinkHighlight && "ring-2 ring-amber-400 bg-amber-50")} onClick={(e) => e.stopPropagation()}>
+                    <label htmlFor="sink-toggle" className={cn("text-xs font-bold tracking-wide cursor-pointer select-none", sinkHighlight ? "text-amber-700" : "text-muted-foreground")}>SINK</label>
                     <Switch
                       id="sink-toggle"
                       checked={sinkEnabled}
-                      onCheckedChange={setSinkEnabled}
+                      onCheckedChange={(v) => {
+                        setSinkEnabled(v);
+                        setSinkConfirmed(false);
+                      }}
                     />
                   </div>
                 </div>
@@ -2109,7 +2126,7 @@ export function ContractDetailsStep({
                   "rounded-xl border p-4 cursor-pointer transition-colors",
                   employmentForm === "age69" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
                 )}
-                onClick={() => setEmploymentForm("age69")}
+                onClick={() => handleEmploymentFormChange("age69")}
               >
                 <div className="flex items-center gap-3 flex-wrap">
                   <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0", employmentForm === "age69" ? "border-primary" : "border-muted-foreground/40")}>
@@ -2145,6 +2162,46 @@ export function ContractDetailsStep({
             </div>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* SINK consideration question */}
+        {showSinkQuestion && employmentForm === "seasonal" && (
+          <div className="mt-4 rounded-xl border-2 border-amber-400 bg-amber-50 p-5 space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm font-semibold text-amber-800">
+                {bl(
+                  "Have you considered whether this is a SINK tax employment or not?",
+                  "Har du övervägt om detta är en SINK-anställning eller inte?"
+                )}
+              </p>
+            </div>
+            <div className="flex gap-3 ml-8">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => {
+                  setSinkConfirmed(true);
+                  setShowSinkQuestion(false);
+                  setSinkHighlight(false);
+                  onNext();
+                }}
+              >
+                {bl("Yes, I have considered", "Ja, jag har övervägt")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowSinkQuestion(false);
+                  setSinkHighlight(true);
+                  setTimeout(() => setSinkHighlight(false), 4000);
+                }}
+              >
+                {bl("No, I want to check", "Nej, jag vill kontrollera")}
+              </Button>
+            </div>
+          </div>
+        )}
 
         </>}
 

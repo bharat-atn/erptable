@@ -312,6 +312,11 @@ export const FORM_LABELS_RO: Record<string, string> = {
   // Salary below minimum warning
   "salary_below_min_hourly": "Salariul de bază introdus ({value} SEK/oră) este sub minimul din contractul colectiv ({min} SEK/oră).",
   "salary_below_min_monthly": "Salariul de bază introdus ({value} SEK/lună) este sub minimul din contractul colectiv ({min} SEK/lună).",
+
+  // SINK confirmation
+  "sink_consideration_question": "Ați luat în considerare dacă aceasta este o angajare cu impozitare SINK sau nu?",
+  "sink_yes": "Da, am luat în considerare",
+  "sink_no": "Nu, vreau să verific",
 };
 
 export const FORM_LABELS_TH: Record<string, string> = {
@@ -622,6 +627,11 @@ export const FORM_LABELS_TH: Record<string, string> = {
   // Salary below minimum warning
   "salary_below_min_hourly": "ค่าจ้างพื้นฐานที่ป้อน ({value} SEK/ชม.) ต่ำกว่าค่าจ้างขั้นต่ำตามข้อตกลงร่วม ({min} SEK/ชม.)",
   "salary_below_min_monthly": "เงินเดือนพื้นฐานที่ป้อน ({value} SEK/เดือน) ต่ำกว่าเงินเดือนขั้นต่ำตามข้อตกลงร่วม ({min} SEK/เดือน)",
+
+  // SINK confirmation
+  "sink_consideration_question": "คุณได้พิจารณาแล้วหรือไม่ว่านี่เป็นการจ้างงานแบบภาษี SINK หรือไม่?",
+  "sink_yes": "ใช่ ฉันพิจารณาแล้ว",
+  "sink_no": "ไม่ ฉันต้องการตรวจสอบ",
 };
 
 export const FORM_LABELS_UK: Record<string, string> = {
@@ -931,6 +941,11 @@ export const FORM_LABELS_UK: Record<string, string> = {
   // Salary below minimum warning
   "salary_below_min_hourly": "Введена основна оплата ({value} SEK/год) нижча за мінімум колективного договору ({min} SEK/год).",
   "salary_below_min_monthly": "Введена основна зарплата ({value} SEK/міс) нижча за мінімум колективного договору ({min} SEK/міс).",
+
+  // SINK confirmation
+  "sink_consideration_question": "Чи розглядали ви, чи є це працевлаштування з оподаткуванням SINK чи ні?",
+  "sink_yes": "Так, я це врахував(ла)",
+  "sink_no": "Ні, хочу перевірити",
 };
 
 /**
