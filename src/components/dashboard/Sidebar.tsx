@@ -56,6 +56,7 @@ import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 import { Separator } from "@/components/ui/separator";
 import { parsePhone, getOrderedCountries, getIsoDateFormat, combinePhone, formatDateForDisplay, parseDateToCanonical } from "@/lib/profile-utils";
+import { DEFAULT_SIDEBAR_ACCESS } from "@/lib/sidebar-registry";
 import { ProfileIdentityFields, type ProfileData } from "@/components/profile/ProfileIdentityFields";
 
 export interface ScreenSizeOption {
@@ -921,6 +922,14 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
       return new Set((data as { menu_item_id: string }[]).map((r) => r.menu_item_id));
     },
     enabled: !!userRole && !!appId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: () => {
+      if (!userRole || !appId) return null;
+      const defaults = DEFAULT_SIDEBAR_ACCESS[appId]?.[userRole as string];
+      if (!defaults) return null;
+      return new Set(defaults);
+    },
   });
 
   // Filter items based on permissions from database — return nothing while loading
