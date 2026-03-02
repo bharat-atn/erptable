@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -10,6 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useOrg } from "@/contexts/OrgContext";
 import { Session } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
+import { logAuthEvent } from "@/lib/audit-helpers";
 
 const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -24,6 +25,7 @@ const Index = () => {
   // Login profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(() => !!sessionStorage.getItem("profile_dialog_shown"));
+  const authLoggedRef = useRef<string | null>(null); // dedupe guard for login audit
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,21 +44,22 @@ const Index = () => {
         sessionStorage.removeItem("profile_dialog_shown");
       }
 
-      if (event === "SIGNED_IN" && session?.user) {
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
         setPendingChecked(false);
         setProfileChecked(false);
-        supabase.rpc("log_auth_event", {
-          _action: "LOGIN",
-          _user_id: session.user.id,
-          _user_email: session.user.email ?? null,
-          _summary: `${session.user.email} logged in`,
-        }).then();
 
-        supabase
-          .from("profiles")
-          .update({ last_sign_in_at: new Date().toISOString() })
-          .eq("user_id", session.user.id)
-          .then();
+        // Dedupe: only log once per unique session access_token
+        const tokenKey = session.access_token?.slice(-16) ?? session.user.id;
+        if (authLoggedRef.current !== tokenKey) {
+          authLoggedRef.current = tokenKey;
+          // Reliable awaited auth logging
+          logAuthEvent("LOGIN", session.user.id, session.user.email, `${session.user.email} logged in`);
+          supabase
+            .from("profiles")
+            .update({ last_sign_in_at: new Date().toISOString() })
+            .eq("user_id", session.user.id)
+            .then(({ error }) => { if (error) console.error("last_sign_in_at update failed:", error.message); });
+        }
       }
     });
 

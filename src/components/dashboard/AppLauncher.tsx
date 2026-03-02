@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { logoutWithAudit } from "@/lib/audit-helpers";
 import { TeaserDialog } from "./TeaserDialog";
 import { useOrg } from "@/contexts/OrgContext";
 
@@ -621,17 +622,7 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
               variant="outline"
               size="sm"
               onClick={async () => {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                  await supabase.rpc("log_auth_event", {
-                    _action: "LOGOUT",
-                    _user_id: session.user.id,
-                    _user_email: session.user.email ?? null,
-                    _summary: `${session.user.email} logged out`,
-                  });
-                }
-                await supabase.auth.signOut();
-                window.location.href = "https://ljungaverkforestry.lovable.app";
+                await logoutWithAudit({ redirect: "https://ljungaverkforestry.lovable.app" });
               }}
               className="gap-2"
             >

@@ -76,7 +76,7 @@ serve(async (req) => {
     // Get employee & company info
     const { data: contract } = await supabase
       .from("contracts")
-      .select("employee_id, contract_code, employees(email, first_name, last_name), companies(name)")
+      .select("employee_id, contract_code, org_id, employees(email, first_name, last_name), companies(name)")
       .eq("id", contractId)
       .single();
 
@@ -190,6 +190,7 @@ serve(async (req) => {
         record_id: contractId,
         summary: `Signing email ${emailSent ? "sent" : "attempted"} for contract ${contractCode || "—"} to ${employeeEmail || "unknown"}`,
         new_data: { recipient: employeeEmail, contractCode, emailSent, signingUrl: fullSigningUrl },
+        org_id: contract.org_id,
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);

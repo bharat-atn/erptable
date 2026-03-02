@@ -306,6 +306,7 @@ Deno.serve(async (req) => {
         record_id: invitationId,
         summary: `Invitation email sent to ${recipientEmail} (${employeeName}) in ${invitationLanguage}`,
         new_data: { recipient: recipientEmail, employeeName, onboardingLink, language: invitationLanguage },
+        org_id: invitation.org_id,
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);

@@ -158,6 +158,7 @@ serve(async (req) => {
         record_id: contractId,
         summary: `Signed contract email sent for ${contractCode} to ${recipientEmail}`,
         new_data: { recipient: recipientEmail, contractCode, employeeName },
+        org_id: contract.org_id,
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);

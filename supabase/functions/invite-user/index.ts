@@ -166,6 +166,10 @@ Deno.serve(async (req) => {
     if (resend_only) {
       const emailResult = await sendInviteEmail(email, full_name || email, role, loginUrl);
       
+      // Get caller org_id for audit
+      const { data: callerProfile } = await adminClient.from("profiles").select("current_org_id").eq("user_id", caller.id).maybeSingle();
+      const callerOrgId = callerProfile?.current_org_id;
+
       // Audit log
       try {
         await adminClient.from("audit_log").insert({
@@ -176,6 +180,7 @@ Deno.serve(async (req) => {
           record_id: email,
           summary: `Invite email resent to ${email} (${ROLE_LABELS[role] || role}) by ${caller.email}`,
           new_data: { email, role, full_name, email_sent: emailResult.sent },
+          org_id: callerOrgId,
         });
       } catch (e) {
         console.error("Audit log failed:", e);
@@ -349,6 +354,8 @@ Deno.serve(async (req) => {
 
     // Audit log
     try {
+      // Get caller org_id for audit
+      const { data: callerProfileForAudit } = await adminClient.from("profiles").select("current_org_id").eq("user_id", caller.id).maybeSingle();
       await adminClient.from("audit_log").insert({
         user_id: caller.id,
         user_email: caller.email,
@@ -357,6 +364,7 @@ Deno.serve(async (req) => {
         record_id: userId,
         summary: `User ${email} ${action} with role "${role}" by ${caller.email}${emailResult.sent ? " (email sent)" : ""}`,
         new_data: { email, role, full_name, action, app_access, email_sent: emailResult.sent },
+        org_id: callerProfileForAudit?.current_org_id,
       });
     } catch (auditErr) {
       console.error("Audit log insert failed:", auditErr);
