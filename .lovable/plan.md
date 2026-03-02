@@ -1,48 +1,46 @@
 
 
-## Plan: Fix AI Test Data Generator Bank Auto-Fill in Candidate View
+## Plan: Speed Up Sidebar Loading
 
-### Problem
-When clicking "Ukrainian Worker" (or any nationality) in the AI Test Data Generator within the Candidate View preview, the bank section is not auto-filled. The BIC and account number fields get values, but the bank country dropdown and bank selection radio remain empty because:
+### Root Cause
 
-1. `selectedBankCountry` (internal wizard state) is never set by the AI fill logic
-2. `onBankSelect(bankName)` is never called from within the wizard after AI data arrives
-3. The bank radio list stays collapsed/hidden since no country is selected
+The sidebar hides **all menu items** while the `role_sidebar_access` query is in flight (line 928: `if (!allowedItems) return []`). Combined with React Query's default `staleTime: 0`, this means every time you navigate to the Dashboard the sidebar fires a fresh network request and shows a blank sidebar until it resolves. The Supabase round-trip adds 1-2 seconds, and this stacks on top of the auth/role/org queries that must complete first (waterfall effect).
 
 ### Changes
 
-**`src/components/onboarding/OnboardingWizard.tsx` — Update `handleAiFill` to also select bank country and bank**
+**`src/components/dashboard/Sidebar.tsx`**
 
-After the existing field fills (around line 479), add logic to:
+1. **Add `staleTime` and `gcTime` to the sidebar access query** — cache the result for 5 minutes so switching between apps or re-rendering the Dashboard does not re-fetch:
+   ```typescript
+   staleTime: 5 * 60 * 1000,
+   gcTime: 10 * 60 * 1000,
+   ```
 
-1. Derive the bank country from `data.country` (e.g., "Ukraine")
-2. Set `setSelectedBankCountry(data.country)` if the country exists in `effectiveBanksByCountry`
-3. If `data.bankName` exists and matches a bank in the fallback/merged list for that country, call `onBankSelect(data.bankName)` to select it
-4. Set `setBankListExpanded(false)` to show the selected bank summary
-5. Open the bank section (`setS4Open(true)`) so the user can see the auto-filled result
+2. **Show a lightweight loading skeleton instead of empty sidebar** — replace the `return []` fallback with a shimmer/skeleton placeholder so the user sees the sidebar structure instantly, even before permissions load. This eliminates the perceived 3-5 second "blank sidebar" delay.
 
-This ensures that after AI fill, the bank section shows: country selected → bank selected → BIC filled → account number filled — all in one click.
+3. **Use `placeholderData` from the sidebar registry defaults** — while the query is loading, use `DEFAULT_SIDEBAR_ACCESS[appId][userRole]` from `sidebar-registry.ts` as immediate placeholder data. This means the sidebar items render instantly with the correct defaults, then silently update if the database has overrides. This is the biggest win: zero visible delay.
 
 ### Technical Detail
 
 ```typescript
-// Inside handleAiFill, after existing field updates:
-if (data.country) {
-  const bankCountry = Object.keys(effectiveBanksByCountry).find(
-    c => c.toLowerCase() === data.country.toLowerCase()
-  );
-  if (bankCountry) {
-    setSelectedBankCountry(bankCountry);
-    if (data.bankName) {
-      onBankSelect(data.bankName);
-      setBankListExpanded(false);
-    } else {
-      setBankListExpanded(true);
-    }
-  }
-}
+import { DEFAULT_SIDEBAR_ACCESS } from "@/lib/sidebar-registry";
+
+const { data: allowedItems } = useQuery({
+  queryKey: ["role-sidebar-access", userRole, appId],
+  queryFn: async () => { /* existing logic */ },
+  enabled: !!userRole && !!appId,
+  staleTime: 5 * 60 * 1000,
+  gcTime: 10 * 60 * 1000,
+  placeholderData: () => {
+    if (!userRole || !appId) return null;
+    const defaults = DEFAULT_SIDEBAR_ACCESS[appId]?.[userRole];
+    if (!defaults) return null;
+    return new Set(defaults);
+  },
+});
 ```
 
 ### Result
-Clicking any nationality button in the AI Test Data Generator will fully populate the bank section — country, bank name, BIC code, and account number — providing a complete one-click demo experience.
+
+The sidebar will render instantly using the local defaults from `sidebar-registry.ts`, then silently swap in the database-stored permissions once the query completes. For the majority of users whose permissions match defaults, there will be zero visual change. The perceived load time drops from 3-5 seconds to near-instant.
 
