@@ -559,9 +559,15 @@ export function ContractDetailsStep({
       if (fd.citizenship !== undefined) setCitizenship(fd.citizenship);
       if (fd.mobile !== undefined) setMobile(fd.mobile);
       if (fd.email !== undefined) setEmail(fd.email);
-      if (fd.emergencyFirstName !== undefined) setEmergencyFirstName(fd.emergencyFirstName);
-      if (fd.emergencyLastName !== undefined) setEmergencyLastName(fd.emergencyLastName);
-      if (fd.emergencyMobile !== undefined) setEmergencyMobile(fd.emergencyMobile);
+      if (fd.emergencyFirstName !== undefined) {
+        setEmergencyFirstName(fd.emergencyFirstName || pi.emergencyFirstName || pi.emergency_first_name || ec.firstName || ec.first_name || "");
+      }
+      if (fd.emergencyLastName !== undefined) {
+        setEmergencyLastName(fd.emergencyLastName || pi.emergencyLastName || pi.emergency_last_name || ec.lastName || ec.last_name || "");
+      }
+      if (fd.emergencyMobile !== undefined) {
+        setEmergencyMobile(fd.emergencyMobile || pi.emergencyPhone || pi.emergency_mobile || ec.phone || ec.mobile || "");
+      }
       if (fd.mainDuties !== undefined) setMainDuties(fd.mainDuties);
       if (fd.jobType !== undefined) setJobType(fd.jobType);
       if (fd.experienceLevel !== undefined) setExperienceLevel(fd.experienceLevel);
