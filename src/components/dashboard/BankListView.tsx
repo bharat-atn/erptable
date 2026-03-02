@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrg } from "@/contexts/OrgContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -212,6 +213,7 @@ function CsvImportPreview({
 /* ── Main View ──────────────────────────────────────────────────── */
 
 export function BankListView() {
+  const { orgId } = useOrg();
   const { t } = useUiLanguage();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
@@ -220,15 +222,18 @@ export function BankListView() {
   const [importOpen, setImportOpen] = useState(false);
   const [seedingDefaults, setSeedingDefaults] = useState(false);
   const { data: banks = [], isLoading } = useQuery({
-    queryKey: ["banks"],
+    queryKey: ["banks", orgId],
     queryFn: async () => {
+      if (!orgId) return [];
       const { data, error } = await supabase
         .from("banks")
         .select("*")
+        .eq("org_id", orgId)
         .order("name");
       if (error) throw error;
       return data as Bank[];
     },
+    enabled: !!orgId,
   });
 
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -243,12 +248,14 @@ export function BankListView() {
 
   const addBank = useMutation({
     mutationFn: async (input: { name: string; bic_code: string; country: string }) => {
+      if (!orgId) throw new Error("No organization selected");
       const { error } = await supabase.from("banks").insert({
         name: input.name,
         bic_code: input.bic_code || null,
         country: input.country || null,
         sort_order: banks.length + 1,
-      } as any);
+        org_id: orgId,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -300,6 +307,7 @@ export function BankListView() {
 
   const importBanks = useMutation({
     mutationFn: async (rows: { name: string; bic_code: string; country: string }[]) => {
+      if (!orgId) throw new Error("No organization selected");
       let added = 0;
       for (const row of rows) {
         const { error } = await supabase.from("banks").insert({
@@ -307,7 +315,8 @@ export function BankListView() {
           bic_code: row.bic_code || null,
           country: row.country || null,
           sort_order: banks.length + added + 1,
-        } as any);
+          org_id: orgId,
+        });
         if (!error) added++;
       }
       return added;
@@ -375,6 +384,7 @@ export function BankListView() {
   ];
 
   const seedDefaultBanks = async () => {
+    if (!orgId) { toast.error("No organization selected"); return; }
     setSeedingDefaults(true);
     try {
       const existingNames = new Set(banks.map((b) => b.name.toLowerCase()));
@@ -390,7 +400,8 @@ export function BankListView() {
           bic_code: row.bic_code,
           country: row.country,
           sort_order: banks.length + added + 1,
-        } as any);
+          org_id: orgId,
+        });
         if (!error) added++;
       }
       queryClient.invalidateQueries({ queryKey: ["banks"] });
@@ -448,7 +459,7 @@ export function BankListView() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="outline" size="sm" onClick={seedDefaultBanks} disabled={seedingDefaults} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={seedDefaultBanks} disabled={seedingDefaults || !orgId} className="gap-1.5">
             {seedingDefaults ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Landmark className="w-3.5 h-3.5" />}
             Seed Default Banks
           </Button>
