@@ -1,25 +1,48 @@
 
 
-## Analysis: Ukrainian Person Not Appearing in Invitations
+## Plan: Fix AI Test Data Generator Bank Auto-Fill in Candidate View
 
-### What Happened
+### Problem
+When clicking "Ukrainian Worker" (or any nationality) in the AI Test Data Generator within the Candidate View preview, the bank section is not auto-filled. The BIC and account number fields get values, but the bank country dropdown and bank selection radio remain empty because:
 
-After investigating the database, here's the timeline:
+1. `selectedBankCountry` (internal wizard state) is never set by the AI fill logic
+2. `onBankSelect(bankName)` is never called from within the wizard after AI data arrives
+3. The bank radio list stays collapsed/hidden since no country is selected
 
-1. **01:25 UTC** — A Ukrainian dummy employee (`mykola.bondarenko@example.com`) was successfully created along with an invitation.
-2. **01:29 UTC** — All invitations and employees were bulk-deleted (3 invitations + 3 employees removed at the same time).
-3. **02:01 UTC** — The "Seed Default Banks" button was clicked, inserting 15+ banks (including 5 Ukrainian banks) into the registry. These bank INSERT entries are what appears in the audit log.
-4. **No new employee/invitation has been created since the bulk delete.**
+### Changes
 
-The audit log entries you're seeing are from the **bank seeding**, not from creating a person. The Ukrainian dummy you created earlier was removed in the bulk delete at 01:29.
+**`src/components/onboarding/OnboardingWizard.tsx` — Update `handleAiFill` to also select bank country and bank**
 
-### Fix
+After the existing field fills (around line 479), add logic to:
 
-No code change is needed. The Ukrainian dummy flow works correctly. You just need to:
+1. Derive the bank country from `data.country` (e.g., "Ukraine")
+2. Set `setSelectedBankCountry(data.country)` if the country exists in `effectiveBanksByCountry`
+3. If `data.bankName` exists and matches a bank in the fallback/merged list for that country, call `onBankSelect(data.bankName)` to select it
+4. Set `setBankListExpanded(false)` to show the selected bank summary
+5. Open the bank section (`setS4Open(true)`) so the user can see the auto-filled result
 
-1. Go to the **Invitations** view.
-2. Click **Add Dummy → 🇺🇦 Ukrainian**.
-3. The Ukrainian employee and invitation will appear in the list.
+This ensures that after AI fill, the bank section shows: country selected → bank selected → BIC filled → account number filled — all in one click.
 
-The previous Ukrainian entry was deleted during a bulk delete operation. Creating a new one will work as expected.
+### Technical Detail
+
+```typescript
+// Inside handleAiFill, after existing field updates:
+if (data.country) {
+  const bankCountry = Object.keys(effectiveBanksByCountry).find(
+    c => c.toLowerCase() === data.country.toLowerCase()
+  );
+  if (bankCountry) {
+    setSelectedBankCountry(bankCountry);
+    if (data.bankName) {
+      onBankSelect(data.bankName);
+      setBankListExpanded(false);
+    } else {
+      setBankListExpanded(true);
+    }
+  }
+}
+```
+
+### Result
+Clicking any nationality button in the AI Test Data Generator will fully populate the bank section — country, bank name, BIC code, and account number — providing a complete one-click demo experience.
 
