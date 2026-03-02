@@ -1,31 +1,28 @@
 
 
-## Plan: Salary Below Collective Agreement Warning
+## Plan: Fix Salary Warning Translation and Block Next Step
 
-### Problem
-When an HR user manually enters a base salary lower than the official collective agreement minimum (from `officialRate.hourly` or `officialRate.monthly`), there is no warning. The system should alert the user that the entered amount is below the minimum.
+### Problem 1: Warning Not Bilingual
+The `getSalaryWarning` function uses `getFormLabel()` which returns only the translated string (e.g., Romanian only). It should produce bilingual output like "Romanian text / Swedish text" — matching how all other text in the wizard works via `bl()`.
 
-### Approach
-Add an inline warning below each salary input field when the entered value is lower than the corresponding official rate for that job type. The warning compares the raw official rate (without company premium) since that is the legal minimum from Skogsavtalet.
+### Problem 2: Next Step Not Blocked
+When the salary warning is active, the "Next Step" button should be disabled to prevent submitting a contract with pay below the collective agreement minimum.
 
 ### Changes
 
 **`src/components/dashboard/ContractDetailsStep.tsx`**
 
-In the per-job-type salary input loop (lines 2421-2455), after each salary input pair, add a conditional warning block:
+1. **Rewrite `getSalaryWarning`** (lines 2432-2448): Instead of using `getFormLabel` with a key, use `bl()` directly with the EN string and SV string, both with values already substituted. The `bl()` function will automatically look up RO/TH/UK translations via `getFormBilingual`. To make this work, add the EN warning strings (with `{value}` and `{min}` already replaced) as dictionary keys won't work — instead, construct the translated+SV string manually using `getFormLabel` for the primary language and then appending the Swedish version.
 
-1. For each job type (`idx` 1/2/3), resolve the matching `officialRate` / `officialRate2` / `officialRate3`.
-2. If `salaryType === "hourly"` and `parseFloat(hb) > 0` and `parseFloat(hb) < officialRate.hourly`, show a warning with an `AlertTriangle` icon:
-   - EN: "The entered basic pay (X SEK/hr) is below the collective agreement minimum (Y SEK/hr)."
-   - SV: "Den angivna grundlönen (X SEK/tim) understiger kollektivavtalets minimibelopp (Y SEK/tim)."
-   - Translated for RO/TH/UK via `bl()`.
-3. Same logic for monthly: if `salaryType === "monthly"` and `parseFloat(mb) > 0` and `parseFloat(mb) < officialRate.monthly`, show equivalent warning.
-4. The warning uses amber/orange styling (border-amber-400, bg-amber-50, text-amber-800) to distinguish from errors.
+   Revised approach: Build the warning using the template from each dictionary, substitute `{value}`/`{min}`, then format as bilingual (primary + " / " + Swedish) based on `contractLanguage`.
+
+2. **Add salary-below-minimum check to `isNextDisabled`** (line 1030): For `activeSection === "section-8"`, compute whether any job type has a salary below the official rate and include that in the disabled condition.
 
 **`src/lib/form-translations.ts`**
 
-Add translation keys for the warning message pattern in RO, TH, and UK dictionaries.
+No changes needed — the translation keys already exist for RO, TH, and UK.
 
 ### Result
-A visible amber warning appears directly under the salary inputs whenever the entered basic pay is below the collective agreement rate, preventing accidental underpayment of employees.
+- Warning text displays bilingually (e.g., "Salariul de bază introdus... / Den angivna grundlönen...") matching the contract language mode
+- Next Step button is disabled whenever the salary warning is visible, preventing contracts with below-minimum pay from advancing
 
