@@ -1,31 +1,29 @@
 
 
-## Plan: Seed a Company into Sandbox Data
+## Plan: Make Dummy Invitations Simulate Full Onboarding Completion
 
 ### Problem
-The `seed-sandbox-data` edge function seeds employees, invitations, and contracts but never creates a **company** record. When trying to build a contract in the sandbox, the contract wizard finds no company to select.
-
-### Solution
-Update the `seed-sandbox-data` edge function to also insert a company that mirrors the production organization's company. This ensures the sandbox is fully functional for contract creation.
+Currently, adding a dummy via the Invitations view only creates an employee (status `INVITED`) and an invitation (status `SENT`). The user wants the dummy to simulate the **complete** lifecycle: the candidate received the email, filled out the form, and submitted — so the invitation shows as **Completed** and the employee moves to `ONBOARDING` with a draft contract.
 
 ### Changes
 
-**`supabase/functions/seed-sandbox-data/index.ts`**
+**`src/components/dashboard/InvitationsView.tsx`** — Update the `addDummyInvitation` mutation to simulate the full submission flow:
 
-1. Add a `SEED_COMPANY` constant with realistic Swedish company data (matching the production company pattern — name, org number, address, bankgiro, CEO, etc.).
+1. Create the employee with status `ONBOARDING` (not `INVITED`) and full `personal_info` already populated (the dummy data already has this).
+2. Create the invitation with status `ACCEPTED` (not `SENT`) — this represents a completed submission.
+3. Fetch the org's company and create a draft contract linked to the employee, mirroring what `submit_onboarding` does in production.
+4. Update the `langMap` to include Ukraine: `{ Ukraine: "uk_en" }`.
+5. Invalidate the contracts query cache as well.
+6. Update the toast to say "Dummy submission created!" to clarify the full lifecycle was simulated.
 
-2. In the reset flow (`resetFirst`), also delete from `companies` for the sandbox org before re-seeding.
+**`src/lib/dummy-employees.ts`** — Add Ukraine as a supported dummy country:
 
-3. After the reset/before employee insertion, insert the seed company into the `companies` table with `org_id = sandboxOrgId`.
+1. Add `UKRAINE_DATA` with Ukrainian names, cities, addresses, phones, and postcodes.
+2. Add `"Ukraine"` to the `COUNTRY_MAP` and `DummyCountry` type.
+3. Add Ukraine-specific `personal_info` fields (country_of_birth, citizenship).
 
-4. Use the inserted company's `id` as `company_id` when creating draft contracts for ONBOARDING employees, so contracts are properly linked to the company.
+**`src/components/dashboard/InvitationsView.tsx`** — Add Ukraine option to the dummy dropdown menu (🇺🇦 Ukrainian).
 
-5. Return the company count in the response JSON.
-
-### Seed Company Data
-A single company will be seeded with fields like:
-- name, org_number, address, postcode, city, country, phone, email, website, bankgiro, ceo_name, company_type
-
-### No database changes needed
-The `companies` table already exists with the correct schema and RLS policies.
+### Result
+Clicking "Add Dummy → 🇷🇴 Romanian" in Invitations will instantly create a fully-submitted dummy: employee in `ONBOARDING`, invitation `ACCEPTED` (Completed), and a draft contract — visible across Operations, Contracts, and Invitations views.
 
