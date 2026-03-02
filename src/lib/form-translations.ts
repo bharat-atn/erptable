@@ -262,7 +262,8 @@ export const FORM_LABELS_RO: Record<string, string> = {
   "Fully signed": "Complet semnat",
 
   // Deductions confirmation
-  "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "Confirm că am examinat și luat în considerare toate deducerile salariale aplicabile pentru acest contract.",
+  "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "Confirm că am verificat și controlat că deducerile salariale introduse mai sus sunt corecte pentru acest contract.",
+  "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "Pentru utilizarea mașinii de serviciu, setați tariful per km. Deducerea totală va fi calculată pe baza kilometrilor parcurși.",
 };
 
 export const FORM_LABELS_TH: Record<string, string> = {
@@ -524,7 +525,8 @@ export const FORM_LABELS_TH: Record<string, string> = {
   "Fully signed": "ลงนามครบถ้วน",
 
   // Deductions confirmation
-  "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "ฉันยืนยันว่าได้ตรวจสอบและพิจารณาการหักเงินเดือนทั้งหมดที่เกี่ยวข้องสำหรับสัญญานี้แล้ว",
+  "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "ฉันยืนยันว่าได้ตรวจสอบและยืนยันว่าการหักเงินเดือนที่ระบุข้างต้นถูกต้องสำหรับสัญญานี้",
+  "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "สำหรับการใช้รถบริษัท ให้กำหนดอัตราต่อกิโลเมตร การหักเงินรวมจะคำนวณจากระยะทางที่ขับ",
 };
 
 export const FORM_LABELS_UK: Record<string, string> = {
@@ -785,7 +787,8 @@ export const FORM_LABELS_UK: Record<string, string> = {
   "Fully signed": "Повністю підписано",
 
   // Deductions confirmation
-  "I confirm that I have reviewed and considered all applicable salary deductions for this contract.": "Я підтверджую, що переглянув(-ла) та врахував(-ла) всі застосовні утримання із заробітної плати для цього договору.",
+  "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "Я підтверджую, що перевірив(-ла) та засвідчив(-ла), що утримання із заробітної плати, зазначені вище, є правильними для цього договору.",
+  "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "Для використання службового автомобіля вкажіть тариф за кілометр. Загальне утримання буде розраховано на основі пройдених кілометрів.",
 };
 
 /**

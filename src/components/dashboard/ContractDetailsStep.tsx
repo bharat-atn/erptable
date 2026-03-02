@@ -3011,7 +3011,7 @@ export function ContractDetailsStep({
                         <CardContent className="pt-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-semibold">
-                              {typeInfo ? `${typeInfo.label} / ${typeInfo.labelSv}` : "Deduction"}
+                              {typeInfo ? bl(typeInfo.label, typeInfo.labelSv) : bl("Deduction", "Avdrag")}
                             </span>
                             <Button
                               variant="ghost"
@@ -3066,8 +3066,7 @@ export function ContractDetailsStep({
                           {deduction.type === "car" && (
                             <div className="rounded-md bg-accent/50 border border-border px-3 py-2">
                               <p className="text-xs text-muted-foreground">
-                                💡 For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven. / 
-                                <span className="italic"> Ange pris per km. Totalavdraget beräknas utifrån körda kilometer.</span>
+                                💡 {bl("For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.", "Ange pris per km. Totalavdraget beräknas utifrån körda kilometer.")}
                               </p>
                             </div>
                           )}
@@ -3115,8 +3114,7 @@ export function ContractDetailsStep({
                             {dt.value === "rent" ? "🏠" : dt.value === "car" ? "🚗" : dt.value === "travel" ? "✈️" : dt.value === "immigration" ? "🏛️" : "📄"}
                           </span>
                           <div>
-                            <p className="text-xs font-semibold">{dt.label}</p>
-                            <p className="text-[10px] text-muted-foreground">{dt.labelSv}</p>
+                            <p className="text-xs font-semibold">{bl(dt.label, dt.labelSv)}</p>
                           </div>
                         </button>
                       ))}
@@ -3161,7 +3159,7 @@ export function ContractDetailsStep({
                       className="mt-0.5"
                     />
                     <label htmlFor="deductions-confirmed" className="text-sm cursor-pointer leading-relaxed">
-                       <span className="font-semibold">{bl("I confirm that I have reviewed and considered all applicable salary deductions for this contract.", "Jag bekräftar att jag har granskat och övervägt alla tillämpliga löneavdrag för detta avtal.")}</span>
+                       <span className="font-semibold">{bl("I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.", "Jag bekräftar att jag har granskat och kontrollerat att ovanstående löneavdrag är korrekta för detta avtal.")}</span>
                     </label>
                   </div>
                 </CardContent>
