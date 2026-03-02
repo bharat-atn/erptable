@@ -1516,7 +1516,7 @@ export function ContractDetailsStep({
                     if (val === "1") { setJobType2(""); setExperienceLevel2(""); setJobType3(""); setExperienceLevel3(""); }
                     if (val === "2") { setJobType3(""); setExperienceLevel3(""); }
                   }}>
-                    <SelectTrigger className={cn("h-11 text-sm font-medium w-full md:w-64", !numberOfJobTypes && "border-destructive ring-2 ring-destructive/40 bg-destructive/5 shadow-sm shadow-destructive/10")}>
+                    <SelectTrigger className={cn("h-11 text-sm font-medium w-full", !numberOfJobTypes && "border-destructive ring-2 ring-destructive/40 bg-destructive/5 shadow-sm shadow-destructive/10")}>
                       <SelectValue placeholder={`⚠ ${bl("Select number of job types...", "Välj antal...")}`} />
                     </SelectTrigger>
                     <SelectContent>
