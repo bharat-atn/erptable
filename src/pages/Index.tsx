@@ -129,8 +129,12 @@ const Index = () => {
         if ((data as any)?.preferred_language) {
           setPreferredLang((data as any).preferred_language);
         }
-        const dismissed = (data as any)?.dismissed_announcements ?? [];
-        if (!Array.isArray(dismissed) || !dismissed.includes(ANNOUNCEMENT_ID)) {
+        const dismissed: any[] = Array.isArray((data as any)?.dismissed_announcements) ? (data as any).dismissed_announcements : [];
+        const entry = dismissed.find((e: any) => typeof e === "object" && e?.id === ANNOUNCEMENT_ID);
+        const count = entry?.count ?? 0;
+        // Also treat old string format as count=1
+        const oldDismissed = dismissed.includes(ANNOUNCEMENT_ID);
+        if (count < 3 && !oldDismissed) {
           setAnnouncementOpen(true);
         }
         setAnnouncementChecked(true);
