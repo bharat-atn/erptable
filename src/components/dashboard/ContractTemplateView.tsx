@@ -467,41 +467,61 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
           {activeStep === 3 && <LanguageSelectionStep selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} onBack={() => setActiveStep(2)} onNext={async () => {
               // Helper: build employee fields for form_data from employee record
               const buildEmployeeFormData = (emp: Employee) => {
-                const pi = emp.personal_info || {};
+                const pi = (emp.personal_info || {}) as Record<string, any>;
+                const ec = (pi.emergencyContact ?? pi.emergency_contact ?? {}) as Record<string, any>;
+                const emergencyName = typeof ec.name === "string" ? ec.name : "";
+
                 return {
                   // Keys must match what ContractDetailsStep reads from fd.*
-                  firstName: emp.first_name || pi.firstName || "",
-                  middleName: emp.middle_name || pi.middleName || "",
-                  lastName: emp.last_name || pi.lastName || "",
+                  firstName: emp.first_name || pi.firstName || pi.first_name || "",
+                  middleName: emp.middle_name || pi.middleName || pi.middle_name || "",
+                  lastName: emp.last_name || pi.lastName || pi.last_name || "",
                   preferredName: pi.preferredName || pi.preferred_name || "",
-                  address: pi.address || pi.address1 || "",
-                  address2: pi.address2 || "",
+                  address: pi.address || pi.address1 || pi.address_1 || "",
+                  address2: pi.address2 || pi.address_2 || "",
                   zipCode: pi.postcode || pi.zipCode || pi.zip_code || "",
                   city: emp.city || pi.city || "",
                   stateProvince: pi.stateProvince || pi.state_province || "",
                   country: emp.country || pi.country || "",
-                  mobile: emp.phone || pi.mobilePhone || pi.phone || "",
+                  mobile: emp.phone || pi.mobilePhone || pi.mobile_phone || pi.phone || "",
                   email: emp.email || pi.email || "",
-                  birthday: pi.birthday || pi.dob || pi.dateOfBirth || null,
+                  birthday: pi.birthday || pi.dob || pi.dateOfBirth || pi.date_of_birth || null,
                   countryOfBirth: pi.countryOfBirth || pi.country_of_birth || "",
                   citizenship: pi.nationality || pi.citizenship || "",
-                  emergencyFirstName: pi.emergencyName?.split(" ")[0] || "",
-                  emergencyLastName: pi.emergencyName?.split(" ").slice(1).join(" ") || "",
-                  emergencyMobile: pi.emergencyPhone || "",
+                  emergencyFirstName:
+                    pi.emergencyFirstName ||
+                    pi.emergency_first_name ||
+                    ec.firstName ||
+                    ec.first_name ||
+                    emergencyName.split(" ")[0] ||
+                    "",
+                  emergencyLastName:
+                    pi.emergencyLastName ||
+                    pi.emergency_last_name ||
+                    ec.lastName ||
+                    ec.last_name ||
+                    emergencyName.split(" ").slice(1).join(" ") ||
+                    "",
+                  emergencyMobile:
+                    pi.emergencyPhone ||
+                    pi.emergency_mobile ||
+                    ec.phone ||
+                    ec.mobile ||
+                    "",
                 };
               };
 
-              // Pre-populate form_data with employee info on contract creation/reuse
-              const prefillEmployeeData = async (cId: string, emp: Employee) => {
-                const { data: rec } = await supabase.from("contracts").select("form_data").eq("id", cId).single();
-                const fd = (rec?.form_data as Record<string, any>) || {};
-                // Only prefill if employee fields are missing
-                if (!fd.firstName && !fd.lastName) {
-                  const empFields = buildEmployeeFormData(emp);
-                  await supabase.from("contracts").update({
-                    form_data: { ...fd, ...empFields },
-                  }).eq("id", cId);
+              const mergeMissingFormData = (
+                existing: Record<string, any>,
+                defaults: Record<string, any>
+              ) => {
+                const merged = { ...existing };
+                for (const [key, value] of Object.entries(defaults)) {
+                  const isMissing = merged[key] === undefined || merged[key] === null || merged[key] === "";
+                  const hasDefault = value !== undefined && value !== null && value !== "";
+                  if (isMissing && hasDefault) merged[key] = value;
                 }
+                return merged;
               };
 
               // Create or reuse contract when entering step 4
@@ -520,10 +540,10 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                   setContractId(existing.id);
                   const { data: ex } = await supabase.from("contracts").select("form_data").eq("id", existing.id).single();
                   const fd = (ex?.form_data as Record<string, any>) || {};
-                  const empFields = (!fd.firstName && !fd.lastName) ? buildEmployeeFormData(selectedEmployee) : {};
+                  const empFields = buildEmployeeFormData(selectedEmployee);
                   await supabase.from("contracts").update({
                     company_id: selectedCompanyId,
-                    form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage },
+                    form_data: { ...mergeMissingFormData(fd, empFields), contractLanguage: selectedLanguage },
                   }).eq("id", existing.id);
                 } else {
                   const empFields = buildEmployeeFormData(selectedEmployee);
@@ -546,8 +566,8 @@ export function ContractTemplateView({ resumeContractId, preselectedEmployeeId, 
                 // Update language + prefill employee data if missing
                 const { data: existing } = await supabase.from("contracts").select("form_data").eq("id", contractId).single();
                 const fd = (existing?.form_data as Record<string, any>) || {};
-                const empFields = selectedEmployee && (!fd.firstName && !fd.lastName) ? buildEmployeeFormData(selectedEmployee) : {};
-                await supabase.from("contracts").update({ form_data: { ...fd, ...empFields, contractLanguage: selectedLanguage } }).eq("id", contractId);
+                const empFields = selectedEmployee ? buildEmployeeFormData(selectedEmployee) : {};
+                await supabase.from("contracts").update({ form_data: { ...mergeMissingFormData(fd, empFields), contractLanguage: selectedLanguage } }).eq("id", contractId);
               }
               goNext(3);
             }} />}
