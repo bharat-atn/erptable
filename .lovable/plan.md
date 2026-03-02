@@ -1,46 +1,83 @@
 
 
-## Plan: Speed Up Sidebar Loading
+## Plan: Make Candidate View Submit Create Real Records
 
-### Root Cause
-
-The sidebar hides **all menu items** while the `role_sidebar_access` query is in flight (line 928: `if (!allowedItems) return []`). Combined with React Query's default `staleTime: 0`, this means every time you navigate to the Dashboard the sidebar fires a fresh network request and shows a blank sidebar until it resolves. The Supabase round-trip adds 1-2 seconds, and this stacks on top of the auth/role/org queries that must complete first (waterfall effect).
+### Problem
+Currently, when you use the AI Test Data Generator in the Candidate View (preview) and click "Submit this form", it only shows a toast saying "simulated". The data is lost. You want it to actually create a real employee, invitation (ACCEPTED), and draft contract in the database — exactly like the "Add Dummy" button does in the Invitations view.
 
 ### Changes
 
-**`src/components/dashboard/Sidebar.tsx`**
+**`src/components/dashboard/OnboardingPreview.tsx`**
 
-1. **Add `staleTime` and `gcTime` to the sidebar access query** — cache the result for 5 minutes so switching between apps or re-rendering the Dashboard does not re-fetch:
-   ```typescript
-   staleTime: 5 * 60 * 1000,
-   gcTime: 10 * 60 * 1000,
-   ```
-
-2. **Show a lightweight loading skeleton instead of empty sidebar** — replace the `return []` fallback with a shimmer/skeleton placeholder so the user sees the sidebar structure instantly, even before permissions load. This eliminates the perceived 3-5 second "blank sidebar" delay.
-
-3. **Use `placeholderData` from the sidebar registry defaults** — while the query is loading, use `DEFAULT_SIDEBAR_ACCESS[appId][userRole]` from `sidebar-registry.ts` as immediate placeholder data. This means the sidebar items render instantly with the correct defaults, then silently update if the database has overrides. This is the biggest win: zero visible delay.
+1. Import `useOrg`, `useQueryClient`, `useMutation`, `supabase`, and `personalInfoSchema` from zod.
+2. Replace the simulated `handleSubmit` with a real mutation that:
+   - Validates the form data with `personalInfoSchema`
+   - Creates an employee record with status `ONBOARDING` and the filled `personal_info`
+   - Creates an invitation with status `ACCEPTED` and the selected language
+   - Creates a draft contract linked to the employee and the org's first company
+   - Invalidates the relevant query caches (invitations, operations, contracts, register)
+3. Show a success toast with a message like "Submission created — visible in Invitations and Operations" and offer to close the preview automatically (or just show a confirmation screen).
+4. Track `isSubmitting` state from the mutation's `isPending`.
 
 ### Technical Detail
 
-```typescript
-import { DEFAULT_SIDEBAR_ACCESS } from "@/lib/sidebar-registry";
+The logic mirrors `addDummyInvitation` in `InvitationsView.tsx` but uses the actual form data instead of `generateDummyEmployee()`:
 
-const { data: allowedItems } = useQuery({
-  queryKey: ["role-sidebar-access", userRole, appId],
-  queryFn: async () => { /* existing logic */ },
-  enabled: !!userRole && !!appId,
-  staleTime: 5 * 60 * 1000,
-  gcTime: 10 * 60 * 1000,
-  placeholderData: () => {
-    if (!userRole || !appId) return null;
-    const defaults = DEFAULT_SIDEBAR_ACCESS[appId]?.[userRole];
-    if (!defaults) return null;
-    return new Set(defaults);
+```typescript
+const submitReal = useMutation({
+  mutationFn: async (data: PersonalInfo) => {
+    const personalInfo = {
+      preferredName: data.preferredName,
+      address1: data.address1,
+      // ... all personal_info fields
+      bankName: isOtherBank ? data.otherBankName : selectedBank,
+      emergencyContact: { firstName: data.emergencyFirstName, ... },
+    };
+
+    // 1. Create employee
+    const { data: emp } = await supabase.from("employees").insert([{
+      first_name: data.firstName,
+      last_name: data.lastName,
+      middle_name: data.middleName,
+      email: data.email,
+      phone: data.mobilePhone,
+      city: data.city,
+      country: data.country,
+      status: "ONBOARDING",
+      personal_info: personalInfo,
+      org_id: orgId,
+    }]).select("id").single();
+
+    // 2. Create ACCEPTED invitation
+    await supabase.from("invitations").insert([{
+      employee_id: emp.id,
+      org_id: orgId,
+      type: "NEW_HIRE",
+      language: previewLanguage,
+      status: "ACCEPTED",
+    }]);
+
+    // 3. Create draft contract
+    const { data: company } = await supabase.from("companies")
+      .select("id").eq("org_id", orgId).limit(1).single();
+    await supabase.from("contracts").insert([{
+      employee_id: emp.id,
+      org_id: orgId,
+      company_id: company?.id || null,
+      status: "draft",
+      signing_status: "not_sent",
+      season_year: new Date().getFullYear().toString(),
+    }]);
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["invitations"] });
+    queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
+    // ... etc
+    toast.success("Submitted! The candidate now appears in Invitations and Operations.");
   },
 });
 ```
 
 ### Result
-
-The sidebar will render instantly using the local defaults from `sidebar-registry.ts`, then silently swap in the database-stored permissions once the query completes. For the majority of users whose permissions match defaults, there will be zero visual change. The perceived load time drops from 3-5 seconds to near-instant.
+After generating AI test data and clicking Submit, the form creates a real employee + completed invitation + draft contract. You can then close the Candidate View, go to Invitations (shows as Completed), and continue to the contract wizard to create the employment contract.
 
