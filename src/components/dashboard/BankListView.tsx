@@ -218,7 +218,7 @@ export function BankListView() {
   const [editBank, setEditBank] = useState<Bank | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Bank | null>(null);
   const [importOpen, setImportOpen] = useState(false);
-
+  const [seedingDefaults, setSeedingDefaults] = useState(false);
   const { data: banks = [], isLoading } = useQuery({
     queryKey: ["banks"],
     queryFn: async () => {
@@ -347,6 +347,61 @@ export function BankListView() {
     URL.revokeObjectURL(url);
   };
 
+  const DEFAULT_BANKS = [
+    { name: "Swedbank", bic_code: "SWEDSESS", country: "Sweden" },
+    { name: "SEB", bic_code: "ESSESESS", country: "Sweden" },
+    { name: "Nordea", bic_code: "NDEASESS", country: "Sweden" },
+    { name: "Handelsbanken", bic_code: "HANDSESS", country: "Sweden" },
+    { name: "BANCA TRANSILVANIA S.A.", bic_code: "BTRLRO22", country: "Romania" },
+    { name: "Banca Comercială Română S.A.", bic_code: "RNCBROBU", country: "Romania" },
+    { name: "BRD - Groupe Société Générale S.A.", bic_code: "BRDEROBU", country: "Romania" },
+    { name: "CEC BANK S.A.", bic_code: "CECEROBU", country: "Romania" },
+    { name: "ING Bank NV, Amsterdam - Bucharest Branch", bic_code: "INGBROBU", country: "Romania" },
+    { name: "UniCredit Bank S.A.", bic_code: "BACXROBU", country: "Romania" },
+    { name: "RAIFFEISEN BANK S.A.", bic_code: "RZBRROBU", country: "Romania" },
+    { name: "Bangkok Bank", bic_code: "BKKBTHBK", country: "Thailand" },
+    { name: "Kasikornbank", bic_code: "KASITHBK", country: "Thailand" },
+    { name: "Krungthai Bank", bic_code: "KRTHTHBK", country: "Thailand" },
+    { name: "Siam Commercial Bank", bic_code: "SICOTHBK", country: "Thailand" },
+    { name: "maib", bic_code: "AGRNMD2X", country: "Moldova" },
+    { name: "Moldindconbank", bic_code: "MOLDMD2X", country: "Moldova" },
+    { name: "OTP Bank Moldova", bic_code: "OTPVMD22", country: "Moldova" },
+    { name: "Victoriabank", bic_code: "VICBMD2X", country: "Moldova" },
+    { name: "PrivatBank", bic_code: "PBANUA2X", country: "Ukraine" },
+    { name: "Monobank", bic_code: "UABORUA", country: "Ukraine" },
+    { name: "PUMB", bic_code: "FUIBUA2X", country: "Ukraine" },
+    { name: "Oschadbank", bic_code: "ABORUA2X", country: "Ukraine" },
+    { name: "Raiffeisen Bank Aval", bic_code: "AVALUA2X", country: "Ukraine" },
+  ];
+
+  const seedDefaultBanks = async () => {
+    setSeedingDefaults(true);
+    try {
+      const existingNames = new Set(banks.map((b) => b.name.toLowerCase()));
+      const toInsert = DEFAULT_BANKS.filter((b) => !existingNames.has(b.name.toLowerCase()));
+      if (toInsert.length === 0) {
+        toast.info("All default banks already exist in the registry");
+        return;
+      }
+      let added = 0;
+      for (const row of toInsert) {
+        const { error } = await supabase.from("banks").insert({
+          name: row.name,
+          bic_code: row.bic_code,
+          country: row.country,
+          sort_order: banks.length + added + 1,
+        } as any);
+        if (!error) added++;
+      }
+      queryClient.invalidateQueries({ queryKey: ["banks"] });
+      toast.success(`${added} default bank(s) added`);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSeedingDefaults(false);
+    }
+  };
+
   const columns: ColumnDef<Bank>[] = [
     {
       key: "name",
@@ -392,7 +447,11 @@ export function BankListView() {
             {t("page.bankList.desc")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" onClick={seedDefaultBanks} disabled={seedingDefaults} className="gap-1.5">
+            {seedingDefaults ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Landmark className="w-3.5 h-3.5" />}
+            Seed Default Banks
+          </Button>
           <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5">
             <FileDown className="w-3.5 h-3.5" /> Template
           </Button>
