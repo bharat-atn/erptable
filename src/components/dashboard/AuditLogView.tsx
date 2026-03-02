@@ -227,6 +227,18 @@ export function AuditLogView() {
     setDateTo("");
   };
 
+  const { data: allProfiles } = useQuery({
+    queryKey: ["audit-log-users"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("email")
+        .not("email", "is", null)
+        .order("email");
+      return data ?? [];
+    },
+  });
+
   const { data: logs, isLoading } = useQuery({
     queryKey: ["audit-log", tableFilter, actionFilter, dateFrom, dateTo],
     queryFn: async () => {
@@ -258,11 +270,10 @@ export function AuditLogView() {
 
   const uniqueUsers = useMemo(() => {
     const emails = new Set<string>();
-    (logs ?? []).forEach((log) => {
-      if (log.user_email) emails.add(log.user_email);
-    });
+    (allProfiles ?? []).forEach((p) => { if (p.email) emails.add(p.email); });
+    (logs ?? []).forEach((log) => { if (log.user_email) emails.add(log.user_email); });
     return Array.from(emails).sort();
-  }, [logs]);
+  }, [allProfiles, logs]);
 
   const filteredLogs = (logs ?? []).filter((log) => {
     if (userFilter !== "all" && log.user_email !== userFilter) return false;
