@@ -1,28 +1,46 @@
 
 
-## Plan: Fix Salary Warning Translation and Block Next Step
+## Plan: Fix Missing Profile for Existing Auth Users on Invite
 
-### Problem 1: Warning Not Bilingual
-The `getSalaryWarning` function uses `getFormLabel()` which returns only the translated string (e.g., Romanian only). It should produce bilingual output like "Romanian text / Swedish text" — matching how all other text in the wizard works via `bl()`.
+### Problem
+When inviting `yash@algoware.in`, the edge function found the user in `auth.users` and assigned the role successfully. However, the **profile row doesn't exist** — the function uses `.update()` on `profiles`, which silently affects 0 rows when there's no matching record. As a result, the user never appears in the User Management table (which reads from `profiles`).
 
-### Problem 2: Next Step Not Blocked
-When the salary warning is active, the "Next Step" button should be disabled to prevent submitting a contract with pay below the collective agreement minimum.
+### Root Cause
+The `invite-user` edge function (existing-user branch, ~line 222) does:
+```typescript
+await adminClient.from("profiles").update({...}).eq("user_id", userId);
+```
+If the user has no profile (e.g., created externally or trigger didn't fire), this is a no-op.
 
-### Changes
+### Fix
 
-**`src/components/dashboard/ContractDetailsStep.tsx`**
+**`supabase/functions/invite-user/index.ts`**
 
-1. **Rewrite `getSalaryWarning`** (lines 2432-2448): Instead of using `getFormLabel` with a key, use `bl()` directly with the EN string and SV string, both with values already substituted. The `bl()` function will automatically look up RO/TH/UK translations via `getFormBilingual`. To make this work, add the EN warning strings (with `{value}` and `{min}` already replaced) as dictionary keys won't work — instead, construct the translated+SV string manually using `getFormLabel` for the primary language and then appending the Swedish version.
+Change the profile `.update()` to `.upsert()` in **both** the existing-user branch (~line 222) and the new-user-with-password branch (~line 282):
 
-   Revised approach: Build the warning using the template from each dictionary, substitute `{value}`/`{min}`, then format as bilingual (primary + " / " + Swedish) based on `contractLanguage`.
+```typescript
+// Before (both branches):
+await adminClient.from("profiles")
+  .update({ role: "approved", full_name: full_name || email, email })
+  .eq("user_id", userId);
 
-2. **Add salary-below-minimum check to `isNextDisabled`** (line 1030): For `activeSection === "section-8"`, compute whether any job type has a salary below the official rate and include that in the disabled condition.
+// After (both branches):
+await adminClient.from("profiles")
+  .upsert({
+    user_id: userId,
+    role: "approved",
+    full_name: full_name || email,
+    email,
+  }, { onConflict: "user_id" });
+```
 
-**`src/lib/form-translations.ts`**
+This ensures a profile row is **created** if missing, or **updated** if it already exists.
 
-No changes needed — the translation keys already exist for RO, TH, and UK.
+### Immediate Data Fix
+The existing user `yash@algoware.in` (id: `6b9d347d-...`) already has the `admin` role assigned but no profile. After deploying the fix, re-inviting or a one-time data patch will create the missing profile row.
 
 ### Result
-- Warning text displays bilingually (e.g., "Salariul de bază introdus... / Den angivna grundlönen...") matching the contract language mode
-- Next Step button is disabled whenever the salary warning is visible, preventing contracts with below-minimum pay from advancing
+- Inviting existing auth users who lack a profile will now correctly create the profile
+- The user will immediately appear in the User Management table after invitation
+- No more silent failures from `.update()` on non-existent rows
 
