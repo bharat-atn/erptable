@@ -1,25 +1,31 @@
 
 
-## Plan: Replace Auto-Screenshot with Manual Screenshot Instructions
+## Plan: Fix Unreliable LOGIN Audit Logging
 
-The `html2canvas` library has inherent limitations with dark themes, CSS filters, and complex rendering that make reliable screenshots difficult. Instead of trying to fix it further, we'll remove the auto-capture and guide users to take their own screenshots.
+### Root Cause
+The LOGIN audit event in `Index.tsx` (line 63) is called as **fire-and-forget** — `logAuthEvent(...)` without `await`. It runs inside `onAuthStateChange`, which fires rapidly during OAuth redirects and token refreshes. If the component re-renders or navigates before the RPC completes, the event is silently lost.
 
-### Changes
+Additionally, logging on both `SIGNED_IN` and `INITIAL_SESSION` events with a ref-based dedupe is fragile — the ref resets on every page mount, but the token-based key can miss legitimate logins or create false deduplication.
 
-**`src/components/dashboard/IssueReportDialog.tsx`**
+### Fix
 
-1. **Remove `html2canvas`** — delete the import and the `captureScreenshot()` function entirely
-2. **Remove auto-capture** — remove the `useEffect` that calls `captureScreenshot` on dialog open
-3. **Remove `screenshotBlob`/`screenshotPreview` state** and the screenshot preview section
-4. **Add instruction banner** at the top of the dialog body with platform-specific shortcut instructions:
-   - Mac: `⇧ ⌘ 4` — drag to select area, screenshot saves to clipboard/desktop
-   - Windows: `Win + Shift + S` — opens Snipping Tool to select area
-   - Then: "Attach the screenshot below using the Attach Image button"
-5. **Keep the existing attachment section** — users attach their manual screenshots the same way they attach other images today
-6. **Upload logic stays the same** — attachments upload to `issue-screenshots` storage bucket
+**File: `src/pages/Index.tsx`**
 
-### Result
-- No more dark/broken auto-screenshots
-- Users get clear, high-quality screenshots they control
-- Simpler code with no `html2canvas` dependency (can be removed from package.json)
+1. **Move LOGIN logging out of `onAuthStateChange`** — instead, log the LOGIN event *after* the session is fully established and the component is stable
+2. **Use `sessionStorage` for dedupe** instead of a ref (survives re-renders but resets on new browser sessions/tabs)
+3. **Await the RPC** in a dedicated `useEffect` that fires once the session user ID is known and hasn't been logged yet this session
+4. **Only log on `SIGNED_IN`**, not `INITIAL_SESSION` — `INITIAL_SESSION` is just "session already existed from storage," not a real login
+
+The new approach:
+- Remove login logging from the `onAuthStateChange` callback
+- Add a separate `useEffect` that watches for a new session and logs LOGIN once per browser session using `sessionStorage.getItem("audit_login_logged_<userId>")`
+- The `logAuthEvent` call is properly `await`ed
+- Remove the `authLoggedRef`
+
+**File: `src/lib/audit-helpers.ts`** — no changes needed, the function itself is fine.
+
+### Summary
+| File | Change |
+|------|--------|
+| `src/pages/Index.tsx` | Move LOGIN audit to dedicated effect, use sessionStorage dedupe, await the RPC |
 
