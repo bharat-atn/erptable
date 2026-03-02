@@ -1,32 +1,31 @@
 
 
-## Plan: Enhance Audit Log Filtering
+## Plan: Seed a Company into Sandbox Data
 
-### Current State
-The audit log has three filters: a text search, a category (table) dropdown, and an action dropdown. There is no way to filter by specific user or by date range.
+### Problem
+The `seed-sandbox-data` edge function seeds employees, invitations, and contracts but never creates a **company** record. When trying to build a contract in the sandbox, the contract wizard finds no company to select.
+
+### Solution
+Update the `seed-sandbox-data` edge function to also insert a company that mirrors the production organization's company. This ensures the sandbox is fully functional for contract creation.
 
 ### Changes
 
-**`src/components/dashboard/AuditLogView.tsx`** — Add two new filter controls and wire them into the query/filtering logic:
+**`supabase/functions/seed-sandbox-data/index.ts`**
 
-1. **User filter dropdown** — Extract unique `user_email` values from the fetched logs and populate a `Select` dropdown. Filter client-side (since all emails come from the 500-row fetch). Options: "All Users" + each distinct email found.
+1. Add a `SEED_COMPANY` constant with realistic Swedish company data (matching the production company pattern — name, org number, address, bankgiro, CEO, etc.).
 
-2. **Date range filter** — Add "From" and "To" date inputs (`<Input type="date" />`). Apply these as server-side filters on `created_at` using `.gte()` and `.lte()` in the query, so the 500-row limit is scoped to the selected date range.
+2. In the reset flow (`resetFirst`), also delete from `companies` for the sandbox org before re-seeding.
 
-3. **Clear filters button** — A small button to reset all filters at once.
+3. After the reset/before employee insertion, insert the seed company into the `companies` table with `org_id = sandboxOrgId`.
 
-### Filter Layout
-The filter bar will wrap to two rows on smaller screens:
-- Row 1: Search input, Category dropdown, Action dropdown
-- Row 2: User dropdown, Date From, Date To, Clear button
+4. Use the inserted company's `id` as `company_id` when creating draft contracts for ONBOARDING employees, so contracts are properly linked to the company.
 
-### Implementation Details
-- Add `userFilter` state (default `"all"`)
-- Add `dateFrom` and `dateTo` state (default `""`)
-- Include `dateFrom`/`dateTo` in the `useQuery` key and apply `.gte("created_at", ...)` / `.lte("created_at", ...)` server-side
-- Apply `userFilter` client-side in `filteredLogs`
-- Derive unique users from `logs` via `useMemo`
-- Import `CalendarDays` icon from lucide-react for the date inputs
+5. Return the company count in the response JSON.
 
-No database changes required.
+### Seed Company Data
+A single company will be seeded with fields like:
+- name, org_number, address, postcode, city, country, phone, email, website, bankgiro, ceo_name, company_type
+
+### No database changes needed
+The `companies` table already exists with the correct schema and RLS policies.
 
