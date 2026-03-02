@@ -774,6 +774,54 @@ export type Database = {
           },
         ]
       }
+      issue_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          issue_id: string
+          org_id: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          issue_id: string
+          org_id: string
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          issue_id?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_comments_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issue_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issue_comments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issue_reports: {
         Row: {
           admin_notes: string | null
