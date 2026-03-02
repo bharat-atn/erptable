@@ -1039,6 +1039,7 @@ export type Database = {
           current_org_id: string | null
           date_of_birth: string | null
           default_signature_url: string | null
+          dismissed_announcements: Json
           email: string | null
           emergency_contact: string | null
           full_name: string | null
@@ -1058,6 +1059,7 @@ export type Database = {
           current_org_id?: string | null
           date_of_birth?: string | null
           default_signature_url?: string | null
+          dismissed_announcements?: Json
           email?: string | null
           emergency_contact?: string | null
           full_name?: string | null
@@ -1077,6 +1079,7 @@ export type Database = {
           current_org_id?: string | null
           date_of_birth?: string | null
           default_signature_url?: string | null
+          dismissed_announcements?: Json
           email?: string | null
           emergency_contact?: string | null
           full_name?: string | null

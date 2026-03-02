@@ -6,6 +6,7 @@ import { AppLauncher, loadApps, type AppDefinition } from "@/components/dashboar
 import { OrganizationPicker } from "@/components/dashboard/OrganizationPicker";
 import { PendingApproval } from "@/components/auth/PendingApproval";
 import { LoginProfileDialog } from "@/components/dashboard/LoginProfileDialog";
+import { FeatureAnnouncementDialog, ANNOUNCEMENT_ID } from "@/components/dashboard/FeatureAnnouncementDialog";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useOrg } from "@/contexts/OrgContext";
 import { Session } from "@supabase/supabase-js";
@@ -25,6 +26,10 @@ const Index = () => {
   // Login profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [profileChecked, setProfileChecked] = useState(() => !!sessionStorage.getItem("profile_dialog_shown"));
+
+  // Feature announcement state
+  const [announcementOpen, setAnnouncementOpen] = useState(false);
+  const [announcementChecked, setAnnouncementChecked] = useState(() => !!sessionStorage.getItem("announcement_dismissed"));
   const authLoggedRef = useRef<string | null>(null); // dedupe guard for login audit
 
   useEffect(() => {
@@ -41,7 +46,9 @@ const Index = () => {
         setActiveApp(null);
         setPendingChecked(false);
         setProfileChecked(false);
+        setAnnouncementChecked(false);
         sessionStorage.removeItem("profile_dialog_shown");
+        sessionStorage.removeItem("announcement_dismissed");
       }
 
       if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
@@ -106,6 +113,24 @@ const Index = () => {
       });
   }, [session, role, orgId, profileChecked]);
 
+  // Check if we need to show feature announcement
+  useEffect(() => {
+    if (!session || !role || !orgId || profileDialogOpen || announcementChecked) return;
+
+    supabase
+      .from("profiles")
+      .select("dismissed_announcements")
+      .eq("user_id", session.user.id)
+      .single()
+      .then(({ data }) => {
+        const dismissed = (data as any)?.dismissed_announcements ?? [];
+        if (!Array.isArray(dismissed) || !dismissed.includes(ANNOUNCEMENT_ID)) {
+          setAnnouncementOpen(true);
+        }
+        setAnnouncementChecked(true);
+      });
+  }, [session, role, orgId, profileDialogOpen, announcementChecked]);
+
   if (loading || (session && roleLoading) || (session && !role && !pendingChecked) || (session && orgLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -137,6 +162,20 @@ const Index = () => {
           onContinue={() => { sessionStorage.setItem("profile_dialog_shown", "1"); setProfileDialogOpen(false); }}
           userId={session.user.id}
           userEmail={session.user.email ?? ""}
+        />
+      </>
+    );
+  }
+
+  // Feature announcement dialog
+  if (announcementOpen) {
+    return (
+      <>
+        <AppLauncher onLaunchApp={(appId) => setActiveApp(appId)} userRole={role} />
+        <FeatureAnnouncementDialog
+          open={announcementOpen}
+          onDismiss={() => setAnnouncementOpen(false)}
+          userId={session.user.id}
         />
       </>
     );
