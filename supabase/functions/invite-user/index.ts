@@ -206,10 +206,11 @@ Deno.serve(async (req) => {
       userId = existingUser.id;
       console.log("Existing user found:", userId);
 
-      await adminClient.from("user_roles").delete().eq("user_id", userId);
+      // Remove other roles, then upsert the desired one
+      await adminClient.from("user_roles").delete().eq("user_id", userId).neq("role", role);
       const { error: roleError } = await adminClient
         .from("user_roles")
-        .insert({ user_id: userId, role });
+        .upsert({ user_id: userId, role }, { onConflict: "user_id,role", ignoreDuplicates: true });
 
       if (roleError) {
         console.error("Role insert failed:", roleError.message);
@@ -274,8 +275,8 @@ Deno.serve(async (req) => {
       userId = newUser.user.id;
       console.log("New user created with password:", userId);
 
-      await adminClient.from("user_roles").delete().eq("user_id", userId);
-      await adminClient.from("user_roles").insert({ user_id: userId, role });
+      await adminClient.from("user_roles").delete().eq("user_id", userId).neq("role", role);
+      await adminClient.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role", ignoreDuplicates: true });
       await adminClient
         .from("profiles")
         .update({ role: "approved", full_name: full_name || email, email })
