@@ -78,8 +78,17 @@ export function FeatureAnnouncementDialog({ open, onDismiss, userId, preferredLa
         .eq("user_id", userId)
         .single();
 
-      const current = (data as any)?.dismissed_announcements ?? [];
-      const updated = Array.isArray(current) ? [...current, ANNOUNCEMENT_ID] : [ANNOUNCEMENT_ID];
+      const current: any[] = Array.isArray((data as any)?.dismissed_announcements) ? (data as any).dismissed_announcements : [];
+      // Support both old format (string[]) and new format ({id, count}[])
+      const idx = current.findIndex((e: any) => typeof e === "object" && e?.id === ANNOUNCEMENT_ID);
+      let updated: any[];
+      if (idx >= 0) {
+        updated = current.map((e: any, i: number) => i === idx ? { ...e, count: (e.count ?? 0) + 1 } : e);
+      } else {
+        // Remove old string entry if present
+        const filtered = current.filter((e: any) => e !== ANNOUNCEMENT_ID);
+        updated = [...filtered, { id: ANNOUNCEMENT_ID, count: 1 }];
+      }
 
       await (supabase as any)
         .from("profiles")
