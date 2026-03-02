@@ -1027,9 +1027,24 @@ export function ContractDetailsStep({
     }
   };
 
+  const hasSalaryBelowMinimum = (() => {
+    if (activeSection !== "section-8") return false;
+    const checks = [
+      { hb: hourlyBasic, mb: monthlyBasic, rate: officialRate },
+      { hb: hourlyBasic2, mb: monthlyBasic2, rate: officialRate2 },
+      { hb: hourlyBasic3, mb: monthlyBasic3, rate: officialRate3 },
+    ];
+    return checks.some(({ hb, mb, rate }) => {
+      if (!rate) return false;
+      if (salaryType === "hourly" && parseFloat(hb) > 0 && parseFloat(hb) < rate.hourly) return true;
+      if (salaryType === "monthly" && parseFloat(mb) > 0 && parseFloat(mb) < rate.monthly) return true;
+      return false;
+    });
+  })();
+
   const isNextDisabled = activeSection === "section-13"
     ? !deductionsConfirmed
-    : getMissingFieldsForSection(activeSection).length > 0;
+    : (getMissingFieldsForSection(activeSection).length > 0 || hasSalaryBelowMinimum);
 
   const showNextButton = activeSection !== "section-14" && activeSection !== "section-scheduling";
 
@@ -2431,20 +2446,17 @@ export function ContractDetailsStep({
 
                 const getSalaryWarning = (type: "hourly" | "monthly", value: string, min: number) => {
                   const key = type === "hourly" ? "salary_below_min_hourly" : "salary_below_min_monthly";
-                  const unit = type === "hourly" ? "hr" : "mån";
                   const unitSv = type === "hourly" ? "tim" : "mån";
-                  const en = type === "hourly"
-                    ? `The entered basic pay (${value} SEK/${unit}) is below the collective agreement minimum (${min} SEK/${unit}).`
-                    : `The entered basic salary (${value} SEK/${unit}) is below the collective agreement minimum (${min} SEK/${unit}).`;
-                  const sv = type === "hourly"
-                    ? `Den angivna grundlönen (${value} SEK/${unitSv}) understiger kollektivavtalets minimibelopp (${min} SEK/${unitSv}).`
-                    : `Den angivna grundlönen (${value} SEK/${unitSv}) understiger kollektivavtalets minimibelopp (${min} SEK/${unitSv}).`;
-                  // For RO/TH/UK, use getFormLabel with the key pattern, replacing placeholders
+                  const sv = `Den angivna grundlönen (${value} SEK/${unitSv}) understiger kollektivavtalets minimibelopp (${min} SEK/${unitSv}).`;
+                  if (contractLanguage === "SE") return sv;
+                  // Get primary language translation
                   const translated = getFormLabel(key, contractLanguage);
-                  if (translated !== key) {
-                    return translated.replace("{value}", value).replace("{min}", min.toString());
-                  }
-                  return bl(en, sv);
+                  const primary = translated !== key
+                    ? translated.replace("{value}", value).replace("{min}", min.toString())
+                    : type === "hourly"
+                      ? `The entered basic pay (${value} SEK/hr) is below the collective agreement minimum (${min} SEK/hr).`
+                      : `The entered basic salary (${value} SEK/mån) is below the collective agreement minimum (${min} SEK/mån).`;
+                  return `${primary} / ${sv}`;
                 };
 
                 return (
