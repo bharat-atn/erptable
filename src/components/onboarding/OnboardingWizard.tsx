@@ -24,19 +24,40 @@ import { countries, findCountryByName } from "@/lib/countries";
 import { supabase } from "@/integrations/supabase/client";
 
 const FALLBACK_BANKS_BY_COUNTRY: Record<string, { name: string; bic_code: string | null }[]> = {
-  Sweden: ["Swedbank", "SEB", "Nordea", "Handelsbanken"].map((name) => ({ name, bic_code: null })),
+  Sweden: [
+    { name: "Swedbank", bic_code: "SWEDSESS" },
+    { name: "SEB", bic_code: "ESSESESS" },
+    { name: "Nordea", bic_code: "NDEASESS" },
+    { name: "Handelsbanken", bic_code: "HANDSESS" },
+  ],
   Romania: [
-    "BANCA TRANSILVANIA S.A.",
-    "Banca Comercială Română S.A.",
-    "BRD - Groupe Société Générale S.A.",
-    "CEC BANK S.A.",
-    "ING Bank NV, Amsterdam - Bucharest Branch",
-    "UniCredit Bank S.A.",
-    "RAIFFEISEN BANK S.A.",
-  ].map((name) => ({ name, bic_code: null })),
-  Thailand: ["Bangkok Bank", "Kasikornbank", "Krungthai Bank", "Siam Commercial Bank"].map((name) => ({ name, bic_code: null })),
-  Moldova: ["maib", "Moldindconbank", "OTP Bank Moldova", "Victoriabank"].map((name) => ({ name, bic_code: null })),
-  Ukraine: ["PrivatBank", "Monobank", "PUMB", "Oschadbank", "Raiffeisen Bank Aval"].map((name) => ({ name, bic_code: null })),
+    { name: "BANCA TRANSILVANIA S.A.", bic_code: "BTRLRO22" },
+    { name: "Banca Comercială Română S.A.", bic_code: "RNCBROBU" },
+    { name: "BRD - Groupe Société Générale S.A.", bic_code: "BRDEROBU" },
+    { name: "CEC BANK S.A.", bic_code: "CECEROBU" },
+    { name: "ING Bank NV, Amsterdam - Bucharest Branch", bic_code: "INGBROBU" },
+    { name: "UniCredit Bank S.A.", bic_code: "BACXROBU" },
+    { name: "RAIFFEISEN BANK S.A.", bic_code: "RZBRROBU" },
+  ],
+  Thailand: [
+    { name: "Bangkok Bank", bic_code: "BKKBTHBK" },
+    { name: "Kasikornbank", bic_code: "KASITHBK" },
+    { name: "Krungthai Bank", bic_code: "KRTHTHBK" },
+    { name: "Siam Commercial Bank", bic_code: "SICOTHBK" },
+  ],
+  Moldova: [
+    { name: "maib", bic_code: "AGRNMD2X" },
+    { name: "Moldindconbank", bic_code: "MOLDMD2X" },
+    { name: "OTP Bank Moldova", bic_code: "OTPVMD22" },
+    { name: "Victoriabank", bic_code: "VICBMD2X" },
+  ],
+  Ukraine: [
+    { name: "PrivatBank", bic_code: "PBANUA2X" },
+    { name: "Monobank", bic_code: "UABORUA" },
+    { name: "PUMB", bic_code: "FUIBUA2X" },
+    { name: "Oschadbank", bic_code: "ABORUA2X" },
+    { name: "Raiffeisen Bank Aval", bic_code: "AVALUA2X" },
+  ],
 };
 
 const COUNTRY_NAMES = countries.map((c) => c.name);
@@ -1244,6 +1265,15 @@ export function OnboardingWizard({
                     if (val !== "other") {
                       const match = banksForSelectedCountry.find((b) => b.name === val);
                       if (match?.bic_code) updateField("bicCode", match.bic_code);
+                      // Auto-generate account number in preview/demo mode
+                      if (showAiFill && selectedBankCountry) {
+                        const ACCOUNT_LENGTHS: Record<string, number> = {
+                          Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
+                        };
+                        const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
+                        const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                        updateField("bankAccountNumber", randomAcct);
+                      }
                     }
                     // Collapse the list after selection
                     setBankListExpanded(false);
