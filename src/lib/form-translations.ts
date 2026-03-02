@@ -230,12 +230,7 @@ export const FORM_LABELS_RO: Record<string, string> = {
   "Additional training requirements": "Cerințe suplimentare de instruire",
   "Describe additional training...": "Descrieți instruirea suplimentară...",
 
-  // Section 10 social security (additional)
-  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "Lucrătorii angajați au dreptul la indemnizație de boală în conformitate cu Legea suedeză a indemnizației de boală (1991:1047) și următoarele beneficii bazate pe acordul colectiv:",
-
-  // Section 11 miscellaneous
-  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "Indicați orice alte condiții pentru aranjamentul de angajare, de ex. salariu și beneficii în plus față de acordul colectiv aplicabil.",
-  "Enter additional terms and conditions...": "Introduceți condiții suplimentare...",
+  // Section 13 deductions (section 10 & 11 keys moved to end of RO block)
 
   // Section 13 deductions
   "Net Salary Deductions": "Deduceri din salariul net",
@@ -264,6 +259,55 @@ export const FORM_LABELS_RO: Record<string, string> = {
   // Deductions confirmation
   "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "Confirm că am verificat și controlat că deducerile salariale introduse mai sus sunt corecte pentru acest contract.",
   "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "Pentru utilizarea mașinii de serviciu, setați tariful per km. Deducerea totală va fi calculată pe baza kilometrilor parcurși.",
+
+  // Section 8 salary reference notes & payment terms
+  "** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.": "** Consultați Secțiunea 7A din Skogsavtalet privind componentele salariale și faptul că salariul lunar constă din plata pentru 174 de ore.",
+  "* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.": "* Posibil pentru angajații pe durată determinată în lucrări forestiere, consultați Secțiunea 7A, Paragraful 2 din Skogsavtalet.",
+  "Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.": "Privind regulile și compensarea pentru munca suplimentară, consultați Secțiunile 5 și 8 din Skogsavtalet.",
+  "No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.": "Nu mai târziu de data de 25 a fiecărei luni cu întârziere sau la o dată fixă stabilită de angajator. Dacă data de plată cade într-o altă zi decât luni–vineri sau într-un weekend sau sărbătoare legală, salariul va fi plătit în mod normal în ziua lucrătoare anterioară.",
+
+  // Section 10 social security
+  "The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).": "Angajatorul plătește contribuțiile angajatorului către stat în conformitate cu Legea suedeză a securității sociale (2000:980).",
+  "Contractual pension SAF-LO": "Pensie contractuală SAF-LO",
+  "Contractual group health insurance (AGS)": "Asigurare colectivă de sănătate contractuală (AGS)",
+  "Parental benefit supplement (FPT)": "Supliment indemnizație parentală (FPT)",
+  "Employment transition fund (TSL)": "Fondul de tranziție profesională (TSL)",
+  "Occupational injury insurance (TFA)": "Asigurare de accidente de muncă (TFA)",
+  "Occupational group life insurance": "Asigurare de viață de grup profesională",
+
+  // Section 12 notes
+  "The period of notice is set out in Section 4 of Skogsavtalet.": "Perioada de preaviz este prevăzută în Secțiunea 4 din Skogsavtalet.",
+  "Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.": "Condițiile pentru perioada de probă și încetarea acesteia sunt prevăzute în Secțiunea 4 din Skogsavtalet.",
+  "The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.": "Condițiile care se aplică pentru încetarea angajării sunt prevăzute în Secțiunea 4 din Skogsavtalet.",
+  "If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "Dacă un angajat a fost angajat de angajator într-un aranjament de angajare pe durată determinată pentru un total de mai mult de doi ani pe o perioadă de cinci ani, angajarea devine permanentă.",
+  "This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "Acest aranjament de angajare se încheie, de asemenea, dacă și când angajarea titularului obișnuit al funcției se încheie în conformitate cu Secțiunea 4 din Skogsavtalet. Dacă un angajat a fost angajat ca înlocuitor temporar pentru un total de mai mult de doi ani pe o perioadă de cinci ani, angajarea devine permanentă.",
+  "The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).": "Perioada de limitare nu trebuie să depășească 16 săptămâni. Cu sprijinul unui acord local, perioada de limitare poate fi mai lungă, dar nu mai mult de 12 luni (timp de lucru anual).",
+  "Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).": "În rest, încetarea raportului de muncă este supusă Secțiunilor 8-10, 19, 20, 30, 33, 33c și 34-37 din Legea suedeză de protecție a muncii (LAS).",
+  "Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).": "Termenele de notificare și de intentare a unei acțiuni în cazul unui litigiu privind încetarea angajării sunt prevăzute în Secțiunile 40-42 din Legea suedeză de protecție a muncii (LAS).",
+  "Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).": "Regulile pentru preaviz, informare și obligația de a negocia sunt prevăzute în Secțiunile 11-14 din Legea suedeză privind codeterminarea la locul de muncă (MBL).",
+
+  // Section 14 signing additional
+  "Contract has {count} missing required field(s)": "Contractul are {count} câmp(uri) obligatoriu(i) lipsă",
+  "...and {count} more": "...și încă {count}",
+  "Please go back and complete all required sections before sending for signing.": "Vă rugăm să reveniți și să completați toate secțiunile obligatorii înainte de a trimite pentru semnare.",
+  "Send for E-Signing": "Trimiteți pentru e-semnare",
+  "Preparing signing...": "Se pregătește semnarea...",
+  "Signing link (fallback)": "Link de semnare (rezervă)",
+  "Copy": "Copiază",
+  "Open Signing Page": "Deschide pagina de semnare",
+  "Opens the actual signing page the employee received.": "Deschide pagina de semnare pe care a primit-o angajatul.",
+  "Employee has signed. Now add the employer signature below.": "Angajatul a semnat. Acum adăugați semnătura angajatorului mai jos.",
+  "Employer Signature": "Semnătura angajatorului",
+  "Saving...": "Se salvează...",
+  "Contract Fully Signed": "Contract complet semnat",
+  "Both parties have signed. You can print the final contract above.": "Ambele părți au semnat. Puteți tipări contractul final mai sus.",
+
+  // Deduction type labels
+  "Rent/Accommodation": "Chirie/Cazare",
+  "Company Car Usage": "Utilizare mașină de serviciu",
+  "Travel Costs": "Costuri de călătorie",
+  "Immigration Process Fees": "Taxe proces de imigrare",
+  "Other Deduction": "Altă deducere",
 };
 
 export const FORM_LABELS_TH: Record<string, string> = {
@@ -492,13 +536,7 @@ export const FORM_LABELS_TH: Record<string, string> = {
   "Additional training requirements": "ข้อกำหนดการฝึกอบรมเพิ่มเติม",
   "Describe additional training...": "อธิบายการฝึกอบรมเพิ่มเติม...",
 
-  // Section 10 social security
-  "The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).": "นายจ้างจ่ายเงินสมทบของนายจ้างให้รัฐตามกฎหมายประกันสังคมของสวีเดน (2000:980)",
-  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "ลูกจ้างมีสิทธิ์ได้รับเงินค่าป่วยตามกฎหมายค่าป่วยของสวีเดน (1991:1047) และสวัสดิการตามข้อตกลงร่วมต่อไปนี้:",
 
-  // Section 11 miscellaneous
-  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "ระบุข้อกำหนดและเงื่อนไขอื่นๆ สำหรับการจ้างงาน เช่น ค่าจ้างและสวัสดิการเพิ่มเติมจากข้อตกลงร่วมที่ใช้บังคับ",
-  "Enter additional terms and conditions...": "ระบุข้อกำหนดและเงื่อนไขเพิ่มเติม...",
 
   // Section 13 deductions
   "Net Salary Deductions": "การหักเงินเดือนสุทธิ",
@@ -527,6 +565,55 @@ export const FORM_LABELS_TH: Record<string, string> = {
   // Deductions confirmation
   "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "ฉันยืนยันว่าได้ตรวจสอบและยืนยันว่าการหักเงินเดือนที่ระบุข้างต้นถูกต้องสำหรับสัญญานี้",
   "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "สำหรับการใช้รถบริษัท ให้กำหนดอัตราต่อกิโลเมตร การหักเงินรวมจะคำนวณจากระยะทางที่ขับ",
+
+  // Section 8 salary reference notes & payment terms
+  "** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.": "** ดูมาตรา 7A ของ Skogsavtalet เกี่ยวกับองค์ประกอบเงินเดือนและเงินเดือนรายเดือนประกอบด้วยค่าจ้าง 174 ชั่วโมง",
+  "* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.": "* เป็นไปได้สำหรับลูกจ้างระยะเวลาจำกัดในงานป่าไม้ ดูมาตรา 7A วรรค 2 ของ Skogsavtalet",
+  "Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.": "เกี่ยวกับกฎระเบียบและค่าชดเชยการทำงานล่วงเวลา ดูมาตรา 5 และ 8 ของ Skogsavtalet",
+  "No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.": "ไม่เกินวันที่ 25 ของแต่ละเดือนย้อนหลัง หรือในวันที่กำหนดโดยนายจ้าง หากวันจ่ายเงินตรงกับวันอื่นที่ไม่ใช่วันจันทร์-ศุกร์ หรือวันหยุดสุดสัปดาห์หรือวันหยุดราชการ เงินเดือนจะจ่ายในวันทำการก่อนหน้า",
+
+  // Section 10 social security
+  "The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).": "นายจ้างจ่ายเงินสมทบของนายจ้างให้รัฐตามกฎหมายประกันสังคมของสวีเดน (2000:980)",
+  "Contractual pension SAF-LO": "เงินบำนาญตามสัญญา SAF-LO",
+  "Contractual group health insurance (AGS)": "ประกันสุขภาพกลุ่มตามสัญญา (AGS)",
+  "Parental benefit supplement (FPT)": "เงินเสริมสวัสดิการบิดามารดา (FPT)",
+  "Employment transition fund (TSL)": "กองทุนเปลี่ยนงาน (TSL)",
+  "Occupational injury insurance (TFA)": "ประกันอุบัติเหตุจากการทำงาน (TFA)",
+  "Occupational group life insurance": "ประกันชีวิตกลุ่มอาชีพ",
+
+  // Section 12 notes
+  "The period of notice is set out in Section 4 of Skogsavtalet.": "ระยะเวลาแจ้งล่วงหน้ากำหนดไว้ในมาตรา 4 ของ Skogsavtalet",
+  "Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.": "ข้อกำหนดและเงื่อนไขสำหรับช่วงทดลองงานและการสิ้นสุดกำหนดไว้ในมาตรา 4 ของ Skogsavtalet",
+  "The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.": "เงื่อนไขที่ใช้บังคับสำหรับการสิ้นสุดการจ้างงานกำหนดไว้ในมาตรา 4 ของ Skogsavtalet",
+  "If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "หากลูกจ้างได้รับการจ้างงานระยะเวลาแน่นอนทั่วไปรวมกันมากกว่าสองปีในช่วงห้าปี การจ้างงานจะกลายเป็นการจ้างงานถาวร",
+  "This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "การจ้างงานนี้สิ้นสุดเมื่อผู้ดำรงตำแหน่งปกติสิ้นสุดการจ้างงานตามมาตรา 4 ของ Skogsavtalet หากลูกจ้างได้รับการจ้างงานเป็นผู้แทนชั่วคราวรวมกันมากกว่าสองปีในช่วงห้าปี การจ้างงานจะกลายเป็นการจ้างงานถาวร",
+  "The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).": "ระยะเวลาจำกัดต้องไม่เกิน 16 สัปดาห์ ด้วยการสนับสนุนของข้อตกลงท้องถิ่น ระยะเวลาจำกัดอาจยาวขึ้นแต่ไม่เกิน 12 เดือน (เวลาทำงานรายปี)",
+  "Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).": "นอกจากนี้ การสิ้นสุดความสัมพันธ์การจ้างงานอยู่ภายใต้มาตรา 8-10, 19, 20, 30, 33, 33c และ 34-37 ของกฎหมายคุ้มครองการจ้างงานของสวีเดน (LAS)",
+  "Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).": "กำหนดเวลาแจ้งเตือนและการฟ้องร้องในกรณีข้อพิพาทเกี่ยวกับการสิ้นสุดการจ้างงานกำหนดไว้ในมาตรา 40-42 ของกฎหมายคุ้มครองการจ้างงานของสวีเดน (LAS)",
+  "Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).": "กฎเกณฑ์การแจ้ง ข้อมูล และหน้าที่ในการเจรจากำหนดไว้ในมาตรา 11-14 ของกฎหมายว่าด้วยการร่วมตัดสินใจในสถานที่ทำงานของสวีเดน (MBL)",
+
+  // Section 14 signing additional
+  "Contract has {count} missing required field(s)": "สัญญามี {count} ช่องที่จำเป็นต้องกรอกที่ขาดหายไป",
+  "...and {count} more": "...และอีก {count}",
+  "Please go back and complete all required sections before sending for signing.": "กรุณากลับไปกรอกข้อมูลที่จำเป็นทั้งหมดก่อนส่งเพื่อลงนาม",
+  "Send for E-Signing": "ส่งเพื่อลงนามอิเล็กทรอนิกส์",
+  "Preparing signing...": "กำลังเตรียมการลงนาม...",
+  "Signing link (fallback)": "ลิงก์ลงนาม (สำรอง)",
+  "Copy": "คัดลอก",
+  "Open Signing Page": "เปิดหน้าลงนาม",
+  "Opens the actual signing page the employee received.": "เปิดหน้าลงนามจริงที่ลูกจ้างได้รับ",
+  "Employee has signed. Now add the employer signature below.": "ลูกจ้างลงนามแล้ว กรุณาเพิ่มลายเซ็นนายจ้างด้านล่าง",
+  "Employer Signature": "ลายเซ็นนายจ้าง",
+  "Saving...": "กำลังบันทึก...",
+  "Contract Fully Signed": "สัญญาลงนามครบถ้วน",
+  "Both parties have signed. You can print the final contract above.": "ทั้งสองฝ่ายลงนามแล้ว คุณสามารถพิมพ์สัญญาฉบับสุดท้ายด้านบน",
+
+  // Deduction type labels
+  "Rent/Accommodation": "ค่าเช่า/ที่พัก",
+  "Company Car Usage": "การใช้รถบริษัท",
+  "Travel Costs": "ค่าเดินทาง",
+  "Immigration Process Fees": "ค่าธรรมเนียมกระบวนการตรวจคนเข้าเมือง",
+  "Other Deduction": "การหักอื่นๆ",
 };
 
 export const FORM_LABELS_UK: Record<string, string> = {
@@ -755,12 +842,6 @@ export const FORM_LABELS_UK: Record<string, string> = {
   "Additional training requirements": "Додаткові вимоги до навчання",
   "Describe additional training...": "Опишіть додаткове навчання...",
 
-  // Section 10 social security (additional)
-  "Employed workers are entitled to sick pay in accordance with the Swedish Sick Pay Act (1991:1047) and the following collective agreement-based benefits:": "Працівники мають право на оплату лікарняних відповідно до Закону Швеції про оплату лікарняних (1991:1047) та наступних пільг за колективним договором:",
-
-  // Section 11 miscellaneous
-  "State any other terms and conditions for the employment arrangement, e.g. pay and benefits in addition to the applicable collective agreement.": "Зазначте будь-які інші умови працевлаштування, наприклад, оплату та пільги додатково до чинного колективного договору.",
-  "Enter additional terms and conditions...": "Введіть додаткові умови...",
 
   // Section 13 deductions
   "Net Salary Deductions": "Утримання із чистої заробітної плати",
@@ -789,6 +870,55 @@ export const FORM_LABELS_UK: Record<string, string> = {
   // Deductions confirmation
   "I confirm that I have reviewed and verified the salary deductions entered above are correct for this contract.": "Я підтверджую, що перевірив(-ла) та засвідчив(-ла), що утримання із заробітної плати, зазначені вище, є правильними для цього договору.",
   "For company car usage, set the per-km rate. The total deduction will be calculated based on kilometers driven.": "Для використання службового автомобіля вкажіть тариф за кілометр. Загальне утримання буде розраховано на основі пройдених кілометрів.",
+
+  // Section 8 salary reference notes & payment terms
+  "** See Section 7A of Skogsavtalet regarding salary components and that the monthly salary consists of 174 hours' pay.": "** Див. Розділ 7A Skogsavtalet щодо складових заробітної плати та того, що місячна зарплата складається з оплати за 174 години.",
+  "* Possible for time-limited employees in forestry work, see Section 7A, Paragraph 2 of Skogsavtalet.": "* Можливо для працівників з обмеженим терміном у лісовому господарстві, див. Розділ 7A, Пункт 2 Skogsavtalet.",
+  "Regarding rules and compensation for overtime work, see Sections 5 and 8 of Skogsavtalet.": "Щодо правил та компенсації за понаднормову роботу, див. Розділи 5 та 8 Skogsavtalet.",
+  "No later than on the 25th of each month in arrears or on a fixed date as determined by the employer. If the payment date falls on a day other than Monday–Friday or on a weekend or public holiday, the salary shall normally be paid on the preceding weekday.": "Не пізніше 25-го числа кожного місяця із затримкою або у фіксовану дату, визначену роботодавцем. Якщо день виплати припадає на день, відмінний від понеділка–п'ятниці, або на вихідний чи святковий день, заробітна плата зазвичай виплачується у попередній робочий день.",
+
+  // Section 10 social security
+  "The employer pays employer's contributions to the state in accordance with the Swedish Social Security Act (2000:980).": "Роботодавець сплачує внески роботодавця державі відповідно до Закону Швеції про соціальне забезпечення (2000:980).",
+  "Contractual pension SAF-LO": "Договірна пенсія SAF-LO",
+  "Contractual group health insurance (AGS)": "Договірне групове медичне страхування (AGS)",
+  "Parental benefit supplement (FPT)": "Додаток до батьківської допомоги (FPT)",
+  "Employment transition fund (TSL)": "Фонд професійного перепрофілювання (TSL)",
+  "Occupational injury insurance (TFA)": "Страхування від нещасних випадків на виробництві (TFA)",
+  "Occupational group life insurance": "Професійне групове страхування життя",
+
+  // Section 12 notes
+  "The period of notice is set out in Section 4 of Skogsavtalet.": "Строк попередження визначено у Розділі 4 Skogsavtalet.",
+  "Terms and conditions for the probationary period and its termination are set out in Section 4 of Skogsavtalet.": "Умови випробувального терміну та його припинення визначені у Розділі 4 Skogsavtalet.",
+  "The conditions that apply for the employment to cease are set out in Section 4 of Skogsavtalet.": "Умови, що застосовуються для припинення працевлаштування, визначені у Розділі 4 Skogsavtalet.",
+  "If an employee has been employed by the employer in a general fixed-term employment arrangement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "Якщо працівник був працевлаштований роботодавцем за загальним строковим договором загалом більше двох років протягом п'ятирічного періоду, працевлаштування стає безстроковим.",
+  "This employment arrangement also ends if and when the employment of the regular holder of the position ends in accordance with Section 4 of Skogsavtalet. If an employee has been employed by the employer as a temporary replacement for a total of more than two years over a five-year period, the employment arrangement becomes a permanent one.": "Це працевлаштування також припиняється, якщо і коли працевлаштування постійного працівника припиняється відповідно до Розділу 4 Skogsavtalet. Якщо працівник працював як тимчасова заміна загалом більше двох років протягом п'ятирічного періоду, працевлаштування стає безстроковим.",
+  "The limitation period shall not exceed 16 weeks. With the support of a local agreement, the limitation period may be longer, but no longer than 12 months (annual working time).": "Обмежувальний період не повинен перевищувати 16 тижнів. За підтримки місцевої угоди обмежувальний період може бути довшим, але не більше 12 місяців (річний робочий час).",
+  "Otherwise, the termination of the employment relationship is subject to Sections 8-10, 19, 20, 30, 33, 33c and 34-37 of the Swedish Employment Protection Act (LAS).": "В іншому випадку припинення трудових відносин регулюється Розділами 8-10, 19, 20, 30, 33, 33c та 34-37 Закону Швеції про захист зайнятості (LAS).",
+  "Deadlines for notification and bringing an action in the event of a dispute concerning termination of employment are set out in Sections 40-42 of the Swedish Employment Protection Act (LAS).": "Терміни повідомлення та подання позову у разі спору щодо припинення працевлаштування визначені у Розділах 40-42 Закону Швеції про захист зайнятості (LAS).",
+  "Rules for notice, information and the obligation to negotiate are set out in Section 11-14 of the Swedish Employment (Co-Determination in the Workplace) Act (MBL).": "Правила попередження, інформування та обов'язку вести переговори визначені у Розділах 11-14 Закону Швеції про співвизначення на робочому місці (MBL).",
+
+  // Section 14 signing additional
+  "Contract has {count} missing required field(s)": "У договорі {count} обов'язкових полів не заповнено",
+  "...and {count} more": "...та ще {count}",
+  "Please go back and complete all required sections before sending for signing.": "Будь ласка, поверніться та заповніть усі обов'язкові розділи перед відправкою на підпис.",
+  "Send for E-Signing": "Надіслати для е-підпису",
+  "Preparing signing...": "Підготовка підписання...",
+  "Signing link (fallback)": "Посилання для підпису (резервне)",
+  "Copy": "Копіювати",
+  "Open Signing Page": "Відкрити сторінку підпису",
+  "Opens the actual signing page the employee received.": "Відкриває сторінку підпису, яку отримав працівник.",
+  "Employee has signed. Now add the employer signature below.": "Працівник підписав. Тепер додайте підпис роботодавця нижче.",
+  "Employer Signature": "Підпис роботодавця",
+  "Saving...": "Збереження...",
+  "Contract Fully Signed": "Договір повністю підписано",
+  "Both parties have signed. You can print the final contract above.": "Обидві сторони підписали. Ви можете роздрукувати остаточний договір вище.",
+
+  // Deduction type labels
+  "Rent/Accommodation": "Оренда/Житло",
+  "Company Car Usage": "Використання службового автомобіля",
+  "Travel Costs": "Витрати на проїзд",
+  "Immigration Process Fees": "Витрати на імміграційний процес",
+  "Other Deduction": "Інше утримання",
 };
 
 /**
