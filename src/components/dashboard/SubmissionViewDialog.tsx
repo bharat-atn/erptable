@@ -79,6 +79,7 @@ export function SubmissionView({ employeeId, onClose }: SubmissionViewProps) {
             <SelectItem value="sv">Swedish only</SelectItem>
             <SelectItem value="ro_en">Romanian + English</SelectItem>
             <SelectItem value="th_en">Thai + English</SelectItem>
+            <SelectItem value="uk_en">Ukrainian + English</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="default" className="shadow-lg gap-2" onClick={onClose}>
