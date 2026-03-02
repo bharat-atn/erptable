@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Bug, Eye, MessageSquare, ExternalLink } from "lucide-react";
+import { Bug, Eye, MessageSquare, ExternalLink, ScrollText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { EnhancedTable, type ColumnDef, type FilterOption } from "@/components/ui/enhanced-table";
@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { IssueChangelogView } from "@/components/dashboard/IssueChangelogView";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
 interface IssueReport {
   id: string;
   reporter_email: string | null;
@@ -166,23 +167,40 @@ export function IssueTrackerView() {
         </div>
       </div>
 
-      <EnhancedTable
-        data={issues}
-        columns={columns}
-        rowKey={(r) => r.id}
-        isLoading={loading}
-        enableSearch
-        searchPlaceholder="Search issues..."
-        filters={filters}
-        emptyMessage="No issues reported yet."
-        defaultPageSize={20}
-        enablePagination
-        rowActions={(row) => (
-          <Button size="icon" variant="ghost" onClick={() => openDetail(row)} title="View details">
-            <Eye className="h-4 w-4" />
-          </Button>
-        )}
-      />
+      <Tabs defaultValue="issues" className="w-full">
+        <TabsList>
+          <TabsTrigger value="issues">
+            <Bug className="h-4 w-4 mr-1" /> Issues
+          </TabsTrigger>
+          <TabsTrigger value="changelog">
+            <ScrollText className="h-4 w-4 mr-1" /> Changelog
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="issues" className="mt-4">
+          <EnhancedTable
+            data={issues}
+            columns={columns}
+            rowKey={(r) => r.id}
+            isLoading={loading}
+            enableSearch
+            searchPlaceholder="Search issues..."
+            filters={filters}
+            emptyMessage="No issues reported yet."
+            defaultPageSize={20}
+            enablePagination
+            rowActions={(row) => (
+              <Button size="icon" variant="ghost" onClick={() => openDetail(row)} title="View details">
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
+          />
+        </TabsContent>
+
+        <TabsContent value="changelog" className="mt-4">
+          <IssueChangelogView />
+        </TabsContent>
+      </Tabs>
 
       {/* Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
