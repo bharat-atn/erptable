@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { Dashboard } from "@/components/dashboard/Dashboard";
@@ -30,7 +30,7 @@ const Index = () => {
   // Feature announcement state
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [announcementChecked, setAnnouncementChecked] = useState(() => !!sessionStorage.getItem("announcement_dismissed"));
-  const authLoggedRef = useRef<string | null>(null); // dedupe guard for login audit
+  const [signedInFlag, setSignedInFlag] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -49,31 +49,38 @@ const Index = () => {
         setAnnouncementChecked(false);
         sessionStorage.removeItem("profile_dialog_shown");
         sessionStorage.removeItem("announcement_dismissed");
+        setSignedInFlag(false);
       }
 
-      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user) {
+      if (event === "SIGNED_IN" && session?.user) {
         setPendingChecked(false);
         setProfileChecked(false);
-
-        // Dedupe: only log once per unique session access_token
-        const tokenKey = session.access_token?.slice(-16) ?? session.user.id;
-        if (authLoggedRef.current !== tokenKey) {
-          authLoggedRef.current = tokenKey;
-          // Reliable awaited auth logging
-          logAuthEvent("LOGIN", session.user.id, session.user.email, `${session.user.email} logged in`);
-          supabase
-            .from("profiles")
-            .update({ last_sign_in_at: new Date().toISOString() })
-            .eq("user_id", session.user.id)
-            .then(({ error }) => { if (error) console.error("last_sign_in_at update failed:", error.message); });
-        }
+        setSignedInFlag(true);
+        // Update last_sign_in_at (fire-and-forget is OK for this)
+        supabase
+          .from("profiles")
+          .update({ last_sign_in_at: new Date().toISOString() })
+          .eq("user_id", session.user.id)
+          .then(({ error }) => { if (error) console.error("last_sign_in_at update failed:", error.message); });
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Safety net: check pending role assignment when user has session but no role
+  // Dedicated effect: log LOGIN audit reliably with sessionStorage dedupe
+  useEffect(() => {
+    if (!session?.user || !signedInFlag) return;
+    const key = `audit_login_logged_${session.user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+
+    (async () => {
+      await logAuthEvent("LOGIN", session.user.id, session.user.email, `${session.user.email} logged in`);
+    })();
+  }, [session, signedInFlag]);
+
+
   useEffect(() => {
     if (!session || roleLoading || role || pendingChecked || checkingPending) return;
 
