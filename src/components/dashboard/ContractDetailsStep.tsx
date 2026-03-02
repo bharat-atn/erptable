@@ -2422,7 +2422,32 @@ export function ContractDetailsStep({
                 { idx: 1, jt: jobType, hb: hourlyBasic, setHb: setHourlyBasic, hp: hourlyPremium, setHp: setHourlyPremium, mb: monthlyBasic, setMb: setMonthlyBasic, mp: monthlyPremium, setMp: setMonthlyPremium },
                 ...((numberOfJobTypes === "2" || numberOfJobTypes === "3") ? [{ idx: 2, jt: jobType2, hb: hourlyBasic2, setHb: setHourlyBasic2, hp: hourlyPremium2, setHp: setHourlyPremium2, mb: monthlyBasic2, setMb: setMonthlyBasic2, mp: monthlyPremium2, setMp: setMonthlyPremium2 }] : []),
                 ...(numberOfJobTypes === "3" ? [{ idx: 3, jt: jobType3, hb: hourlyBasic3, setHb: setHourlyBasic3, hp: hourlyPremium3, setHp: setHourlyPremium3, mb: monthlyBasic3, setMb: setMonthlyBasic3, mp: monthlyPremium3, setMp: setMonthlyPremium3 }] : []),
-              ].map(({ idx, jt, hb, setHb, hp, setHp, mb, setMb, mp, setMp }) => (
+              ].map(({ idx, jt, hb, setHb, hp, setHp, mb, setMb, mp, setMp }) => {
+                const rate = idx === 1 ? officialRate : idx === 2 ? officialRate2 : officialRate3;
+                const hbNum = parseFloat(hb);
+                const mbNum = parseFloat(mb);
+                const showHourlyWarn = salaryType === "hourly" && rate && hbNum > 0 && hbNum < rate.hourly;
+                const showMonthlyWarn = salaryType === "monthly" && rate && mbNum > 0 && mbNum < rate.monthly;
+
+                const getSalaryWarning = (type: "hourly" | "monthly", value: string, min: number) => {
+                  const key = type === "hourly" ? "salary_below_min_hourly" : "salary_below_min_monthly";
+                  const unit = type === "hourly" ? "hr" : "mån";
+                  const unitSv = type === "hourly" ? "tim" : "mån";
+                  const en = type === "hourly"
+                    ? `The entered basic pay (${value} SEK/${unit}) is below the collective agreement minimum (${min} SEK/${unit}).`
+                    : `The entered basic salary (${value} SEK/${unit}) is below the collective agreement minimum (${min} SEK/${unit}).`;
+                  const sv = type === "hourly"
+                    ? `Den angivna grundlönen (${value} SEK/${unitSv}) understiger kollektivavtalets minimibelopp (${min} SEK/${unitSv}).`
+                    : `Den angivna grundlönen (${value} SEK/${unitSv}) understiger kollektivavtalets minimibelopp (${min} SEK/${unitSv}).`;
+                  // For RO/TH/UK, use getFormLabel with the key pattern, replacing placeholders
+                  const translated = getFormLabel(key, contractLanguage);
+                  if (translated !== key) {
+                    return translated.replace("{value}", value).replace("{min}", min.toString());
+                  }
+                  return bl(en, sv);
+                };
+
+                return (
                 <div key={idx} className="rounded-xl border border-border p-4 space-y-3">
                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                      {bl(`Job Type ${idx}`, `Befattningstyp ${idx}`)}: <span className="text-foreground">{jt || "—"}</span>
@@ -2451,8 +2476,18 @@ export function ContractDetailsStep({
                       </div>
                     </div>
                   )}
+                  {(showHourlyWarn || showMonthlyWarn) && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-400 bg-amber-50 p-3">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-800 font-medium">
+                        {showHourlyWarn && getSalaryWarning("hourly", hb, rate!.hourly)}
+                        {showMonthlyWarn && getSalaryWarning("monthly", mb, rate!.monthly)}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
 
               {/* Overtime clause - language-aware */}
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex items-start gap-2">
