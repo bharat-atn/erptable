@@ -483,19 +483,14 @@ export function OnboardingWizard({
         updateField("emergencyPhone", data.emergencyPhone);
       }
 
-      // Auto-select bank country and bank inside the wizard
+      // Auto-select bank country but never auto-select a specific bank — user must pick manually
       if (data.country) {
         const bankCountry = Object.keys(effectiveBanksByCountry).find(
           c => c.toLowerCase() === data.country.toLowerCase()
         );
         if (bankCountry) {
           setSelectedBankCountry(bankCountry);
-          if (data.bankName && data.country.toLowerCase() !== "sweden") {
-            onBankSelect(data.bankName);
-            setBankListExpanded(false);
-          } else {
-            setBankListExpanded(true);
-          }
+          setBankListExpanded(true);
           setS4Open(true);
         }
       }
