@@ -1,30 +1,19 @@
 
 
-## Plan: Multilingual Feature Announcement Dialog
+## Plan: Show Announcement 3 Times Before Permanent Dismissal
 
-### What changes
-**Single file edit: `src/components/dashboard/FeatureAnnouncementDialog.tsx`**
+### Approach
+Instead of storing the announcement ID in `dismissed_announcements` on first dismiss, track a **view count**. Change the storage format from an array of IDs to an array of objects like `{ id: "issue-reporter-v1", count: 2 }`. On the 3rd "Got it" click, the announcement is considered fully dismissed.
 
-Add a translations dictionary for all 5 languages (EN, SV, RO, TH, UK) and language-switcher buttons at the top of the dialog.
+### Changes
 
-### Implementation
+**`src/components/dashboard/FeatureAnnouncementDialog.tsx`**
+- On dismiss: read current `dismissed_announcements`, find the entry for this announcement ID, increment its count. If count reaches 3, mark as fully dismissed. Otherwise just save the incremented count.
+- Storage format: `[{ id: "issue-reporter-v1", count: 1 }]` → count increments each login until it hits 3.
 
-1. Add a `translations` record keyed by language code (`en`, `sv`, `ro`, `th`, `uk`) containing:
-   - Title ("New: Issue Reporter")
-   - Description
-   - "Look for this button" label
-   - Body text about the red bug icon
-   - "Got it!" button text
+**`src/pages/Index.tsx`**
+- Update the announcement check logic: instead of checking `dismissed.includes(ANNOUNCEMENT_ID)`, look for an entry with `id === ANNOUNCEMENT_ID` and `count >= 3`. If count < 3 (or no entry), show the dialog.
 
-2. Add local `useState` for the selected announcement language, defaulting to the user's `preferred_language` (passed as a new prop) or `"en"`.
-
-3. Render a row of compact flag/label toggle buttons at the top of the dialog content (🇬🇧 EN, 🇸🇪 SV, 🇷🇴 RO, 🇹🇭 TH, 🇺🇦 UK). The active language gets a highlighted style.
-
-4. All dialog text references the translations dictionary using the selected language.
-
-### Props change
-Add optional `preferredLanguage?: string` prop so Index.tsx can pass the user's saved language as the default. Falls back to `"en"`.
-
-### No other files need changes
-The dialog is self-contained; Index.tsx already has access to the user profile and can pass the preferred language.
+### No database changes needed
+The `dismissed_announcements` column is already `jsonb` — we just change the data shape from a string array to an object array.
 
