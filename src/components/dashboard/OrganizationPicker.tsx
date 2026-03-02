@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { supabase } from "@/integrations/supabase/client";
+import { logoutWithAudit } from "@/lib/audit-helpers";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -35,20 +36,11 @@ export function OrganizationPicker({ onOrgSelected, isAdmin, userEmail }: Organi
   };
 
   const handleSignOut = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      await supabase.rpc("log_auth_event", {
-        _action: "LOGOUT",
-        _user_id: session.user.id,
-        _user_email: session.user.email ?? null,
-        _summary: `${session.user.email} logged out from org picker`,
-      });
-    }
-    await supabase.auth.signOut();
+    await logoutWithAudit();
   };
 
   const handleSwitchAccount = async () => {
-    await supabase.auth.signOut();
+    await logoutWithAudit();
   };
 
   const handleCreated = async (orgId: string) => {

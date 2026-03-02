@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { logoutWithAudit } from "@/lib/audit-helpers";
 import { type UiLang } from "@/lib/ui-translations";
 import { toast } from "sonner";
 import {
@@ -176,7 +177,7 @@ export function LoginProfileDialog({ open, onContinue, userId, userEmail }: Logi
   };
 
   const handleClose = async () => {
-    await supabase.auth.signOut();
+    await logoutWithAudit();
   };
 
   return (

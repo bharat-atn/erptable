@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Shield, Search, Filter, Clock, User, FileText, Building2, Mail, Users, LogIn, LogOut, KeyRound, Settings, UserPlus, UserMinus, Pencil, Trash2, Plus, CalendarDays, X } from "lucide-react";
+import { Shield, Search, Filter, Clock, User, FileText, Building2, Mail, Users, LogIn, LogOut, KeyRound, Settings, UserPlus, UserMinus, Pencil, Trash2, Plus, CalendarDays, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,16 @@ const TABLE_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   contract_id_settings: Settings,
   employee_id_settings: Settings,
   invitation_template_fields: Settings,
+  profiles: User,
+  org_members: Users,
+  organizations: Building2,
+  pending_role_assignments: UserPlus,
+  user_app_access: Shield,
+  role_app_access: Shield,
+  role_sidebar_access: Shield,
+  app_launcher_config: Settings,
+  app_versions: Settings,
+  contract_id_year_counters: Settings,
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -39,6 +49,9 @@ const ACTION_COLORS: Record<string, string> = {
   SIGNING_EMAIL_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
   CONTRACT_EMAIL_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
   USER_INVITED: "bg-teal-500/10 text-teal-700 border-teal-200",
+  INVITE_EMAIL_RESENT: "bg-teal-500/10 text-teal-700 border-teal-200",
+  ROLE_NOTIFICATION_SENT: "bg-violet-500/10 text-violet-700 border-violet-200",
+  ORPHAN_CLEANUP: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -51,6 +64,9 @@ const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
   SIGNING_EMAIL_SENT: Mail,
   CONTRACT_EMAIL_SENT: Mail,
   USER_INVITED: UserPlus,
+  INVITE_EMAIL_RESENT: Mail,
+  ROLE_NOTIFICATION_SENT: Mail,
+  ORPHAN_CLEANUP: UserMinus,
 };
 
 const TABLE_LABELS: Record<string, string> = {
@@ -67,6 +83,16 @@ const TABLE_LABELS: Record<string, string> = {
   contract_id_settings: "Contract ID Settings",
   employee_id_settings: "Employee ID Settings",
   invitation_template_fields: "Invitation Template",
+  profiles: "Profiles",
+  org_members: "Org Members",
+  organizations: "Organizations",
+  pending_role_assignments: "Pending Assignments",
+  user_app_access: "App Access",
+  role_app_access: "Role App Access",
+  role_sidebar_access: "Sidebar Access",
+  app_launcher_config: "App Launcher Config",
+  app_versions: "App Versions",
+  contract_id_year_counters: "Year Counters",
 };
 
 function extractDetail(log: any): string {
@@ -150,6 +176,36 @@ function extractDetail(log: any): string {
       if (action === "UPDATE") return `Updated agreement period mapping`;
     }
 
+    if (table_name === "profiles") {
+      const name = data.full_name || data.email || "—";
+      if (action === "INSERT") return `Profile created: ${name}`;
+      if (action === "DELETE") return `Profile deleted: ${name}`;
+      if (action === "UPDATE") {
+        const changes: string[] = [];
+        if (old_data && new_data) {
+          if (old_data.full_name !== new_data.full_name) changes.push(`name → ${new_data.full_name}`);
+          if (old_data.preferred_language !== new_data.preferred_language) changes.push(`language → ${new_data.preferred_language}`);
+          if (old_data.current_org_id !== new_data.current_org_id) changes.push("switched org");
+          if (old_data.skip_login_profile !== new_data.skip_login_profile) changes.push(`skip profile → ${new_data.skip_login_profile}`);
+          if (old_data.last_sign_in_at !== new_data.last_sign_in_at) changes.push("signed in");
+        }
+        return `Updated profile ${name}${changes.length ? ": " + changes.join(", ") : ""}`;
+      }
+    }
+
+    if (table_name === "org_members") {
+      if (action === "INSERT") return `Added member to org`;
+      if (action === "DELETE") return `Removed member from org`;
+      if (action === "UPDATE") return `Updated org membership`;
+    }
+
+    if (table_name === "organizations") {
+      const name = data.name || "—";
+      if (action === "INSERT") return `Created org: ${name}`;
+      if (action === "DELETE") return `Deleted org: ${name}`;
+      if (action === "UPDATE") return `Updated org: ${name}`;
+    }
+
     if (table_name === "auth") {
       return log.summary || `${action} event`;
     }
@@ -172,7 +228,6 @@ function DataDiff({ oldData, newData }: { oldData: any; newData: any }) {
     ...Object.keys(newData ?? {}),
   ]);
 
-  // Filter to only changed fields
   const changedKeys = Array.from(allKeys).filter((key) => {
     if (["updated_at", "created_at"].includes(key)) return false;
     const o = JSON.stringify(oldData?.[key]);
@@ -206,6 +261,8 @@ function DataDiff({ oldData, newData }: { oldData: any; newData: any }) {
   );
 }
 
+const PAGE_SIZE = 50;
+
 export function AuditLogView() {
   const { t } = useUiLanguage();
   const [search, setSearch] = useState("");
@@ -215,6 +272,7 @@ export function AuditLogView() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
 
   const hasActiveFilters = search || tableFilter !== "all" || actionFilter !== "all" || userFilter !== "all" || dateFrom || dateTo;
 
@@ -225,7 +283,14 @@ export function AuditLogView() {
     setUserFilter("all");
     setDateFrom("");
     setDateTo("");
+    setPage(0);
   };
+
+  // Reset page when filters change
+  const updateFilter = useCallback((setter: (v: string) => void) => (v: string) => {
+    setter(v);
+    setPage(0);
+  }, []);
 
   const { data: allProfiles } = useQuery({
     queryKey: ["audit-log-users"],
@@ -239,27 +304,43 @@ export function AuditLogView() {
     },
   });
 
+  // Server-side total count for current filters
+  const { data: totalCount } = useQuery({
+    queryKey: ["audit-log-count", tableFilter, actionFilter, userFilter, dateFrom, dateTo, search],
+    queryFn: async () => {
+      let query = supabase
+        .from("audit_log")
+        .select("id", { count: "exact", head: true });
+
+      if (tableFilter !== "all") query = query.eq("table_name", tableFilter);
+      if (actionFilter !== "all") query = query.eq("action", actionFilter);
+      if (userFilter !== "all") query = query.eq("user_email", userFilter);
+      if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+      if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
+      if (search) query = query.or(`user_email.ilike.%${search}%,summary.ilike.%${search}%,table_name.ilike.%${search}%,record_id.ilike.%${search}%`);
+
+      const { count, error } = await query;
+      if (error) throw error;
+      return count ?? 0;
+    },
+    refetchInterval: 15000,
+  });
+
   const { data: logs, isLoading } = useQuery({
-    queryKey: ["audit-log", tableFilter, actionFilter, dateFrom, dateTo],
+    queryKey: ["audit-log", tableFilter, actionFilter, userFilter, dateFrom, dateTo, search, page],
     queryFn: async () => {
       let query = supabase
         .from("audit_log")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(500);
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-      if (tableFilter !== "all") {
-        query = query.eq("table_name", tableFilter);
-      }
-      if (actionFilter !== "all") {
-        query = query.eq("action", actionFilter);
-      }
-      if (dateFrom) {
-        query = query.gte("created_at", `${dateFrom}T00:00:00`);
-      }
-      if (dateTo) {
-        query = query.lte("created_at", `${dateTo}T23:59:59`);
-      }
+      if (tableFilter !== "all") query = query.eq("table_name", tableFilter);
+      if (actionFilter !== "all") query = query.eq("action", actionFilter);
+      if (userFilter !== "all") query = query.eq("user_email", userFilter);
+      if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
+      if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
+      if (search) query = query.or(`user_email.ilike.%${search}%,summary.ilike.%${search}%,table_name.ilike.%${search}%,record_id.ilike.%${search}%`);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -275,18 +356,11 @@ export function AuditLogView() {
     return Array.from(emails).sort();
   }, [allProfiles, logs]);
 
-  const filteredLogs = (logs ?? []).filter((log) => {
-    if (userFilter !== "all" && log.user_email !== userFilter) return false;
-    if (!search) return true;
-    const s = search.toLowerCase();
-    return (
-      log.user_email?.toLowerCase().includes(s) ||
-      log.table_name?.toLowerCase().includes(s) ||
-      log.summary?.toLowerCase().includes(s) ||
-      log.record_id?.toLowerCase().includes(s) ||
-      extractDetail(log).toLowerCase().includes(s)
-    );
-  });
+  const displayLogs = logs ?? [];
+  const total = totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, total);
 
   return (
     <div className="space-y-6">
@@ -309,11 +383,11 @@ export function AuditLogView() {
               <Input
                 placeholder="Search by user, table, action, or detail..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 className="pl-9"
               />
             </div>
-            <Select value={tableFilter} onValueChange={setTableFilter}>
+            <Select value={tableFilter} onValueChange={updateFilter(setTableFilter)}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="All tables" />
@@ -326,16 +400,21 @@ export function AuditLogView() {
                 <SelectItem value="invitations">Invitations</SelectItem>
                 <SelectItem value="companies">Companies</SelectItem>
                 <SelectItem value="user_roles">User Roles</SelectItem>
+                <SelectItem value="profiles">Profiles</SelectItem>
+                <SelectItem value="org_members">Org Members</SelectItem>
+                <SelectItem value="organizations">Organizations</SelectItem>
                 <SelectItem value="banks">Banks</SelectItem>
                 <SelectItem value="positions">Positions</SelectItem>
                 <SelectItem value="skill_groups">Skill Groups</SelectItem>
                 <SelectItem value="agreement_periods">Agreement Periods</SelectItem>
+                <SelectItem value="user_app_access">App Access</SelectItem>
+                <SelectItem value="pending_role_assignments">Pending Assignments</SelectItem>
                 <SelectItem value="contract_id_settings">Contract ID Settings</SelectItem>
                 <SelectItem value="employee_id_settings">Employee ID Settings</SelectItem>
                 <SelectItem value="invitation_template_fields">Invitation Template</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={actionFilter} onValueChange={setActionFilter}>
+            <Select value={actionFilter} onValueChange={updateFilter(setActionFilter)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="All actions" />
               </SelectTrigger>
@@ -350,11 +429,14 @@ export function AuditLogView() {
                 <SelectItem value="SIGNING_EMAIL_SENT">Signing Email</SelectItem>
                 <SelectItem value="CONTRACT_EMAIL_SENT">Contract Email</SelectItem>
                 <SelectItem value="USER_INVITED">User Invited</SelectItem>
+                <SelectItem value="INVITE_EMAIL_RESENT">Invite Resent</SelectItem>
+                <SelectItem value="ROLE_NOTIFICATION_SENT">Role Notification</SelectItem>
+                <SelectItem value="ORPHAN_CLEANUP">Orphan Cleanup</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex flex-wrap items-center gap-3 mt-3">
-            <Select value={userFilter} onValueChange={setUserFilter}>
+            <Select value={userFilter} onValueChange={updateFilter(setUserFilter)}>
               <SelectTrigger className="w-[220px]">
                 <User className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
                 <SelectValue placeholder="All Users" />
@@ -371,7 +453,7 @@ export function AuditLogView() {
               <Input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(0); }}
                 className="w-[150px]"
                 placeholder="From"
               />
@@ -379,7 +461,7 @@ export function AuditLogView() {
               <Input
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => { setDateTo(e.target.value); setPage(0); }}
                 className="w-[150px]"
                 placeholder="To"
               />
@@ -397,10 +479,37 @@ export function AuditLogView() {
       {/* Log Table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t("audit.recentActivity")}</CardTitle>
-          <CardDescription>
-            {filteredLogs.length} {filteredLogs.length === 1 ? t("audit.entryFound") : t("audit.entriesFound")}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base">{t("audit.recentActivity")}</CardTitle>
+              <CardDescription>
+                {total > 0 ? `Showing ${rangeStart}–${rangeEnd} of ${total} entries` : "No entries found"}
+              </CardDescription>
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page + 1} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[600px]">
@@ -421,14 +530,14 @@ export function AuditLogView() {
                       Loading audit log...
                     </TableCell>
                   </TableRow>
-                ) : filteredLogs.length === 0 ? (
+                ) : displayLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No audit entries found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLogs.map((log) => {
+                  displayLogs.map((log) => {
                     const TableIcon = TABLE_ICONS[log.table_name] ?? FileText;
                     const ActionIcon = ACTION_ICONS[log.action] ?? FileText;
                     const isExpanded = expandedRow === log.id;

@@ -125,6 +125,7 @@ Deno.serve(async (req) => {
     );
 
     // Audit log
+    const { data: callerProfile } = await adminClient.from("profiles").select("current_org_id").eq("user_id", caller.id).maybeSingle();
     await adminClient.from("audit_log").insert({
       user_id: caller.id,
       user_email: caller.email,
@@ -132,6 +133,7 @@ Deno.serve(async (req) => {
       table_name: "auth.users",
       record_id: orphan.id,
       summary: `Cleaned up orphan auth user ${email} (role: ${role}, ${appAccess.length} apps). Pending assignment created.`,
+      org_id: callerProfile?.current_org_id,
     });
 
     console.log("Orphan cleaned up:", email, "role:", role, "apps:", appAccess.length);

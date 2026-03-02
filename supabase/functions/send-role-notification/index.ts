@@ -152,6 +152,7 @@ Deno.serve(async (req) => {
 
     // Audit log
     try {
+      const { data: callerProfile } = await adminClient.from("profiles").select("current_org_id").eq("user_id", caller.id).maybeSingle();
       await adminClient.from("audit_log").insert({
         user_id: caller.id,
         user_email: caller.email,
@@ -160,6 +161,7 @@ Deno.serve(async (req) => {
         record_id: email,
         summary: `Role approval notification sent to ${email} (${roleName}) by ${caller.email}`,
         new_data: { email, role, userName },
+        org_id: callerProfile?.current_org_id,
       });
     } catch (e) {
       console.error("Audit log failed:", e);
