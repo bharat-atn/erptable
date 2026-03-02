@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { IssueCommentsThread } from "@/components/dashboard/IssueCommentsThread";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IssueChangelogView } from "@/components/dashboard/IssueChangelogView";
@@ -306,6 +307,16 @@ export function IssueTrackerView() {
                   rows={3}
                 />
               </div>
+
+              <hr className="border-border" />
+
+              {/* Comments Thread */}
+              <IssueCommentsThread
+                issueId={selected.id}
+                orgId={orgId || ""}
+                reporterEmail={selected.reporter_email}
+                isAdmin={true}
+              />
             </div>
           )}
           <DialogFooter>

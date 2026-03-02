@@ -1,14 +1,32 @@
 import { useState } from "react";
-import { Bug } from "lucide-react";
+import { Bug, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { IssueReportDialog } from "./IssueReportDialog";
+import { MyIssuesDialog } from "./MyIssuesDialog";
 
 export function IssueReportButton() {
   const [open, setOpen] = useState(false);
+  const [myIssuesOpen, setMyIssuesOpen] = useState(false);
 
   return (
     <>
+      {/* My Issues button */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={() => setMyIssuesOpen(true)}
+            size="icon"
+            className="fixed bottom-20 right-6 z-50 h-10 w-10 rounded-full shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
+            aria-label="My reported issues"
+          >
+            <ListChecks className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">My Issues</TooltipContent>
+      </Tooltip>
+
+      {/* Report Issue button */}
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -22,7 +40,9 @@ export function IssueReportButton() {
         </TooltipTrigger>
         <TooltipContent side="left">Report an issue</TooltipContent>
       </Tooltip>
+
       <IssueReportDialog open={open} onOpenChange={setOpen} />
+      <MyIssuesDialog open={myIssuesOpen} onOpenChange={setMyIssuesOpen} />
     </>
   );
 }
