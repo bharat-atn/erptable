@@ -31,12 +31,24 @@ const THAILAND_DATA = {
   postcodes: ["10110", "50200", "83000", "20150", "40000"],
 };
 
+const UKRAINE_DATA = {
+  firstNames: ["Oleksandr", "Dmytro", "Andriy", "Volodymyr", "Mykola", "Serhiy", "Viktor", "Ivan", "Petro", "Taras"],
+  lastNames: ["Kovalenko", "Shevchenko", "Bondarenko", "Tkachenko", "Kravchenko", "Moroz", "Lysenko", "Marchenko"],
+  middleNames: ["Oleksandrovych", "Ivanovych", "Petrovych", "Mykolayovych", "Volodymyrovych", "Serhiyovych", "Andriyovych", "Dmytrovych"],
+  cities: ["Kyiv", "Lviv", "Odesa", "Kharkiv", "Dnipro"],
+  states: ["Kyiv Oblast", "Lviv Oblast", "Odesa Oblast", "Kharkiv Oblast", "Dnipropetrovsk Oblast"],
+  addresses: ["вул. Хрещатик 15", "вул. Шевченка 28", "просп. Свободи 42", "вул. Січових Стрільців 7"],
+  phones: ["+380 67 123 4567", "+380 50 456 7890", "+380 93 234 5678"],
+  postcodes: ["01001", "79000", "65000", "61000", "49000"],
+};
+
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
 const COUNTRY_MAP: Record<string, { country: string; data: typeof SWEDEN_DATA }> = {
   Sweden: { country: "Sweden", data: SWEDEN_DATA },
   Romania: { country: "Romania", data: ROMANIA_DATA },
   Thailand: { country: "Thailand", data: THAILAND_DATA },
+  Ukraine: { country: "Ukraine", data: UKRAINE_DATA },
 };
 
 function randomBirthday(): string {
@@ -74,7 +86,7 @@ export interface DummyEmployeeData {
   };
 }
 
-export type DummyCountry = "Sweden" | "Romania" | "Thailand";
+export type DummyCountry = "Sweden" | "Romania" | "Thailand" | "Ukraine";
 
 export function generateDummyEmployee(selectedCountry?: DummyCountry): DummyEmployeeData {
   const key = selectedCountry || pick(Object.keys(COUNTRY_MAP)) as DummyCountry;

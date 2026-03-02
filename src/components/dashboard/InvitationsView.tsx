@@ -82,7 +82,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
   const addDummyInvitation = useMutation({
     mutationFn: async (country: DummyCountry) => {
       const dummy = generateDummyEmployee(country);
-      // Create employee with INVITED status
+      // Create employee with ONBOARDING status (simulating completed submission)
       const { data: emp, error: empErr } = await supabase.from("employees").insert([{
         first_name: dummy.first_name,
         last_name: dummy.last_name,
@@ -91,28 +91,42 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         phone: dummy.phone,
         city: dummy.city,
         country: dummy.country,
-        status: "INVITED",
+        status: "ONBOARDING",
         personal_info: dummy.personal_info,
         org_id: orgId,
       } as any]).select("id").single();
       if (empErr) throw empErr;
 
-      // Create invitation
-      const langMap: Record<string, string> = { Sweden: "en_sv", Romania: "ro_en", Thailand: "th_en" };
+      // Create invitation with ACCEPTED status (completed submission)
+      const langMap: Record<string, string> = { Sweden: "en_sv", Romania: "ro_en", Thailand: "th_en", Ukraine: "uk_en" };
       const { error: invErr } = await supabase.from("invitations").insert([{
         employee_id: emp.id,
         org_id: orgId,
         type: "NEW_HIRE",
         language: langMap[country] || "en_sv",
-        status: "SENT",
+        status: "ACCEPTED",
       } as any]);
       if (invErr) throw invErr;
+
+      // Create draft contract (mirroring submit_onboarding)
+      const { data: company } = await supabase.from("companies").select("id").eq("org_id", orgId!).limit(1).single();
+      const { error: contractErr } = await supabase.from("contracts").insert([{
+        employee_id: emp.id,
+        org_id: orgId,
+        company_id: company?.id || null,
+        status: "draft",
+        signing_status: "not_sent",
+        season_year: new Date().getFullYear().toString(),
+      } as any]);
+      if (contractErr) throw contractErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
       queryClient.invalidateQueries({ queryKey: ["operations-employees"] });
       queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] });
-      toast.success("Dummy invitation created!");
+      queryClient.invalidateQueries({ queryKey: ["operations-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["register-employees"] });
+      toast.success("Dummy submission created!");
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -272,6 +286,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
               <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Sweden")}>🇸🇪 Swedish</DropdownMenuItem>
               <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Romania")}>🇷🇴 Romanian</DropdownMenuItem>
               <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Thailand")}>🇹🇭 Thai</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addDummyInvitation.mutate("Ukraine")}>🇺🇦 Ukrainian</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {onShowPreview && (
