@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { IssueReportButton } from "./IssueReportButton";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -746,6 +747,7 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
         open={!!teaserApp}
         onClose={() => setTeaserApp(null)}
       />
+      <IssueReportButton />
     </div>
   );
 }

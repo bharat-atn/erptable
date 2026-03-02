@@ -21,8 +21,10 @@ import { BankListView } from "./BankListView";
 import { UserManagementView } from "./UserManagementView";
 import { RolePermissionMatrix } from "./RolePermissionMatrix";
 import { VersionManagementView } from "./VersionManagementView";
+import { IssueTrackerView } from "./IssueTrackerView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
+import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
@@ -94,6 +96,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "user-management": return <UserManagementView />;
       case "role-permissions": return <RolePermissionMatrix />;
       case "version-management": return <VersionManagementView />;
+      case "issue-tracker": return <IssueTrackerView />;
       default: return <DashboardView />;
     }
   };
@@ -135,7 +138,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
             {renderView()}
           </div>
         </main>
-        
+        <IssueReportButton />
       </div>
     </div>
   );
