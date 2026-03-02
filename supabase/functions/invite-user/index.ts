@@ -220,11 +220,15 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update profile to approved
+      // Upsert profile to ensure it exists and is approved
       await adminClient
         .from("profiles")
-        .update({ role: "approved", full_name: full_name || email, email })
-        .eq("user_id", userId);
+        .upsert({
+          user_id: userId,
+          role: "approved",
+          full_name: full_name || email,
+          email,
+        }, { onConflict: "user_id" });
 
       // Handle app access
       if (Array.isArray(app_access)) {
@@ -279,8 +283,12 @@ Deno.serve(async (req) => {
       await adminClient.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role", ignoreDuplicates: true });
       await adminClient
         .from("profiles")
-        .update({ role: "approved", full_name: full_name || email, email })
-        .eq("user_id", userId);
+        .upsert({
+          user_id: userId,
+          role: "approved",
+          full_name: full_name || email,
+          email,
+        }, { onConflict: "user_id" });
 
       if (Array.isArray(app_access)) {
         await adminClient.from("user_app_access").delete().eq("user_id", userId);
