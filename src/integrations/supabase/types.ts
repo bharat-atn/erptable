@@ -774,6 +774,74 @@ export type Database = {
           },
         ]
       }
+      issue_reports: {
+        Row: {
+          admin_notes: string | null
+          attachment_urls: Json | null
+          browser_info: string | null
+          created_at: string
+          current_page: string | null
+          description: string
+          id: string
+          org_id: string
+          priority: string
+          reporter_email: string | null
+          reporter_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          screenshot_url: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachment_urls?: Json | null
+          browser_info?: string | null
+          created_at?: string
+          current_page?: string | null
+          description: string
+          id?: string
+          org_id: string
+          priority?: string
+          reporter_email?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          attachment_urls?: Json | null
+          browser_info?: string | null
+          created_at?: string
+          current_page?: string | null
+          description?: string
+          id?: string
+          org_id?: string
+          priority?: string
+          reporter_email?: string | null
+          reporter_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          screenshot_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_reports_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string

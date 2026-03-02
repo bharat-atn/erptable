@@ -23,6 +23,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "employee-id-settings", label: "Employee ID", group: "settings" },
     { id: "contract-id-settings", label: "Contract ID", group: "settings" },
     { id: "iso-standards", label: "ISO Standards", group: "settings" },
+    { id: "issue-tracker", label: "Issue Tracker", group: "others" },
     { id: "version-management", label: "Version Management", group: "others" },
     { id: "process-guide", label: "Process Guide", group: "others" },
     { id: "audit-log", label: "Audit Log", group: "others" },
@@ -30,6 +31,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
   "user-management": [
     { id: "user-management", label: "Users", group: "main" },
     { id: "role-permissions", label: "Role Permissions", group: "main" },
+    { id: "issue-tracker", label: "Issue Tracker", group: "main" },
     { id: "audit-log", label: "Audit Log", group: "main" },
     { id: "settings", label: "Settings", group: "main" },
   ],
@@ -82,6 +84,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
 export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = {
   "hr-management": {
     admin: SIDEBAR_ITEMS_BY_APP["hr-management"].map((i) => i.id),
+    // org_admin also gets issue-tracker access
     org_admin: SIDEBAR_ITEMS_BY_APP["hr-management"].map((i) => i.id),
     hr_manager: [
       "dashboard", "operations", "invitations", "contracts",
@@ -94,7 +97,7 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
     user: ["dashboard"],
   },
   "user-management": {
-    admin: ["user-management", "role-permissions", "audit-log", "settings"],
+    admin: ["user-management", "role-permissions", "issue-tracker", "audit-log", "settings"],
   },
   "forestry-project": {
     admin: SIDEBAR_ITEMS_BY_APP["forestry-project"].map((i) => i.id),
