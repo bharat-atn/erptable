@@ -1,25 +1,25 @@
 
 
-## Plan: Unify Edit Profile Dialog with Shared Profile Fields
+## Plan: Replace Auto-Screenshot with Manual Screenshot Instructions
 
-### Problem
-The admin "Edit Profile" dialog in User Management uses plain text inputs without flags for nationality and language, while the "Welcome Back" login dialog uses the shared `ProfileIdentityFields` component with flag emojis and priority-sorted dropdowns. The emergency contact field is also still present despite being removed from other profile views.
+The `html2canvas` library has inherent limitations with dark themes, CSS filters, and complex rendering that make reliable screenshots difficult. Instead of trying to fix it further, we'll remove the auto-capture and guide users to take their own screenshots.
 
 ### Changes
 
-**File: `src/components/dashboard/UserManagementView.tsx` — `EditProfileDialog` component (lines 165-345)**
+**`src/components/dashboard/IssueReportDialog.tsx`**
 
-1. **Import and use `ProfileIdentityFields`** from `@/components/profile/ProfileIdentityFields` and `parsePhone`/`combinePhone` from `@/lib/profile-utils`
-2. **Remove the `emergency_contact` field** entirely from the form state and save logic
-3. **Remove the local `LANGUAGE_OPTIONS` constant** (lines 174-180) — no longer needed since `ProfileIdentityFields` uses the shared one from `ui-translations`
-4. **Refactor form state** to use `ProfileData` shape (`fullName`, `avatarUrl`, `lang`, `dateOfBirth`, `dialCode`, `localNumber`, `nationality`) parsed from the fetched profile using `parsePhone`
-5. **Replace the manual form fields** (nationality select, language select, phone input, date input) with a single `<ProfileIdentityFields>` component, keeping the admin-specific fields outside it:
-   - Full Name and Email remain as-is (already in `ProfileIdentityFields`)
-   - The "Welcome Back Dialog" checkbox toggle stays below
-6. **Update `handleSave`** to recombine `dialCode + localNumber` via `combinePhone` before saving
+1. **Remove `html2canvas`** — delete the import and the `captureScreenshot()` function entirely
+2. **Remove auto-capture** — remove the `useEffect` that calls `captureScreenshot` on dialog open
+3. **Remove `screenshotBlob`/`screenshotPreview` state** and the screenshot preview section
+4. **Add instruction banner** at the top of the dialog body with platform-specific shortcut instructions:
+   - Mac: `⇧ ⌘ 4` — drag to select area, screenshot saves to clipboard/desktop
+   - Windows: `Win + Shift + S` — opens Snipping Tool to select area
+   - Then: "Attach the screenshot below using the Attach Image button"
+5. **Keep the existing attachment section** — users attach their manual screenshots the same way they attach other images today
+6. **Upload logic stays the same** — attachments upload to `issue-screenshots` storage bucket
 
-This ensures the admin sees the exact same flags, priority sorting, and field layout as the user's own profile dialog — single source of truth.
-
-### No other files change
-The `ProfileIdentityFields` component already supports all needed fields. The `showAvatar` prop can be set to `false` for the admin dialog since avatar management isn't needed there.
+### Result
+- No more dark/broken auto-screenshots
+- Users get clear, high-quality screenshots they control
+- Simpler code with no `html2canvas` dependency (can be removed from package.json)
 
