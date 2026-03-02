@@ -6,6 +6,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const SEED_COMPANY = {
+  name: "Ljungan Skogsbruk AB",
+  org_number: "556123-4567",
+  address: "Skogsvägen 12",
+  postcode: "86232",
+  city: "KVISSLEBY",
+  country: "Sweden",
+  phone: "+46601234567",
+  email: "info@ljungan-skog.se",
+  website: "https://ljungan-skog.se",
+  bankgiro: "123-4567",
+  ceo_name: "Anders Ljungberg",
+  company_type: "Aktiebolag",
+};
+
 const SEED_EMPLOYEES = [
   { first_name: "Erik", last_name: "Johansson", email: "erik.johansson@sandbox.test", phone: "+46701234567", city: "Stockholm", country: "Sweden", status: "ACTIVE" },
   { first_name: "Anna", last_name: "Lindqvist", email: "anna.lindqvist@sandbox.test", phone: "+46702345678", city: "Göteborg", country: "Sweden", status: "ACTIVE" },
@@ -62,7 +77,18 @@ Deno.serve(async (req) => {
       await admin.from("contracts").delete().eq("org_id", sandboxOrgId);
       await admin.from("invitations").delete().eq("org_id", sandboxOrgId);
       await admin.from("employees").delete().eq("org_id", sandboxOrgId);
+      await admin.from("companies").delete().eq("org_id", sandboxOrgId);
     }
+
+    // Insert seed company
+    const { data: insertedCompany, error: compErr } = await admin
+      .from("companies")
+      .insert({ ...SEED_COMPANY, org_id: sandboxOrgId })
+      .select("id")
+      .single();
+
+    if (compErr) throw compErr;
+    const companyId = insertedCompany?.id;
 
     // Insert employees
     const employeeRows = SEED_EMPLOYEES.map((e) => ({
@@ -107,6 +133,7 @@ Deno.serve(async (req) => {
     const contractRows = onboardingEmps.map((e: any) => ({
       employee_id: e.id,
       org_id: sandboxOrgId,
+      company_id: companyId,
       status: "draft",
       signing_status: "not_sent",
       season_year: new Date().getFullYear().toString(),
@@ -124,6 +151,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        companies: 1,
         employees: insertedEmployees?.length || 0,
         invitations: invitationsCreated,
         contracts: contractsCreated,
