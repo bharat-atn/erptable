@@ -1,30 +1,30 @@
 
 
-## Plan: One-Time Feature Announcement Banner for Bug Reporter
+## Plan: Multilingual Feature Announcement Dialog
 
-### Approach
-Show a dismissible announcement dialog/banner once per user on their next login, informing them about the new issue reporting feature. Once dismissed, it never shows again (persisted in the `profiles` table).
+### What changes
+**Single file edit: `src/components/dashboard/FeatureAnnouncementDialog.tsx`**
 
-### Changes
+Add a translations dictionary for all 5 languages (EN, SV, RO, TH, UK) and language-switcher buttons at the top of the dialog.
 
-**Database migration**
-- Add column `dismissed_announcements jsonb DEFAULT '[]'` to `profiles` table. This stores an array of announcement IDs the user has dismissed, making it reusable for future announcements.
+### Implementation
 
-**New component: `src/components/dashboard/FeatureAnnouncementDialog.tsx`**
-- A polished dialog that shows on login (after profile dialog, before app launcher/dashboard).
-- Announcement ID: `"issue-reporter-v1"`
-- Content: icon of the bug button, short explanation that a new reporting tool is available in the bottom-right corner, and a "Got it" button to dismiss.
-- On dismiss: updates `profiles.dismissed_announcements` to include this ID, sets session flag so it doesn't re-render.
+1. Add a `translations` record keyed by language code (`en`, `sv`, `ro`, `th`, `uk`) containing:
+   - Title ("New: Issue Reporter")
+   - Description
+   - "Look for this button" label
+   - Body text about the red bug icon
+   - "Got it!" button text
 
-**Edit: `src/pages/Index.tsx`**
-- After the profile dialog check passes, add a new check: query `profiles.dismissed_announcements` and if `"issue-reporter-v1"` is not in the array, show `FeatureAnnouncementDialog` before proceeding to the app launcher.
-- Uses `sessionStorage` guard (like the profile dialog) to avoid re-checking within the same session.
+2. Add local `useState` for the selected announcement language, defaulting to the user's `preferred_language` (passed as a new prop) or `"en"`.
 
-### Flow
-```text
-Login → Profile Dialog (if enabled) → Feature Announcement (if not dismissed) → App Launcher
-```
+3. Render a row of compact flag/label toggle buttons at the top of the dialog content (🇬🇧 EN, 🇸🇪 SV, 🇷🇴 RO, 🇹🇭 TH, 🇺🇦 UK). The active language gets a highlighted style.
 
-### No other files affected
-The announcement system is self-contained and reusable for future feature introductions by simply adding new announcement entries.
+4. All dialog text references the translations dictionary using the selected language.
+
+### Props change
+Add optional `preferredLanguage?: string` prop so Index.tsx can pass the user's saved language as the default. Falls back to `"en"`.
+
+### No other files need changes
+The dialog is self-contained; Index.tsx already has access to the user profile and can pass the preferred language.
 
