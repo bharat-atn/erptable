@@ -478,6 +478,11 @@ export function OnboardingWizard({
       // Handle bank selection via callback
       if (onAiFill) onAiFill(data);
       
+      // Fallback: if AI returns emergencyPhone as combined string
+      if (!data.emergencyPhonePrefix && !data.emergencyPhoneNumber && data.emergencyPhone) {
+        updateField("emergencyPhone", data.emergencyPhone);
+      }
+
       // Auto-select bank country and bank inside the wizard
       if (data.country) {
         const bankCountry = Object.keys(effectiveBanksByCountry).find(
@@ -485,7 +490,7 @@ export function OnboardingWizard({
         );
         if (bankCountry) {
           setSelectedBankCountry(bankCountry);
-          if (data.bankName) {
+          if (data.bankName && data.country.toLowerCase() !== "sweden") {
             onBankSelect(data.bankName);
             setBankListExpanded(false);
           } else {
@@ -494,6 +499,9 @@ export function OnboardingWizard({
           setS4Open(true);
         }
       }
+
+      // Ensure emergency contact section is visible
+      setS3Open(true);
       
       toast.success("AI test data generated successfully!", {
         description: "Review the auto-filled data and adjust as needed before submitting.",
