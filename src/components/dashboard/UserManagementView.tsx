@@ -13,7 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
 import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw, UserCog } from "lucide-react";
-import { getOrderedNationalities } from "@/lib/nationalities";
+import { parsePhone, combinePhone } from "@/lib/profile-utils";
+import { ProfileIdentityFields, type ProfileData } from "@/components/profile/ProfileIdentityFields";
+import type { UiLang } from "@/lib/ui-translations";
 import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
@@ -171,27 +173,20 @@ interface EditProfileDialogProps {
   userName: string;
 }
 
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "sv", label: "Svenska" },
-  { value: "ro", label: "Română" },
-  { value: "th", label: "ไทย" },
-  { value: "uk", label: "Українська" },
-];
-
 function EditProfileDialog({ open, onClose, userId, userName }: EditProfileDialogProps) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone_number: "",
-    date_of_birth: "",
+  const [skipLoginProfile, setSkipLoginProfile] = useState(false);
+  const [profileData, setProfileData] = useState<ProfileData>({
+    fullName: "",
+    avatarUrl: null,
+    lang: "en" as UiLang,
+    dateOfBirth: "",
+    dialCode: "+46",
+    localNumber: "",
     nationality: "",
-    preferred_language: "en",
-    emergency_contact: "",
-    skip_login_profile: false,
   });
+  const [userEmail, setUserEmail] = useState("");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["admin-profile-detail", userId],
@@ -209,32 +204,34 @@ function EditProfileDialog({ open, onClose, userId, userName }: EditProfileDialo
 
   useEffect(() => {
     if (profile) {
-      setForm({
-        full_name: profile.full_name || "",
-        email: profile.email || "",
-        phone_number: profile.phone_number || "",
-        date_of_birth: profile.date_of_birth || "",
+      const { dialCode, localNumber } = parsePhone(profile.phone_number || "");
+      setProfileData({
+        fullName: profile.full_name || "",
+        avatarUrl: profile.avatar_url || null,
+        lang: (profile.preferred_language || "en") as UiLang,
+        dateOfBirth: profile.date_of_birth || "",
+        dialCode,
+        localNumber,
         nationality: profile.nationality || "",
-        preferred_language: profile.preferred_language || "en",
-        emergency_contact: profile.emergency_contact || "",
-        skip_login_profile: profile.skip_login_profile ?? false,
       });
+      setUserEmail(profile.email || "");
+      setSkipLoginProfile(profile.skip_login_profile ?? false);
     }
   }, [profile]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      const phone = combinePhone(profileData.dialCode, profileData.localNumber);
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: form.full_name.trim() || null,
-          phone_number: form.phone_number.trim() || null,
-          date_of_birth: form.date_of_birth || null,
-          nationality: form.nationality || null,
-          preferred_language: form.preferred_language,
-          emergency_contact: form.emergency_contact.trim() || null,
-          skip_login_profile: form.skip_login_profile,
+          full_name: profileData.fullName.trim() || null,
+          phone_number: phone,
+          date_of_birth: profileData.dateOfBirth || null,
+          nationality: profileData.nationality || null,
+          preferred_language: profileData.lang,
+          skip_login_profile: skipLoginProfile,
         })
         .eq("user_id", userId);
       if (error) throw error;
@@ -248,8 +245,6 @@ function EditProfileDialog({ open, onClose, userId, userName }: EditProfileDialo
       setSaving(false);
     }
   };
-
-  const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -266,68 +261,24 @@ function EditProfileDialog({ open, onClose, userId, userName }: EditProfileDialo
           <div className="py-8 text-center text-muted-foreground text-sm">Loading profile…</div>
         ) : (
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Full Name</Label>
-              <Input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} placeholder="Full name" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Email <span className="text-muted-foreground text-xs">(read-only)</span></Label>
-              <Input value={form.email} disabled className="opacity-60" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Date of Birth</Label>
-              <Input type="date" value={form.date_of_birth} onChange={(e) => set("date_of_birth", e.target.value)} />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Phone Number</Label>
-              <Input value={form.phone_number} onChange={(e) => set("phone_number", e.target.value)} placeholder="+46 70 123 4567" />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Nationality</Label>
-              <Select value={form.nationality} onValueChange={(v) => set("nationality", v)}>
-                <SelectTrigger><SelectValue placeholder="Select nationality…" /></SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {(() => {
-                    const { priority, rest } = getOrderedNationalities();
-                    return [...priority, ...rest].map((n) => (
-                      <SelectItem key={n.nationality} value={n.nationality}>{n.nationality}</SelectItem>
-                    ));
-                  })()}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Preferred Language</Label>
-              <Select value={form.preferred_language} onValueChange={(v) => set("preferred_language", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LANGUAGE_OPTIONS.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Emergency Contact</Label>
-              <Input value={form.emergency_contact} onChange={(e) => set("emergency_contact", e.target.value)} placeholder="Name & phone number" />
-            </div>
+            <ProfileIdentityFields
+              userId={userId}
+              userEmail={userEmail}
+              data={profileData}
+              onChange={(patch) => setProfileData((prev) => ({ ...prev, ...patch }))}
+              showAvatar={false}
+            />
 
             <div className="flex items-center justify-between rounded-md border border-border p-3">
               <div>
                 <p className="text-sm font-medium">Welcome Back Dialog</p>
                 <p className="text-xs text-muted-foreground">
-                  {form.skip_login_profile ? "Skipped — user won't see profile review" : "Active — user will see profile review on login"}
+                  {skipLoginProfile ? "Skipped — user won't see profile review" : "Active — user will see profile review on login"}
                 </p>
               </div>
               <Checkbox
-                checked={!form.skip_login_profile}
-                onCheckedChange={(checked) => set("skip_login_profile", !checked)}
+                checked={!skipLoginProfile}
+                onCheckedChange={(checked) => setSkipLoginProfile(!checked)}
               />
             </div>
           </div>
