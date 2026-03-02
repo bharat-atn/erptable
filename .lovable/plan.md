@@ -1,28 +1,25 @@
 
 
-## Plan: Fix Bank Registry — Add org_id to All Bank Inserts + Ensure Ukrainian Banks Appear
+## Analysis: Ukrainian Person Not Appearing in Invitations
 
-### Root Cause
-The `BankListView.tsx` component never imports `useOrg()` or passes `org_id` when inserting banks. The `banks` table has a NOT NULL `org_id` column and RLS policies that check `is_org_member_current(org_id)`. Every insert — Add Bank, Seed Default Banks, CSV Import — is silently failing because `org_id` is missing.
+### What Happened
 
-This is why Ukraine (and potentially other seeded banks) never appear: the seed operation fails at the database level.
+After investigating the database, here's the timeline:
 
-### Changes
+1. **01:25 UTC** — A Ukrainian dummy employee (`mykola.bondarenko@example.com`) was successfully created along with an invitation.
+2. **01:29 UTC** — All invitations and employees were bulk-deleted (3 invitations + 3 employees removed at the same time).
+3. **02:01 UTC** — The "Seed Default Banks" button was clicked, inserting 15+ banks (including 5 Ukrainian banks) into the registry. These bank INSERT entries are what appears in the audit log.
+4. **No new employee/invitation has been created since the bulk delete.**
 
-**`src/components/dashboard/BankListView.tsx`**
+The audit log entries you're seeing are from the **bank seeding**, not from creating a person. The Ukrainian dummy you created earlier was removed in the bulk delete at 01:29.
 
-1. **Import `useOrg`** from `@/contexts/OrgContext` and extract `orgId` via `const { orgId } = useOrg()`.
+### Fix
 
-2. **Add `org_id: orgId` to every insert/query call:**
-   - `addBank` mutation: add `org_id: orgId` to the insert payload
-   - `seedDefaultBanks` function: add `org_id: orgId` to each insert payload
-   - `importBanks` mutation: add `org_id: orgId` to each insert payload
-   - Bank list query: filter by `.eq("org_id", orgId)` so each org sees only its own banks
+No code change is needed. The Ukrainian dummy flow works correctly. You just need to:
 
-3. **Remove `as any` casts** — once `org_id` is included, the type should match properly.
+1. Go to the **Invitations** view.
+2. Click **Add Dummy → 🇺🇦 Ukrainian**.
+3. The Ukrainian employee and invitation will appear in the list.
 
-4. **Guard mutations** — disable the Add/Seed/Import buttons when `orgId` is null.
-
-### Result
-After this fix, clicking "Seed Default Banks" will correctly insert all 25 banks (including the 5 Ukrainian ones) into the registry for the current organization. Ukraine will appear in the country filter dropdown.
+The previous Ukrainian entry was deleted during a bulk delete operation. Creating a new one will work as expected.
 
