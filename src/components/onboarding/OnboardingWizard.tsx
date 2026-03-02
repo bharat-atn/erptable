@@ -36,6 +36,7 @@ const FALLBACK_BANKS_BY_COUNTRY: Record<string, { name: string; bic_code: string
   ].map((name) => ({ name, bic_code: null })),
   Thailand: ["Bangkok Bank", "Kasikornbank", "Krungthai Bank", "Siam Commercial Bank"].map((name) => ({ name, bic_code: null })),
   Moldova: ["maib", "Moldindconbank", "OTP Bank Moldova", "Victoriabank"].map((name) => ({ name, bic_code: null })),
+  Ukraine: ["PrivatBank", "Monobank", "PUMB", "Oschadbank", "Raiffeisen Bank Aval"].map((name) => ({ name, bic_code: null })),
 };
 
 const COUNTRY_NAMES = countries.map((c) => c.name);
@@ -146,6 +147,7 @@ export const personalInfoSchema = z.object({
   email: z.string().email("Valid email required"),
   bankName: z.string().min(1, "Bank is required"),
   otherBankName: z.string().max(200).optional(),
+  bankCountryName: z.string().max(100).optional(),
   bicCode: z.string().min(1, "BIC Code is required").max(20),
   bankAccountNumber: z.string().min(1, "Bank account number is required").max(50).refine(
     (val) => /^\d+$/.test(val),
@@ -680,7 +682,8 @@ export function OnboardingWizard({
 
   const s4Missing: string[] = [];
   if (!selectedBankCountry) s4Missing.push("Country");
-  if (!selectedBank && !isOtherBank) s4Missing.push("Bank Selection");
+  else if (selectedBankCountry === "__other__" && !formData.bankCountryName) s4Missing.push("Country Name");
+  if (selectedBankCountry !== "__other__" && !selectedBank && !isOtherBank) s4Missing.push("Bank Selection");
   if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
@@ -1166,9 +1169,14 @@ export function OnboardingWizard({
                   aria-label="Select bank country"
                   value={selectedBankCountry}
                   onChange={(e) => {
-                    setSelectedBankCountry(e.target.value);
-                    onBankSelect("");
-                    setBankListExpanded(true);
+                    const val = e.target.value;
+                    setSelectedBankCountry(val);
+                    if (val === "__other__") {
+                      onBankSelect("other");
+                    } else {
+                      onBankSelect("");
+                      setBankListExpanded(true);
+                    }
                   }}
                   className={cn(
                     "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -1181,11 +1189,27 @@ export function OnboardingWizard({
                   {availableBankCountries.map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
+                  <option disabled>──────────</option>
+                  <option value="__other__">Other country / Annat land</option>
                 </select>
               </div>
 
-              {/* Bank radio list – only shown after country is selected */}
-              {selectedBankCountry && (
+              {/* Free-text country name when "Other country" is selected */}
+              {selectedBankCountry === "__other__" && (
+                <div className="space-y-1.5">
+                  <FieldLabel en="Country Name" sv="Landsnamn" />
+                  <Input
+                    tabIndex={23}
+                    value={formData.bankCountryName || ""}
+                    onChange={(e) => updateField("bankCountryName" as keyof PersonalInfo, e.target.value)}
+                    placeholder="Enter country name / Ange landsnamn"
+                    className={cn("h-11 text-sm font-medium", fieldError(selectedBankCountry === "__other__" && !formData.bankCountryName))}
+                  />
+                </div>
+              )}
+
+              {/* Bank radio list – only shown after a real country is selected */}
+              {selectedBankCountry && selectedBankCountry !== "__other__" && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
