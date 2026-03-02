@@ -44,8 +44,11 @@ export function IssueReportDialog({ open, onOpenChange }: IssueReportDialogProps
       const canvas = await html2canvas(document.body, {
         useCORS: true,
         allowTaint: true,
-        scale: 0.5,
+        scale: 1.0,
         logging: false,
+        backgroundColor: "#ffffff",
+        windowWidth: document.documentElement.scrollWidth,
+        windowHeight: document.documentElement.scrollHeight,
         ignoreElements: (el) => el.getAttribute("role") === "dialog",
       });
       canvas.toBlob((blob) => {

@@ -842,6 +842,60 @@ export type Database = {
           },
         ]
       }
+      issue_updates: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          issue_id: string | null
+          org_id: string
+          title: string
+          update_type: string
+          updated_at: string | null
+          visibility: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          issue_id?: string | null
+          org_id: string
+          title: string
+          update_type?: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          issue_id?: string | null
+          org_id?: string
+          title?: string
+          update_type?: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_updates_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issue_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issue_updates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_members: {
         Row: {
           created_at: string
