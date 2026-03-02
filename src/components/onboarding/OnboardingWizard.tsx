@@ -725,7 +725,7 @@ export function OnboardingWizard({
   return (
     <LanguageContext.Provider value={language}>
     <div className="min-h-screen bg-background overflow-y-auto safe-area-top safe-area-bottom">
-      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-8 pb-28">
         {/* Logo & Header */}
         <div className="flex flex-col items-center mb-5">
           {templateLogo ? (
@@ -779,7 +779,7 @@ export function OnboardingWizard({
               Generate realistic test data for a seasonal worker. Select nationality:
             </p>
             <div className="flex flex-wrap gap-2">
-              {["Romanian", "Thai", "Swedish"].map((nat) => (
+              {["Romanian", "Thai", "Swedish", "Ukrainian"].map((nat) => (
                 <Button
                   key={nat}
                   type="button"

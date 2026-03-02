@@ -36,11 +36,13 @@ COUNTRY-SPECIFIC VALIDATION RULES:
 - Romania: Phone prefix +40, 9 digits, cities like București, Cluj-Napoca, Brașov, Timișoara. Postcodes 6 digits. States like "Cluj", "Brașov", "Timiș".
 - Thailand: Phone prefix +66, 9 digits, cities like Bangkok, Chiang Mai, Udon Thani. Postcodes 5 digits. Provinces like "Chiang Mai", "Udon Thani".
 - Sweden: Phone prefix +46, 7-9 digits, cities like Stockholm, Göteborg, Sundsvall. Postcodes 5 digits (NNN NN). Counties like "Västernorrland", "Jämtland".
+- Ukraine: Phone prefix +380, 9 digits, cities like Kyiv, Lviv, Kharkiv, Odesa, Dnipro. Postcodes 5 digits. Oblasts like "Kyivska", "Lvivska", "Kharkivska".
 
 IMPORTANT: The address country, country of birth, citizenship, phone prefix, and emergency phone prefix must ALL be consistent with the "${countryHint}" nationality. 
 - If Romanian worker: country=Romania, phone prefix=+40, emergency phone prefix=+40
 - If Thai worker: country=Thailand, phone prefix=+66, emergency phone prefix=+66  
 - If Swedish worker: country=Sweden, phone prefix=+46, emergency phone prefix=+46
+- If Ukrainian worker: country=Ukraine, phone prefix=+380, emergency phone prefix=+380
 
 Return a JSON object with these exact keys:
 {
@@ -144,6 +146,7 @@ Return a JSON object with these exact keys:
         "Romanian": { country: "Romania", prefix: "+40" },
         "Thai": { country: "Thailand", prefix: "+66" },
         "Swedish": { country: "Sweden", prefix: "+46" },
+        "Ukrainian": { country: "Ukraine", prefix: "+380" },
       };
       const nat = nationalityMap[countryHint];
       if (nat) {
