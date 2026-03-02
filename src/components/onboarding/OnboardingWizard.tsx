@@ -478,6 +478,23 @@ export function OnboardingWizard({
       // Handle bank selection via callback
       if (onAiFill) onAiFill(data);
       
+      // Auto-select bank country and bank inside the wizard
+      if (data.country) {
+        const bankCountry = Object.keys(effectiveBanksByCountry).find(
+          c => c.toLowerCase() === data.country.toLowerCase()
+        );
+        if (bankCountry) {
+          setSelectedBankCountry(bankCountry);
+          if (data.bankName) {
+            onBankSelect(data.bankName);
+            setBankListExpanded(false);
+          } else {
+            setBankListExpanded(true);
+          }
+          setS4Open(true);
+        }
+      }
+      
       toast.success("AI test data generated successfully!", {
         description: "Review the auto-filled data and adjust as needed before submitting.",
       });
