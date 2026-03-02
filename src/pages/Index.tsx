@@ -113,16 +113,22 @@ const Index = () => {
       });
   }, [session, role, orgId, profileChecked]);
 
+  // Preferred language for announcement dialog
+  const [preferredLang, setPreferredLang] = useState<string>("en");
+
   // Check if we need to show feature announcement
   useEffect(() => {
     if (!session || !role || !orgId || profileDialogOpen || announcementChecked) return;
 
     supabase
       .from("profiles")
-      .select("dismissed_announcements")
+      .select("dismissed_announcements, preferred_language")
       .eq("user_id", session.user.id)
       .single()
       .then(({ data }) => {
+        if ((data as any)?.preferred_language) {
+          setPreferredLang((data as any).preferred_language);
+        }
         const dismissed = (data as any)?.dismissed_announcements ?? [];
         if (!Array.isArray(dismissed) || !dismissed.includes(ANNOUNCEMENT_ID)) {
           setAnnouncementOpen(true);
@@ -176,6 +182,7 @@ const Index = () => {
           open={announcementOpen}
           onDismiss={() => setAnnouncementOpen(false)}
           userId={session.user.id}
+          preferredLanguage={preferredLang}
         />
       </>
     );
