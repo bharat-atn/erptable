@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
+import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
 import {
   Collapsible,
   CollapsibleContent,
@@ -924,14 +926,13 @@ export function OnboardingWizard({
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Country" sv="Land" />
-                  <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
-                    <SelectTrigger tabIndex={10} className={cn("h-11 text-sm font-medium", fieldError(!formData.country))}><SelectValue placeholder="Select country" /></SelectTrigger>
-                    <SelectContent>
-                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      <div className="border-t border-border my-1" />
-                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableCountrySelect
+                    value={formData.country}
+                    onValueChange={(v) => updateField("country", v)}
+                    placeholder="Select country"
+                    hasError={validationAttempted && !formData.country}
+                    tabIndex={10}
+                  />
                 </div>
               </div>
             </CollapsibleContent>
@@ -1023,58 +1024,42 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Country of Birth" sv="Födelseland" />
-                  <Select value={formData.countryOfBirth} onValueChange={(v) => {
-                    updateField("countryOfBirth", v);
-                    if (!formData.citizenship) updateField("citizenship", v);
-                  }}>
-                    <SelectTrigger tabIndex={14} className={cn("h-11 text-sm font-medium", fieldError(!formData.countryOfBirth))}><SelectValue placeholder="Select country" /></SelectTrigger>
-                    <SelectContent>
-                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      <div className="border-t border-border my-1" />
-                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableCountrySelect
+                    value={formData.countryOfBirth}
+                    onValueChange={(v) => {
+                      updateField("countryOfBirth", v);
+                      if (!formData.citizenship) updateField("citizenship", v);
+                    }}
+                    placeholder="Select country"
+                    hasError={validationAttempted && !formData.countryOfBirth}
+                    tabIndex={14}
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Citizenship" sv="Medborgarskap" />
-                  <Select value={formData.citizenship} onValueChange={(v) => {
-                    updateField("citizenship", v);
-                    if (!formData.countryOfBirth) updateField("countryOfBirth", v);
-                  }}>
-                    <SelectTrigger tabIndex={15} className={cn("h-11 text-sm font-medium", fieldError(!formData.citizenship))}><SelectValue placeholder="Select citizenship" /></SelectTrigger>
-                    <SelectContent>
-                      {priorityCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      <div className="border-t border-border my-1" />
-                      {otherCountryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableCountrySelect
+                    value={formData.citizenship}
+                    onValueChange={(v) => {
+                      updateField("citizenship", v);
+                      if (!formData.countryOfBirth) updateField("countryOfBirth", v);
+                    }}
+                    placeholder="Select citizenship"
+                    hasError={validationAttempted && !formData.citizenship}
+                    tabIndex={15}
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <FieldLabel en="Mobile Phone Number" sv="Mobiltelefon" />
                 <div className="flex gap-2">
-                  <Select
+                  <SearchablePhonePrefixSelect
                     value={formData.mobilePhone?.match(/^\+[\d-]+/)?.[0] || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")}
                     onValueChange={(prefix) => {
                       const digits = (formData.mobilePhone || "").replace(/^\+[\d-]+\s*/, "");
                       updateField("mobilePhone", `${prefix} ${digits}`);
                     }}
-                  >
-                    <SelectTrigger tabIndex={16} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {priorityPhonePrefixOptions.map((c) => (
-                        <SelectItem key={`phone-priority-${c.dialCode}`} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                      <div className="border-t border-border my-1" />
-                      {otherPhonePrefixOptions.map((c) => (
-                        <SelectItem key={`phone-other-${c.dialCode}`} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    tabIndex={16}
+                  />
                   <Input
                     tabIndex={17}
                     type="tel"
@@ -1140,28 +1125,14 @@ export function OnboardingWizard({
               <div className="space-y-1.5">
                 <FieldLabel en="Emergency Contact Mobile Phone" sv="Mobiltelefon" />
                 <div className="flex gap-2">
-                  <Select
+                  <SearchablePhonePrefixSelect
                     value={formData.emergencyPhone?.match(/^\+[\d-]+/)?.[0] || (formData.country ? (findCountryByName(formData.country)?.dialCode || "+46") : "+46")}
                     onValueChange={(prefix) => {
                       const digits = (formData.emergencyPhone || "").replace(/^\+[\d-]+\s*/, "");
                       updateField("emergencyPhone", `${prefix} ${digits}`);
                     }}
-                  >
-                    <SelectTrigger tabIndex={21} className="w-28 h-11 text-sm font-medium"><SelectValue /></SelectTrigger>
-                    <SelectContent className="max-h-60">
-                      {priorityPhonePrefixOptions.map((c) => (
-                        <SelectItem key={`emergency-priority-${c.dialCode}`} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                      <div className="border-t border-border my-1" />
-                      {otherPhonePrefixOptions.map((c) => (
-                        <SelectItem key={`emergency-other-${c.dialCode}`} value={c.dialCode}>
-                          {c.flag} {c.dialCode}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    tabIndex={21}
+                  />
                   <Input
                     tabIndex={22}
                     type="tel"
@@ -1205,12 +1176,9 @@ export function OnboardingWizard({
               {/* Country selector */}
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
-                <select
-                  tabIndex={23}
-                  aria-label="Select bank country"
+                <SearchableCountrySelect
                   value={selectedBankCountry}
-                  onChange={(e) => {
-                    const val = e.target.value;
+                  onValueChange={(val) => {
                     setSelectedBankCountry(val);
                     if (val === "__other__") {
                       onBankSelect("other");
@@ -1219,20 +1187,11 @@ export function OnboardingWizard({
                       setBankListExpanded(true);
                     }
                   }}
-                  className={cn(
-                    "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                    fieldError(!selectedBankCountry)
-                  )}
-                >
-                  <option value="" disabled>
-                    Choose country / Välj land
-                  </option>
-                  {availableBankCountries.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                  <option disabled>──────────</option>
-                  <option value="__other__">Other country / Annat land</option>
-                </select>
+                  placeholder="Choose country / Välj land"
+                  hasError={validationAttempted && !selectedBankCountry}
+                  tabIndex={23}
+                  extraItems={[{ label: "Other country / Annat land", value: "__other__" }]}
+                />
               </div>
 
               {/* Free-text country name when "Other country" is selected */}
