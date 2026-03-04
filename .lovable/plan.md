@@ -1,38 +1,24 @@
 
 
-## Plan: Add Searchable Country and Phone Prefix Selectors
+## Plan: Fix Update Button Feedback and Sticky Dialog Footer
 
-### Problem
-The country and phone prefix dropdowns in the onboarding wizard require scrolling through long lists with no way to search. This is frustrating for users trying to find a specific country or dial code.
+### Issues Identified
 
-### Approach
-Create two reusable searchable combobox components (based on the existing `CountryCombobox` pattern already used in `CompanyFormDialog.tsx`) and replace the current plain `Select` dropdowns in the onboarding wizard.
+1. **"Update" (Uppdatera) button** — The button calls `invalidateAll()` which silently re-fetches data. There's no visual feedback (no spinner, no toast), so it appears broken even though it's working. Fix: add a brief spinning animation on the refresh icon and a subtle toast confirmation.
 
-### New Components
+2. **Invite User dialog footer scrolls off-screen** — The dialog has `max-h-[90vh] overflow-y-auto` on the entire `DialogContent` (line 408), which means the Cancel and Invite User buttons scroll away with the content on small screens. Fix: restructure so the body content scrolls independently while the footer stays pinned at the bottom.
 
-**`src/components/ui/searchable-country-select.tsx`**
-- Popover + search input + scrollable list with flags
-- Shows priority countries (Romania, Thailand, Ukraine, Sweden) at top, separated by a divider
-- Supports optional error styling via a `hasError` prop
-- Reusable across the app
+### Changes
 
-**`src/components/ui/searchable-phone-prefix-select.tsx`**
-- Same popover pattern but for phone dial codes
-- Shows flag + dial code (e.g. 🇸🇪 +46)
-- Filters by country name or dial code
-- Priority prefixes at top
+**File: `src/components/dashboard/UserManagementView.tsx`**
 
-### Changes in `src/components/onboarding/OnboardingWizard.tsx`
+| Location | Change |
+|----------|--------|
+| ~line 1309 `invalidateAll` | Add a `refreshing` state that briefly shows a spinning icon on the Refresh button and shows a toast ("Data refreshed") on completion |
+| ~line 1334 Refresh button | Bind the `refreshing` state to animate the `RefreshCw` icon and disable the button during refresh |
+| ~line 408 `InviteUserDialog` DialogContent | Remove `overflow-y-auto` from DialogContent; wrap the form body (lines 458-578) in a `div` with `overflow-y-auto flex-1 min-h-0`; move `DialogFooter` outside the scrollable area so it stays pinned |
 
-Replace 5 dropdowns with the new searchable components:
-
-| Location | Field | Current | New |
-|----------|-------|---------|-----|
-| ~line 927 | Country (address) | `Select` | `SearchableCountrySelect` |
-| ~line 1030 | Country of Birth | `Select` | `SearchableCountrySelect` |
-| ~line 1044 | Citizenship | `Select` | `SearchableCountrySelect` |
-| ~line 1063 | Phone prefix | `Select` | `SearchablePhonePrefixSelect` |
-| ~line 1208 | Bank country | native `<select>` | `SearchableCountrySelect` (with "Other" option) |
-
-No logic changes — only the UI widget is swapped. All existing `updateField` callbacks and state management remain the same.
+### Result
+- The Refresh button will spin briefly and confirm "Data refreshed" so users know it worked
+- The Invite User dialog's Cancel and Invite buttons will always be visible at the bottom, with only the form content scrolling
 
