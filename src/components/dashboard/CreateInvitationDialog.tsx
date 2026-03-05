@@ -332,11 +332,12 @@ export function CreateInvitationDialog() {
           Create Invitation
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-lg font-semibold">New Invitation</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+        <form onSubmit={handleSubmit} className="flex flex-col overflow-hidden flex-1 min-h-0">
+          <div className="overflow-y-auto flex-1 min-h-0 space-y-5 pr-1 pt-2">
           {/* Invitation Type */}
           <div className="space-y-2">
             <Label htmlFor="type">Invitation Type</Label>
@@ -474,8 +475,7 @@ export function CreateInvitationDialog() {
             </>
           )}
 
-          {showPreview ? (
-            <div className="space-y-4">
+          {showPreview && (
               <EmailPreviewPanel
                 language={language}
                 recipientName={
@@ -485,6 +485,11 @@ export function CreateInvitationDialog() {
                 }
                 recipientEmail={type === "CONTRACT_RENEWAL" ? selectedEmployee?.email || "" : email}
               />
+          )}
+          </div>
+
+          <div className="shrink-0 border-t pt-4">
+          {showPreview ? (
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -504,7 +509,6 @@ export function CreateInvitationDialog() {
                   Send Invitation
                 </Button>
               </div>
-            </div>
           ) : (
             <Button
               type="button"
@@ -516,6 +520,7 @@ export function CreateInvitationDialog() {
               Preview Email
             </Button>
           )}
+          </div>
         </form>
       </DialogContent>
     </Dialog>
