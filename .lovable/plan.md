@@ -1,29 +1,30 @@
 
 
-## Plan: Expand Fallback Bank List to Match Full Database
+## Plan: Fix Bank List — Unique Constraint and Database Seeding
 
-### Problem
-The `FALLBACK_BANKS_BY_COUNTRY` hardcoded list in `OnboardingWizard.tsx` only contains 24 banks (4 Sweden, 7 Romania, 4 Thailand, 4 Moldova, 5 Ukraine). The database has 73 banks. When the database fetch fails or returns empty (e.g., in demo/preview mode without authentication, or if the RPC encounters an error), candidates only see the 24 fallback banks instead of the full list.
+### Root Cause
 
-Similarly, the `DEFAULT_BANKS` seed list in `BankListView.tsx` only has 24 entries.
+I found the problem. There are actually **two issues**:
 
-### Fix
+1. **Database constraint bug**: The `banks` table has a `UNIQUE(name)` constraint that is **not scoped to organization**. This means if org A already has "Nordea" in the database, org B cannot add "Nordea" — the insert fails silently. Your organization only has 15 banks in the database because the Seed Default Banks button fails for names that already exist in the other organization's records.
 
-**File: `src/components/onboarding/OnboardingWizard.tsx`**
+2. **Your organization needs re-seeding**: The 15 banks currently in the database for your organization were seeded with the old short list. After fixing the constraint, the Seed button needs to be pressed again to populate all 73 banks.
 
-Replace the `FALLBACK_BANKS_BY_COUNTRY` constant (lines 28-63) with the complete list of 73 banks matching the database:
+### Changes
 
-- **Sweden**: 11 banks (add Avanza, Danske Bank, ICA Banken, Lansforsakringar, SBAB, Skandia, Svenska Handelsbanken)
-- **Romania**: 24 banks (add all major Romanian banks: Banca Centrala Cooperatista, Garanti BBVA, Intesa Sanpaolo, Libra Internet Bank, Nexent Bank, Patria Bank, Revolut Bank, Salt Bank, TechVentures Bank, Vista Bank, etc.)
-- **Thailand**: 20 banks (add Bank of Ayudhya, CIMB Thai, Government banks, Islamic Bank, Kiatnakin Phatra, Land and Houses, Standard Chartered, TMBThanachart, United Overseas Bank, etc.)
-- **Moldova**: 13 banks (add BCR Chisinau, Comertbank, Energbank, EuroCreditBank, Eximbank, FinComBank, Mobiasbanca, ProCredit Bank)
-- **Ukraine**: 5 banks (unchanged)
+**1. Database migration**: Drop `UNIQUE(name)` constraint and replace with `UNIQUE(org_id, name)`
 
-**File: `src/components/dashboard/BankListView.tsx`**
+```sql
+ALTER TABLE public.banks DROP CONSTRAINT banks_name_unique;
+ALTER TABLE public.banks ADD CONSTRAINT banks_org_name_unique UNIQUE (org_id, name);
+```
 
-Update the `DEFAULT_BANKS` constant (lines 351-374) to match the same expanded list, so the "Seed Default Banks" button seeds all 73 banks.
+This allows each organization to independently maintain its own bank registry with the same bank names.
+
+**2. No code changes needed**: The `FALLBACK_BANKS_BY_COUNTRY` (73 banks) and `DEFAULT_BANKS` (73 banks) constants are already correctly expanded in the code. The `effectiveBanksByCountry` memo already merges fallback + DB banks. Once the constraint is fixed and banks are re-seeded, both the admin Bank List view and the onboarding invitation form will show the full list.
 
 ### Result
-- Candidates always see the full ~73 bank list regardless of whether the database fetch succeeds
-- The "Seed Default Banks" admin button populates the complete bank registry
+- The admin Bank List view will show all 73 banks after pressing "Seed Default Banks"
+- The onboarding form (both invitation token mode and preview mode) will show all banks via the merge of fallback + DB banks
+- Each organization can maintain its own independent bank registry
 
