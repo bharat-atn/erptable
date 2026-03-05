@@ -1,20 +1,32 @@
 
 
-## Plan: Sticky Footer for CreateInvitationDialog
+## Plan: Show All Banks in Onboarding Invitation
 
 ### Problem
-On low-resolution screens, the "Back" and "Send Invitation" buttons scroll off-screen in the Create Invitation dialog, making them inaccessible.
+When a candidate opens the onboarding form via an invitation token, the bank list only shows banks fetched from the database for that organization. If the organization hasn't seeded all banks, or if some banks are missing from the DB, the candidate sees an incomplete list. The fallback banks (hardcoded in `FALLBACK_BANKS_BY_COUNTRY`) are intentionally excluded in token mode (line 518 of OnboardingWizard.tsx).
 
-### Changes
+### Fix
 
-**File: `src/components/dashboard/CreateInvitationDialog.tsx`**
+**File: `src/components/onboarding/OnboardingWizard.tsx`**
 
-Apply the same sticky footer pattern used in the Invite User dialog:
+Change the `effectiveBanksByCountry` memo (lines 516-540) to **always merge** fallback banks with DB banks, regardless of whether it's token mode or not. This ensures candidates always see at least the standard banks for Sweden, Romania, Thailand, Moldova, and Ukraine, plus any additional banks the organization has registered.
 
-1. **DialogContent** (line 335): Add `max-h-[90vh] flex flex-col overflow-hidden`
-2. **Form element** (line 339): Change to `flex flex-col overflow-hidden flex-1 min-h-0` (remove `space-y-5`)
-3. **Scrollable body**: Wrap form fields (lines 340-475) and the email preview (lines 479-487) in a `div` with `overflow-y-auto flex-1 min-h-0 space-y-5 pr-1`
-4. **Footer buttons** (lines 488-517): Move outside the scrollable wrapper with `shrink-0 border-t pt-4` so they stay pinned at the bottom regardless of screen size
+Current logic:
+```typescript
+if (invitationToken && Object.keys(banksByCountry).length > 0) {
+  return banksByCountry; // Token mode: DB only, no fallback
+}
+// Demo/preview: merge fallback + DB
+```
 
-This affects both states: the preview state (Back + Send Invitation) and the initial state (Preview Email button).
+New logic:
+```typescript
+// Always merge fallback + DB banks (both token and demo/preview modes)
+const merged = {};
+mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
+mergeBanks(banksByCountry); // DB banks override fallback if same name
+return merged;
+```
+
+This is a single change (~5 lines) in the memo function. No other files need modification.
 
