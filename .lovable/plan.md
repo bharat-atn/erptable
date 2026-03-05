@@ -1,32 +1,29 @@
 
 
-## Plan: Show All Banks in Onboarding Invitation
+## Plan: Expand Fallback Bank List to Match Full Database
 
 ### Problem
-When a candidate opens the onboarding form via an invitation token, the bank list only shows banks fetched from the database for that organization. If the organization hasn't seeded all banks, or if some banks are missing from the DB, the candidate sees an incomplete list. The fallback banks (hardcoded in `FALLBACK_BANKS_BY_COUNTRY`) are intentionally excluded in token mode (line 518 of OnboardingWizard.tsx).
+The `FALLBACK_BANKS_BY_COUNTRY` hardcoded list in `OnboardingWizard.tsx` only contains 24 banks (4 Sweden, 7 Romania, 4 Thailand, 4 Moldova, 5 Ukraine). The database has 73 banks. When the database fetch fails or returns empty (e.g., in demo/preview mode without authentication, or if the RPC encounters an error), candidates only see the 24 fallback banks instead of the full list.
+
+Similarly, the `DEFAULT_BANKS` seed list in `BankListView.tsx` only has 24 entries.
 
 ### Fix
 
 **File: `src/components/onboarding/OnboardingWizard.tsx`**
 
-Change the `effectiveBanksByCountry` memo (lines 516-540) to **always merge** fallback banks with DB banks, regardless of whether it's token mode or not. This ensures candidates always see at least the standard banks for Sweden, Romania, Thailand, Moldova, and Ukraine, plus any additional banks the organization has registered.
+Replace the `FALLBACK_BANKS_BY_COUNTRY` constant (lines 28-63) with the complete list of 73 banks matching the database:
 
-Current logic:
-```typescript
-if (invitationToken && Object.keys(banksByCountry).length > 0) {
-  return banksByCountry; // Token mode: DB only, no fallback
-}
-// Demo/preview: merge fallback + DB
-```
+- **Sweden**: 11 banks (add Avanza, Danske Bank, ICA Banken, Lansforsakringar, SBAB, Skandia, Svenska Handelsbanken)
+- **Romania**: 24 banks (add all major Romanian banks: Banca Centrala Cooperatista, Garanti BBVA, Intesa Sanpaolo, Libra Internet Bank, Nexent Bank, Patria Bank, Revolut Bank, Salt Bank, TechVentures Bank, Vista Bank, etc.)
+- **Thailand**: 20 banks (add Bank of Ayudhya, CIMB Thai, Government banks, Islamic Bank, Kiatnakin Phatra, Land and Houses, Standard Chartered, TMBThanachart, United Overseas Bank, etc.)
+- **Moldova**: 13 banks (add BCR Chisinau, Comertbank, Energbank, EuroCreditBank, Eximbank, FinComBank, Mobiasbanca, ProCredit Bank)
+- **Ukraine**: 5 banks (unchanged)
 
-New logic:
-```typescript
-// Always merge fallback + DB banks (both token and demo/preview modes)
-const merged = {};
-mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
-mergeBanks(banksByCountry); // DB banks override fallback if same name
-return merged;
-```
+**File: `src/components/dashboard/BankListView.tsx`**
 
-This is a single change (~5 lines) in the memo function. No other files need modification.
+Update the `DEFAULT_BANKS` constant (lines 351-374) to match the same expanded list, so the "Seed Default Banks" button seeds all 73 banks.
+
+### Result
+- Candidates always see the full ~73 bank list regardless of whether the database fetch succeeds
+- The "Seed Default Banks" admin button populates the complete bank registry
 
