@@ -514,12 +514,7 @@ export function OnboardingWizard({
   const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
 
   const effectiveBanksByCountry = useMemo(() => {
-    // If we have token-fetched banks (real invitation), use ONLY those — no fallback mixing
-    if (invitationToken && Object.keys(banksByCountry).length > 0) {
-      return banksByCountry;
-    }
-
-    // Demo/preview mode: merge fallback + any DB banks
+    // Always merge fallback + DB banks (both token and demo/preview modes)
     const merged: Record<string, { name: string; bic_code: string | null }[]> = {};
 
     const mergeBanks = (source: Record<string, { name: string; bic_code: string | null }[]>) => {
@@ -534,10 +529,10 @@ export function OnboardingWizard({
     };
 
     mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
-    mergeBanks(banksByCountry);
+    mergeBanks(banksByCountry); // DB banks added on top of fallback
 
     return merged;
-  }, [banksByCountry, invitationToken]);
+  }, [banksByCountry]);
 
   // Only show countries that have banks registered — never all world countries
   const availableBankCountries = useMemo(() => {
