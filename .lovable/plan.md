@@ -1,29 +1,38 @@
 
 
-## Plan: Auto-fill Birth Country & Citizenship from Address Country
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-When the user selects an address country (e.g. Sweden or Poland), the "Country of Birth" and "Citizenship" fields remain empty, requiring manual selection.
+### Root Cause
 
-### Fix
-In `src/components/onboarding/OnboardingWizard.tsx`, update the address country `onValueChange` handler (line 975) to also set `countryOfBirth` and `citizenship` when they are currently empty.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-**Before:**
-```typescript
-onValueChange={(v) => updateField("country", v)}
-```
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**After:**
-```typescript
-onValueChange={(v) => {
-  updateField("country", v);
-  if (!formData.countryOfBirth) updateField("countryOfBirth", v);
-  if (!formData.citizenship) updateField("citizenship", v);
-}}
-```
+**1. Replace generic message with specific missing-condition checklist**
 
-This mirrors the existing pattern already used between `countryOfBirth` ↔ `citizenship` (lines 1074-1075, 1087-1088) where selecting one auto-fills the other if empty. The auto-fill is non-destructive — it only applies when the target field is blank.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-### File changed
-- `src/components/onboarding/OnboardingWizard.tsx` (1 line → 5 lines)
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
+
+This tells the user exactly what's blocking them.
+
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 

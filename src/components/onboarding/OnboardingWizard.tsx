@@ -972,7 +972,11 @@ export function OnboardingWizard({
                   <FieldLabel en="Country" sv="Land" />
                   <SearchableCountrySelect
                     value={formData.country}
-                    onValueChange={(v) => updateField("country", v)}
+                    onValueChange={(v) => {
+                      updateField("country", v);
+                      if (!formData.countryOfBirth) updateField("countryOfBirth", v);
+                      if (!formData.citizenship) updateField("citizenship", v);
+                    }}
                     placeholder="Select country"
                     hasError={validationAttempted && !formData.country}
                     tabIndex={10}
