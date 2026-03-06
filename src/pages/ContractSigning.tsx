@@ -590,55 +590,9 @@ export default function ContractSigning() {
                   </Alert>
                 )}
 
-                {canSign ? (
-                  pendingSignature ? (
-                    /* Signature preview & redo */
-                    <div className="space-y-4">
-                      <p className="text-sm font-medium">
-                        Review your signature / Granska din namnteckning:
-                      </p>
-                      <div className="rounded-lg border-2 border-primary/30 bg-background p-4">
-                        <img
-                          src={pendingSignature}
-                          alt="Your signature"
-                          className="max-h-[120px] mx-auto"
-                        />
-                      </div>
-                      <div className="flex gap-3 justify-end">
-                        <Button
-                          variant="outline"
-                          onClick={() => setPendingSignature(null)}
-                          disabled={submitting}
-                          className="gap-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Redo / Gör om
-                        </Button>
-                        <Button
-                          onClick={() => handleSign(pendingSignature)}
-                          disabled={submitting}
-                          className="gap-2"
-                        >
-                          {submitting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Send className="w-4 h-4" />
-                          )}
-                          {submitting ? "Submitting..." : "Submit Signature / Skicka in"}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm text-muted-foreground">
-                        Draw your signature below to sign the contract. /
-                        <span className="italic"> Rita din namnteckning nedan för att signera avtalet.</span>
-                      </p>
-                      <SignatureCanvas onSave={(dataUrl) => setPendingSignature(dataUrl)} disabled={submitting} />
-                    </>
-                  )
-                ) : (
-                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-6 space-y-3">
+                {/* Missing steps checklist (shown above canvas when not all done) */}
+                {!canSign && (
+                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-4 space-y-3">
                     <p className="text-sm font-medium text-foreground">
                       Complete these steps to sign / Slutför dessa steg för att signera:
                     </p>
@@ -646,6 +600,7 @@ export default function ContractSigning() {
                       {[
                         { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
                         { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
+                        ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat" }] : []),
                         { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-2">
@@ -657,18 +612,58 @@ export default function ContractSigning() {
                           <span className={cn(item.done ? "text-muted-foreground line-through" : "text-foreground")}>
                             {item.label}
                           </span>
-                          {"scrollTo" in item && item.scrollTo && !item.done && (
-                            <button
-                              onClick={scrollToSchedule}
-                              className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 ml-1"
-                            >
-                              ↑ Scroll up
-                            </button>
-                          )}
                         </li>
                       ))}
                     </ul>
                   </div>
+                )}
+
+                {/* Signature area — always visible, disabled until canSign */}
+                {pendingSignature ? (
+                  <div className="space-y-4">
+                    <p className="text-sm font-medium">
+                      Review your signature / Granska din namnteckning:
+                    </p>
+                    <div className="rounded-lg border-2 border-primary/30 bg-background p-4">
+                      <img
+                        src={pendingSignature}
+                        alt="Your signature"
+                        className="max-h-[120px] mx-auto"
+                      />
+                    </div>
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setPendingSignature(null)}
+                        disabled={submitting}
+                        className="gap-2"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Redo / Gör om
+                      </Button>
+                      <Button
+                        onClick={() => handleSign(pendingSignature)}
+                        disabled={submitting}
+                        className="gap-2"
+                      >
+                        {submitting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        {submitting ? "Submitting..." : "Submit Signature / Skicka in"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      {canSign
+                        ? "Draw your signature below to sign the contract. / Rita din namnteckning nedan för att signera avtalet."
+                        : "Complete the steps above to enable signing. / Slutför stegen ovan för att kunna signera."}
+                    </p>
+                    <SignatureCanvas onSave={(dataUrl) => setPendingSignature(dataUrl)} disabled={submitting || !canSign} />
+                  </>
                 )}
               </div>
             )}
