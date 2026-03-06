@@ -1,30 +1,37 @@
 
 
-## Plan: Fix Bank List — Unique Constraint and Database Seeding
+## Plan: Make Bank Seeding Robust and Self-Healing
 
-### Root Cause
+### Current State
 
-I found the problem. There are actually **two issues**:
+The database constraint is now fixed (`UNIQUE(org_id, name)` instead of `UNIQUE(name)`). However, one organization still has only 58 banks instead of 73 because the old constraint blocked seeding. The code has several weaknesses that allowed this to happen silently.
 
-1. **Database constraint bug**: The `banks` table has a `UNIQUE(name)` constraint that is **not scoped to organization**. This means if org A already has "Nordea" in the database, org B cannot add "Nordea" — the insert fails silently. Your organization only has 15 banks in the database because the Seed Default Banks button fails for names that already exist in the other organization's records.
+### Root Causes of Silent Bank Loss
 
-2. **Your organization needs re-seeding**: The 15 banks currently in the database for your organization were seeded with the old short list. After fixing the constraint, the Seed button needs to be pressed again to populate all 73 banks.
+1. **Seed function silently swallows errors**: In `BankListView.tsx` line 459, `if (!error) added++` means failed inserts are silently skipped with no warning to the user.
+2. **One-by-one inserts are fragile**: Banks are inserted individually in a loop, so partial failures leave the registry incomplete without any indication.
+3. **No verification after seeding**: The function never checks whether the final count matches the expected 73 banks.
 
 ### Changes
 
-**1. Database migration**: Drop `UNIQUE(name)` constraint and replace with `UNIQUE(org_id, name)`
+**1. `BankListView.tsx` — Rewrite `seedDefaultBanks` to use batch upsert with verification**
 
-```sql
-ALTER TABLE public.banks DROP CONSTRAINT banks_name_unique;
-ALTER TABLE public.banks ADD CONSTRAINT banks_org_name_unique UNIQUE (org_id, name);
-```
+Replace the current one-by-one insert loop with:
+- A single batch upsert using `.upsert()` with `onConflict: 'org_id,name'` so existing banks get their BIC codes updated rather than skipped.
+- After upsert, verify the total bank count matches `DEFAULT_BANKS.length` (73).
+- If the count is lower, show an explicit warning toast with the difference.
+- Show a summary toast: "73/73 banks verified" or "Added 15 new banks, updated 58 existing".
 
-This allows each organization to independently maintain its own bank registry with the same bank names.
+**2. `BankListView.tsx` — Add a count badge next to "Seed Default Banks" button**
 
-**2. No code changes needed**: The `FALLBACK_BANKS_BY_COUNTRY` (73 banks) and `DEFAULT_BANKS` (73 banks) constants are already correctly expanded in the code. The `effectiveBanksByCountry` memo already merges fallback + DB banks. Once the constraint is fixed and banks are re-seeded, both the admin Bank List view and the onboarding invitation form will show the full list.
+Show `{banks.length} / {DEFAULT_BANKS.length}` next to the seed button so admins can instantly see if the registry is incomplete.
+
+**3. `OnboardingWizard.tsx` — No changes needed**
+
+The fallback merge logic already ensures candidates always see all 73 banks regardless of what's in the database. This acts as a safety net.
 
 ### Result
-- The admin Bank List view will show all 73 banks after pressing "Seed Default Banks"
-- The onboarding form (both invitation token mode and preview mode) will show all banks via the merge of fallback + DB banks
-- Each organization can maintain its own independent bank registry
+- Pressing "Seed Default Banks" will upsert all 73 banks in one operation — no more silent partial failures
+- Admins can see at a glance whether their bank registry is complete
+- The fallback merge in the onboarding form continues to act as a safety net for candidates
 
