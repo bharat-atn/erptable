@@ -126,13 +126,26 @@ const defaultConfigItems: MenuItem[] = [
 const forestryMenuItems: MenuItem[] = [
 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
 { id: "forestry-projects", label: "Projects", icon: FolderKanban },
-{ id: "forestry-objects", label: "Objects", icon: MapPin },
+{ id: "gantt-view", label: "Gantt View", icon: BarChart3 },
+{ id: "kanban-board", label: "Kanban Board", icon: Layers },
 { id: "employee-register", label: "Employees", icon: Users },
 { id: "analytics", label: "Analytics", icon: BarChart3 }];
 
-const forestryOthersItems: MenuItem[] = [
-{ id: "audit-log", label: "Audit Log", icon: Shield },
+const forestrySettingsItems: MenuItem[] = [
 { id: "settings", label: "Settings", icon: Settings },
+{ id: "client-register", label: "Client Register", icon: Building2 },
+{ id: "forestry-objects", label: "Object Register", icon: MapPin },
+{ id: "project-id", label: "Project ID", icon: FileText },
+{ id: "comp-groups", label: "Comp. Groups", icon: Briefcase },
+{ id: "contract-data", label: "Contract Data", icon: Briefcase },
+{ id: "project-defaults", label: "Project Defaults", icon: Settings },
+{ id: "version-management", label: "Version Management", icon: GitBranch },
+{ id: "iso-standards", label: "ISO Standards", icon: Shield }];
+
+const forestryAuditItems: MenuItem[] = [
+{ id: "audit-log", label: "Audit Log", icon: Shield }];
+
+const forestryBottomItems: MenuItem[] = [
 { id: "process-guide", label: "Process Guide", icon: BookOpen }];
 
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
@@ -923,19 +936,22 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   const isForestry = appId === "forestry-project";
   const [menuItems, setMenuItems] = useState(() => loadOrder("menu", isForestry ? forestryMenuItems : defaultMenuItems));
-  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", isForestry ? [] : defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => loadOrder("config", isForestry ? forestryOthersItems : defaultConfigItems));
+  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", isForestry ? forestrySettingsItems : defaultSettingsItems));
+  const [configItems, setConfigItems] = useState(() => loadOrder("config", isForestry ? forestryAuditItems : defaultConfigItems));
+  const [bottomItems, setBottomItems] = useState(() => isForestry ? forestryBottomItems : []);
 
   // Reset menu items when app changes
   useEffect(() => {
     if (isForestry) {
       setMenuItems(loadOrder("forestry-menu", forestryMenuItems));
-      setSettingsItems([]);
-      setConfigItems(loadOrder("forestry-others", forestryOthersItems));
+      setSettingsItems(loadOrder("forestry-settings", forestrySettingsItems));
+      setConfigItems(loadOrder("forestry-audit", forestryAuditItems));
+      setBottomItems(forestryBottomItems);
     } else {
       setMenuItems(loadOrder("menu", defaultMenuItems));
       setSettingsItems(loadOrder("settings", defaultSettingsItems));
       setConfigItems(loadOrder("config", defaultConfigItems));
+      setBottomItems([]);
     }
   }, [appId, isForestry]);
 
@@ -979,6 +995,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const filteredMenuItems = filterByPermission(menuItems);
   const filteredSettingsItems = filterByPermission(settingsItems);
   const filteredConfigItems = filterByPermission(configItems);
+  const filteredBottomItems = filterByPermission(bottomItems);
 
   const { data: pendingCount } = useQuery({
     queryKey: ["pending-signatures-count"],
@@ -1082,7 +1099,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
                 {filteredConfigItems.length > 0 &&
               <>
-                    <GroupLabel label={t("group.others")} collapsed={collapsed} />
+                    <GroupLabel label={isForestry ? t("group.audit") : t("group.others")} collapsed={collapsed} />
                     <DraggableGroup
                   items={filteredConfigItems}
                   groupKey="config"
@@ -1092,6 +1109,21 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
                   collapsed={collapsed}
                   t={t} />
                 
+                  </>
+              }
+
+                {filteredBottomItems.length > 0 &&
+              <>
+                    {filteredBottomItems.map((item) => (
+                      <SidebarItem
+                        key={item.id}
+                        item={item}
+                        isActive={activeView === item.id}
+                        onViewChange={onViewChange}
+                        collapsed={collapsed}
+                        translatedLabel={t(`menu.${item.id}`)}
+                      />
+                    ))}
                   </>
               }
               </>

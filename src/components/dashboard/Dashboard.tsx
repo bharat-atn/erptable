@@ -30,6 +30,7 @@ import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -87,6 +88,26 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
         case "process-guide": return <ForestryProcessGuideView />;
+        case "contract-data": return <ContractDataRegistryView />;
+        case "version-management": return <VersionManagementView />;
+        case "iso-standards": return <IsoStandardsView />;
+        case "gantt-view":
+        case "kanban-board":
+        case "client-register":
+        case "project-id":
+        case "comp-groups":
+        case "project-defaults":
+          return (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="rounded-full bg-muted p-4 mb-4">
+                <Settings className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
+              <p className="text-muted-foreground max-w-md">
+                This module is currently under development and will be available in a future release.
+              </p>
+            </div>
+          );
         default: return <ForestryDashboardView onNavigate={setActiveView} />;
       }
     }

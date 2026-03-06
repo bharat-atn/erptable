@@ -27,6 +27,16 @@ const translations: Record<string, Record<UiLang, string>> = {
   "menu.user-management": { en: "Users", sv: "Användare", ro: "Utilizatori" },
   "menu.role-permissions": { en: "Role Permissions", sv: "Rollbehörigheter", ro: "Permisiuni roluri" },
   "menu.settings": { en: "Settings", sv: "Inställningar", ro: "Setări" },
+  "menu.forestry-projects": { en: "Projects", sv: "Projekt", ro: "Proiecte" },
+  "menu.forestry-objects": { en: "Objects", sv: "Objekt", ro: "Obiecte" },
+  "menu.analytics": { en: "Analytics", sv: "Analys", ro: "Analiză" },
+  "menu.gantt-view": { en: "Gantt View", sv: "Gantt-vy", ro: "Vizualizare Gantt" },
+  "menu.kanban-board": { en: "Kanban Board", sv: "Kanban-tavla", ro: "Tablou Kanban" },
+  "menu.client-register": { en: "Client Register", sv: "Kundregister", ro: "Registru clienți" },
+  "menu.project-id": { en: "Project ID", sv: "Projekt-ID", ro: "ID proiect" },
+  "menu.comp-groups": { en: "Comp. Groups", sv: "Komp. Grupper", ro: "Grupuri comp." },
+  "menu.project-defaults": { en: "Project Defaults", sv: "Projektstandard", ro: "Valori implicite proiect" },
+  "group.audit": { en: "Audit", sv: "Granskning", ro: "Audit" },
 
   // Common UI strings
   "ui.signOut": { en: "Sign Out", sv: "Logga ut", ro: "Deconectare" },
