@@ -8,6 +8,13 @@ import {
   type LangCode,
 } from "@/lib/contract-translations";
 
+interface SigningMetadata {
+  place?: string | null;
+  date?: string | null;
+  ip?: string | null;
+  signedAt?: string | null;
+}
+
 interface ContractDocumentProps {
   companyName: string;
   companyOrgNumber?: string | null;
@@ -21,6 +28,8 @@ interface ContractDocumentProps {
   employerSignatureUrl?: string | null;
   employeeSignedAt?: string | null;
   employerSignedAt?: string | null;
+  employeeSigningMetadata?: SigningMetadata | null;
+  employerSigningMetadata?: SigningMetadata | null;
 }
 
 function fmtDate(val: string | null | undefined): string {
