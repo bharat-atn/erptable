@@ -371,27 +371,26 @@ export default function ContractSigning() {
                   {/* Sentinel for scroll detection */}
                   <div ref={cocBottomRef} className="h-1" />
 
-                  {/* Review toggle - only enabled after scrolling past the document */}
-                  <div className="flex items-center justify-end">
-                    {cocReviewed ? (
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                        <Check className="w-4 h-4" /> Reviewed / Granskad
-                      </span>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!cocScrolledToBottom}
-                        onClick={() => setCocReviewed(true)}
-                        className="gap-1.5"
-                      >
-                        <Check className="w-4 h-4" />
-                        {cocScrolledToBottom
-                          ? "Mark as reviewed / Markera som granskad"
-                          : "Scroll through document first / Scrolla igenom dokumentet först"}
-                      </Button>
-                    )}
-                  </div>
+                  {/* Review toggle - hidden until user scrolls past the document */}
+                  {cocScrolledToBottom && (
+                    <div className="flex items-center justify-end">
+                      {cocReviewed ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                          <Check className="w-4 h-4" /> Reviewed / Granskad
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCocReviewed(true)}
+                          className="gap-1.5"
+                        >
+                          <Check className="w-4 h-4" />
+                          Mark as reviewed / Markera som granskad
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
