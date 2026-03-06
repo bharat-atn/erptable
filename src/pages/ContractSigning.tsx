@@ -546,8 +546,11 @@ export default function ContractSigning() {
                     </span>
                   </label>
                   <label
-                    className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => setCocConfirmed(!cocConfirmed)}
+                    className={cn(
+                      "flex items-start gap-3",
+                      cocReviewed ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                    )}
+                    onClick={() => { if (cocReviewed) setCocConfirmed(!cocConfirmed); }}
                   >
                     <div className={cn(
                       "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
@@ -558,6 +561,11 @@ export default function ContractSigning() {
                     <span className="text-sm">
                       I have read and understood the Code of Conduct. /
                       <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                      {!cocReviewed && (
+                        <span className="block text-xs text-muted-foreground mt-0.5">
+                          (Review the document above first / Granska dokumentet ovan först)
+                        </span>
+                      )}
                     </span>
                   </label>
                 </div>
