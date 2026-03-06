@@ -334,7 +334,6 @@ export default function ContractSigning() {
                       src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                       className="w-full h-[400px] sm:h-[500px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
-                      onLoad={() => setCocReviewed(true)}
                       style={{ border: "none" }}
                     />
                   </div>
