@@ -172,7 +172,7 @@ function SidebarItem({
             )}>
             
             {isActive &&
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
             }
             <item.icon className="w-4 h-4 shrink-0" />
             {badge && badge > 0 ?
@@ -200,10 +200,10 @@ function SidebarItem({
       )}>
       
       {isActive &&
-      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full" style={{ background: 'hsl(250 85% 45%)' }} />
+      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
       }
       <item.icon className="w-4 h-4 shrink-0" />
-      <span className="flex-1 text-left truncate text-primary">{label}</span>
+      <span className="flex-1 text-left truncate">{label}</span>
       {badge && badge > 0 ?
       <span className="w-5 h-5 rounded-full bg-amber-500 text-[10px] font-bold text-white flex items-center justify-center shrink-0">
           {badge}
