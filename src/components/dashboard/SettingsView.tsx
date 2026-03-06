@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building, Bell, Shield, PenTool, Loader2, Trash2, Upload } from "lucide-react";
+import { IssueManagementSettings } from "./IssueManagementSettings";
 import { toast } from "sonner";
 
 export function SettingsView() {
@@ -210,6 +211,9 @@ export function SettingsView() {
             )}
           </CardContent>
         </Card>
+
+        {/* Issue Management */}
+        <IssueManagementSettings />
 
         <Card>
           <CardHeader>
