@@ -57,13 +57,13 @@
     /* Sidebar - White / Light */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 15% 30%;
-    --sidebar-primary: 250 80% 58%;
+    --sidebar-primary: 217 91% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 250 40% 96%;
-    --sidebar-accent-foreground: 250 80% 58%;
+    --sidebar-accent: 217 40% 96%;
+    --sidebar-accent-foreground: 217 91% 53%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 250 80% 58%;
-    --sidebar-primary-dark: 250 85% 45%;
+    --sidebar-ring: 217 91% 53%;
+    --sidebar-primary-dark: 217 91% 40%;
 
     /* Chart colors */
     --chart-1: 217 91% 53%;
