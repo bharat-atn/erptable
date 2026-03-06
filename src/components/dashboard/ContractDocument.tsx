@@ -506,7 +506,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           <div className="sig-grid">
             <div className="sig-column">
               <div className="sig-field">
-                <div className="sig-line" />
+                <div className="sig-line">
+                  {employerSigningMetadata?.place && employerSigningMetadata?.date && (
+                    <span className="sig-prefill">{employerSigningMetadata.place}, {employerSigningMetadata.date}</span>
+                  )}
+                </div>
                 <span className="sig-label">{bl(CL.placeAndDate, lang)}</span>
               </div>
               <div className="sig-field">
@@ -523,7 +527,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
             </div>
             <div className="sig-column">
               <div className="sig-field">
-                <div className="sig-line" />
+                <div className="sig-line">
+                  {employeeSigningMetadata?.place && employeeSigningMetadata?.date && (
+                    <span className="sig-prefill">{employeeSigningMetadata.place}, {employeeSigningMetadata.date}</span>
+                  )}
+                </div>
                 <span className="sig-label">{bl(CL.placeAndDate, lang)}</span>
               </div>
               <div className="sig-field">

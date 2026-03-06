@@ -212,7 +212,7 @@ export default function ContractSigning() {
     try {
       const { data: result, error: fnErr } = await supabase.functions.invoke(
         "upload-employee-signature",
-        { body: { token, signatureDataUrl: dataUrl } }
+        { body: { token, signatureDataUrl: dataUrl, signingPlace, signingDate } }
       );
 
       if (fnErr) throw fnErr;

@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,13 +6,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function sha256Hex(data: string): Promise<string> {
+  const encoded = new TextEncoder().encode(data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { token, signatureDataUrl } = await req.json();
+    const { token, signatureDataUrl, signingPlace, signingDate } = await req.json();
 
     if (!token || typeof token !== "string" || token.length < 10) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
@@ -27,6 +35,14 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Capture IP and User Agent server-side (eIDAS SES metadata)
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || "unknown";
 
     // Use service role to bypass RLS
     const supabaseAdmin = createClient(
@@ -92,10 +108,30 @@ Deno.serve(async (req) => {
       .from("signatures")
       .getPublicUrl(filePath);
 
-    // Submit signature via RPC (uses service role, bypasses RLS)
+    // Compute SHA-256 content hash of form_data for tamper evidence
+    const contentHash = contract.form_data
+      ? `sha256:${await sha256Hex(JSON.stringify(contract.form_data))}`
+      : null;
+
+    // Build eIDAS SES signing metadata
+    const signingMetadata = {
+      ip: clientIp,
+      userAgent,
+      place: signingPlace || null,
+      date: signingDate || null,
+      consentText: "I have read and agree to the contract terms. I have read and understood the Code of Conduct.",
+      contentHash,
+      signedAt: new Date().toISOString(),
+    };
+
+    // Submit signature via RPC with metadata
     const { error: submitErr } = await supabaseAdmin.rpc(
       "submit_employee_signature",
-      { _token: token, _signature_url: urlData.publicUrl }
+      {
+        _token: token,
+        _signature_url: urlData.publicUrl,
+        _signing_metadata: signingMetadata,
+      }
     );
 
     if (submitErr) {
