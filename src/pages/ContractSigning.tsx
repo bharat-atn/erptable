@@ -168,17 +168,18 @@ export default function ContractSigning() {
   const scheduleCardRef = useRef<HTMLDivElement>(null);
   const scheduleBottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-detect when user scrolls past the CoC document bottom
+  // Auto-detect when user scrolls to the bottom of the CoC scrollable container
   useEffect(() => {
     const el = cocBottomRef.current;
-    if (!el || cocScrolledToBottom) return;
+    const root = cocScrollContainerRef.current;
+    if (!el || !root || cocScrolledToBottom) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setCocScrolledToBottom(true);
         }
       },
-      { threshold: 0.5 }
+      { root, threshold: 0.5 }
     );
     observer.observe(el);
     return () => observer.disconnect();
