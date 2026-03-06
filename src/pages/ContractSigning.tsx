@@ -612,10 +612,8 @@ export default function ContractSigning() {
                     </p>
                     <ul className="space-y-2 text-sm">
                       {[
-                        { done: cocReviewed, label: "Review Code of Conduct / Granska uppförandekoden" },
                         { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
                         { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
-                        ...(schedData ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat", scrollTo: true }] : []),
                         { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-2">
