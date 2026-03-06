@@ -1,27 +1,125 @@
 
 
-## Plan: Fix Sidebar Active Item Styling
+## Plan: Build Forestry Project Manager — Foundation
 
-### Problem
-Two styling issues in the `SidebarItem` component (`Sidebar.tsx`):
+This is a large feature, so I propose building it incrementally. This first phase delivers the core foundation: a working app with a Dashboard, a Projects view with CRUD, and proper sidebar navigation. Future phases will add Gantt View, Kanban Board, Analytics, and other advanced features.
 
-1. **Text not white when active**: Line 206 has `text-primary` hardcoded on the label `<span>`, which forces it to blue (`217 91% 53%`) even when the parent button sets `text-sidebar-primary-foreground` (white). The label overrides the inherited white color.
+### Database Changes (Migration)
 
-2. **Active background is violet, not blue**: `--sidebar-primary` is set to `250 80% 58%` (blue-violet) in `index.css`, but the design system primary is `217 91% 53%` (deep blue). The sidebar active highlight should match this blue.
+**1. `forestry_projects` table**
+Stores project records per organization.
 
-### Changes
+```sql
+CREATE TABLE public.forestry_projects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  project_id_display TEXT NOT NULL,          -- e.g. "PJ-26-0001"
+  name TEXT NOT NULL,
+  description TEXT,
+  type TEXT NOT NULL DEFAULT 'clearing',      -- clearing, planting, mixed
+  status TEXT NOT NULL DEFAULT 'setup',       -- setup, planning, in_progress, payroll_ready, completed
+  location TEXT,
+  client TEXT,
+  start_date DATE,
+  end_date DATE,
+  budget NUMERIC(12,2) DEFAULT 0,
+  revenue NUMERIC(12,2) DEFAULT 0,
+  cost NUMERIC(12,2) DEFAULT 0,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-**1. `src/index.css`** — Update sidebar-primary to match the primary blue:
-- Change `--sidebar-primary: 250 80% 58%` → `--sidebar-primary: 217 91% 53%` (same as `--primary`)
-- Update `--sidebar-primary-dark` and related accent colors to match the blue family
+ALTER TABLE public.forestry_projects ENABLE ROW LEVEL SECURITY;
 
-**2. `src/components/dashboard/Sidebar.tsx`** — Fix text color inheritance:
-- Line 206: Remove `text-primary` from the label span so it inherits the white `text-sidebar-primary-foreground` from the parent when active
-- Ensure non-active items keep their current foreground color via the parent's `text-sidebar-foreground`
-- Update the left accent bar (lines 175, 203) from `hsl(250 85% 45%)` to use the primary blue
+-- RLS: org members can read their org's projects
+CREATE POLICY "Org members can view projects"
+  ON public.forestry_projects FOR SELECT TO authenticated
+  USING (org_id IN (SELECT org_id FROM public.organization_members WHERE user_id = auth.uid()));
+
+CREATE POLICY "Org members can insert projects"
+  ON public.forestry_projects FOR INSERT TO authenticated
+  WITH CHECK (org_id IN (SELECT org_id FROM public.organization_members WHERE user_id = auth.uid()));
+
+CREATE POLICY "Org members can update projects"
+  ON public.forestry_projects FOR UPDATE TO authenticated
+  USING (org_id IN (SELECT org_id FROM public.organization_members WHERE user_id = auth.uid()));
+
+CREATE POLICY "Org members can delete projects"
+  ON public.forestry_projects FOR DELETE TO authenticated
+  USING (org_id IN (SELECT org_id FROM public.organization_members WHERE user_id = auth.uid()));
+```
+
+**2. `forestry_tasks` table**
+Tasks assigned within a project.
+
+```sql
+CREATE TABLE public.forestry_tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES public.forestry_projects(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',     -- pending, in_progress, completed
+  priority TEXT NOT NULL DEFAULT 'medium',    -- low, medium, high, urgent
+  assigned_to UUID REFERENCES auth.users(id),
+  due_date DATE,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.forestry_tasks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Org members can manage tasks"
+  ON public.forestry_tasks FOR ALL TO authenticated
+  USING (project_id IN (
+    SELECT id FROM public.forestry_projects
+    WHERE org_id IN (SELECT org_id FROM public.organization_members WHERE user_id = auth.uid())
+  ));
+```
+
+### Frontend Changes
+
+**1. Enable the app** — `AppLauncher.tsx`
+- Set `available: true` for the `forestry-project` app definition.
+
+**2. Update sidebar registry** — `sidebar-registry.ts`
+- Update the forestry-project items to match the new views: Dashboard, Projects, Employees, Analytics, Audit Log, Settings, Process Guide. Remove placeholder items (work-orders, field-reports, map-view, etc.) that are not being built yet.
+
+**3. Add sidebar menu items** — `Sidebar.tsx`
+- Add a new conditional branch for `appId === "forestry-project"` with the correct menu items and icons (LayoutDashboard, FolderKanban, Users, BarChart3, etc.).
+
+**4. Create `ForestryDashboardView.tsx`** (new component)
+Inspired by the screenshot, includes:
+- **Warning & Attention row**: Overdue projects, setup projects, pending tasks, task completion rate.
+- **Notifications & Status row**: Total projects, active, planning, assignments.
+- **Financial & Information row**: Completed, total revenue, total profit, avg duration, high-value count.
+- Search bar with status filters (All, Setup, Planning, In Progress, Payroll Ready, Completed) and type filters (All, Clearing, Planting, Mixed).
+- Projects list table with project ID, name, location, client, status badge.
+- Recent Activity and Upcoming Tasks panels.
+- All data fetched from `forestry_projects` and `forestry_tasks`.
+
+**5. Create `ForestryProjectsView.tsx`** (new component)
+- Full CRUD table for projects.
+- Create/Edit dialog with fields: name, description, type, status, location, client, start/end dates, budget.
+- Delete with confirmation.
+- Search, filter by status/type, pagination.
+
+**6. Create `ForestryProjectFormDialog.tsx`** (new component)
+- Reusable form dialog for creating and editing projects.
+
+**7. Wire into `Dashboard.tsx`**
+- Import and render ForestryDashboardView and ForestryProjectsView in the `renderView` switch, gated by `appId === "forestry-project"`.
+
+**8. Remove TeaserDialog trigger** for forestry-project
+- Since the app is now real, clicking it should open the dashboard instead of showing the teaser.
+
+### What is NOT included in this phase
+- Gantt View, Kanban Board (future phase)
+- AI System Insights section (future phase)
+- Map View, Equipment, Site Register (future phase)
+- Forestry-specific Settings view (will reuse existing Settings for now)
 
 ### Result
-- Active sidebar items: blue background with white text
-- Non-active items: unchanged dark text with hover effect
-- Left accent indicator matches the blue theme
+The Forestry Project Manager becomes a functional app with a rich dashboard and full project CRUD, accessible from the App Launcher. The sidebar shows the correct navigation items with proper role-based access.
 
