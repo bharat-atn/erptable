@@ -1,67 +1,38 @@
 
-Problem confirmed from live data:
-- Multiple contracts were sent with `company_id = null`.
-- The signing RPC (`get_contract_for_signing`) reads employer fields only from `contracts.company_id -> companies`, so employer data becomes blank on the signing page.
-- This can happen when resuming drafts (company shown in UI state) without persisting `company_id` back to the contract before sending.
 
-Implementation plan (prevent + self-heal + fallback):
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-1) Prevent missing employer data before send (HR side)
-- File: `src/components/dashboard/ContractDetailsStep.tsx`
-- In `handleSendForSigning`, update contract with:
-  - `company_id: company.id`
-  - `form_data.companySnapshot` (name, org_number, address, postcode, city)
-  - existing `form_data`
-- Add explicit pre-send validation for required employer fields:
-  - name, org number, address, postcode, city
-- Disable “Send for E-Signing” if employer data is incomplete and show a clear blocking warning.
+### Root Cause
 
-2) Make sending function fail-safe and ordered
-- File: `supabase/functions/send-signing-email/index.ts`
-- Refactor flow:
-  1. Load contract + employer context first (do not set signing status yet).
-  2. If `company_id` missing: try resolve a default company for `org_id`.
-  3. Build/persist `companySnapshot` on contract.
-  4. Validate required employer fields; if incomplete, return 422 with actionable message.
-  5. Only then generate token and set `signing_status = sent_to_employee`.
-- This guarantees no tokenized signing link is issued for incomplete employer data.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-3) Add backend fallback for already-issued links
-- Migration: update `public.get_contract_for_signing(_token)`
-- Return employer fields using fallback chain:
-  - `companies.*`
-  - `contracts.form_data.companySnapshot.*`
-  - `organizations.*` (last fallback)
-- This immediately improves existing links where company relation is missing.
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-4) Fix contract creation so future drafts start with employer linked
-- Migration: update `public.submit_onboarding(...)`
-- When inserting contract, set `company_id` to first company in the same org (if available), instead of always null.
-- Keep current org isolation behavior unchanged.
+**1. Replace generic message with specific missing-condition checklist**
 
-5) Ensure new organizations always get an initial company record
-- File: `src/components/dashboard/CreateOrganizationDialog.tsx`
-- After organization creation, also insert a company row seeded from org details.
-- This removes the “org exists but no company source exists” condition.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-6) One-time data remediation migration
-- Create missing company rows for orgs that have none (seed from organization fields).
-- Backfill `contracts.company_id` where null using org default company.
-- Backfill `form_data.companySnapshot` for contracts missing snapshot.
-- Scope to safe, idempotent updates.
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-Technical details (concise):
-- Required employer fields for sending/signing validity:
-  - `name`, `org_number`, `address`, `postcode`, `city`
-- Snapshot shape (inside `form_data`):
-  - `companySnapshot: { name, orgNumber, address, postcode, city }`
-- SQL fallback idea in `get_contract_for_signing`:
-  - `coalesce(co.name, c.form_data->'companySnapshot'->>'name', o.name)` etc.
-- No changes to auth model or RLS policies needed for this fix.
+This tells the user exactly what's blocking them.
 
-Validation checklist after implementation:
-1. Resume an old draft with null `company_id` and send for signing → employer data appears correctly on `/sign/:token`.
-2. Try sending with missing employer fields → blocked with clear error, no token/status change.
-3. New onboarding submission creates draft with populated `company_id` when org company exists.
-4. Existing already-sent contracts with missing company relation now show fallback employer data on signing page.
-5. End-to-end test: Create invitation → onboarding submit → complete contract → send signing link → review/sign on candidate page with employer section fully populated.
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+

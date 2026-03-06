@@ -463,19 +463,43 @@ export function ContractDetailsStep({
   }, [contractId]);
 
   const handleSendForSigning = async () => {
+    // Pre-send validation: employer data must be complete
+    if (!company) {
+      toast.error("No company selected. Please select a company before sending for signing.");
+      return;
+    }
+    const missingFields: string[] = [];
+    if (!company.name) missingFields.push("Company name");
+    if (!company.org_number) missingFields.push("Org number");
+    if (!company.address) missingFields.push("Address");
+    if (!company.postcode) missingFields.push("Postcode");
+    if (!company.city) missingFields.push("City");
+    if (missingFields.length > 0) {
+      toast.error(`Employer data incomplete: ${missingFields.join(", ")}. Please complete the company register first.`);
+      return;
+    }
+
     setSendingForSigning(true);
     try {
-      // Force-save the latest form data before sending for signing
-      // so the signing page always shows the most up-to-date contract
-      const currentFormData = getFormData();
+      // Build companySnapshot and persist company_id + form_data before sending
+      const companySnapshot = {
+        name: company.name,
+        orgNumber: company.org_number,
+        address: company.address,
+        postcode: company.postcode,
+        city: company.city,
+      };
+      const currentFormData = { ...getFormData(), companySnapshot };
       const { error: saveErr } = await supabase
         .from("contracts")
-        .update({ form_data: currentFormData })
+        .update({
+          form_data: currentFormData,
+          company_id: company.id,
+        })
         .eq("id", contractId)
         .eq("signing_status", "not_sent");
       if (saveErr) {
         console.warn("Pre-send save failed:", saveErr);
-        // Continue anyway — existing saved data will be used
       }
 
       const { data, error } = await supabase.functions.invoke("send-signing-email", {

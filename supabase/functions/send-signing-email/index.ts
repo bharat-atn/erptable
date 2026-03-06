@@ -20,7 +20,7 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-    // --- Auth check: require authenticated HR user ---
+    // --- Auth check ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -46,9 +46,7 @@ serve(async (req) => {
       });
     }
 
-    // --- Use service role for data operations ---
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-
     const { contractId } = await req.json();
 
     if (!contractId) {
@@ -58,10 +56,79 @@ serve(async (req) => {
       });
     }
 
-    // Generate signing token
+    // --- Step 1: Load contract + employer context BEFORE changing status ---
+    const { data: contract, error: loadErr } = await supabase
+      .from("contracts")
+      .select("employee_id, contract_code, org_id, company_id, form_data, employees(email, first_name, last_name), companies(id, name, org_number, address, postcode, city)")
+      .eq("id", contractId)
+      .single();
+
+    if (loadErr || !contract) throw new Error("Contract not found");
+
+    let companyId = contract.company_id;
+    let companyData = (contract as any).companies;
+
+    // --- Step 2: If company_id missing, resolve default company for this org ---
+    if (!companyId || !companyData) {
+      const { data: defaultCompany } = await supabase
+        .from("companies")
+        .select("id, name, org_number, address, postcode, city")
+        .eq("org_id", contract.org_id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (defaultCompany) {
+        companyId = defaultCompany.id;
+        companyData = defaultCompany;
+        // Persist the resolved company_id
+        await supabase.from("contracts").update({ company_id: companyId }).eq("id", contractId);
+      }
+    }
+
+    // --- Step 3: Build companySnapshot ---
+    const companyName = companyData?.name || "";
+    const companyOrgNumber = companyData?.org_number || "";
+    const companyAddress = companyData?.address || "";
+    const companyPostcode = companyData?.postcode || "";
+    const companyCity = companyData?.city || "";
+
+    // If we have company data, persist snapshot into form_data
+    if (companyName) {
+      const existingFormData = contract.form_data || {};
+      const updatedFormData = {
+        ...existingFormData,
+        companySnapshot: {
+          name: companyName,
+          orgNumber: companyOrgNumber,
+          address: companyAddress,
+          postcode: companyPostcode,
+          city: companyCity,
+        },
+      };
+      await supabase.from("contracts").update({ form_data: updatedFormData }).eq("id", contractId);
+    }
+
+    // --- Step 4: Validate required employer fields ---
+    const missingFields: string[] = [];
+    if (!companyName) missingFields.push("Company name");
+    if (!companyOrgNumber) missingFields.push("Org number");
+    if (!companyAddress) missingFields.push("Address");
+    if (!companyPostcode) missingFields.push("Postcode");
+    if (!companyCity) missingFields.push("City");
+
+    if (missingFields.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: `Employer data incomplete. Missing: ${missingFields.join(", ")}. Please complete the company register before sending.`,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // --- Step 5: Generate token and update status ---
     const signingToken = crypto.randomUUID() + crypto.randomUUID();
 
-    // Update contract with token and status
     const { error: updateErr } = await supabase
       .from("contracts")
       .update({
@@ -73,26 +140,13 @@ serve(async (req) => {
 
     if (updateErr) throw updateErr;
 
-    // Get employee & company info
-    const { data: contract } = await supabase
-      .from("contracts")
-      .select("employee_id, contract_code, org_id, employees(email, first_name, last_name), companies(name)")
-      .eq("id", contractId)
-      .single();
-
-    if (!contract) throw new Error("Contract not found");
-
     const employee = (contract as any).employees;
-    const company = (contract as any).companies;
     const employeeEmail = employee?.email;
     const employeeName = `${employee?.first_name || ""} ${employee?.last_name || ""}`.trim();
-    const companyName = company?.name || "Employer";
     const contractCode = contract.contract_code;
-
-    // Build signing URL using published domain
     const fullSigningUrl = `${PUBLISHED_DOMAIN}/sign/${signingToken}`;
 
-    // Attempt to send email via Resend
+    // --- Send email via Resend ---
     let emailSent = false;
     if (resendApiKey && employeeEmail) {
       try {
@@ -106,55 +160,7 @@ serve(async (req) => {
             from: "Ljungan Forestry <contracts@mail.erptable.com>",
             to: [employeeEmail],
             subject: `Employment Contract Ready for Signing – ${companyName}`,
-            html: `
-              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 24px;">
-                  <h2 style="color: #1a1a1a; margin: 0;">Employment Contract</h2>
-                  <p style="color: #666; font-size: 14px; margin: 4px 0 0;">Anställningsavtal</p>
-                </div>
-                
-                <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                  <p style="margin: 0 0 8px; color: #333;">
-                    Dear <strong>${employeeName || "Employee"}</strong>,
-                  </p>
-                  <p style="margin: 0 0 8px; color: #333; font-size: 14px;">
-                    Your employment contract${contractCode ? ` (${contractCode})` : ""} with <strong>${companyName}</strong> is ready for your review and signature.
-                  </p>
-                  <p style="margin: 0; color: #666; font-size: 13px; font-style: italic;">
-                    Ditt anställningsavtal${contractCode ? ` (${contractCode})` : ""} hos ${companyName} är redo för granskning och signering.
-                  </p>
-                </div>
-
-                <p style="color: #333; font-size: 14px; margin-bottom: 8px;">
-                  Please click the button below to review and sign your contract:
-                </p>
-                <p style="color: #666; font-size: 13px; font-style: italic; margin-bottom: 20px;">
-                  Klicka på knappen nedan för att granska och signera ditt avtal:
-                </p>
-
-                <div style="text-align: center; margin: 24px 0;">
-                  <a href="${fullSigningUrl}" 
-                     style="display: inline-block; background: #16a34a; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
-                    Review & Sign Contract / Granska & Signera Avtal
-                  </a>
-                </div>
-
-                <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 24px;">
-                  <p style="color: #999; font-size: 12px; margin: 0 0 4px;">
-                    If the button doesn't work, copy and paste this link into your browser:
-                  </p>
-                  <p style="color: #666; font-size: 12px; word-break: break-all; margin: 0;">
-                    ${fullSigningUrl}
-                  </p>
-                </div>
-
-                <div style="margin-top: 24px; padding: 12px; background: #fffbeb; border-radius: 6px; border: 1px solid #fde68a;">
-                  <p style="color: #92400e; font-size: 12px; margin: 0;">
-                    ⚠️ This link is personal and should not be shared. / Denna länk är personlig och bör inte delas.
-                  </p>
-                </div>
-              </div>
-            `,
+            html: buildSigningEmailHtml(employeeName, companyName, contractCode, fullSigningUrl),
           }),
         });
 
@@ -172,7 +178,7 @@ serve(async (req) => {
       console.log("Resend not configured or no employee email — skipping email delivery");
     }
 
-    // Audit log entry
+    // --- Audit log ---
     const callerId = claimsData.claims.sub;
     const { data: callerProfile } = await supabase
       .from("profiles")
@@ -180,7 +186,7 @@ serve(async (req) => {
       .eq("user_id", callerId)
       .maybeSingle();
     const callerEmail = callerProfile?.full_name || callerId;
-    
+
     try {
       await supabase.from("audit_log").insert({
         user_id: callerId,
@@ -207,19 +213,40 @@ serve(async (req) => {
         companyName,
         contractCode,
       }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Error:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Internal error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
+
+function buildSigningEmailHtml(employeeName: string, companyName: string, contractCode: string | null, fullSigningUrl: string): string {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #1a1a1a; margin: 0;">Employment Contract</h2>
+        <p style="color: #666; font-size: 14px; margin: 4px 0 0;">Anställningsavtal</p>
+      </div>
+      <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px; color: #333;">Dear <strong>${employeeName || "Employee"}</strong>,</p>
+        <p style="margin: 0 0 8px; color: #333; font-size: 14px;">Your employment contract${contractCode ? ` (${contractCode})` : ""} with <strong>${companyName}</strong> is ready for your review and signature.</p>
+        <p style="margin: 0; color: #666; font-size: 13px; font-style: italic;">Ditt anställningsavtal${contractCode ? ` (${contractCode})` : ""} hos ${companyName} är redo för granskning och signering.</p>
+      </div>
+      <p style="color: #333; font-size: 14px; margin-bottom: 8px;">Please click the button below to review and sign your contract:</p>
+      <p style="color: #666; font-size: 13px; font-style: italic; margin-bottom: 20px;">Klicka på knappen nedan för att granska och signera ditt avtal:</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${fullSigningUrl}" style="display: inline-block; background: #16a34a; color: #fff; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">Review & Sign Contract / Granska & Signera Avtal</a>
+      </div>
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 24px;">
+        <p style="color: #999; font-size: 12px; margin: 0 0 4px;">If the button doesn't work, copy and paste this link into your browser:</p>
+        <p style="color: #666; font-size: 12px; word-break: break-all; margin: 0;">${fullSigningUrl}</p>
+      </div>
+      <div style="margin-top: 24px; padding: 12px; background: #fffbeb; border-radius: 6px; border: 1px solid #fde68a;">
+        <p style="color: #92400e; font-size: 12px; margin: 0;">⚠️ This link is personal and should not be shared. / Denna länk är personlig och bör inte delas.</p>
+      </div>
+    </div>`;
+}
