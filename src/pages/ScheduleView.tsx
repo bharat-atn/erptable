@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, AlertTriangle, Calendar, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/ljungan-forestry-logo.png";
+import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 
 interface ScheduleDay {
   schedule_date: string;

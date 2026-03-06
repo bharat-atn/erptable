@@ -356,6 +356,7 @@ export default function ContractSigning() {
                       {/* Scrollable container — user must scroll to bottom to reveal confirmation */}
                       <div
                         ref={cocScrollContainerRef}
+                        onScroll={handleCocScroll}
                         className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto"
                       >
                         <iframe
@@ -365,8 +366,6 @@ export default function ContractSigning() {
                           style={{ border: "none", height: "900px" }}
                           title={`Code of Conduct - ${selectedCocLang.label}`}
                         />
-                        {/* Sentinel — only visible when user scrolls container to bottom */}
-                        <div ref={cocBottomRef} className="h-1" />
                       </div>
 
                       <div className="flex items-center gap-3">
