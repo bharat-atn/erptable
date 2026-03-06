@@ -147,7 +147,6 @@ export default function ContractSigning() {
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
   const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
-  const [cocReviewed, setCocReviewed] = useState(false);
   const cocBottomRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
@@ -270,7 +269,7 @@ export default function ContractSigning() {
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const canSign = cocReviewed && cocConfirmed && contractConfirmed && signingPlace.trim().length > 0;
+  const canSign = cocConfirmed && contractConfirmed && signingPlace.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
@@ -319,7 +318,7 @@ export default function ContractSigning() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocReviewed(false); setCocScrolledToBottom(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocScrolledToBottom(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
@@ -351,7 +350,7 @@ export default function ContractSigning() {
                     <iframe
                       key={cocLanguage}
                       src={selectedCocLang.file}
-                      className="w-full h-[400px] sm:h-[500px]"
+                      className="w-full h-[600px] sm:h-[700px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       style={{ border: "none" }}
                     />
@@ -371,25 +370,23 @@ export default function ContractSigning() {
                   {/* Sentinel for scroll detection */}
                   <div ref={cocBottomRef} className="h-1" />
 
-                  {/* Review toggle - hidden until user scrolls past the document */}
+                  {/* CoC confirmation checkbox - hidden until user scrolls past the document */}
                   {cocScrolledToBottom && (
-                    <div className="flex items-center justify-end">
-                      {cocReviewed ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                          <Check className="w-4 h-4" /> Reviewed / Granskad
-                        </span>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCocReviewed(true)}
-                          className="gap-1.5"
-                        >
-                          <Check className="w-4 h-4" />
-                          Mark as reviewed / Markera som granskad
-                        </Button>
-                      )}
-                    </div>
+                    <label
+                      className="flex items-start gap-3 cursor-pointer rounded-lg border border-border bg-muted/20 p-4"
+                      onClick={() => setCocConfirmed(!cocConfirmed)}
+                    >
+                      <div className={cn(
+                        "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                        cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
+                      )}>
+                        {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <span className="text-sm">
+                        I have read and understood the Code of Conduct. /
+                        <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                      </span>
+                    </label>
                   )}
                 </div>
               )}
@@ -544,23 +541,6 @@ export default function ContractSigning() {
                       <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
                     </span>
                   </label>
-                  {cocReviewed && (
-                    <label
-                      className="flex items-start gap-3 cursor-pointer"
-                      onClick={() => setCocConfirmed(!cocConfirmed)}
-                    >
-                      <div className={cn(
-                        "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                        cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
-                      )}>
-                        {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                      </div>
-                      <span className="text-sm">
-                        I have read and understood the Code of Conduct. /
-                        <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                      </span>
-                    </label>
-                  )}
                 </div>
 
                 {/* Place & Date fields */}
