@@ -1,37 +1,27 @@
 
 
-## Plan: Make Bank Seeding Robust and Self-Healing
+## Plan: Fix Sidebar Active Item Styling
 
-### Current State
+### Problem
+Two styling issues in the `SidebarItem` component (`Sidebar.tsx`):
 
-The database constraint is now fixed (`UNIQUE(org_id, name)` instead of `UNIQUE(name)`). However, one organization still has only 58 banks instead of 73 because the old constraint blocked seeding. The code has several weaknesses that allowed this to happen silently.
+1. **Text not white when active**: Line 206 has `text-primary` hardcoded on the label `<span>`, which forces it to blue (`217 91% 53%`) even when the parent button sets `text-sidebar-primary-foreground` (white). The label overrides the inherited white color.
 
-### Root Causes of Silent Bank Loss
-
-1. **Seed function silently swallows errors**: In `BankListView.tsx` line 459, `if (!error) added++` means failed inserts are silently skipped with no warning to the user.
-2. **One-by-one inserts are fragile**: Banks are inserted individually in a loop, so partial failures leave the registry incomplete without any indication.
-3. **No verification after seeding**: The function never checks whether the final count matches the expected 73 banks.
+2. **Active background is violet, not blue**: `--sidebar-primary` is set to `250 80% 58%` (blue-violet) in `index.css`, but the design system primary is `217 91% 53%` (deep blue). The sidebar active highlight should match this blue.
 
 ### Changes
 
-**1. `BankListView.tsx` — Rewrite `seedDefaultBanks` to use batch upsert with verification**
+**1. `src/index.css`** — Update sidebar-primary to match the primary blue:
+- Change `--sidebar-primary: 250 80% 58%` → `--sidebar-primary: 217 91% 53%` (same as `--primary`)
+- Update `--sidebar-primary-dark` and related accent colors to match the blue family
 
-Replace the current one-by-one insert loop with:
-- A single batch upsert using `.upsert()` with `onConflict: 'org_id,name'` so existing banks get their BIC codes updated rather than skipped.
-- After upsert, verify the total bank count matches `DEFAULT_BANKS.length` (73).
-- If the count is lower, show an explicit warning toast with the difference.
-- Show a summary toast: "73/73 banks verified" or "Added 15 new banks, updated 58 existing".
-
-**2. `BankListView.tsx` — Add a count badge next to "Seed Default Banks" button**
-
-Show `{banks.length} / {DEFAULT_BANKS.length}` next to the seed button so admins can instantly see if the registry is incomplete.
-
-**3. `OnboardingWizard.tsx` — No changes needed**
-
-The fallback merge logic already ensures candidates always see all 73 banks regardless of what's in the database. This acts as a safety net.
+**2. `src/components/dashboard/Sidebar.tsx`** — Fix text color inheritance:
+- Line 206: Remove `text-primary` from the label span so it inherits the white `text-sidebar-primary-foreground` from the parent when active
+- Ensure non-active items keep their current foreground color via the parent's `text-sidebar-foreground`
+- Update the left accent bar (lines 175, 203) from `hsl(250 85% 45%)` to use the primary blue
 
 ### Result
-- Pressing "Seed Default Banks" will upsert all 73 banks in one operation — no more silent partial failures
-- Admins can see at a glance whether their bank registry is complete
-- The fallback merge in the onboarding form continues to act as a safety net for candidates
+- Active sidebar items: blue background with white text
+- Non-active items: unchanged dark text with hover effect
+- Left accent indicator matches the blue theme
 
