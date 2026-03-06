@@ -326,12 +326,6 @@ export default function ContractSigning() {
                     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70">
                       Document / Dokument — {selectedCocLang.label}
                     </label>
-                    {cocReviewed && (
-                      <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                        <Check className="w-3.5 h-3.5" />
-                        Reviewed / Granskad
-                      </span>
-                    )}
                   </div>
                   {/* key={cocLanguage} forces iframe re-creation on language change */}
                   <div className="rounded-lg border border-border overflow-hidden bg-muted/20">
