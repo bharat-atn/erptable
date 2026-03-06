@@ -328,9 +328,6 @@ export default function ContractSigning() {
                       <p className="font-semibold text-sm">{lang.label}</p>
                       <p className="text-xs text-muted-foreground">{lang.labelEn}</p>
                     </div>
-                    {cocLanguage === lang.code && (
-                      <Check className="w-4 h-4 text-primary ml-auto" />
-                    )}
                   </button>
                 ))}
               </div>
