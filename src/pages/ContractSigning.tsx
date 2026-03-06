@@ -147,7 +147,6 @@ export default function ContractSigning() {
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
   const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
-  const [cocReviewed, setCocReviewed] = useState(false);
   const cocBottomRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
