@@ -24,6 +24,8 @@ import { VersionManagementView } from "./VersionManagementView";
 import { IssueTrackerView } from "./IssueTrackerView";
 import { ForestryDashboardView } from "./ForestryDashboardView";
 import { ForestryProjectsView } from "./ForestryProjectsView";
+import { ForestryObjectsView } from "./ForestryObjectsView";
+import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
@@ -80,10 +82,11 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       switch (activeView) {
         case "dashboard": return <ForestryDashboardView onNavigate={setActiveView} />;
         case "forestry-projects": return <ForestryProjectsView />;
+        case "forestry-objects": return <ForestryObjectsView />;
         case "employee-register": return <EmployeeRegisterView />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
-        case "process-guide": return <ProcessGuideView />;
+        case "process-guide": return <ForestryProcessGuideView />;
         default: return <ForestryDashboardView onNavigate={setActiveView} />;
       }
     }
