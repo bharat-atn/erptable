@@ -146,6 +146,20 @@ export function CreateOrganizationDialog({
         role: "owner",
       } as any);
 
+      // Auto-create a company record seeded from org details
+      await supabase.from("companies").insert({
+        org_id: org.id,
+        name: name.trim(),
+        org_number: orgNumber || null,
+        address: address || null,
+        postcode: postcode || null,
+        city: city || null,
+        country: country || null,
+        phone: phone || null,
+        email: email || null,
+        website: website || null,
+      } as any);
+
       toast.success(`Organization "${name}" created!`);
       resetForm();
       onOpenChange(false);
