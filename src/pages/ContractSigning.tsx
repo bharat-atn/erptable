@@ -503,23 +503,17 @@ export default function ContractSigning() {
                   </label>
                   <label
                     className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => cocReviewed ? setCocConfirmed(!cocConfirmed) : null}
+                    onClick={() => setCocConfirmed(!cocConfirmed)}
                   >
                     <div className={cn(
                       "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                      cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40",
-                      !cocReviewed && "opacity-50 cursor-not-allowed"
+                      cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
                     )}>
                       {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
                     </div>
-                    <span className={cn("text-sm", !cocReviewed && "opacity-50")}>
+                    <span className="text-sm">
                       I have read and understood the Code of Conduct. /
                       <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                      {!cocReviewed && (
-                        <span className="block text-xs text-destructive mt-1">
-                          Please review the Code of Conduct above first. / Vänligen granska uppförandekoden ovan först.
-                        </span>
-                      )}
                     </span>
                   </label>
                 </div>
