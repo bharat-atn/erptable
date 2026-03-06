@@ -146,7 +146,7 @@ export default function ContractSigning() {
 
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
-  const [cocReviewed, setCocReviewed] = useState(false);
+  
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
