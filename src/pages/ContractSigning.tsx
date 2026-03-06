@@ -267,7 +267,8 @@ export default function ContractSigning() {
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const canSign = cocConfirmed && contractConfirmed && signingPlace.trim().length > 0;
+  const hasSchedule = !!schedData;
+  const canSign = cocConfirmed && contractConfirmed && signingPlace.trim().length > 0 && (!hasSchedule || scheduleReviewed);
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
