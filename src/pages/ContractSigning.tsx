@@ -318,7 +318,7 @@ export default function ContractSigning() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocReviewed(false); setCocScrolledToBottom(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocScrolledToBottom(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
