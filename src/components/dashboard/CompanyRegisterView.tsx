@@ -2,18 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Plus, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Pencil, Building2, Phone, Mail, Globe, MapPin, Hash, User, Landmark, FileText } from "lucide-react";
 import { CompanyFormDialog, type CompanyFormData } from "./CompanyFormDialog";
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "sonner";
-import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
+import { useOrg } from "@/contexts/OrgContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Company {
   id: string;
@@ -31,73 +26,53 @@ interface Company {
   company_type: string | null;
 }
 
-const columns: ColumnDef<Company>[] = [
-  {
-    key: "name", header: "Employer / Arbetsgivare", accessor: (c) => c.name, hideable: false,
-    render: (c, hl) => <span className="font-medium text-sm">{hl?.(c.name) ?? c.name}</span>,
-  },
-  { key: "org_number", header: "Org. Number", accessor: (c) => c.org_number, render: (c, hl) => <span className="text-sm">{hl?.(c.org_number || "—") ?? c.org_number ?? "—"}</span> },
-  { key: "city", header: "City / Ort", accessor: (c) => c.city, render: (c, hl) => <span className="text-sm">{hl?.(c.city || "—") ?? c.city ?? "—"}</span> },
-  { key: "country", header: "Country", accessor: (c) => c.country, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.country || "—") ?? c.country ?? "—"}</span> },
-  { key: "phone", header: "Phone", accessor: (c) => c.phone, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.phone || "—") ?? c.phone ?? "—"}</span> },
-  { key: "email", header: "Email", accessor: (c) => c.email, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.email || "—") ?? c.email ?? "—"}</span> },
-  { key: "website", header: "Website", accessor: (c) => c.website, defaultVisible: false, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.website || "—") ?? c.website ?? "—"}</span> },
-  { key: "address", header: "Address", accessor: (c) => c.address, defaultVisible: false, render: (c, hl) => <span className="text-sm text-muted-foreground">{hl?.(c.address || "—") ?? c.address ?? "—"}</span> },
-  { key: "postcode", header: "Postcode", accessor: (c) => c.postcode, defaultVisible: false, className: "text-sm text-muted-foreground" },
-];
+function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | null }) {
+  return (
+    <div className="flex items-start gap-3 py-2">
+      <Icon className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium break-words">{value || "—"}</p>
+      </div>
+    </div>
+  );
+}
 
 export function CompanyRegisterView() {
   const { t } = useUiLanguage();
+  const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Company | null>(null);
 
-  const { data: companies = [], isLoading } = useQuery({
-    queryKey: ["companies"],
+  const { data: company, isLoading } = useQuery({
+    queryKey: ["companies", orgId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("companies").select("*").order("name");
+      if (!orgId) return null;
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
       if (error) throw error;
-      return data as Company[];
+      return data as Company | null;
     },
+    enabled: !!orgId,
   });
 
-  const upsertMutation = useMutation({
-    mutationFn: async (company: CompanyFormData & { id?: string }) => {
-      if (company.id) {
-        const { error } = await supabase.from("companies").update(company).eq("id", company.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("companies").insert(company as any);
-        if (error) throw error;
-      }
+  const updateMutation = useMutation({
+    mutationFn: async (data: CompanyFormData & { id: string }) => {
+      const { id, ...rest } = data;
+      const { error } = await supabase.from("companies").update(rest).eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success(editingCompany ? "Company updated" : "Company added");
+      toast.success("Company details updated");
       setDialogOpen(false);
-      setEditingCompany(null);
     },
     onError: (err: Error) => toast.error(err.message),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("companies").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success("Company deleted");
-    },
-    onError: (err: any) => {
-      const msg = err?.message || "";
-      if (msg.includes("foreign key") || msg.includes("still referenced")) {
-        toast.error("Cannot delete this company — it is linked to one or more contracts. Remove or reassign those contracts first.");
-      } else {
-        toast.error(msg);
-      }
-    },
   });
 
   return (
@@ -106,57 +81,89 @@ export function CompanyRegisterView() {
         <div>
           <h1 className="text-2xl font-semibold">
             {t("page.companyRegister.title")}{" "}
-            <span className="text-muted-foreground font-normal text-lg">/ Företagsregister</span>
+            <span className="text-muted-foreground font-normal text-lg">/ Företagsuppgifter</span>
           </h1>
-          <p className="text-muted-foreground text-sm">{t("page.companyRegister.desc")}</p>
+          <p className="text-muted-foreground text-sm">
+            Company details used in contracts and official documents.
+          </p>
         </div>
-        <Button onClick={() => { setEditingCompany(null); setDialogOpen(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> {t("action.addCompany")}
-        </Button>
+        {company && (
+          <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Pencil className="w-4 h-4" /> Edit Details
+          </Button>
+        )}
       </div>
 
-      <EnhancedTable<Company>
-        data={companies}
-        columns={columns}
-        rowKey={(c) => c.id}
-        defaultSortKey="name"
-        isLoading={isLoading}
-        emptyMessage="No companies registered yet."
-        searchPlaceholder="Search companies by name, org number, city..."
-        enableColumnToggle
-        enableDenseToggle
-        enableHighlight
-        stickyHeader
-        onRowClick={(c) => { setEditingCompany(c); setDialogOpen(true); }}
-        rowActions={(c) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { setEditingCompany(c); setDialogOpen(true); }}><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteTarget(c)}><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      />
+      {isLoading ? (
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      ) : !company ? (
+        <Card>
+          <CardContent className="p-10 text-center text-muted-foreground">
+            <Building2 className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p>No company details found for this organization.</p>
+            <p className="text-xs mt-1">Company details are created automatically when an organization is set up.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Identity */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Identity</h3>
+              <div className="divide-y divide-border">
+                <DetailRow icon={Building2} label="Company Name" value={company.name} />
+                <DetailRow icon={Hash} label="Org. Number" value={company.org_number} />
+                <DetailRow icon={FileText} label="Company Type" value={company.company_type} />
+                <DetailRow icon={User} label="CEO / VD" value={company.ceo_name} />
+                <DetailRow icon={Landmark} label="Bankgiro" value={company.bankgiro} />
+              </div>
+            </CardContent>
+          </Card>
 
-      <CompanyFormDialog
-        open={dialogOpen}
-        onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingCompany(null); }}
-        onSubmit={(data) => upsertMutation.mutate(editingCompany ? { ...data, id: editingCompany.id } : data)}
-        initialData={editingCompany ? { ...editingCompany, bankgiro: (editingCompany as any).bankgiro || "", ceo_name: (editingCompany as any).ceo_name || "", company_type: (editingCompany as any).company_type || "" } : null}
-      />
+          {/* Contact & Address */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Contact & Address</h3>
+              <div className="divide-y divide-border">
+                <DetailRow icon={MapPin} label="Address" value={[company.address, company.postcode, company.city].filter(Boolean).join(", ") || null} />
+                <DetailRow icon={MapPin} label="Country" value={company.country} />
+                <DetailRow icon={Phone} label="Phone" value={company.phone} />
+                <DetailRow icon={Mail} label="Email" value={company.email} />
+                <DetailRow icon={Globe} label="Website" value={company.website} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      <DeleteConfirmDialog
-        open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        title="Delete Company"
-        itemName={deleteTarget?.name || ""}
-        description="This company will be removed from the register. Any contracts referencing this company may be affected."
-        onConfirm={() => { if (deleteTarget) { deleteMutation.mutate(deleteTarget.id); setDeleteTarget(null); } }}
-        isLoading={deleteMutation.isPending}
-      />
+      {company && (
+        <CompanyFormDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          onSubmit={(data) => updateMutation.mutate({ ...data, id: company.id })}
+          initialData={{
+            ...company,
+            org_number: company.org_number || "",
+            address: company.address || "",
+            postcode: company.postcode || "",
+            city: company.city || "",
+            phone: company.phone || "",
+            email: company.email || "",
+            country: company.country || "",
+            website: company.website || "",
+            bankgiro: company.bankgiro || "",
+            ceo_name: company.ceo_name || "",
+            company_type: company.company_type || "",
+            id: company.id,
+          }}
+        />
+      )}
     </div>
   );
 }
