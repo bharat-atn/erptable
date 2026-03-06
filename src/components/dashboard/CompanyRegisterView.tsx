@@ -90,7 +90,14 @@ export function CompanyRegisterView() {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: any) => {
+      const msg = err?.message || "";
+      if (msg.includes("foreign key") || msg.includes("still referenced")) {
+        toast.error("Cannot delete this company — it is linked to one or more contracts. Remove or reassign those contracts first.");
+      } else {
+        toast.error(msg);
+      }
+    },
   });
 
   return (
