@@ -165,6 +165,22 @@ export default function ContractSigning() {
   const scheduleCardRef = useRef<HTMLDivElement>(null);
   const scheduleBottomRef = useRef<HTMLDivElement>(null);
 
+  // Auto-detect when user scrolls past the CoC document bottom
+  useEffect(() => {
+    const el = cocBottomRef.current;
+    if (!el || cocScrolledToBottom) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCocScrolledToBottom(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cocScrolledToBottom, cocLanguage]);
+
   // Auto-review schedule when bottom of schedule table becomes visible
   useEffect(() => {
     const el = scheduleBottomRef.current;
