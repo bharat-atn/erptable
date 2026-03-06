@@ -1,26 +1,38 @@
 
 
-## Plan: Remove "Reviewed" Badge + Fix Missing Signing Area
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Two Issues
+### Root Cause
 
-1. **"✓ Reviewed / Granskad" badge on schedule section** (line 507-511) — still showing. Remove it entirely.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-2. **Signing area not visible** — The `canSign` condition (line 270) requires `cocConfirmed && contractConfirmed && signingPlace.trim().length > 0`. But the **CoC confirmation checkbox only appears after scrolling** (`cocScrolledToBottom`), and the **contract confirmation checkbox + place/date fields are inside the signing area card** which is always visible but placed *after* the schedule section. The user likely hasn't scrolled far enough or hasn't completed all steps. The real UX problem: the signing canvas is hidden behind a checklist when `canSign` is false, and the checklist doesn't clearly guide the user.
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-### Changes (`src/pages/ContractSigning.tsx`)
+**1. Replace generic message with specific missing-condition checklist**
 
-1. **Remove the "Reviewed / Granskad" text** on lines 507-511 (the blue check badge after schedule).
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-2. **Make the signing section always show the signature canvas** — but keep it disabled until conditions are met. Instead of hiding the `SignatureCanvas` behind the checklist, always render it with `disabled={!canSign}`. Show the missing-steps checklist *above* the canvas as guidance, not as a replacement. This way the user always sees where to sign.
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-3. **Include `scheduleReviewed` in `canSign`** when schedule data exists — currently it's missing from the condition (line 270), which may have been a regression.
+This tells the user exactly what's blocking them.
 
-### Summary of line changes
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-| Lines | Change |
-|-------|--------|
-| 270 | Add `scheduleReviewed` to `canSign` when `schedData` exists |
-| 507-511 | Remove the "Reviewed / Granskad" badge entirely |
-| 597-675 | Restructure: always show SignatureCanvas (disabled when `!canSign`), show checklist as guidance above it |
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
