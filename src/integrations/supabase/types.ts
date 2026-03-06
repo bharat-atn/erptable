@@ -661,6 +661,72 @@ export type Database = {
           },
         ]
       }
+      forestry_objects: {
+        Row: {
+          area_hectares: number | null
+          coordinates: string | null
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          object_id_display: string
+          org_id: string
+          project_id: string
+          sla_class: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          area_hectares?: number | null
+          coordinates?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          object_id_display: string
+          org_id: string
+          project_id: string
+          sla_class?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          area_hectares?: number | null
+          coordinates?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          object_id_display?: string
+          org_id?: string
+          project_id?: string
+          sla_class?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forestry_objects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forestry_objects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forestry_projects: {
         Row: {
           budget: number | null

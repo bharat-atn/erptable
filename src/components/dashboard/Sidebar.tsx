@@ -38,7 +38,8 @@ import {
   AlertTriangle,
   FolderKanban,
   BarChart3,
-  TreePine } from
+   TreePine,
+   MapPin } from
 "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logoutWithAudit } from "@/lib/audit-helpers";
@@ -125,6 +126,7 @@ const defaultConfigItems: MenuItem[] = [
 const forestryMenuItems: MenuItem[] = [
 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
 { id: "forestry-projects", label: "Projects", icon: FolderKanban },
+{ id: "forestry-objects", label: "Objects", icon: MapPin },
 { id: "employee-register", label: "Employees", icon: Users },
 { id: "analytics", label: "Analytics", icon: BarChart3 }];
 

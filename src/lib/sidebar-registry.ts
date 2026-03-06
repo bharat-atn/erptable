@@ -38,6 +38,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
   "forestry-project": [
     { id: "dashboard", label: "Dashboard", group: "main" },
     { id: "forestry-projects", label: "Projects", group: "main" },
+    { id: "forestry-objects", label: "Objects", group: "main" },
     { id: "employee-register", label: "Employees", group: "main" },
     { id: "analytics", label: "Analytics", group: "main" },
     { id: "audit-log", label: "Audit Log", group: "others" },
@@ -98,9 +99,9 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
   "forestry-project": {
     admin: SIDEBAR_ITEMS_BY_APP["forestry-project"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["forestry-project"].map((i) => i.id),
-    hr_manager: ["dashboard", "forestry-projects", "employee-register"],
-    project_manager: ["dashboard", "forestry-projects", "employee-register", "analytics"],
-    team_leader: ["dashboard", "forestry-projects"],
+    hr_manager: ["dashboard", "forestry-projects", "forestry-objects", "employee-register"],
+    project_manager: ["dashboard", "forestry-projects", "forestry-objects", "employee-register", "analytics"],
+    team_leader: ["dashboard", "forestry-projects", "forestry-objects"],
     user: ["dashboard"],
   },
   "payroll": {
