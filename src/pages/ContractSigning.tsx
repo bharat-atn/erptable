@@ -146,6 +146,9 @@ export default function ContractSigning() {
 
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
+  const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
+  const [cocReviewed, setCocReviewed] = useState(false);
+  const cocBottomRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
@@ -161,6 +164,22 @@ export default function ContractSigning() {
   // Ref for schedule section (scroll-to + auto-review)
   const scheduleCardRef = useRef<HTMLDivElement>(null);
   const scheduleBottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-detect when user scrolls past the CoC document bottom
+  useEffect(() => {
+    const el = cocBottomRef.current;
+    if (!el || cocScrolledToBottom) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCocScrolledToBottom(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cocScrolledToBottom, cocLanguage]);
 
   // Auto-review schedule when bottom of schedule table becomes visible
   useEffect(() => {
@@ -251,7 +270,7 @@ export default function ContractSigning() {
 
   const alreadySigned = data.signing_status !== "sent_to_employee" || data.employee_signed_at;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
-  const canSign = cocConfirmed && contractConfirmed && signingPlace.trim().length > 0;
+  const canSign = cocReviewed && cocConfirmed && contractConfirmed && signingPlace.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
@@ -300,7 +319,7 @@ export default function ContractSigning() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocReviewed(false); setCocScrolledToBottom(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
@@ -337,7 +356,7 @@ export default function ContractSigning() {
                       style={{ border: "none" }}
                     />
                   </div>
-                  <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-3">
                     <a
                       href={selectedCocLang.file}
                       target="_blank"
@@ -347,6 +366,31 @@ export default function ContractSigning() {
                       <ExternalLink className="w-4 h-4" />
                       Open in new tab / Öppna i ny flik
                     </a>
+                  </div>
+
+                  {/* Sentinel for scroll detection */}
+                  <div ref={cocBottomRef} className="h-1" />
+
+                  {/* Review toggle - only enabled after scrolling past the document */}
+                  <div className="flex items-center justify-end">
+                    {cocReviewed ? (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                        <Check className="w-4 h-4" /> Reviewed / Granskad
+                      </span>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!cocScrolledToBottom}
+                        onClick={() => setCocReviewed(true)}
+                        className="gap-1.5"
+                      >
+                        <Check className="w-4 h-4" />
+                        {cocScrolledToBottom
+                          ? "Mark as reviewed / Markera som granskad"
+                          : "Scroll through document first / Scrolla igenom dokumentet först"}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -502,8 +546,11 @@ export default function ContractSigning() {
                     </span>
                   </label>
                   <label
-                    className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => setCocConfirmed(!cocConfirmed)}
+                    className={cn(
+                      "flex items-start gap-3",
+                      cocReviewed ? "cursor-pointer" : "cursor-not-allowed opacity-50"
+                    )}
+                    onClick={() => { if (cocReviewed) setCocConfirmed(!cocConfirmed); }}
                   >
                     <div className={cn(
                       "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
@@ -514,6 +561,11 @@ export default function ContractSigning() {
                     <span className="text-sm">
                       I have read and understood the Code of Conduct. /
                       <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                      {!cocReviewed && (
+                        <span className="block text-xs text-muted-foreground mt-0.5">
+                          (Review the document above first / Granska dokumentet ovan först)
+                        </span>
+                      )}
                     </span>
                   </label>
                 </div>
