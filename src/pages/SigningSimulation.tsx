@@ -23,6 +23,8 @@ const COC_LANGUAGES = [
   { code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
+const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th"]);
+
 interface ContractRow {
   id: string;
   contract_code: string | null;
