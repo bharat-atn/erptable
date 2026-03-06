@@ -171,6 +171,8 @@ export default function ContractSigning() {
   const handleCocScroll = useCallback(() => {
     const el = cocScrollContainerRef.current;
     if (!el || cocScrolledToBottom) return;
+    // Guard: only trigger if container is actually scrollable (iframe loaded)
+    if (el.scrollHeight <= el.clientHeight + 50) return;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
       setCocScrolledToBottom(true);
     }
@@ -326,9 +328,6 @@ export default function ContractSigning() {
                       <p className="font-semibold text-sm">{lang.label}</p>
                       <p className="text-xs text-muted-foreground">{lang.labelEn}</p>
                     </div>
-                    {cocLanguage === lang.code && (
-                      <Check className="w-4 h-4 text-primary ml-auto" />
-                    )}
                   </button>
                 ))}
               </div>
