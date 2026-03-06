@@ -1,65 +1,68 @@
 
 
-## Plan: Fix Forestry Sidebar Labels and Expand Structure
+## Plan: Rebuild Forestry Process Guide
 
-### Problems Identified
+### What We're Building
 
-1. **Missing translations**: Items like `forestry-projects`, `forestry-objects`, `analytics` have no entries in `ui-translations.ts`, so the sidebar shows raw keys like "menu.forestry-projects" instead of proper labels.
-2. **Missing sidebar items**: The desired sidebar (from screenshot 2) shows a much richer structure than what's currently defined. The current forestry sidebar only has 5 main items and 3 "others" items, but the target has many more including Settings sub-items.
+A comprehensive, multi-tab Process Guide matching the screenshots exactly. This replaces the current simple `ForestryProcessGuideView.tsx` with a rich reference document containing two tabs: **Process Map** and **Scenarios**.
 
-### Target Sidebar Structure (from screenshot)
+### Tab 1: Process Map
 
-**MAIN:**
-- Dashboard (LayoutDashboard)
-- Projects (FolderKanban)
-- Gantt View (BarChart3 — placeholder/teaser for now)
-- Kanban Board (CheckSquare — placeholder/teaser for now)
-- Employees (Users)
-- Analytics (BarChart3)
+Visual hierarchy showing how the forestry system is structured:
 
-**AUDIT:**
-- Audit Log (Shield)
+1. **Header** with two info dialog buttons: "What is a Compensation Group?" and "What is an SLA Class?"
 
-**SETTINGS** (group with items):
-- Settings (Settings) — general settings page
-- Client Register (Building2) — new, future
-- Object Register (MapPin) — the existing Objects view
-- Project ID (Hash) — project ID config, similar to Employee ID settings
-- Comp. Groups (DollarSign) — compensation groups, future
-- Contract Data (Briefcase) — reuse existing
-- Project Defaults (Settings) — future
-- Version Management (GitBranch) — reuse existing
-- ISO Standards (Globe) — reuse existing
+2. **Project Hierarchy Flow**: Project → Client → Location → Coordinates → Objects (icon cards with arrows)
 
-**Bottom (no group):**
-- Process Guide (BookOpen)
+3. **Object Types**: Two side-by-side cards — Planting Objects (plant pieces/thousands) and Clearing Objects (hectares)
 
-### Changes
+4. **Compensation Methods**: Hourly Salary (both types) and Piece Work (per unit)
 
-**1. `src/lib/ui-translations.ts`** — Add missing translation keys:
-- `menu.forestry-projects` → en: "Projects", sv: "Projekt", ro: "Proiecte"
-- `menu.forestry-objects` → en: "Objects", sv: "Objekt", ro: "Obiecte"
-- `menu.analytics` → en: "Analytics", sv: "Analys", ro: "Analiză"
-- `menu.gantt-view` → en: "Gantt View", sv: "Gantt-vy", ro: "Vizualizare Gantt"
-- `menu.kanban-board` → en: "Kanban Board", sv: "Kanban-tavla", ro: "Tablou Kanban"
-- `menu.client-register` → en: "Client Register", sv: "Kundregister", ro: "Registru clienți"
-- `menu.project-id` → en: "Project ID", sv: "Projekt-ID", ro: "ID proiect"
-- `menu.comp-groups` → en: "Comp. Groups", sv: "Komp. Grupper", ro: "Grupuri comp."
-- `menu.project-defaults` → en: "Project Defaults", sv: "Projektstandard", ro: "Valori implicite proiect"
-- `group.audit` → en: "Audit", sv: "Granskning", ro: "Audit"
+5. **SLA Classes (101-113)**: Visual gradient from green (101 Light) through blue (107 Medium) to red (113 Heavy), with intermediate classes shown as badge groups
 
-**2. `src/components/dashboard/Sidebar.tsx`** — Restructure forestry menu arrays:
-- `forestryMenuItems`: Dashboard, Projects, Gantt View (future), Kanban Board (future), Employees, Analytics
-- `forestrySettingsItems` (new): Settings, Client Register, Object Register (forestry-objects), Project ID, Comp. Groups, Contract Data, Project Defaults, Version Management, ISO Standards
-- `forestryOthersItems`: Audit Log
-- Add Process Guide as a separate bottom item (like in the second screenshot, it appears outside of groups)
-- Update the `useEffect` for app changes to set `settingsItems` to the new forestry settings array
-- Add `group.audit` label for the audit section
+6. **Forest Plant & Clearing Types 1-10**: Two columns showing plant types (Jackpot, Powerpot, Superpot...) and clearing types (Young Forest, Undergrowth, Powerline...)
 
-**3. `src/lib/sidebar-registry.ts`** — Update forestry-project sidebar items and default access to include all the new items.
+7. **Compensation Details**:
+   - Hourly Salary: Star System table (Job Type × Salary Group × Stars 1-5 with kr/h rates)
+   - Piece Work: Planting table (SLA Class × Stars with plants/day + Net Gross) and Clearing table (SLA Class × Stars with hectares/day + Net Gross)
 
-**4. `src/components/dashboard/Dashboard.tsx`** — Add placeholder cases for new sidebar items (gantt-view, kanban-board, client-register, project-id, comp-groups, project-defaults) that show a "Coming Soon" or teaser message, and wire existing views for contract-data, version-management, iso-standards.
+8. **What is a Project Object?**: Object attributes (Unique ID, Quantity, Compensation Type)
 
-### Result
-The forestry sidebar will match the target layout with proper translated labels, a Settings group with sub-items, and all navigation working correctly.
+9. **Compensation Type Connection**: Category + Compensation Method
+
+10. **5-Level Compensation Hierarchy**: Category → Compensation Method → Quantity Units → Difficulty Level (SLA) → Employee Performance (Stars)
+
+11. **Practical Example**: Object D330470 trace through the full hierarchy
+
+### Tab 2: Scenarios
+
+Workflow phases and real-world examples:
+
+1. **Foundation Setup** (6 cards in 2-col grid): Client Register, Object Register, Compensation Groups, Employee Register, Project Numbers, Project Defaults
+
+2. **Project Planning** (5 cards): Create Project, Add Project Objects, Set Duration & Timing, Assign Team, Financial Planning — each with subtitle notes
+
+3. **Execution & Monitoring** (4 cards): Gantt View, Kanban Board, Task Management, Activity Log
+
+4. **Compensation & Reporting** (3 cards): Preliminary Payroll, Analytics, Documentation
+
+5. **Real-World Scenarios**:
+   - **Scenario 1: Beginner Planting Project** — Project Setup card → Project Objects table → Team Assignment list → Compensation Calculation → Expected Results
+   - **Scenario 2: Complex Clearing Project** — Same structure with harder parameters
+
+### Technical Approach
+
+**Single file change**: Complete rewrite of `src/components/dashboard/ForestryProcessGuideView.tsx`
+
+- Use Radix `Tabs` component for Process Map / Scenarios toggle
+- Use `Dialog` for the info popups ("What is a Compensation Group?" / "What is an SLA Class?")
+- All data is static/hardcoded (reference documentation, not database-driven)
+- Use existing Card, Badge, Table components
+- Arrow connectors between sections using `ArrowDown` icon + centered text
+- Color-coded sections: green tint for planting, blue for clearing, yellow/red for SLA difficulty
+- Responsive: 2-column grids collapse to single column on mobile
+
+### Estimated Size
+
+~800-900 lines for the full component with all the tables, scenarios, and visual hierarchy.
 
