@@ -505,11 +505,6 @@ export default function ContractSigning() {
                   </Button>
                 )}
               </div>
-              {scheduleReviewed && (
-                <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                  <Check className="w-3.5 h-3.5" /> Reviewed / Granskad
-                </span>
-              )}
             </CardContent>
           </Card>
         )}
