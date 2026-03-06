@@ -43,6 +43,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
       companyName, companyOrgNumber, companyAddress, companyPostcode, companyCity,
       contractCode, seasonYear, formData: fd,
       employeeSignatureUrl, employerSignatureUrl, employeeSignedAt, employerSignedAt,
+      employeeSigningMetadata, employerSigningMetadata,
     } = props;
 
     const lang: LangCode = fd.contractLanguage || "EN/SE";
