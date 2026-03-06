@@ -544,29 +544,23 @@ export default function ContractSigning() {
                       <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
                     </span>
                   </label>
-                  <label
-                    className={cn(
-                      "flex items-start gap-3",
-                      cocReviewed ? "cursor-pointer" : "cursor-not-allowed opacity-50"
-                    )}
-                    onClick={() => { if (cocReviewed) setCocConfirmed(!cocConfirmed); }}
-                  >
-                    <div className={cn(
-                      "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                      cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    )}>
-                      {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                    </div>
-                    <span className="text-sm">
-                      I have read and understood the Code of Conduct. /
-                      <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                      {!cocReviewed && (
-                        <span className="block text-xs text-muted-foreground mt-0.5">
-                          (Review the document above first / Granska dokumentet ovan först)
-                        </span>
-                      )}
-                    </span>
-                  </label>
+                  {cocReviewed && (
+                    <label
+                      className="flex items-start gap-3 cursor-pointer"
+                      onClick={() => setCocConfirmed(!cocConfirmed)}
+                    >
+                      <div className={cn(
+                        "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
+                        cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
+                      )}>
+                        {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      <span className="text-sm">
+                        I have read and understood the Code of Conduct. /
+                        <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                      </span>
+                    </label>
+                  )}
                 </div>
 
                 {/* Place & Date fields */}
