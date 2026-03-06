@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/ljungan-forestry-logo.png";
+import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 
 const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
@@ -61,29 +61,20 @@ export default function SigningSimulation() {
   // Review states
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
   const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
-  const cocBottomRef = useRef<HTMLDivElement>(null);
   const cocScrollContainerRef = useRef<HTMLDivElement>(null);
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
 
-  // Detect when user scrolls to bottom of CoC container
-  useEffect(() => {
-    const el = cocBottomRef.current;
-    const root = cocScrollContainerRef.current;
-    if (!el || !root || cocScrolledToBottom) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCocScrolledToBottom(true);
-        }
-      },
-      { root, threshold: 0.5 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [cocScrolledToBottom, cocLanguage]);
+  // Detect when user scrolls to bottom of CoC container via scroll event
+  const handleCocScroll = () => {
+    const el = cocScrollContainerRef.current;
+    if (!el || cocScrolledToBottom) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+      setCocScrolledToBottom(true);
+    }
+  };
 
   useEffect(() => {
     if (!contractId) return;
@@ -288,6 +279,7 @@ export default function SigningSimulation() {
                       {/* Scrollable container — user must scroll to bottom to reveal confirmation */}
                       <div
                         ref={cocScrollContainerRef}
+                        onScroll={handleCocScroll}
                         className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto"
                       >
                         <iframe
@@ -297,7 +289,6 @@ export default function SigningSimulation() {
                           style={{ border: "none", height: "900px" }}
                           title={`Code of Conduct - ${selectedCocLang.label}`}
                         />
-                        <div ref={cocBottomRef} className="h-1" />
                       </div>
 
                       <div className="flex items-center gap-3">

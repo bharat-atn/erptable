@@ -10,7 +10,7 @@ import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar, RotateCcw, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/ljungan-forestry-logo.png";
+import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 import { format, addDays, eachDayOfInterval, getDay } from "date-fns";
 
 const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
@@ -150,7 +150,6 @@ export default function ContractSigning() {
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
   const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
-  const cocBottomRef = useRef<HTMLDivElement>(null);
   const cocScrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
@@ -168,22 +167,14 @@ export default function ContractSigning() {
   const scheduleCardRef = useRef<HTMLDivElement>(null);
   const scheduleBottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-detect when user scrolls to the bottom of the CoC scrollable container
-  useEffect(() => {
-    const el = cocBottomRef.current;
-    const root = cocScrollContainerRef.current;
-    if (!el || !root || cocScrolledToBottom) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCocScrolledToBottom(true);
-        }
-      },
-      { root, threshold: 0.5 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [cocScrolledToBottom, cocLanguage]);
+  // Detect when user scrolls to the bottom of the CoC scrollable container via scroll event
+  const handleCocScroll = useCallback(() => {
+    const el = cocScrollContainerRef.current;
+    if (!el || cocScrolledToBottom) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+      setCocScrolledToBottom(true);
+    }
+  }, [cocScrolledToBottom]);
 
   // Auto-review schedule when bottom of schedule table becomes visible
   useEffect(() => {
@@ -365,6 +356,7 @@ export default function ContractSigning() {
                       {/* Scrollable container — user must scroll to bottom to reveal confirmation */}
                       <div
                         ref={cocScrollContainerRef}
+                        onScroll={handleCocScroll}
                         className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto"
                       >
                         <iframe
@@ -374,8 +366,6 @@ export default function ContractSigning() {
                           style={{ border: "none", height: "900px" }}
                           title={`Code of Conduct - ${selectedCocLang.label}`}
                         />
-                        {/* Sentinel — only visible when user scrolls container to bottom */}
-                        <div ref={cocBottomRef} className="h-1" />
                       </div>
 
                       <div className="flex items-center gap-3">

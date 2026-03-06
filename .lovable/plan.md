@@ -1,39 +1,38 @@
 
 
-## Plan: Fix CoC Scroll-Gated Confirmation + Replace Logo on Contract Pages
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem 1: CoC Confirmation Appears Immediately
+### Root Cause
 
-**Root cause**: The scrollable container has `max-h-[500px]` and the iframe inside has `height: 900px`. The sentinel `div` (`cocBottomRef`) is placed *after* the iframe inside the container. However, the browser renders the iframe as a replaced element with a fixed height of 900px — and the sentinel `<div class="h-1">` sits at pixel 901 inside the scrollable container. This should work in theory.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-The real issue is likely a **timing problem**: the `IntersectionObserver` is created in a `useEffect` that runs when the component mounts, but the `cocScrollContainerRef` and `cocBottomRef` may not be attached yet when the language is first selected (the refs are inside a conditional render `{selectedCocLang && ...}`). When `cocLanguage` changes, React re-renders, the refs attach, and the effect runs — but at that point the sentinel might momentarily be in view before the iframe content loads (the iframe starts at 0 height and expands).
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**Fix**: Instead of relying on `IntersectionObserver` (which has proven unreliable across multiple attempts), switch to a simple `scroll` event listener on the container. Check if `scrollTop + clientHeight >= scrollHeight - threshold`. This is deterministic and cannot fire prematurely because:
-- Before scrolling: `scrollTop` is 0, `clientHeight` is 500px, `scrollHeight` is 901px. `0 + 500 < 901 - 20` = true, so not at bottom.
-- After scrolling to bottom: `scrollTop` ~= 401, `401 + 500 >= 901 - 20` = true.
+**1. Replace generic message with specific missing-condition checklist**
 
-Changes:
-- Remove `cocBottomRef` sentinel div and its `IntersectionObserver` useEffect
-- Add a `handleCocScroll` callback on the scrollable container's `onScroll` event
-- When `scrollTop + clientHeight >= scrollHeight - 30`, set `cocScrolledToBottom = true`
-- Reset `cocScrolledToBottom` to false when language changes (already done)
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-### Problem 2: Replace Logo on Contract Pages
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-The user uploaded `Logo_Ljungan_Forestry.jpg` and wants it used on contract-related pages instead of the current `ljungan-forestry-logo.png`.
+This tells the user exactly what's blocking them.
 
-- Copy uploaded file to `src/assets/ljungan-forestry-logo-new.jpg`
-- Update imports in contract pages only:
-  - `src/pages/ContractSigning.tsx`
-  - `src/pages/SigningSimulation.tsx`
-  - `src/pages/ScheduleView.tsx`
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-### Files to Change
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-| File | Changes |
-|------|---------|
-| `src/pages/ContractSigning.tsx` | Replace IntersectionObserver with scroll event listener; remove sentinel div; update logo import |
-| `src/pages/SigningSimulation.tsx` | Same scroll event fix; update logo import |
-| `src/pages/ScheduleView.tsx` | Update logo import only |
-| `src/assets/ljungan-forestry-logo-new.jpg` | Copy uploaded logo file |
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
