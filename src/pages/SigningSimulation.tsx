@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/ljungan-forestry-logo.png";
+import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 
 const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
