@@ -1,38 +1,31 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Fix Code of Conduct Display and Scroll-Gated Review
 
-### Root Cause
+### Problems
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+1. **PDF not loading**: The Google Docs viewer iframe (`https://docs.google.com/gview?embedded=true&url=...`) is failing to render the PDF — the area appears blank.
+2. **Review toggle visible too early**: The "Mark as reviewed" button and confirmation checkbox are shown before the user has scrolled through the document.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+### Fix
 
-**1. Replace generic message with specific missing-condition checklist**
+**1. Replace Google Docs viewer with direct PDF embed**
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+Switch from `<iframe src="https://docs.google.com/gview?...">` to `<iframe src="/documents/code-of-conduct-sv.pdf">` (direct URL). Modern browsers have built-in PDF viewers that render PDFs natively in iframes without relying on a third-party service.
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+**2. Scroll-gated review flow**
 
-This tells the user exactly what's blocking them.
+Since we cannot detect scroll inside an iframe/PDF viewer (cross-origin restriction), the approach is:
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+- The sentinel `div` (`cocBottomRef`) stays below the iframe in the page flow. The user must scroll the page past the entire PDF viewer area for it to become visible — this is a reasonable proxy for "having seen the document."
+- The "Mark as reviewed" button remains hidden (not just disabled) until the sentinel has been intersected.
+- The CoC confirmation checkbox remains hidden until `cocReviewed` is true.
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+**3. Hide confirmation checkbox until reviewed**
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+Currently the CoC checkbox is shown but disabled. Change it to be completely hidden until `cocReviewed === true`.
 
-**3. Add scroll-to-schedule link in the checklist**
+### Files to change
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+- `src/pages/ContractSigning.tsx` — change iframe `src` to direct PDF URL, hide (not disable) review button and confirmation checkbox until conditions are met.
 
