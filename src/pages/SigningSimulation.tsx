@@ -250,7 +250,7 @@ export default function SigningSimulation() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocReviewed(false); setCocConfirmed(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocScrolledToBottom(false); setCocConfirmed(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
