@@ -10,7 +10,7 @@ import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import { CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink, Calendar, RotateCcw, Send } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/ljungan-forestry-logo.png";
+import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 import { format, addDays, eachDayOfInterval, getDay } from "date-fns";
 
 const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
