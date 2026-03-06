@@ -11,6 +11,7 @@ import { format, eachDayOfInterval, isWeekend, parseISO, addDays } from "date-fn
 import { CalendarIcon, CalendarDays, Briefcase, Clock, Plane, ArrowLeft, ArrowRight, Save, Filter, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useOrg } from "@/contexts/OrgContext";
 
 // Swedish public holidays (fixed + Easter-based for multiple years)
 function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
@@ -121,6 +122,7 @@ type FilterMode = "all" | "holidays" | "vacation" | "workdays";
 const SEASON_YEARS = [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032];
 
 export function SchedulingStep({ initialData, onChange, onBack, onNext, contractId, contractLanguage }: SchedulingStepProps) {
+  const { orgId } = useOrg();
   const [data, setData] = useState<SchedulingData>(initialData);
   const [filter, setFilter] = useState<FilterMode>("all");
   const [saving, setSaving] = useState(false);
@@ -243,6 +245,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
       // Insert in batches of 100
       const rows = schedule.map(d => ({
         contract_id: contractId,
+        org_id: orgId,
         schedule_date: d.date,
         day_type: d.type,
         scheduled_hours: d.hours,
