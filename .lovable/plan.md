@@ -1,38 +1,52 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Fix CoC Scroll-Gated Confirmation and Ukrainian PDF Issue
 
-### Root Cause
+### Two Problems
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+1. **Confirmation appears immediately** — The sentinel `div` (`cocBottomRef`) is placed right after the iframe in normal document flow. Since the iframe has a fixed CSS height (600-700px), the sentinel is already in the viewport when the CoC section loads. The `IntersectionObserver` fires instantly. The user never has to scroll past the document.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+2. **Ukrainian Code of Conduct PDF missing** — The file `code-of-conduct-uk.pdf` is referenced in code but does not exist in `public/documents/`. Only `sv`, `en`, `ro`, and `th` PDFs exist. When selected, the iframe shows "No preview available."
 
-**1. Replace generic message with specific missing-condition checklist**
+### Solution
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+**Problem 1: Wrap the iframe in a scrollable container and put the sentinel inside it**
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+Instead of relying on page-level scroll (which doesn't work because the iframe has a fixed height and the sentinel is immediately visible), place the iframe inside a scrollable container with a constrained height. The sentinel goes *below* the iframe content inside that scrollable container, so it only becomes visible when the user scrolls the container to the bottom.
 
-This tells the user exactly what's blocking them.
+Approach:
+- Wrap the iframe in a `div` with `overflow-y: auto` and a max-height (e.g. `500px`)
+- Give the iframe a larger height than the container (e.g. `800px` or `900px`) so the container actually scrolls
+- Place the `cocBottomRef` sentinel at the bottom of this scrollable div, after the iframe
+- The `IntersectionObserver` uses `root: scrollContainerRef.current` so it only fires when the sentinel scrolls into view within the container
+- The confirmation checkbox remains hidden until `cocScrolledToBottom` is true
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+**Problem 2: Block Ukrainian until PDF exists**
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+- When the user selects Ukrainian, show a message explaining the PDF is not yet available and disable/hide the confirmation checkbox
+- Add a check: if the selected language's PDF file doesn't exist (we can check against a known list), show a "Document not available" alert instead of the iframe
+- The user chose "Block until PDF exists" — so we show an explicit message and prevent confirmation
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+### Files to Change
 
-**3. Add scroll-to-schedule link in the checklist**
+**`src/pages/ContractSigning.tsx`**:
+- Add a `scrollContainerRef` for the CoC scrollable wrapper
+- Wrap iframe in scrollable container div with constrained height
+- Move `cocBottomRef` inside the scrollable container, below the iframe
+- Update `IntersectionObserver` to use `root: scrollContainerRef.current`
+- Add Ukrainian PDF availability check — show alert instead of iframe when PDF is missing
+- Hide confirmation checkbox when PDF is unavailable
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+**`src/pages/SigningSimulation.tsx`**:
+- Same Ukrainian PDF availability fix (show "not available" message)
+- This file uses Google Docs viewer and `onLoad` for review — apply same scrollable-container pattern for consistency
 
-### Estimated changes
+**`src/components/dashboard/CodeOfConductStep.tsx`**:
+- No iframe here (just language selection), no changes needed
 
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+### Available PDFs
+```
+sv, en, ro, th  ← exist
+uk              ← missing
+```
 
