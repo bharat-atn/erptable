@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -157,6 +157,31 @@ export default function ContractSigning() {
 
   // Signature preview (redo flow)
   const [pendingSignature, setPendingSignature] = useState<string | null>(null);
+
+  // Ref for schedule section (scroll-to + auto-review)
+  const scheduleCardRef = useRef<HTMLDivElement>(null);
+  const scheduleBottomRef = useRef<HTMLDivElement>(null);
+
+  // Auto-review schedule when bottom of schedule table becomes visible
+  useEffect(() => {
+    const el = scheduleBottomRef.current;
+    if (!el || scheduleReviewed) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const timer = setTimeout(() => setScheduleReviewed(true), 1500);
+          return () => clearTimeout(timer);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [scheduleReviewed]);
+
+  const scrollToSchedule = useCallback(() => {
+    scheduleCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -349,7 +374,7 @@ export default function ContractSigning() {
 
         {/* Schedule Appendix Review */}
         {!alreadySigned && !signed && schedData && (
-          <Card className="shadow-md">
+          <Card className="shadow-md" ref={scheduleCardRef}>
             <CardHeader>
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-primary" />
@@ -438,9 +463,9 @@ export default function ContractSigning() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
+              <div ref={scheduleBottomRef} className="flex items-center gap-3">
                 {!scheduleReviewed && (
-                  <Button variant="secondary" size="sm" onClick={() => setScheduleReviewed(true)} className="gap-2">
+                  <Button onClick={() => setScheduleReviewed(true)} className="gap-2 animate-pulse">
                     <Check className="w-4 h-4" />
                     Mark as reviewed / Markera som granskad
                   </Button>
@@ -605,11 +630,38 @@ export default function ContractSigning() {
                     </>
                   )
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-8 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing. /
-                      <span className="italic"> Granska uppförandekoden, bekräfta båda kryssrutorna och ange ort för att aktivera signering.</span>
+                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-6 space-y-3">
+                    <p className="text-sm font-medium text-foreground">
+                      Complete these steps to sign / Slutför dessa steg för att signera:
                     </p>
+                    <ul className="space-y-2 text-sm">
+                      {[
+                        { done: cocReviewed, label: "Review Code of Conduct / Granska uppförandekoden" },
+                        { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
+                        { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
+                        ...(schedData ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat", scrollTo: true }] : []),
+                        { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          {item.done ? (
+                            <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 shrink-0" />
+                          )}
+                          <span className={cn(item.done ? "text-muted-foreground line-through" : "text-foreground")}>
+                            {item.label}
+                          </span>
+                          {"scrollTo" in item && item.scrollTo && !item.done && (
+                            <button
+                              onClick={scrollToSchedule}
+                              className="text-xs text-primary underline underline-offset-2 hover:text-primary/80 ml-1"
+                            >
+                              ↑ Scroll up
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
