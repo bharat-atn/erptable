@@ -176,7 +176,7 @@ export default function SigningSimulation() {
   const alreadySigned = contract.signing_status !== "sent_to_employee" || contract.employee_signature_url;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
   const hasSchedule = schedule.length > 0 || schedData;
-  const canSign = cocReviewed && cocConfirmed && contractConfirmed && (scheduleReviewed || !hasSchedule);
+  const canSign = cocConfirmed && contractConfirmed && (scheduleReviewed || !hasSchedule);
 
   // Day type colors
   const dayTypeColor = (t: string) => {
