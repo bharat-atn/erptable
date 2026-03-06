@@ -1,68 +1,50 @@
 
 
-## Plan: Rebuild Forestry Process Guide
+## Plan: Rebuild Scenario 1 — Forest Clearing Project
 
-### What We're Building
+The screenshots reveal a dramatically different and richer Scenario 1 than what currently exists. The current implementation uses a compact card with simple tables. The target is a full-page, multi-section walkthrough with detailed financial calculations, timeline visualization, team performance breakdowns, and compensation analysis.
 
-A comprehensive, multi-tab Process Guide matching the screenshots exactly. This replaces the current simple `ForestryProcessGuideView.tsx` with a rich reference document containing two tabs: **Process Map** and **Scenarios**.
+### Current vs Target
 
-### Tab 1: Process Map
+**Current**: Simple card with setup grid, table, team list, one calculation line, 3-column results.
 
-Visual hierarchy showing how the forestry system is structured:
+**Target**: Full scenario page with 10+ distinct sections, each with rich visual cards, colored badges, star avatars, timeline bars, and detailed financial breakdowns.
 
-1. **Header** with two info dialog buttons: "What is a Compensation Group?" and "What is an SLA Class?"
+### What Scenario 1 Looks Like (from screenshots)
 
-2. **Project Hierarchy Flow**: Project → Client → Location → Coordinates → Objects (icon cards with arrows)
+The scenario is "Forest Clearing Project" (not "Beginner Planting" as currently). It follows this flow:
 
-3. **Object Types**: Two side-by-side cards — Planting Objects (plant pieces/thousands) and Clearing Objects (hectares)
-
-4. **Compensation Methods**: Hourly Salary (both types) and Piece Work (per unit)
-
-5. **SLA Classes (101-113)**: Visual gradient from green (101 Light) through blue (107 Medium) to red (113 Heavy), with intermediate classes shown as badge groups
-
-6. **Forest Plant & Clearing Types 1-10**: Two columns showing plant types (Jackpot, Powerpot, Superpot...) and clearing types (Young Forest, Undergrowth, Powerline...)
-
-7. **Compensation Details**:
-   - Hourly Salary: Star System table (Job Type × Salary Group × Stars 1-5 with kr/h rates)
-   - Piece Work: Planting table (SLA Class × Stars with plants/day + Net Gross) and Clearing table (SLA Class × Stars with hectares/day + Net Gross)
-
-8. **What is a Project Object?**: Object attributes (Unique ID, Quantity, Compensation Type)
-
-9. **Compensation Type Connection**: Category + Compensation Method
-
-10. **5-Level Compensation Hierarchy**: Category → Compensation Method → Quantity Units → Difficulty Level (SLA) → Employee Performance (Stars)
-
-11. **Practical Example**: Object D330470 trace through the full hierarchy
-
-### Tab 2: Scenarios
-
-Workflow phases and real-world examples:
-
-1. **Foundation Setup** (6 cards in 2-col grid): Client Register, Object Register, Compensation Groups, Employee Register, Project Numbers, Project Defaults
-
-2. **Project Planning** (5 cards): Create Project, Add Project Objects, Set Duration & Timing, Assign Team, Financial Planning — each with subtitle notes
-
-3. **Execution & Monitoring** (4 cards): Gantt View, Kanban Board, Task Management, Activity Log
-
-4. **Compensation & Reporting** (3 cards): Preliminary Payroll, Analytics, Documentation
-
-5. **Real-World Scenarios**:
-   - **Scenario 1: Beginner Planting Project** — Project Setup card → Project Objects table → Team Assignment list → Compensation Calculation → Expected Results
-   - **Scenario 2: Complex Clearing Project** — Same structure with harder parameters
+1. **Scenario selector** — 3 buttons at top to switch between scenarios
+2. **Live data banner** — Yellow note: "This scenario reflects the current state of project PJ-26-0001"
+3. **Project Setup** — 4-column layout: Project Number (PJ-26-0001), Client (Swedish Forestry Corporation), Location (Värmland, Sweden), Coordinates (59.3293° N, 13.4877° E)
+4. **Project Objects (3)** — Individual object cards (not table), each showing Object ID, Type, SLA Class badge, Compensation badge, Quantity. Objects: D330474 (16.9 ha), D330473 (14.2 ha), D330472 (18.7 ha) — all Forest Clearing, SLA 107, Piece Work
+5. **Summary stats** — 4 colored cards: 3 Total Objects, 49.8 Total Hectares, Piece Work (Compensation), Class 107 (SLA Difficulty)
+6. **Team Assignment (4 Members)** — 2x2 grid cards with star ratings, hourly rate, total earnings: Anna Lindqvist (5★ Team Leader, 198 SEK, 3792 SEK), Niran Chairat (3★, 162 SEK, 3103 SEK), Andrei Popescu (2★, 144 SEK, 2758 SEK), Somchai Rattanakul (2★, 144 SEK, 2758 SEK)
+7. **Project Timeline** — 3 stat cards (3 Working Days, 19.2 Total Hours, 8 Hours/Day) + calculation note + Object Type Breakdown (Young Forest Type 1, Undergrowth Type 2)
+8. **Project Timeline - Scenario 1** — Two-column: Planning Phase (Apr 1 - May 31, 60 days) + Execution Phase (May 15 - May 31, 16 days) with green background. Timeline Overview bar chart (Feb-Jul 2026).
+9. **Timeline & Planning** — 3 cards: Planning Phase (April 2026), Execution Period (May 15 - May 31, 2026), Daily Schedule (8 hours)
+10. **Timeline Match Analysis** — Yellow-bordered note about 3 working days requirement
+11. **Performance & Duration Calculation** — 4 stat cards: 3 Working Days, 4 Team Members, 3 Clearing Days, 3.0★ Avg Team Rating
+12. **Team Performance Breakdown** — Per-person cards with Clearing Performance (ha/hour, ha/day, total ha) + Compensation Breakdown (ha × SEK). Anna: 0.85 ha/h, 6.80 ha/day, 20.40 ha, 51,000 SEK. Niran: 0.65, 5.20, 15.60, 39,000. Andrei: 0.55, 4.40, 13.20, 33,000. Somchai: same as Andrei.
+13. **Project Compensation Summary** — Two columns: Individual Distribution (4 workers with amounts) + Project Financial Overview (156,000 SEK total, Clearing Rate 2,500 SEK/hectare, Avg per person 39,000 SEK)
+14. **Key Insights & Performance Analysis** — Bullet points with colored highlights
+15. **Compensation Breakdown - Scenario 1** — Distribution method toggle (Individual Performance / Equal Distribution) + SLA Class 107 Pricing Rates (3,500 SEK/hectare)
+16. **Individual Earnings** — Per-person cards with star avatar, role badge, Clearing Contribution details, Total Earnings
+17. **Project Financial Summary** — 3 cards: Total Labor Cost (218,400 SEK red), Gross Revenue (174,300 SEK), Gross Profit (-44,100 SEK, -25.3% margin)
 
 ### Technical Approach
 
-**Single file change**: Complete rewrite of `src/components/dashboard/ForestryProcessGuideView.tsx`
+**File**: Rewrite `src/components/dashboard/forestry-guide/ScenariosTab.tsx`
 
-- Use Radix `Tabs` component for Process Map / Scenarios toggle
-- Use `Dialog` for the info popups ("What is a Compensation Group?" / "What is an SLA Class?")
-- All data is static/hardcoded (reference documentation, not database-driven)
-- Use existing Card, Badge, Table components
-- Arrow connectors between sections using `ArrowDown` icon + centered text
-- Color-coded sections: green tint for planting, blue for clearing, yellow/red for SLA difficulty
-- Responsive: 2-column grids collapse to single column on mobile
+- Keep the phase cards and best practices at top/bottom
+- Replace the 3 simple `Scenario` components with a **tabbed scenario selector** (3 buttons)
+- Build Scenario 1 as a comprehensive component with all 15+ sections above
+- Scenarios 2 and 3 remain as placeholders ("Coming in next iteration") for now
+- Use colored circle avatars for star ratings (gold for 5★, blue for 3★, brown for 2★)
+- Timeline overview uses simple CSS bar chart (no recharts needed)
+- All data is static/hardcoded
 
 ### Estimated Size
 
-~800-900 lines for the full component with all the tables, scenarios, and visual hierarchy.
+~900-1000 lines due to the rich visual detail in each section.
 
