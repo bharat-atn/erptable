@@ -23,6 +23,9 @@ const COC_LANGUAGES = [
   { code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
+// PDFs that actually exist in public/documents/
+const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th"]);
+
 // Swedish public holidays calculation
 function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
   const fixed = [
