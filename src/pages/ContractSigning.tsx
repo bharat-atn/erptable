@@ -171,6 +171,8 @@ export default function ContractSigning() {
   const handleCocScroll = useCallback(() => {
     const el = cocScrollContainerRef.current;
     if (!el || cocScrolledToBottom) return;
+    // Guard: only trigger if container is actually scrollable (iframe loaded)
+    if (el.scrollHeight <= el.clientHeight + 50) return;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
       setCocScrolledToBottom(true);
     }
