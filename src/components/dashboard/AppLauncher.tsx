@@ -123,7 +123,7 @@ const defaultApps: AppDefinition[] = [
     iconName: "TreePine",
     colorIndex: 2,
     enabled: true,
-    available: false,
+    available: true,
     allowedRoles: ["admin", "org_admin", "project_manager"],
   },
   {
