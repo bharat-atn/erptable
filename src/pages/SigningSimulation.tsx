@@ -67,22 +67,14 @@ export default function SigningSimulation() {
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
 
-  // Detect when user scrolls to bottom of CoC container
-  useEffect(() => {
-    const el = cocBottomRef.current;
-    const root = cocScrollContainerRef.current;
-    if (!el || !root || cocScrolledToBottom) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setCocScrolledToBottom(true);
-        }
-      },
-      { root, threshold: 0.5 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [cocScrolledToBottom, cocLanguage]);
+  // Detect when user scrolls to bottom of CoC container via scroll event
+  const handleCocScroll = () => {
+    const el = cocScrollContainerRef.current;
+    if (!el || cocScrolledToBottom) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
+      setCocScrolledToBottom(true);
+    }
+  };
 
   useEffect(() => {
     if (!contractId) return;
