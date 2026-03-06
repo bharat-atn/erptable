@@ -101,9 +101,19 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
         signatureUrl = urlData.publicUrl;
       }
 
+      // Build eIDAS SES signing metadata
+      const signingMetadata = {
+        place: signingPlace,
+        date: signingDate,
+        userAgent: navigator.userAgent,
+        consentText: "Employer counter-signature confirming contract terms.",
+        signedAt: new Date().toISOString(),
+      };
+
       const { error: rpcErr } = await supabase.rpc("submit_employer_signature", {
         _contract_id: contractId,
         _signature_url: signatureUrl,
+        _signing_metadata: signingMetadata,
       });
       if (rpcErr) throw rpcErr;
 

@@ -8,6 +8,13 @@ import {
   type LangCode,
 } from "@/lib/contract-translations";
 
+interface SigningMetadata {
+  place?: string | null;
+  date?: string | null;
+  ip?: string | null;
+  signedAt?: string | null;
+}
+
 interface ContractDocumentProps {
   companyName: string;
   companyOrgNumber?: string | null;
@@ -21,6 +28,8 @@ interface ContractDocumentProps {
   employerSignatureUrl?: string | null;
   employeeSignedAt?: string | null;
   employerSignedAt?: string | null;
+  employeeSigningMetadata?: SigningMetadata | null;
+  employerSigningMetadata?: SigningMetadata | null;
 }
 
 function fmtDate(val: string | null | undefined): string {
@@ -34,6 +43,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
       companyName, companyOrgNumber, companyAddress, companyPostcode, companyCity,
       contractCode, seasonYear, formData: fd,
       employeeSignatureUrl, employerSignatureUrl, employeeSignedAt, employerSignedAt,
+      employeeSigningMetadata, employerSigningMetadata,
     } = props;
 
     const lang: LangCode = fd.contractLanguage || "EN/SE";
@@ -497,7 +507,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           <div className="sig-grid">
             <div className="sig-column">
               <div className="sig-field">
-                <div className="sig-line" />
+                <div className="sig-line">
+                  {employerSigningMetadata?.place && employerSigningMetadata?.date && (
+                    <span className="sig-prefill">{employerSigningMetadata.place}, {employerSigningMetadata.date}</span>
+                  )}
+                </div>
                 <span className="sig-label">{bl(CL.placeAndDate, lang)}</span>
               </div>
               <div className="sig-field">
@@ -514,7 +528,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
             </div>
             <div className="sig-column">
               <div className="sig-field">
-                <div className="sig-line" />
+                <div className="sig-line">
+                  {employeeSigningMetadata?.place && employeeSigningMetadata?.date && (
+                    <span className="sig-prefill">{employeeSigningMetadata.place}, {employeeSigningMetadata.date}</span>
+                  )}
+                </div>
                 <span className="sig-label">{bl(CL.placeAndDate, lang)}</span>
               </div>
               <div className="sig-field">

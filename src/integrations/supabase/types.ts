@@ -475,8 +475,10 @@ export type Database = {
           employee_id: string
           employee_signature_url: string | null
           employee_signed_at: string | null
+          employee_signing_metadata: Json | null
           employer_signature_url: string | null
           employer_signed_at: string | null
+          employer_signing_metadata: Json | null
           end_date: string | null
           form_data: Json | null
           id: string
@@ -498,8 +500,10 @@ export type Database = {
           employee_id: string
           employee_signature_url?: string | null
           employee_signed_at?: string | null
+          employee_signing_metadata?: Json | null
           employer_signature_url?: string | null
           employer_signed_at?: string | null
+          employer_signing_metadata?: Json | null
           end_date?: string | null
           form_data?: Json | null
           id?: string
@@ -521,8 +525,10 @@ export type Database = {
           employee_id?: string
           employee_signature_url?: string | null
           employee_signed_at?: string | null
+          employee_signing_metadata?: Json | null
           employer_signature_url?: string | null
           employer_signed_at?: string | null
+          employer_signing_metadata?: Json | null
           end_date?: string | null
           form_data?: Json | null
           id?: string
@@ -1607,14 +1613,32 @@ export type Database = {
         Returns: undefined
       }
       set_org_context: { Args: { _org_id: string }; Returns: undefined }
-      submit_employee_signature: {
-        Args: { _signature_url: string; _token: string }
-        Returns: undefined
-      }
-      submit_employer_signature: {
-        Args: { _contract_id: string; _signature_url: string }
-        Returns: undefined
-      }
+      submit_employee_signature:
+        | {
+            Args: { _signature_url: string; _token: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _signature_url: string
+              _signing_metadata?: Json
+              _token: string
+            }
+            Returns: undefined
+          }
+      submit_employer_signature:
+        | {
+            Args: { _contract_id: string; _signature_url: string }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _contract_id: string
+              _signature_url: string
+              _signing_metadata?: Json
+            }
+            Returns: undefined
+          }
       submit_onboarding: {
         Args: {
           _first_name: string
