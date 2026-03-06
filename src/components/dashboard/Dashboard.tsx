@@ -22,6 +22,8 @@ import { UserManagementView } from "./UserManagementView";
 import { RolePermissionMatrix } from "./RolePermissionMatrix";
 import { VersionManagementView } from "./VersionManagementView";
 import { IssueTrackerView } from "./IssueTrackerView";
+import { ForestryDashboardView } from "./ForestryDashboardView";
+import { ForestryProjectsView } from "./ForestryProjectsView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
@@ -73,6 +75,19 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
+    // Forestry Project Manager views
+    if (appId === "forestry-project") {
+      switch (activeView) {
+        case "dashboard": return <ForestryDashboardView onNavigate={setActiveView} />;
+        case "forestry-projects": return <ForestryProjectsView />;
+        case "employee-register": return <EmployeeRegisterView />;
+        case "audit-log": return <AuditLogView />;
+        case "settings": return <SettingsView />;
+        case "process-guide": return <ProcessGuideView />;
+        default: return <ForestryDashboardView onNavigate={setActiveView} />;
+      }
+    }
+
     switch (activeView) {
       case "dashboard": return <DashboardView onNavigate={setActiveView} />;
       case "operations": return <OperationsView onNavigate={(view, empId) => {

@@ -37,15 +37,11 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
   ],
   "forestry-project": [
     { id: "dashboard", label: "Dashboard", group: "main" },
-    { id: "projects", label: "Projects", group: "main" },
-    { id: "work-orders", label: "Work Orders", group: "main" },
-    { id: "field-reports", label: "Field Reports", group: "main" },
-    { id: "map-view", label: "Map View", group: "main" },
-    { id: "inventory", label: "Inventory", group: "settings" },
-    { id: "equipment", label: "Equipment", group: "settings" },
-    { id: "site-register", label: "Site Register", group: "settings" },
-    { id: "species-register", label: "Species Register", group: "settings" },
+    { id: "forestry-projects", label: "Projects", group: "main" },
+    { id: "employee-register", label: "Employees", group: "main" },
+    { id: "analytics", label: "Analytics", group: "main" },
     { id: "audit-log", label: "Audit Log", group: "others" },
+    { id: "settings", label: "Settings", group: "others" },
     { id: "process-guide", label: "Process Guide", group: "others" },
   ],
   "payroll": [
@@ -102,9 +98,9 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
   "forestry-project": {
     admin: SIDEBAR_ITEMS_BY_APP["forestry-project"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["forestry-project"].map((i) => i.id),
-    hr_manager: ["dashboard", "projects", "work-orders", "field-reports"],
-    project_manager: ["dashboard", "projects", "work-orders", "field-reports", "map-view", "site-register", "equipment"],
-    team_leader: ["dashboard", "work-orders", "field-reports", "map-view"],
+    hr_manager: ["dashboard", "forestry-projects", "employee-register"],
+    project_manager: ["dashboard", "forestry-projects", "employee-register", "analytics"],
+    team_leader: ["dashboard", "forestry-projects"],
     user: ["dashboard"],
   },
   "payroll": {

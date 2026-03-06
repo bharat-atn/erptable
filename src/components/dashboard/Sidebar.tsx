@@ -35,7 +35,10 @@ import {
   Globe,
   Lock,
   Loader2,
-  AlertTriangle } from
+  AlertTriangle,
+  FolderKanban,
+  BarChart3,
+  TreePine } from
 "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logoutWithAudit } from "@/lib/audit-helpers";
@@ -118,6 +121,17 @@ const defaultConfigItems: MenuItem[] = [
 { id: "process-guide", label: "Process Guide", icon: BookOpen },
 { id: "audit-log", label: "Audit Log", icon: Shield }];
 
+// Forestry Project Manager menu items
+const forestryMenuItems: MenuItem[] = [
+{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+{ id: "forestry-projects", label: "Projects", icon: FolderKanban },
+{ id: "employee-register", label: "Employees", icon: Users },
+{ id: "analytics", label: "Analytics", icon: BarChart3 }];
+
+const forestryOthersItems: MenuItem[] = [
+{ id: "audit-log", label: "Audit Log", icon: Shield },
+{ id: "settings", label: "Settings", icon: Settings },
+{ id: "process-guide", label: "Process Guide", icon: BookOpen }];
 
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
   try {
@@ -905,9 +919,23 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const [profileOpen, setProfileOpen] = useState(false);
   const isPublished = isPublishedEnvironment();
 
-  const [menuItems, setMenuItems] = useState(() => loadOrder("menu", defaultMenuItems));
-  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => loadOrder("config", defaultConfigItems));
+  const isForestry = appId === "forestry-project";
+  const [menuItems, setMenuItems] = useState(() => loadOrder("menu", isForestry ? forestryMenuItems : defaultMenuItems));
+  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", isForestry ? [] : defaultSettingsItems));
+  const [configItems, setConfigItems] = useState(() => loadOrder("config", isForestry ? forestryOthersItems : defaultConfigItems));
+
+  // Reset menu items when app changes
+  useEffect(() => {
+    if (isForestry) {
+      setMenuItems(loadOrder("forestry-menu", forestryMenuItems));
+      setSettingsItems([]);
+      setConfigItems(loadOrder("forestry-others", forestryOthersItems));
+    } else {
+      setMenuItems(loadOrder("menu", defaultMenuItems));
+      setSettingsItems(loadOrder("settings", defaultSettingsItems));
+      setConfigItems(loadOrder("config", defaultConfigItems));
+    }
+  }, [appId, isForestry]);
 
   // Fetch sidebar permissions for current role + app
   const { data: allowedItems } = useQuery({
