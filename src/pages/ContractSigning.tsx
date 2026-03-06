@@ -347,17 +347,6 @@ export default function ContractSigning() {
                       <ExternalLink className="w-4 h-4" />
                       Open in new tab / Öppna i ny flik
                     </a>
-                    {!cocReviewed && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setCocReviewed(true)}
-                        className="gap-2"
-                      >
-                        <Check className="w-4 h-4" />
-                        Mark as reviewed / Markera som granskad
-                      </Button>
-                    )}
                   </div>
                 </div>
               )}
