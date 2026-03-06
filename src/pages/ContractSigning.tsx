@@ -151,6 +151,7 @@ export default function ContractSigning() {
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
   const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
   const cocBottomRef = useRef<HTMLDivElement>(null);
+  const cocScrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
