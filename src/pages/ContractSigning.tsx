@@ -350,7 +350,7 @@ export default function ContractSigning() {
                     <iframe
                       key={cocLanguage}
                       src={selectedCocLang.file}
-                      className="w-full h-[400px] sm:h-[500px]"
+                      className="w-full h-[600px] sm:h-[700px]"
                       title={`Code of Conduct - ${selectedCocLang.label}`}
                       style={{ border: "none" }}
                     />
