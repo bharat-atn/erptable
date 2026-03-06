@@ -441,25 +441,41 @@ export function BankListView() {
     if (!orgId) { toast.error("No organization selected"); return; }
     setSeedingDefaults(true);
     try {
-      const existingNames = new Set(banks.map((b) => b.name.toLowerCase()));
-      const toInsert = DEFAULT_BANKS.filter((b) => !existingNames.has(b.name.toLowerCase()));
-      if (toInsert.length === 0) {
-        toast.info("All default banks already exist in the registry");
+      // Batch upsert all default banks — existing ones get BIC codes updated
+      const rows = DEFAULT_BANKS.map((b, i) => ({
+        name: b.name,
+        bic_code: b.bic_code,
+        country: b.country,
+        sort_order: i + 1,
+        org_id: orgId,
+      }));
+
+      const { error } = await supabase.from("banks").upsert(rows, {
+        onConflict: "org_id,name",
+        ignoreDuplicates: false,
+      });
+
+      if (error) {
+        toast.error(`Seed failed: ${error.message}`);
         return;
       }
-      let added = 0;
-      for (const row of toInsert) {
-        const { error } = await supabase.from("banks").insert({
-          name: row.name,
-          bic_code: row.bic_code,
-          country: row.country,
-          sort_order: banks.length + added + 1,
-          org_id: orgId,
-        });
-        if (!error) added++;
-      }
+
+      // Verify final count
+      const { count, error: countError } = await supabase
+        .from("banks")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId);
+
       queryClient.invalidateQueries({ queryKey: ["banks"] });
-      toast.success(`${added} default bank(s) added`);
+
+      const finalCount = count ?? 0;
+      if (countError) {
+        toast.warning("Banks upserted but could not verify count");
+      } else if (finalCount < DEFAULT_BANKS.length) {
+        toast.warning(`Bank registry incomplete: ${finalCount} / ${DEFAULT_BANKS.length} banks. ${DEFAULT_BANKS.length - finalCount} banks are missing.`);
+      } else {
+        toast.success(`${DEFAULT_BANKS.length} / ${DEFAULT_BANKS.length} banks verified ✓`);
+      }
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -516,6 +532,9 @@ export function BankListView() {
           <Button variant="outline" size="sm" onClick={seedDefaultBanks} disabled={seedingDefaults || !orgId} className="gap-1.5">
             {seedingDefaults ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Landmark className="w-3.5 h-3.5" />}
             Seed Default Banks
+            <Badge variant={banks.length >= DEFAULT_BANKS.length ? "success" : "warning"} className="ml-1 text-[10px] px-1.5 py-0">
+              {banks.length} / {DEFAULT_BANKS.length}
+            </Badge>
           </Button>
           <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5">
             <FileDown className="w-3.5 h-3.5" /> Template
