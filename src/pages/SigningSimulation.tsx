@@ -60,11 +60,30 @@ export default function SigningSimulation() {
 
   // Review states
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
-  const [cocReviewed, setCocReviewed] = useState(false);
+  const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
+  const cocBottomRef = useRef<HTMLDivElement>(null);
+  const cocScrollContainerRef = useRef<HTMLDivElement>(null);
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
   const [scheduleExpanded, setScheduleExpanded] = useState(false);
+
+  // Detect when user scrolls to bottom of CoC container
+  useEffect(() => {
+    const el = cocBottomRef.current;
+    const root = cocScrollContainerRef.current;
+    if (!el || !root || cocScrolledToBottom) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setCocScrolledToBottom(true);
+        }
+      },
+      { root, threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [cocScrolledToBottom, cocLanguage]);
 
   useEffect(() => {
     if (!contractId) return;
