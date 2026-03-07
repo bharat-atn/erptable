@@ -590,7 +590,7 @@ function buildFullContractHtml(
       const holidayName = lang === "SE" ? (row.holiday_name_sv || "") : (row.holiday_name_en || row.holiday_name_sv || "");
       html += `<tr${trClass}>`;
       html += `<td>${fmtDate(row.schedule_date)}</td>`;
-      html += `<td>${esc(row.day_type)}</td>`;
+      html += `<td>${esc(translateDayType(row.day_type, lang))}</td>`;
       html += `<td>${row.scheduled_hours}</td>`;
       html += `<td>${esc(row.start_time) || "—"}</td>`;
       html += `<td>${esc(row.end_time) || "—"}</td>`;
