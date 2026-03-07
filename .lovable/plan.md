@@ -1,29 +1,38 @@
 
 
-## Plan: Fix Bank Section — Clean Rewrite of State Management
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
 ### Root Cause
 
-The bank name input has a **race condition** between parent and child state. Here's what happens step-by-step:
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-1. User types "bank" → `onChange` fires on **every keystroke**, calling `onBankSelect("other")` which sets `selectedBank=""` and `isOtherBank=true` in parent
-2. User clicks a suggestion → `onMouseDown` calls `onBankSelect("CEC BANK S.A.")` which sets `selectedBank="CEC BANK S.A."` and `isOtherBank=false`
-3. The input value expression `bankSearchQuery || (isOtherBank ? formData.otherBankName : selectedBank) || ""` tries to derive the display from **three different state sources** across parent and child — this creates timing issues during React's batched re-renders
-4. The session replay confirms: after clicking a suggestion, the DOM input value is set to `""` — the bank name never appears
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-For BIC and account number: the same `onChange → onBankSelect("other")` loop on every keystroke triggers parent re-renders that cascade through the entire form, likely causing focus/value issues with sibling inputs.
+**1. Replace generic message with specific missing-condition checklist**
 
-### Fix
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-**File: `src/components/onboarding/OnboardingWizard.tsx`**
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-1. **Add a local `bankNameValue` state** that tracks what the user sees in the bank name input — no more complex derived expression
-2. **Remove `onBankSelect("other")` from the input's `onChange`** — only call `onBankSelect` when a dropdown suggestion is clicked or on blur when user has typed a custom value
-3. **On suggestion click**: set `bankNameValue` directly, call `onBankSelect(bank)` once, auto-fill BIC
-4. **On blur with custom text**: call `onBankSelect("other")` and `updateField("otherBankName", bankNameValue)` once
-5. **BIC and account number inputs stay simple** — no changes needed to their logic, the fix above stops the parent re-render storm that was interfering
+This tells the user exactly what's blocking them.
 
-**File: `src/pages/OnboardingPortal.tsx`** — no changes needed.
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-This is a ~30-line change isolated to the bank name input block (lines 1260-1324).
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 

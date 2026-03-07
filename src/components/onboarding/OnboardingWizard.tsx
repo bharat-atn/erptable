@@ -543,7 +543,7 @@ export function OnboardingWizard({
       updateField("otherBankName", "");
       updateField("bicCode", "");
       updateField("bankAccountNumber", "");
-      setBankSearchQuery("");
+      setBankNameValue("");
       setS4Open(true);
 
       // Ensure emergency contact section is visible
@@ -652,7 +652,7 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
-  const [bankSearchQuery, setBankSearchQuery] = useState("");
+  const [bankNameValue, setBankNameValue] = useState("");
   const [bankDropdownOpen, setBankDropdownOpen] = useState(false);
   const bankInputRef = useRef<HTMLInputElement>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
@@ -706,10 +706,10 @@ export function OnboardingWizard({
 
   /* ─── Filtered bank suggestions for autocomplete ─── */
   const filteredBankSuggestions = useMemo(() => {
-    if (!bankSearchQuery.trim()) return bankList;
-    const q = bankSearchQuery.toLowerCase();
+    if (!bankNameValue.trim()) return bankList;
+    const q = bankNameValue.toLowerCase();
     return bankList.filter((b) => b.toLowerCase().includes(q));
-  }, [bankList, bankSearchQuery]);
+  }, [bankList, bankNameValue]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
@@ -1233,7 +1233,7 @@ export function OnboardingWizard({
                       onBankSelect("other");
                     } else {
                       onBankSelect("");
-                      setBankSearchQuery("");
+                      setBankNameValue("");
                     }
                   }}
                   placeholder="Choose country / Välj land"
@@ -1263,24 +1263,26 @@ export function OnboardingWizard({
                 <Input
                   ref={bankInputRef}
                   tabIndex={23}
-                  value={bankSearchQuery || (isOtherBank ? (formData.otherBankName || "") : selectedBank) || ""}
+                  value={bankNameValue}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    setBankSearchQuery(val);
+                    setBankNameValue(e.target.value);
                     setBankDropdownOpen(true);
-                    // If user types freely, treat as "other" bank
-                    onBankSelect("other");
-                    updateField("otherBankName", val);
                   }}
                   onFocus={() => {
                     if (bankList.length > 0) setBankDropdownOpen(true);
                   }}
                   onBlur={() => {
-                    // Delay to allow click on suggestion
-                    setTimeout(() => setBankDropdownOpen(false), 200);
+                    // Sync to parent on blur (not on every keystroke)
+                    setTimeout(() => {
+                      setBankDropdownOpen(false);
+                      if (bankNameValue && !selectedBank) {
+                        onBankSelect("other");
+                        updateField("otherBankName", bankNameValue);
+                      }
+                    }, 200);
                   }}
                   placeholder="Type or select bank / Skriv eller välj bank"
-                  className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !formData.otherBankName))}
+                  className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !bankNameValue))}
                 />
                 {/* Autocomplete dropdown */}
                 {bankDropdownOpen && filteredBankSuggestions.length > 0 && (
@@ -1291,10 +1293,10 @@ export function OnboardingWizard({
                         type="button"
                         className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
                         onMouseDown={(e) => {
-                          e.preventDefault(); // Prevent blur before click
-                          onBankSelect(bank);
-                          setBankSearchQuery("");
+                          e.preventDefault();
+                          setBankNameValue(bank);
                           setBankDropdownOpen(false);
+                          onBankSelect(bank);
                           // Auto-fill BIC
                           const match = banksForSelectedCountry.find((b) => b.name === bank);
                           if (match?.bic_code) updateField("bicCode", match.bic_code);
@@ -1315,7 +1317,7 @@ export function OnboardingWizard({
                   </div>
                 )}
                 {/* Show selected bank confirmation */}
-                {selectedBank && !bankDropdownOpen && !bankSearchQuery && (
+                {selectedBank && !bankDropdownOpen && (
                   <div className="flex items-center gap-2 mt-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
                     <span className="text-xs text-primary font-medium">{selectedBank}</span>
