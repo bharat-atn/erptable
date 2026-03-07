@@ -652,7 +652,7 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
-  const [bankSearchQuery, setBankSearchQuery] = useState("");
+  const [bankNameValue, setBankNameValue] = useState("");
   const [bankDropdownOpen, setBankDropdownOpen] = useState(false);
   const bankInputRef = useRef<HTMLInputElement>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
