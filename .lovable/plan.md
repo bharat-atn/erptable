@@ -1,38 +1,42 @@
 
+Goal: restore an in-app, scrollable Code of Conduct (no forced download), provide real Ukrainian content, and enforce ISO date format everywhere in signing.
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+1) Replace the current CoC iframe strategy (Google viewer)
+- Build a dedicated `CodeOfConductViewer` component and use it in both:
+  - `src/pages/ContractSigning.tsx`
+  - `src/pages/SigningSimulation.tsx`
+- Remove the external viewer URL and remove/disable the “Open in new tab” download-style action in signing flow.
+- Keep the CoC inside the existing fixed-height scroll container so phone users can scroll directly in-app.
 
-### Root Cause
+2) Make Ukrainian CoC actually Ukrainian (not English placeholder)
+- Add a Ukrainian translated CoC content source (based on the English text) and wire it to the `uk` language option.
+- Render Ukrainian content in the same CoC box/component as other languages, so behavior is identical.
+- Keep language card label as `Українська / Ukrainian`.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+3) Fix ISO date compliance end-to-end (YYYY-MM-DD)
+- Frontend input hardening:
+  - `src/pages/ContractSigning.tsx`: keep date as text, enforce `YYYY-MM-DD` pattern, validate before allowing submit.
+  - `src/components/dashboard/EmployerSigningDialog.tsx`: change employer signing date from native `type="date"` to ISO-controlled text input with same validation.
+- Display hardening:
+  - `src/components/dashboard/ContractDocument.tsx`: format signing metadata dates with ISO formatter (`fmtDate`) before rendering under “Place and Date”.
+  - Replace any `toLocaleDateString()` in signing-related summaries with ISO format.
+- Backend hardening:
+  - `supabase/functions/upload-employee-signature/index.ts`: reject non-ISO signingDate.
+  - Add a migration to update signing RPC validation (`submit_employee_signature`, `submit_employer_signature`) so metadata date must match `^\d{4}-\d{2}-\d{2}$` (or null), preventing bad formats from being persisted.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+4) Consistency + regression coverage
+- Ensure both signing pages use the same CoC viewer path and same language mapping.
+- Verify no CoC step in signing requires downloading to proceed.
+- Verify existing stored signatures still render safely (formatted display), while new signatures are strictly validated.
 
-**1. Replace generic message with specific missing-condition checklist**
+Technical details
+- No new tables needed; only RPC/function validation update via migration.
+- No auth model changes.
+- CoC viewer change is UI-only but applied in both signing entry points to prevent drift.
+- ISO enforcement is layered: UI validation + edge function validation + RPC validation + normalized rendering.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
-
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
-
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
-
+Acceptance criteria
+- On mobile, selecting any CoC language shows readable in-box content with scroll; no download prompt required to read.
+- Ukrainian CoC displays Ukrainian text in the same CoC viewer area.
+- Signing date fields and displayed signature “Place and Date” are always `YYYY-MM-DD`.
+- Non-ISO dates are blocked before save and rejected server-side if bypassed client-side.
