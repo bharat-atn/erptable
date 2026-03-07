@@ -1323,9 +1323,10 @@ export function OnboardingWizard({
                   placeholder="Type or select bank / Skriv eller välj bank"
                   className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !bankNameValue))}
                 />
-                {/* Autocomplete dropdown */}
-                {bankDropdownOpen && filteredBankSuggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+                {/* Autocomplete dropdown: "Other" option */}
+                {bankDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
+                    style={{ top: "100%" }}>
                     {filteredBankSuggestions.map((bank) => (
                       <button
                         key={bank}
@@ -1360,13 +1361,24 @@ export function OnboardingWizard({
                         {bank}
                       </button>
                     ))}
-                  </div>
-                )}
-                {/* Show selected bank confirmation */}
-                {selectedBank && !bankDropdownOpen && (
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs text-primary font-medium">{selectedBank}</span>
+                    {/* "Other bank" option */}
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-2.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors border-t border-border"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setBankNameValue("");
+                        setBankDropdownOpen(false);
+                        onBankSelect("other");
+                        updateField("otherBankName", "");
+                        setBicValue("");
+                        updateField("bicCode", "");
+                        setBankAccountValue("");
+                        updateField("bankAccountNumber", "");
+                      }}
+                    >
+                      Other / Annan bank…
+                    </button>
                   </div>
                 )}
               </div>
