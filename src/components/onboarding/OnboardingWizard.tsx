@@ -706,10 +706,10 @@ export function OnboardingWizard({
 
   /* ─── Filtered bank suggestions for autocomplete ─── */
   const filteredBankSuggestions = useMemo(() => {
-    if (!bankSearchQuery.trim()) return bankList;
-    const q = bankSearchQuery.toLowerCase();
+    if (!bankNameValue.trim()) return bankList;
+    const q = bankNameValue.toLowerCase();
     return bankList.filter((b) => b.toLowerCase().includes(q));
-  }, [bankList, bankSearchQuery]);
+  }, [bankList, bankNameValue]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
