@@ -543,7 +543,7 @@ export function OnboardingWizard({
       updateField("otherBankName", "");
       updateField("bicCode", "");
       updateField("bankAccountNumber", "");
-      setBankListExpanded(true);
+      setBankSearchQuery("");
       setS4Open(true);
 
       // Ensure emergency contact section is visible
