@@ -3,19 +3,20 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import {
-  CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink,
+  CheckCircle, Loader2, AlertTriangle, FileText, Check,
   Calendar, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
 import { CodeOfConductViewer } from "@/components/dashboard/CodeOfConductViewer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { format, addDays, eachDayOfInterval, getDay } from "date-fns";
 import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
-
-const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
 const COC_LANGUAGES = [
   { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
