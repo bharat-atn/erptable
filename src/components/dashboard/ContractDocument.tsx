@@ -5,6 +5,7 @@ import {
   bilingualLabel as bl,
   primaryText as pt,
   swedishText as svt,
+  getExperienceLevelLabel,
   type LangCode,
 } from "@/lib/contract-translations";
 
