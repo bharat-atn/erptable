@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { CONTRACT_PRINT_CSS } from "@/lib/contract-print-styles";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
