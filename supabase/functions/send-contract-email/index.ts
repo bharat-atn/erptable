@@ -289,8 +289,9 @@ function getCocPrimaryForLang(lang: string): { title: string; sections: { headin
 const printCss = `
   @page { size: A4; margin: 14mm 12mm 14mm 12mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; background: #fff; font-size: 10pt; line-height: 1.45; }
-  .contract-doc { max-width: 100%; }
+  body { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; background: #fff; font-size: 10pt; line-height: 1.45; padding: 20mm 16mm; max-width: 210mm; margin: 0 auto; }
+  @media print { body { padding: 0; max-width: 100%; } }
+  .contract-doc { max-width: 100%; padding: 0 2mm; }
   .doc-header { text-align: center; padding-bottom: 10px; border-bottom: 3px double #333; margin-bottom: 12px; }
   .doc-header h1 { font-size: 14pt; font-weight: 700; letter-spacing: 2.5px; margin-bottom: 2px; font-family: Arial, Helvetica, sans-serif; }
   .doc-subtitle { font-size: 8.5pt; color: #555; letter-spacing: 0.5px; }
@@ -327,11 +328,12 @@ const printCss = `
   .sig-img { height: 28px; object-fit: contain; }
   .page-break { page-break-before: always; break-before: always; }
   .coc-section { margin-top: 8px; }
-  .coc-heading { font-size: 9.5pt; font-weight: 700; margin-top: 8px; margin-bottom: 2px; }
-  .coc-body { font-size: 9pt; white-space: pre-line; line-height: 1.4; margin-bottom: 6px; }
+  .coc-heading { font-size: 9.5pt; font-weight: 700; margin-top: 12px; margin-bottom: 3px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+  .coc-body { font-size: 9pt; white-space: pre-line; line-height: 1.5; margin-bottom: 8px; margin-left: 2px; }
   .schedule-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-top: 6px; }
-  .schedule-table th { font-family: Arial, Helvetica, sans-serif; font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; text-align: left; padding: 3px 6px; border-bottom: 2px solid #999; }
-  .schedule-table td { padding: 2px 6px; border-bottom: 1px solid #eee; }
+  .schedule-table th { font-family: Arial, Helvetica, sans-serif; font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; text-align: left; padding: 4px 8px; border-bottom: 2px solid #999; }
+  .schedule-table td { padding: 3px 8px; border-bottom: 1px solid #eee; }
+  .schedule-table tr:nth-child(even) { background: #fafafa; }
   .schedule-table tr.holiday { background: #fef3c7; }
   .schedule-table tr.weekend { background: #f0f0f0; }
   .whitespace-pre-wrap { white-space: pre-wrap; }
