@@ -356,7 +356,7 @@ export default function ContractSigning() {
                       <div className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto">
                         <iframe
                           key={cocLanguage}
-                          src={selectedCocLang.file}
+                          src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
                           className="w-full"
                           style={{ border: "none", height: "900px" }}
                           title={`Code of Conduct - ${selectedCocLang.label}`}

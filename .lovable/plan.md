@@ -1,23 +1,38 @@
 
 
-## Plan: Embed Code of Conduct PDF Inline via Google Docs Viewer
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
+### Root Cause
 
-In `ContractSigning.tsx` (line 359), the iframe loads the raw PDF file directly (`src={selectedCocLang.file}`). Most mobile browsers cannot render PDFs inline in iframes — they either show a blank page or trigger a download. `SigningSimulation.tsx` already uses Google Docs Viewer and works correctly.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-### Fix — One-line change in `src/pages/ContractSigning.tsx`
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**Line 359**: Change the iframe `src` from:
-```
-src={selectedCocLang.file}
-```
-to:
-```
-src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
-```
+**1. Replace generic message with specific missing-condition checklist**
 
-This matches the working implementation in `SigningSimulation.tsx` (line 274). The Google Docs Viewer renders the PDF as scrollable HTML that works on all devices including mobile phones.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-No other files need changes.
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
+
+This tells the user exactly what's blocking them.
+
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
