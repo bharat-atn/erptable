@@ -680,6 +680,7 @@ export default function ContractSigning() {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );

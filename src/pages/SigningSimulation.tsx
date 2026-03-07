@@ -566,6 +566,7 @@ export default function SigningSimulation() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Footer */}
         <div className="text-center pb-8">
