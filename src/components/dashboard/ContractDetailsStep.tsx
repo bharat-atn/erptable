@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { CONTRACT_PRINT_CSS } from "@/lib/contract-print-styles";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { differenceInMonths, differenceInDays } from "date-fns";
