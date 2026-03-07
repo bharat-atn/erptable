@@ -624,8 +624,9 @@ const COC_TH = {
   ],
 };
 
-/* ───────────────────── MAP ───────────────────── */
-const COC_MAP: Record<string, { title: string; sections: { heading: string; body: string }[] }> = {
+export type CoCContent = { title: string; sections: { heading: string; body: string }[] };
+
+export const COC_MAP: Record<string, CoCContent> = {
   en: COC_EN,
   sv: COC_SV,
   ro: COC_RO,
