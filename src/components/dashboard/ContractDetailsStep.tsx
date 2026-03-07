@@ -1482,6 +1482,7 @@ export function ContractDetailsStep({
                     <Calendar
                       mode="single"
                       selected={birthday}
+                      defaultMonth={birthday || undefined}
                       onSelect={setBirthday}
                       disabled={(date) =>
                         date > maxBirthDate || date < minBirthDate
