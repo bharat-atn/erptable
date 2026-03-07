@@ -50,52 +50,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
 
     printWindow.document.write(`<!DOCTYPE html>
 <html><head><title>${docTitle}</title>
-<style>
-  @page { size: A4; margin: 14mm 12mm; }
-  body { font-family: Georgia, 'Times New Roman', serif; font-size: 11px; line-height: 1.45; color: #1a1a1a; margin: 0; padding: 0; }
-  .contract-doc { max-width: 100%; }
-  .doc-header { text-align: center; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid #1a1a1a; }
-  .doc-header h1 { font-size: 16px; margin: 0 0 4px; letter-spacing: 0.5px; }
-  .doc-subtitle { font-size: 11px; color: #555; margin: 2px 0; }
-  .doc-legal-lang { font-size: 9px; color: #777; margin-top: 4px; }
-  .section-title { font-size: 12px; margin: 14px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #ccc; }
-  .field-grid-2, .field-grid-3 { display: grid; gap: 6px 16px; margin-bottom: 8px; }
-  .field-grid-2 { grid-template-columns: 1fr 1fr; }
-  .field-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-  .field { display: flex; flex-direction: column; }
-  .field-label { font-size: 5.5px; text-transform: uppercase; color: #bbb; letter-spacing: 0.15px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
-  .field-value { font-size: 12px; font-weight: 800; padding: 2px 0; border-bottom: 1px dotted #ccc; min-height: 16px; color: #000; }
-  .subsection-label { font-size: 10px; font-weight: 600; margin: 8px 0 4px; color: #444; }
-  .info-block { background: #f8f8f8; padding: 8px 10px; border-radius: 3px; margin-bottom: 8px; font-size: 10px; }
-  .info-sv, .info-sv-inline { color: #666; font-style: italic; }
-  .info-block-alert { border-left: 3px solid #b91c1c; background: rgba(185,28,28,0.06); }
-  .info-block-alert p { color: #b91c1c; }
-  .info-block-alert .info-sv { color: #b91c1c; }
-  .info-block-alert .info-sv-inline { color: #b91c1c; }
-  .info-list { margin: 4px 0; padding-left: 18px; }
-  .info-list li { margin-bottom: 2px; }
-  .info-text-muted { color: #999; font-style: italic; }
-  .checklist { margin-bottom: 8px; }
-  .check-item { margin: 3px 0; font-size: 11px; }
-  .training-mandatory-badge { font-size: 8px; background: #fee; color: #c00; padding: 1px 4px; border-radius: 2px; margin-left: 4px; }
-  .legal-notes p { margin: 3px 0; font-size: 10px; }
-  .deduction-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 10px; }
-  .deduction-table th, .deduction-table td { border: 1px solid #ddd; padding: 4px 6px; text-align: left; }
-  .deduction-table th { background: #f5f5f5; font-weight: 600; }
-  .signatures-section { margin-top: 24px; }
-  .sig-title { margin-bottom: 4px; }
-  .sig-intro { font-size: 10px; color: #555; margin-bottom: 12px; }
-  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .sig-column { display: flex; flex-direction: column; gap: 12px; }
-  .sig-field { display: flex; flex-direction: column; }
-  .sig-line { border-bottom: 1px solid #333; min-height: 24px; display: flex; align-items: flex-end; padding-bottom: 2px; overflow: visible; }
-  .sig-line-tall { min-height: 50px; overflow: visible; }
-  .sig-prefill { font-size: 11px; color: #333; }
-  .sig-label { font-size: 7px; text-transform: uppercase; color: #aaa; margin-top: 2px; font-weight: 400; }
-  .sig-date { font-size: 7px; color: #999; margin-top: 1px; }
-  .sig-img { max-height: 50px; max-width: 180px; object-fit: contain; display: block; }
-  .page-break-avoid { page-break-inside: avoid; }
-</style>
+<style>${CONTRACT_PRINT_CSS}</style>
 </head><body>${printRef.current.innerHTML}</body></html>`);
     printWindow.document.close();
     printWindow.focus();
