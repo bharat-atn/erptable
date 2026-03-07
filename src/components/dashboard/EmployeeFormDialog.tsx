@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Json } from "@/integrations/supabase/types";
 
