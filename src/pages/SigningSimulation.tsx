@@ -26,7 +26,81 @@ const COC_LANGUAGES = [
   { code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
-const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th", "uk"]);
+// ── Swedish holidays (shared with ContractSigning) ──
+function getSwedishHolidays(year: number) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, month, day);
+  const fixed = [
+    { m: 1, d: 1, nameEn: "New Year's Day", nameSv: "Nyårsdagen" },
+    { m: 1, d: 6, nameEn: "Epiphany", nameSv: "Trettondedag jul" },
+    { m: 5, d: 1, nameEn: "May Day", nameSv: "Första maj" },
+    { m: 6, d: 6, nameEn: "National Day", nameSv: "Nationaldagen" },
+    { m: 12, d: 24, nameEn: "Christmas Eve", nameSv: "Julafton" },
+    { m: 12, d: 25, nameEn: "Christmas Day", nameSv: "Juldagen" },
+    { m: 12, d: 26, nameEn: "Boxing Day", nameSv: "Annandag jul" },
+    { m: 12, d: 31, nameEn: "New Year's Eve", nameSv: "Nyårsafton" },
+  ];
+  const easterBased = [
+    { offset: -2, nameEn: "Good Friday", nameSv: "Långfredagen" },
+    { offset: 0, nameEn: "Easter Sunday", nameSv: "Påskdagen" },
+    { offset: 1, nameEn: "Easter Monday", nameSv: "Annandag påsk" },
+    { offset: 39, nameEn: "Ascension Day", nameSv: "Kristi himmelsfärdsdag" },
+    { offset: 49, nameEn: "Whit Sunday", nameSv: "Pingstdagen" },
+  ];
+  let midsummerEve = new Date(year, 5, 19);
+  while (midsummerEve.getDay() !== 5) midsummerEve = addDays(midsummerEve, 1);
+  let allSaints = new Date(year, 9, 31);
+  while (allSaints.getDay() !== 6) allSaints = addDays(allSaints, 1);
+  const holidays = fixed.map(h => ({
+    date: `${year}-${String(h.m).padStart(2, "0")}-${String(h.d).padStart(2, "0")}`,
+    nameEn: h.nameEn, nameSv: h.nameSv,
+  }));
+  easterBased.forEach(eb => {
+    const dd = addDays(easter, eb.offset);
+    holidays.push({ date: format(dd, "yyyy-MM-dd"), nameEn: eb.nameEn, nameSv: eb.nameSv });
+  });
+  holidays.push({ date: format(midsummerEve, "yyyy-MM-dd"), nameEn: "Midsummer Eve", nameSv: "Midsommarafton" });
+  holidays.push({ date: format(addDays(midsummerEve, 1), "yyyy-MM-dd"), nameEn: "Midsummer Day", nameSv: "Midsommardagen" });
+  holidays.push({ date: format(allSaints, "yyyy-MM-dd"), nameEn: "All Saints' Day", nameSv: "Alla helgons dag" });
+  return holidays;
+}
+
+function generateScheduleFromFormData(schedData: Record<string, any>): ScheduleDay[] {
+  const startStr = schedData.workStartDate || schedData.contractStartDate;
+  const endStr = schedData.workEndDate || schedData.contractEndDate;
+  if (!startStr || !endStr) return [];
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+  const weeklyHours = Number(schedData.weeklyHours) || 40;
+  const dailyHours = weeklyHours / 5;
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  const holidayMap = new Map<string, { nameEn: string; nameSv: string }>();
+  for (let y = startYear; y <= endYear; y++) {
+    getSwedishHolidays(y).forEach(h => holidayMap.set(h.date, { nameEn: h.nameEn, nameSv: h.nameSv }));
+  }
+  const vacStart = schedData.vacationEnabled && schedData.vacationStartDate ? new Date(schedData.vacationStartDate) : null;
+  const vacEnd = schedData.vacationEnabled && schedData.vacationEndDate ? new Date(schedData.vacationEndDate) : null;
+  const days = eachDayOfInterval({ start, end });
+  return days.map(d => {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dow = getDay(d);
+    const holiday = holidayMap.get(dateStr);
+    const isVacation = vacStart && vacEnd && d >= vacStart && d <= vacEnd;
+    if (holiday) return { schedule_date: dateStr, day_type: "Holiday", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: holiday.nameEn, holiday_name_sv: holiday.nameSv };
+    if (isVacation) return { schedule_date: dateStr, day_type: "Vacation", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: null, holiday_name_sv: null };
+    if (dow === 0 || dow === 6) return { schedule_date: dateStr, day_type: "Weekend", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: null, holiday_name_sv: null };
+    return { schedule_date: dateStr, day_type: "Workday", scheduled_hours: Math.round(dailyHours * 100) / 100, start_time: schedData.startTime || "06:30", end_time: schedData.endTime || "17:00", holiday_name_en: null, holiday_name_sv: null };
+  });
+}
 
 interface ContractRow {
   id: string;

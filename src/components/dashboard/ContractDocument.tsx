@@ -204,14 +204,28 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
             <span className="field-label">{bl(CL.mainDuties, lang)}</span>
             <span className="field-value">{fd.mainDuties || "—"}</span>
           </div>
-          <div className="field">
-            <span className="field-label">{bl(CL.jobType, lang)}</span>
-            <span className="field-value">{fd.jobType || "—"}</span>
-          </div>
-          <div className="field">
-            <span className="field-label">{bl(CL.experienceLevel, lang)}</span>
-            <span className="field-value">{fd.experienceLevel || "—"}</span>
-          </div>
+        </div>
+        {(() => {
+          const numJobs = String(fd.numberOfJobTypes || "1");
+          const jobs = [
+            { idx: 1, jt: fd.jobType, el: fd.experienceLevel },
+            ...((numJobs === "2" || numJobs === "3") ? [{ idx: 2, jt: fd.jobType2, el: fd.experienceLevel2 }] : []),
+            ...(numJobs === "3" ? [{ idx: 3, jt: fd.jobType3, el: fd.experienceLevel3 }] : []),
+          ];
+          return jobs.map(({ idx, jt, el }) => (
+            <div key={idx} className="field-grid-2">
+              <div className="field">
+                <span className="field-label">{bl(CL.jobType, lang)}{numJobs !== "1" ? ` ${idx}` : ""}</span>
+                <span className="field-value">{jt || "—"}</span>
+              </div>
+              <div className="field">
+                <span className="field-label">{bl(CL.experienceLevel, lang)}{numJobs !== "1" ? ` ${idx}` : ""}</span>
+                <span className="field-value">{el || "—"}</span>
+              </div>
+            </div>
+          ));
+        })()}
+        <div className="field-grid-2">
           <div className="field">
             <span className="field-label">{bl(CL.postingLocation, lang)}</span>
             <span className="field-value">{fd.postingLocation || "—"}</span>
