@@ -1282,11 +1282,18 @@ export function OnboardingWizard({
                   value={selectedBankCountry}
                   onValueChange={(val) => {
                     setSelectedBankCountry(val);
-                    if (val === "__other__") {
-                      onBankSelect("other");
-                    } else {
-                      onBankSelect("");
-                      setBankNameValue("");
+                    setBankDropdownOpen(false);
+
+                    onBankSelect(val === "__other__" ? "other" : "");
+                    setBankNameValue("");
+                    updateField("otherBankName", "");
+                    setBicValue("");
+                    updateField("bicCode", "");
+                    setBankAccountValue("");
+                    updateField("bankAccountNumber", "");
+
+                    if (val !== "__other__") {
+                      updateField("bankCountryName", "");
                     }
                   }}
                   placeholder="Choose country / Välj land"
@@ -1303,7 +1310,7 @@ export function OnboardingWizard({
                   <Input
                     tabIndex={23}
                     value={formData.bankCountryName || ""}
-                    onChange={(e) => updateField("bankCountryName" as keyof PersonalInfo, e.target.value)}
+                    onChange={(e) => updateField("bankCountryName", e.target.value)}
                     placeholder="Enter country name / Ange landsnamn"
                     className={cn("h-11 text-sm font-medium", fieldError(selectedBankCountry === "__other__" && !formData.bankCountryName))}
                   />
@@ -1318,11 +1325,20 @@ export function OnboardingWizard({
                   tabIndex={23}
                   value={bankNameValue}
                   onChange={(e) => {
-                    setBankNameValue(e.target.value);
+                    const nextValue = e.target.value;
+                    setBankNameValue(nextValue);
+
+                    if (!selectedBankCountry) return;
+
                     setBankDropdownOpen(true);
+                    if (isOtherBank) {
+                      updateField("otherBankName", nextValue);
+                    }
                   }}
                   onFocus={() => {
-                    if (bankList.length > 0) setBankDropdownOpen(true);
+                    if (selectedBankCountry) {
+                      setBankDropdownOpen(true);
+                    }
                   }}
                   onBlur={() => {
                     // Delay to allow click on suggestion first
@@ -1333,6 +1349,10 @@ export function OnboardingWizard({
                       if (!trimmed) {
                         onBankSelect("");
                         updateField("otherBankName", "");
+                        setBicValue("");
+                        updateField("bicCode", "");
+                        setBankAccountValue("");
+                        updateField("bankAccountNumber", "");
                         return;
                       }
 
@@ -1346,6 +1366,9 @@ export function OnboardingWizard({
                         if (exact.bic_code) {
                           setBicValue(exact.bic_code);
                           updateField("bicCode", exact.bic_code);
+                        } else {
+                          setBicValue("");
+                          updateField("bicCode", "");
                         }
                       } else {
                         onBankSelect("other");
@@ -1353,11 +1376,20 @@ export function OnboardingWizard({
                       }
                     }, 150);
                   }}
-                  placeholder="Type or select bank / Skriv eller välj bank"
-                  className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !bankNameValue))}
+                  placeholder={
+                    selectedBankCountry
+                      ? "Type or select bank / Skriv eller välj bank"
+                      : "Select country first / Välj land först"
+                  }
+                  disabled={!selectedBankCountry}
+                  autoComplete="off"
+                  className={cn(
+                    "h-11 text-sm font-medium",
+                    fieldError(!!selectedBankCountry && !selectedBank && !isOtherBank && !bankNameValue)
+                  )}
                 />
-                {/* Autocomplete dropdown: "Other" option */}
-                {bankDropdownOpen && (
+                {/* Autocomplete dropdown: includes "Other bank" option */}
+                {bankDropdownOpen && selectedBankCountry && (
                   <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
                     style={{ top: "100%" }}>
                     {filteredBankSuggestions.map((bank) => (
@@ -1378,6 +1410,9 @@ export function OnboardingWizard({
                           if (match?.bic_code) {
                             setBicValue(match.bic_code);
                             updateField("bicCode", match.bic_code);
+                          } else {
+                            setBicValue("");
+                            updateField("bicCode", "");
                           }
 
                           if (showAiFill && selectedBankCountry) {
@@ -1394,6 +1429,11 @@ export function OnboardingWizard({
                         {bank}
                       </button>
                     ))}
+                    {filteredBankSuggestions.length === 0 && (
+                      <p className="px-3 py-2 text-xs text-muted-foreground">
+                        No listed banks for this country. Choose “Other bank” below.
+                      </p>
+                    )}
                     {/* "Other bank" option */}
                     <button
                       type="button"
@@ -1410,7 +1450,7 @@ export function OnboardingWizard({
                         updateField("bankAccountNumber", "");
                       }}
                     >
-                      Other / Annan bank…
+                      Other bank / Annan bank…
                     </button>
                   </div>
                 )}
@@ -1422,6 +1462,7 @@ export function OnboardingWizard({
                   <Input
                     tabIndex={24}
                     value={bicValue}
+                    autoComplete="off"
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20);
                       setBicValue(cleaned);
@@ -1436,6 +1477,7 @@ export function OnboardingWizard({
                   <Input
                     tabIndex={25}
                     value={bankAccountValue}
+                    autoComplete="off"
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "");
                       setBankAccountValue(cleaned);
