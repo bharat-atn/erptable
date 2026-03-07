@@ -285,6 +285,7 @@ export function SchedulingStep({ initialData, onChange, onBack, onNext, contract
           <Calendar
             mode="single"
             selected={value ? parseISO(value) : undefined}
+            defaultMonth={value ? parseISO(value) : undefined}
             onSelect={(d) => onSelect(d ? format(d, "yyyy-MM-dd") : null)}
             initialFocus
             className="p-3 pointer-events-auto"

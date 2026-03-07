@@ -1,22 +1,38 @@
 
 
-## Plan: Make Date Pickers Open to the Selected Date's Month
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-All `<Calendar>` components across `ContractDetailsStep.tsx` and `SchedulingStep.tsx` lack the `defaultMonth` prop. When a date is already selected (e.g., September 30), re-opening the picker shows the current month (March 2026) instead of September. This forces users to navigate several months to find their selected date.
+### Root Cause
 
-### Fix
-Add `defaultMonth={selectedDate}` to every `<Calendar>` instance. The `react-day-picker` `defaultMonth` prop accepts a `Date` object and opens the calendar to that month.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-### Changes
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**File: `src/components/dashboard/ContractDetailsStep.tsx`** (~11 Calendar instances)
-- Add `defaultMonth={selectedDate}` to each `<Calendar>` where `selectedDate` is the corresponding state variable (`permanentFromDate`, `probationFromDate`, `seasonalFromDate`, `seasonalEndAround`, etc.)
-- Example: `<Calendar mode="single" selected={seasonalEndAround} defaultMonth={seasonalEndAround || undefined} onSelect={...} />`
+**1. Replace generic message with specific missing-condition checklist**
 
-**File: `src/components/dashboard/SchedulingStep.tsx`** (1 `DatePicker` component used ~6 times)
-- Update the inner `DatePicker` component's `<Calendar>` to include `defaultMonth={value ? parseISO(value) : undefined}`
-- Since this is a shared local component, the fix applies to all 6 usages automatically.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-No schema changes, no new dependencies.
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
+
+This tells the user exactly what's blocking them.
+
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 

@@ -1482,11 +1482,11 @@ export function ContractDetailsStep({
                     <Calendar
                       mode="single"
                       selected={birthday}
+                      defaultMonth={birthday || maxBirthDate}
                       onSelect={setBirthday}
                       disabled={(date) =>
                         date > maxBirthDate || date < minBirthDate
                       }
-                      defaultMonth={maxBirthDate}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
@@ -1968,7 +1968,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={permanentFromDate} onSelect={setPermanentFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={permanentFromDate} defaultMonth={permanentFromDate || undefined} onSelect={setPermanentFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">1)</span>
@@ -1996,7 +1996,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={probationFromDate} onSelect={setProbationFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={probationFromDate} defaultMonth={probationFromDate || undefined} onSelect={setProbationFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
@@ -2008,7 +2008,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={probationUntilDate} onSelect={setProbationUntilDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={probationUntilDate} defaultMonth={probationUntilDate || undefined} onSelect={setProbationUntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">2)</span>
@@ -2036,7 +2036,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={fixedTermFromDate} onSelect={setFixedTermFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={fixedTermFromDate} defaultMonth={fixedTermFromDate || undefined} onSelect={setFixedTermFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
@@ -2048,7 +2048,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={fixedTermUntilDate} onSelect={setFixedTermUntilDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={fixedTermUntilDate} defaultMonth={fixedTermUntilDate || undefined} onSelect={setFixedTermUntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                    <span className="text-[10px] text-muted-foreground align-super">{bl("3) and 4)", "3) och 4)")}</span>
@@ -2079,7 +2079,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={tempReplacementFromDate} onSelect={setTempReplacementFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={tempReplacementFromDate} defaultMonth={tempReplacementFromDate || undefined} onSelect={setTempReplacementFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -2103,7 +2103,7 @@ export function ContractDetailsStep({
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="end">
-                            <Calendar mode="single" selected={tempReplacementNoLaterThan} onSelect={setTempReplacementNoLaterThan} initialFocus className="p-3 pointer-events-auto" />
+                            <Calendar mode="single" selected={tempReplacementNoLaterThan} defaultMonth={tempReplacementNoLaterThan || undefined} onSelect={setTempReplacementNoLaterThan} initialFocus className="p-3 pointer-events-auto" />
                           </PopoverContent>
                         </Popover>
                       </div>
@@ -2147,7 +2147,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={seasonalFromDate} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={seasonalFromDate} defaultMonth={seasonalFromDate || undefined} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-sm text-muted-foreground">{bl("The season is expected to end around", "Säsongen förväntas sluta omkring")}</span>
@@ -2159,7 +2159,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={seasonalEndAround} onSelect={setSeasonalEndAround} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={seasonalEndAround} defaultMonth={seasonalEndAround || undefined} onSelect={setSeasonalEndAround} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">3)</span>
@@ -2201,7 +2201,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={age69FromDate} onSelect={setAge69FromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={age69FromDate} defaultMonth={age69FromDate || undefined} onSelect={setAge69FromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-sm text-muted-foreground">{bl("until", "till")}</span>
@@ -2213,7 +2213,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={age69UntilDate} onSelect={setAge69UntilDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={age69UntilDate} defaultMonth={age69UntilDate || undefined} onSelect={setAge69UntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">3)</span>
