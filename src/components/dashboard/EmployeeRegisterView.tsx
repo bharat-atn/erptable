@@ -122,6 +122,7 @@ export function EmployeeRegisterView() {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
+  const [sendingContractFor, setSendingContractFor] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
 
