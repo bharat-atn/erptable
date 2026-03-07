@@ -1272,10 +1272,11 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
                   <Select
-                    value={selectedBank || ""}
+                    value={selectedBankValue}
                     onValueChange={(bankName) => {
+                      setSelectedBankValue(bankName);
                       onBankSelect(bankName);
-                      updateField("otherBankName", "");
+                      updateField("bankName", bankName);
 
                       const match = banksForSelectedCountry.find(
                         (b) => b.name === bankName
