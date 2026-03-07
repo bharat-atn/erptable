@@ -219,7 +219,7 @@ export function EmployeeFormDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold uppercase tracking-wide">Country / Land *</Label>
-                    <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+                    <SearchableCountrySelect value={form.country} onValueChange={(v) => setForm({ ...form, country: v })} placeholder="Select country" />
                   </div>
                 </div>
               </CollapsibleContent>
