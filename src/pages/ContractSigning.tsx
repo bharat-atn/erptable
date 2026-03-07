@@ -150,8 +150,6 @@ export default function ContractSigning() {
 
   // Code of Conduct state
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
-  const [cocScrolledToBottom, setCocScrolledToBottom] = useState(false);
-  const cocScrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [cocConfirmed, setCocConfirmed] = useState(false);
   const [contractConfirmed, setContractConfirmed] = useState(false);
@@ -167,17 +165,6 @@ export default function ContractSigning() {
   // Ref for schedule section (scroll-to + auto-review)
   const scheduleCardRef = useRef<HTMLDivElement>(null);
   const scheduleBottomRef = useRef<HTMLDivElement>(null);
-
-  // Detect when user scrolls to the bottom of the CoC scrollable container via scroll event
-  const handleCocScroll = useCallback(() => {
-    const el = cocScrollContainerRef.current;
-    if (!el || cocScrolledToBottom) return;
-    // Guard: only trigger if container is actually scrollable (iframe loaded)
-    if (el.scrollHeight <= el.clientHeight + 50) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 30) {
-      setCocScrolledToBottom(true);
-    }
-  }, [cocScrolledToBottom]);
 
   // Auto-review schedule when bottom of schedule table becomes visible
   useEffect(() => {
