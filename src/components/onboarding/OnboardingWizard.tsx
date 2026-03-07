@@ -1329,37 +1329,47 @@ export function OnboardingWizard({
               )}
 
               {/* "Other bank" checkbox toggle */}
-              {selectedBankCountry && (
-                <div className="flex items-center gap-2">
+              {selectedBankCountry && selectedBankCountry !== "__other__" && (
+                <div
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border-2 px-4 py-3 cursor-pointer transition-all select-none",
+                    isOtherBank
+                      ? "border-primary bg-primary/5"
+                      : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5",
+                    isPreview && "opacity-60 cursor-not-allowed"
+                  )}
+                  onClick={() => {
+                    if (isPreview) return;
+                    const willCheck = !isOtherBank;
+                    if (willCheck) {
+                      onBankSelect("other");
+                    } else {
+                      onBankSelect("");
+                    }
+                    setSelectedBankValue("");
+                    updateField("bankName", "");
+                    updateField("otherBankName", "");
+                    setBicValue("");
+                    updateField("bicCode", "");
+                    setBankAccountValue("");
+                    updateField("bankAccountNumber", "");
+                  }}
+                >
                   <Checkbox
                     id="other-bank-toggle"
                     checked={isOtherBank}
                     disabled={isPreview}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        onBankSelect("other");
-                        setSelectedBankValue("");
-                        updateField("bankName", "");
-                        updateField("otherBankName", "");
-                        setBicValue("");
-                        updateField("bicCode", "");
-                        setBankAccountValue("");
-                        updateField("bankAccountNumber", "");
-                      } else {
-                        onBankSelect("");
-                        setSelectedBankValue("");
-                        updateField("bankName", "");
-                        updateField("otherBankName", "");
-                        setBicValue("");
-                        updateField("bicCode", "");
-                        setBankAccountValue("");
-                        updateField("bankAccountNumber", "");
-                      }
-                    }}
+                    className="pointer-events-none"
+                    tabIndex={-1}
                   />
-                  <label htmlFor="other-bank-toggle" className="text-sm text-muted-foreground cursor-pointer select-none">
-                    My bank is not listed / Min bank finns inte i listan
-                  </label>
+                  <div>
+                    <span className="text-sm font-medium text-foreground">
+                      My bank is not in the list
+                    </span>
+                    <span className="text-sm text-muted-foreground ml-1">
+                      / Min bank finns inte i listan
+                    </span>
+                  </div>
                 </div>
               )}
 
