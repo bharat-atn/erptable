@@ -1292,14 +1292,33 @@ export function OnboardingWizard({
                     if (bankList.length > 0) setBankDropdownOpen(true);
                   }}
                   onBlur={() => {
-                    // Sync to parent on blur (not on every keystroke)
+                    // Delay to allow click on suggestion first
                     setTimeout(() => {
                       setBankDropdownOpen(false);
-                      if (bankNameValue && !selectedBank) {
-                        onBankSelect("other");
-                        updateField("otherBankName", bankNameValue);
+
+                      const trimmed = bankNameValue.trim();
+                      if (!trimmed) {
+                        onBankSelect("");
+                        updateField("otherBankName", "");
+                        return;
                       }
-                    }, 200);
+
+                      const exact = banksForSelectedCountry.find(
+                        (b) => b.name.trim().toLowerCase() === trimmed.toLowerCase()
+                      );
+
+                      if (exact) {
+                        onBankSelect(exact.name);
+                        updateField("otherBankName", "");
+                        if (exact.bic_code) {
+                          setBicValue(exact.bic_code);
+                          updateField("bicCode", exact.bic_code);
+                        }
+                      } else {
+                        onBankSelect("other");
+                        updateField("otherBankName", trimmed);
+                      }
+                    }, 150);
                   }}
                   placeholder="Type or select bank / Skriv eller välj bank"
                   className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !bankNameValue))}
@@ -1317,16 +1336,23 @@ export function OnboardingWizard({
                           setBankNameValue(bank);
                           setBankDropdownOpen(false);
                           onBankSelect(bank);
-                          // Auto-fill BIC
-                          const match = banksForSelectedCountry.find((b) => b.name === bank);
-                          if (match?.bic_code) updateField("bicCode", match.bic_code);
-                          // Auto-generate account in demo mode
+                          updateField("otherBankName", "");
+
+                          const match = banksForSelectedCountry.find(
+                            (b) => b.name.trim().toLowerCase() === bank.trim().toLowerCase()
+                          );
+                          if (match?.bic_code) {
+                            setBicValue(match.bic_code);
+                            updateField("bicCode", match.bic_code);
+                          }
+
                           if (showAiFill && selectedBankCountry) {
                             const ACCOUNT_LENGTHS: Record<string, number> = {
                               Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
                             };
                             const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
                             const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                            setBankAccountValue(randomAcct);
                             updateField("bankAccountNumber", randomAcct);
                           }
                         }}
@@ -1348,16 +1374,26 @@ export function OnboardingWizard({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
-                  <Input tabIndex={24} value={formData.bicCode || ""} onChange={(e) => updateField("bicCode", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))} />
+                  <Input
+                    tabIndex={24}
+                    value={bicValue}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20);
+                      setBicValue(cleaned);
+                      updateField("bicCode", cleaned);
+                    }}
+                    className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))}
+                  />
                   <AiFieldHint validation={aiValidation.bicCode} isValidating={aiValidating} />
                 </div>
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
                     tabIndex={25}
-                    value={formData.bankAccountNumber || ""}
+                    value={bankAccountValue}
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "");
+                      setBankAccountValue(cleaned);
                       updateField("bankAccountNumber", cleaned);
                     }}
                     placeholder="Letters and digits (e.g. SE35500000000549)"
