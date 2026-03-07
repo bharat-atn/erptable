@@ -1,38 +1,51 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Replace Generic CoC with Full Company Document (All 6 Pages)
 
-### Root Cause
+### Problem
+The current `CodeOfConductViewer.tsx` contains a generic 12-section Code of Conduct. The real company document (Ljungan Skogsvård AB) has **25+ sections across 6 pages** covering forestry-specific rules: work requirements, PPE, driving rules, planting instructions, fuel handling, accommodation, emergency procedures, etc. Only ~1 page worth of content is showing.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+### Solution
+Replace all 5 language constants (`COC_SV`, `COC_EN`, `COC_UK`, `COC_RO`, `COC_TH`) in `CodeOfConductViewer.tsx` with the full company-specific content matching the uploaded PDF structure.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+**Single file change:** `src/components/dashboard/CodeOfConductViewer.tsx`
 
-**1. Replace generic message with specific missing-condition checklist**
+#### Content to add (all ~25 sections per language):
+1. Arbetskrav / Work Requirements
+2. Hälsovård och ersättning / Healthcare & Compensation
+3. Personlig skyddsutrustning (PSU) / PPE
+4. Säkerhet under arbete / Safety During Work
+5. Körregler / Driving Rules
+6. Förbjudna substanser / Prohibited Substances
+7. Avfallshantering / Waste Management
+8. Bränsleförvaring / Fuel Storage
+9. Boende Lokaler / Accommodation Facilities
+10. Arbetstider / Working Hours
+11. Kvalitetsstandarder / Quality Standards
+12. Plantering instruktioner / Planting Instructions
+13. Boende / Accommodation
+14. Kommunikation och rapportering / Communication & Reporting
+15. Uppsägning av anställning / Termination of Employment
+16. Förbjudna aktiviteter / Prohibited Activities
+17. Utrustning och underhåll / Equipment & Maintenance
+18. Arbetsmiljö / Work Environment
+19. Bränslehantering / Fuel Handling
+20. Kemikaliehantering / Chemical Handling
+21. Fordonssäkerhet / Vehicle Safety
+22. Kartor och nödprocedurer / Maps & Emergency Procedures
+23. Diskriminering och sekretess / Discrimination & Confidentiality
+24. Användning av företagsfordon / Company Vehicle Use
+25. Skattedeklaration / Tax Declaration
+26. Riskidentifiering och rapportering / Risk Identification
+27. Personliga hygienartiklar / Personal Hygiene Items
+28. Bekräftelse och avtal / Acknowledgment & Agreement
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+#### Per-language approach:
+- **COC_SV**: Direct from the parsed PDF text (Swedish source of truth)
+- **COC_EN**: Translate from Swedish (already have the English versions from the PDF structure)
+- **COC_UK**: Full Ukrainian translation of the Swedish company document
+- **COC_RO**: Romanian translation matching the same structure
+- **COC_TH**: Thai translation matching the same structure
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
-
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+The viewer component itself (`CodeOfConductViewer`) and its scroll container remain unchanged — it already supports rendering any number of sections. The issue is purely that the content only had 12 generic sections instead of 28.
 
