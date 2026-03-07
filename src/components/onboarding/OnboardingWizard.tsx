@@ -712,6 +712,10 @@ export function OnboardingWizard({
     setBankAccountValue(formData.bankAccountNumber || "");
   }, [formData.bankAccountNumber]);
 
+  useEffect(() => {
+    setSelectedBankValue(selectedBank || "");
+  }, [selectedBank]);
+
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
     if (formData.country) {
