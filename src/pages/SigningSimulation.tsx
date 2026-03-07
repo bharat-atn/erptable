@@ -580,6 +580,35 @@ export default function SigningSimulation() {
                   </div>
                 </div>
 
+                {/* Place & Date fields */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                    Place and Date / Plats och datum
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-place" className="text-sm">Place / Plats *</Label>
+                      <Input
+                        id="signing-place"
+                        value={signingPlace}
+                        onChange={(e) => setSigningPlace(e.target.value)}
+                        placeholder="e.g. Stockholm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-date" className="text-sm">Date / Datum</Label>
+                      <Input
+                        id="signing-date"
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        maxLength={10}
+                        value={signingDate}
+                        onChange={(e) => setSigningDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {signingError && (
                   <Alert variant="destructive" className="mb-2">
                     <AlertTriangle className="h-4 w-4" />
@@ -603,6 +632,7 @@ export default function SigningSimulation() {
                         { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
                         { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
                         ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat" }] : []),
+                        { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-2">
                           {item.done ? (
