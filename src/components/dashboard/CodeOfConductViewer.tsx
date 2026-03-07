@@ -388,7 +388,7 @@ const COC_RO = {
     },
     {
       heading: "Cerințe de lucru",
-      body: "• Plantarea, defrișarea cu motocoase și drujbe și alte activități pot începe numai după ce ați trecut examenele la Școala de Silvicultură (Skötselskolan) și ați semnat toate documentele necesare, inclusiv contractul de muncă și alte formulare relevante.\n• Pentru a începe lucrul, trebuie să treceți examenele la Școala de Silvicultură pentru sectoarele „Plantare", „Defrișare și pre-defrișare", „Considerații de mediu de bază" și „A fi angajat", la companii precum SCA, Sveaskog, Holmen, Södra și alte companii cu care colaborăm.",
+      body: "• Plantarea, defrișarea cu motocoase și drujbe și alte activități pot începe numai după ce ați trecut examenele la Școala de Silvicultură (Skötselskolan) și ați semnat toate documentele necesare, inclusiv contractul de muncă și alte formulare relevante.\n• Pentru a începe lucrul, trebuie să treceți examenele la Școala de Silvicultură pentru sectoarele \"Plantare\", \"Defrișare și pre-defrișare\", \"Considerații de mediu de bază\" și \"A fi angajat\", la companii precum SCA, Sveaskog, Holmen, Södra și alte companii cu care colaborăm.",
     },
     {
       heading: "Asistență medicală și compensații",
