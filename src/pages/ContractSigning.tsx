@@ -157,7 +157,7 @@ export default function ContractSigning() {
   const [scheduleReviewed, setScheduleReviewed] = useState(false);
 
   // Place & Date for signing
-  const [signingPlace, setSigningPlace] = useState("");
+  const [signingPlace, setSigningPlace] = useState("Ljungaverk");
   const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
 
   // Signature preview (redo flow)

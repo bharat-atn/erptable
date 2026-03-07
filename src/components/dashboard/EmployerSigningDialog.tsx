@@ -299,8 +299,37 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
                       </div>
                     )}
 
+                    {/* Upload signature option */}
+                    <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <Upload className="w-4 h-4 text-primary" />
+                        Upload signature image
+                      </p>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg"
+                        disabled={!placeValid || submitting}
+                        className="block w-full text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer disabled:opacity-50"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 512000) {
+                            toast.error("File too large. Max 500KB.");
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (reader.result && placeValid) {
+                              setPendingSignature(reader.result as string);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </div>
+
                     <p className="text-sm text-muted-foreground">
-                      {defaultSignatureUrl ? "Or draw your signature below:" : "Draw your signature below to counter-sign this contract as the employer."}
+                      {defaultSignatureUrl ? "Or draw your signature below:" : "Or draw your signature below to counter-sign this contract as the employer."}
                     </p>
                     <SignatureCanvas
                       onSave={(dataUrl) => placeValid && setPendingSignature(dataUrl)}

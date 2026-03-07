@@ -133,7 +133,7 @@ export default function SigningSimulation() {
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
-  const [signingPlace, setSigningPlace] = useState("");
+  const [signingPlace, setSigningPlace] = useState("Ljungaverk");
   const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [signingError, setSigningError] = useState<string | null>(null);
 
