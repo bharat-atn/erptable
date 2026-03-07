@@ -1257,85 +1257,72 @@ export function OnboardingWizard({
                 </div>
               )}
 
-              {/* Bank radio list – only shown after a real country is selected */}
-              {selectedBankCountry && selectedBankCountry !== "__other__" && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <FieldLabel en="Toggle your Bank" sv="Välj din bank" />
-                  {(selectedBank || isOtherBank) && !bankListExpanded && (
-                    <button
-                      type="button"
-                      onClick={() => setBankListExpanded(true)}
-                      className="text-xs text-primary underline hover:text-primary/80"
-                    >
-                      Change bank / Byt bank
-                    </button>
-                  )}
-                </div>
-
-                {/* Selected bank summary (shown when collapsed) */}
-                {(selectedBank || isOtherBank) && !bankListExpanded && (
-                  <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-sm font-medium text-primary">
-                      {isOtherBank ? (formData.otherBankName || "Other Bank") : selectedBank}
-                    </span>
+              {/* Bank name — hybrid: text input with autocomplete suggestions */}
+              <div className="space-y-1.5 relative">
+                <FieldLabel en="Bank Name" sv="Banknamn" />
+                <Input
+                  ref={bankInputRef}
+                  tabIndex={23}
+                  value={bankSearchQuery || (isOtherBank ? (formData.otherBankName || "") : selectedBank) || ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setBankSearchQuery(val);
+                    setBankDropdownOpen(true);
+                    // If user types freely, treat as "other" bank
+                    onBankSelect("other");
+                    updateField("otherBankName", val);
+                  }}
+                  onFocus={() => {
+                    if (bankList.length > 0) setBankDropdownOpen(true);
+                  }}
+                  onBlur={() => {
+                    // Delay to allow click on suggestion
+                    setTimeout(() => setBankDropdownOpen(false), 200);
+                  }}
+                  placeholder="Type or select bank / Skriv eller välj bank"
+                  className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !formData.otherBankName))}
+                />
+                {/* Autocomplete dropdown */}
+                {bankDropdownOpen && filteredBankSuggestions.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+                    {filteredBankSuggestions.map((bank) => (
+                      <button
+                        key={bank}
+                        type="button"
+                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault(); // Prevent blur before click
+                          onBankSelect(bank);
+                          setBankSearchQuery("");
+                          setBankDropdownOpen(false);
+                          // Auto-fill BIC
+                          const match = banksForSelectedCountry.find((b) => b.name === bank);
+                          if (match?.bic_code) updateField("bicCode", match.bic_code);
+                          // Auto-generate account in demo mode
+                          if (showAiFill && selectedBankCountry) {
+                            const ACCOUNT_LENGTHS: Record<string, number> = {
+                              Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
+                            };
+                            const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
+                            const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                            updateField("bankAccountNumber", randomAcct);
+                          }
+                        }}
+                      >
+                        {bank}
+                      </button>
+                    ))}
                   </div>
                 )}
-
-                {/* Bank list (expanded) – always show if no bank selected yet */}
-                {(bankListExpanded || (!selectedBank && !isOtherBank)) && (
-                <RadioGroup
-                  value={isOtherBank ? "other" : selectedBank}
-                  onValueChange={(val) => {
-                    onBankSelect(val);
-                    // Auto-fill BIC code
-                    if (val !== "other") {
-                      const match = banksForSelectedCountry.find((b) => b.name === val);
-                      if (match?.bic_code) updateField("bicCode", match.bic_code);
-                      // Auto-generate account number in preview/demo mode
-                      if (showAiFill && selectedBankCountry) {
-                        const ACCOUNT_LENGTHS: Record<string, number> = {
-                          Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
-                        };
-                        const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
-                        const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
-                        updateField("bankAccountNumber", randomAcct);
-                      }
-                    }
-                    // Collapse the list after selection
-                    setBankListExpanded(false);
-                  }}
-                  className="space-y-2"
-                >
-                  {bankList.map((bank) => {
-                    const safeId = "bank-" + bank.replace(/[^a-zA-Z0-9]/g, "-");
-                    return (
-                      <div key={bank} className="flex items-center space-x-2.5 min-h-[44px]">
-                        <RadioGroupItem value={bank} id={safeId} className="shrink-0" />
-                        <Label htmlFor={safeId} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
-                      </div>
-                    );
-                  })}
-                  <div className="pt-3 mt-2 border-t border-border">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2 block">
-                      Toggle here if your bank is not in the list above / Välj här om din bank inte finns i listan ovan
-                    </label>
-                    <div className="flex items-center space-x-2.5 min-h-[44px]">
-                      <RadioGroupItem value="other" id="other-bank" className="shrink-0" />
-                      <Label htmlFor="other-bank" className="font-normal cursor-pointer text-sm">Other Bank / Annan bank</Label>
-                    </div>
+                {/* Show selected bank confirmation */}
+                {selectedBank && !bankDropdownOpen && !bankSearchQuery && (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-xs text-primary font-medium">{selectedBank}</span>
                   </div>
-                </RadioGroup>
                 )}
               </div>
-              )}
-              {isOtherBank && (
-                <div className="space-y-1.5">
-                  <FieldLabel en="Bank Name" sv="Banknamn" />
-                  <Input value={formData.otherBankName || ""} onChange={(e) => updateField("otherBankName", e.target.value)} className={cn("h-11 text-sm font-medium", fieldError(isOtherBank && !formData.otherBankName))} />
-                </div>
-              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
