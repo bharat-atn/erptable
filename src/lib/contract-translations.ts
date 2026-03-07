@@ -317,6 +317,21 @@ export function swedishText(label: LabelSet): string {
   return label.sv;
 }
 
+const DAY_TYPE_MAP: Record<string, LabelSet> = {
+  Workday: CONTRACT_LABELS.dayTypeWorkday,
+  Weekend: CONTRACT_LABELS.dayTypeWeekend,
+  Holiday: CONTRACT_LABELS.dayTypeHoliday,
+  Vacation: CONTRACT_LABELS.dayTypeVacation,
+  "Off-season": CONTRACT_LABELS.dayTypeOffSeason,
+};
+
+/** Translate a day_type DB value (e.g. "Weekend") into a bilingual label */
+export function translateDayType(dayType: string, lang: LangCode): string {
+  const label = DAY_TYPE_MAP[dayType];
+  if (!label) return dayType;
+  return bilingualLabel(label, lang);
+}
+
 // ── Experience Level shared data ──
 
 export const EXPERIENCE_LEVELS_BASE = [
