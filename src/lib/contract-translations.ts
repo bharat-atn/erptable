@@ -262,6 +262,13 @@ export const CONTRACT_LABELS = {
   scheduleEnd: L("End", "Slut", "Sfârșit", "สิ้นสุด", "Кінець"),
   scheduleHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
   noSchedule: L("No schedule data available.", "Ingen schemadata tillgänglig.", "Nu sunt disponibile date privind programul.", "ไม่มีข้อมูลตารางงาน", "Дані розкладу відсутні."),
+
+  // Day type values
+  dayTypeWorkday: L("Workday", "Arbetsdag", "Zi lucrătoare", "วันทำงาน", "Робочий день"),
+  dayTypeWeekend: L("Weekend", "Helg", "Weekend", "วันหยุดสุดสัปดาห์", "Вихідний"),
+  dayTypeHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
+  dayTypeVacation: L("Vacation", "Semester", "Vacanță", "วันลาพักร้อน", "Відпустка"),
+  dayTypeOffSeason: L("Off-season", "Lågsäsong", "Extrasezon", "นอกฤดูกาล", "Міжсезоння"),
 } as const;
 
 /**
