@@ -203,7 +203,7 @@ export default function SigningSimulation() {
     try {
       const { data: result, error: fnErr } = await supabase.functions.invoke(
         "upload-employee-signature",
-        { body: { token: contract.signing_token, signatureDataUrl: dataUrl } }
+        { body: { token: contract.signing_token, signatureDataUrl: dataUrl, signingPlace, signingDate } }
       );
 
       if (fnErr) throw fnErr;
