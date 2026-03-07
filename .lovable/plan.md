@@ -1,38 +1,27 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Fix Bank Radio Buttons Not Clickable
 
 ### Root Cause
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+The bank names (e.g., "BANCA TRANSILVANIA S.A.", "ING BANK N.V., AMSTERDAM - BUCHAREST BRANCH") are used directly as HTML `id` attributes and `htmlFor` targets on lines 1312-1313:
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+```tsx
+<RadioGroupItem value={bank} id={bank} />
+<Label htmlFor={bank}>{bank}</Label>
+```
 
-**1. Replace generic message with specific missing-condition checklist**
+HTML `id` attributes with spaces, commas, periods, and special characters are invalid. The `htmlFor`-to-`id` link breaks, so clicking the label text (the large clickable area) does nothing. Only the tiny 16×16px radio circle would respond — and that's nearly impossible to hit on mobile.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+This has technically always been fragile, but the previous rendering logic may have masked it. The fix is to sanitize the `id` values and also add a direct click handler on the label row as a safety net.
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+### Changes
 
-This tells the user exactly what's blocking them.
+**File: `src/components/onboarding/OnboardingWizard.tsx`**
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+1. **Sanitize IDs**: Create a small helper like `const bankId = (name: string) => "bank-" + name.replace(/[^a-zA-Z0-9]/g, "-")` and use it for both `id` and `htmlFor` on bank radio items (lines 1310-1314).
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+2. **Same fix for "other-bank"**: Already has a clean id — no change needed there.
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+This is a one-file, ~5-line change.
 
