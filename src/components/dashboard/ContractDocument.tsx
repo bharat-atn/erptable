@@ -297,6 +297,18 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
           </div>
         )}
 
+        {/* Clause: contract comes into force */}
+        <div className="info-block" style={{ marginTop: 8, marginBottom: 12 }}>
+          <p style={{ margin: 0, fontSize: "0.78rem", color: "hsl(var(--foreground))", fontStyle: "italic" }}>
+            {pt(CL.s4_comesIntoForce, lang)}
+          </p>
+          {lang !== "SE" && (
+            <p style={{ margin: "2px 0 0", fontSize: "0.74rem", color: "hsl(var(--muted-foreground))", fontStyle: "italic" }}>
+              {svt(CL.s4_comesIntoForce)}
+            </p>
+          )}
+        </div>
+
         {/* ── §5 WORKING TIME & LEAVE ── */}
         <h2 className="section-title page-break-avoid">§5. {bl(CL.s5_title, lang)}</h2>
         <div className="field-grid-2">

@@ -87,6 +87,14 @@ export const CONTRACT_LABELS = {
   ef_seasonal: L("Seasonal", "Säsongsanställning", "Sezonier", "ตามฤดูกาล", "Сезонний"),
   ef_age69: L("Age 69+", "Anställning efter 69 år", "Vârsta 69+", "อายุ 69+", "Вік 69+"),
 
+  s4_comesIntoForce: L(
+    "The employment contract comes into force when work on the site begins and finishes when the assigned mission is finished or if the weather conditions no longer allow the continuation of the mission.",
+    "Anställningsavtalet träder i kraft när arbetet på platsen påbörjas och upphör när det tilldelade uppdraget är slutfört eller om väderförhållandena inte längre tillåter att uppdraget fortsätter.",
+    "Contractul de muncă intră în vigoare când munca pe șantier începe și se încheie când misiunea atribuită este finalizată sau dacă condițiile meteorologice nu mai permit continuarea misiunii.",
+    "สัญญาจ้างงานมีผลบังคับใช้เมื่อเริ่มทำงานในพื้นที่และสิ้นสุดเมื่อภารกิจที่ได้รับมอบหมายเสร็จสิ้นหรือสภาพอากาศไม่อนุญาตให้ดำเนินภารกิจต่อไป",
+    "Трудовий договір набуває чинності, коли починається робота на об'єкті, і закінчується, коли призначене завдання виконано або якщо погодні умови більше не дозволяють продовження завдання."
+  ),
+
   // §5
   s5_title: L("Working Time & Leave", "Arbetstid & Semester", "Timp de lucru și concediu", "เวลาทำงานและวันลา", "Робочий час та відпустка"),
   workingTime: L("Working Time", "Arbetstid", "Timp de lucru", "เวลาทำงาน", "Робочий час"),
