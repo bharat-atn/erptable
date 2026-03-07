@@ -1351,7 +1351,7 @@ export function OnboardingWizard({
                     className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber || !isBankAccountValid(formData.bankAccountNumber || "")))}
                   />
                   {formData.bankAccountNumber && !isBankAccountValid(formData.bankAccountNumber) && (
-                    <p className="text-[11px] text-destructive">Bank account number must contain only digits — no letters or special characters</p>
+                    <p className="text-[11px] text-destructive">Bank account number must contain only letters and digits — no special characters</p>
                   )}
                   <AiFieldHint validation={aiValidation.bankAccountNumber} isValidating={aiValidating} />
                 </div>
