@@ -584,7 +584,9 @@ export default function ContractSigning() {
                       <Label htmlFor="signing-date" className="text-sm">Date / Datum</Label>
                       <Input
                         id="signing-date"
-                        type="date"
+                         type="text"
+                         placeholder="YYYY-MM-DD"
+                         maxLength={10}
                         value={signingDate}
                         onChange={(e) => setSigningDate(e.target.value)}
                       />
