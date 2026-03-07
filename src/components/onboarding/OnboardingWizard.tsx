@@ -1233,7 +1233,7 @@ export function OnboardingWizard({
                       onBankSelect("other");
                     } else {
                       onBankSelect("");
-                      setBankSearchQuery("");
+                      setBankNameValue("");
                     }
                   }}
                   placeholder="Choose country / Välj land"
