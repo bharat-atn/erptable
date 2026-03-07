@@ -774,7 +774,7 @@ export function OnboardingWizard({
   if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
-  else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (digits only)");
+  else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (invalid characters)");
 
   const s5Missing: string[] = [];
   if (!uploadedFile) s5Missing.push("ID / Passport Document");
