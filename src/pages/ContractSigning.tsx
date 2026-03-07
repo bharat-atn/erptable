@@ -419,13 +419,13 @@ export default function ContractSigning() {
         {/* Schedule Appendix Review */}
         {!alreadySigned && !signed && schedData && (
           <Card className="shadow-md" ref={scheduleCardRef}>
-            <CardHeader>
+            <CardHeader className="bg-accent/30 border-b border-border">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-primary" />
-                Schedule Appendix / Schemabilaga
+                Step {stepNumberSchedule}: Schedule Appendix / Steg {stepNumberSchedule}: Schemabilaga
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-5">
               {/* Summary info */}
               <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
