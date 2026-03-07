@@ -681,7 +681,7 @@ export function OnboardingWizard({
             emergencyPhone: formData.emergencyPhone,
             bicCode: formData.bicCode,
             bankAccountNumber: formData.bankAccountNumber,
-            bankName: selectedBank || formData.otherBankName,
+            bankName: selectedBankValue || formData.otherBankName,
             bankCountry: selectedBankCountry,
             birthday: formData.birthday,
           },
