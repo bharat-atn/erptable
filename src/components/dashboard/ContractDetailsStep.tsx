@@ -2148,7 +2148,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={seasonalFromDate} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={seasonalFromDate} defaultMonth={seasonalFromDate || undefined} onSelect={setSeasonalFromDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-sm text-muted-foreground">{bl("The season is expected to end around", "Säsongen förväntas sluta omkring")}</span>
