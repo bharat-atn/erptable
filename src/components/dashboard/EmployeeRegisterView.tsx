@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2,
+  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2, Mail, Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -122,6 +122,7 @@ export function EmployeeRegisterView() {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
+  const [sendingContractFor, setSendingContractFor] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
 
@@ -300,6 +301,43 @@ export function EmployeeRegisterView() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={sendingContractFor === employee.id}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setSendingContractFor(employee.id);
+                  try {
+                    // Find the latest signed contract for this employee
+                    const { data: contracts, error: cErr } = await supabase
+                      .from("contracts")
+                      .select("id, contract_code")
+                      .eq("employee_id", employee.id)
+                      .eq("signing_status", "employer_signed")
+                      .order("updated_at", { ascending: false })
+                      .limit(1);
+                    if (cErr) throw cErr;
+                    if (!contracts || contracts.length === 0) {
+                      toast.error("No signed contract found for this employee");
+                      return;
+                    }
+                    const { error } = await supabase.functions.invoke("send-contract-email", {
+                      body: { contractId: contracts[0].id, recipientEmail: employee.email },
+                    });
+                    if (error) throw error;
+                    toast.success(`Contract ${contracts[0].contract_code || ""} sent to ${employee.email}`);
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to send contract email");
+                  } finally {
+                    setSendingContractFor(null);
+                  }
+                }}
+              >
+                {sendingContractFor === employee.id ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                ) : (
+                  <><Mail className="w-4 h-4 mr-2" /> Send Contract Email</>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee)}>Delete Employee</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

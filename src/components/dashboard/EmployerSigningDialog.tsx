@@ -120,6 +120,19 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
       setSigned(true);
       toast.success("Contract signed successfully!");
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+
+      // Auto-send contract email to employee
+      if (employee?.email) {
+        try {
+          await supabase.functions.invoke("send-contract-email", {
+            body: { contractId, recipientEmail: employee.email },
+          });
+          toast.success(`Contract email sent to ${employee.email}`);
+        } catch (emailErr: any) {
+          console.error("Auto-send contract email failed:", emailErr);
+          toast.info("Contract signed, but email could not be sent automatically. You can resend from the Employee Register.");
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["pending-signatures-count"] });
       queryClient.invalidateQueries({ queryKey: ["pending-signatures-details"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
