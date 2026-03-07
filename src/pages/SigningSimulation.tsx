@@ -181,7 +181,16 @@ export default function SigningSimulation() {
         .select("schedule_date, day_type, scheduled_hours, start_time, end_time, holiday_name_en, holiday_name_sv")
         .eq("contract_id", contractId)
         .order("schedule_date");
-      if (sched) setSchedule(sched);
+      if (sched && sched.length > 0) {
+        setSchedule(sched);
+      } else {
+        // Fallback: generate from form_data schedulingData
+        const fd = (c.form_data || {}) as Record<string, any>;
+        const sd = fd.schedulingData as Record<string, any> | undefined;
+        if (sd) {
+          setSchedule(generateScheduleFromFormData(sd));
+        }
+      }
 
       setLoading(false);
     };
