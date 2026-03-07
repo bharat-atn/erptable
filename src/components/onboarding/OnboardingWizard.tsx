@@ -1342,13 +1342,12 @@ export function OnboardingWizard({
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
                     tabIndex={25}
-                    inputMode="numeric"
                     value={formData.bankAccountNumber || ""}
                     onChange={(e) => {
-                      const digitsOnly = e.target.value.replace(/\D/g, "");
-                      updateField("bankAccountNumber", digitsOnly);
+                      const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "");
+                      updateField("bankAccountNumber", cleaned);
                     }}
-                    placeholder="Digits only"
+                    placeholder="Letters and digits (e.g. SE35500000000549)"
                     className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber || !isBankAccountValid(formData.bankAccountNumber || "")))}
                   />
                   {formData.bankAccountNumber && !isBankAccountValid(formData.bankAccountNumber) && (
