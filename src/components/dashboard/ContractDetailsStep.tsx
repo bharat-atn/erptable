@@ -2214,7 +2214,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={age69UntilDate} onSelect={setAge69UntilDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={age69UntilDate} defaultMonth={age69UntilDate || undefined} onSelect={setAge69UntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">3)</span>
