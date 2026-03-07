@@ -1334,6 +1334,7 @@ export function OnboardingWizard({
                   <Checkbox
                     id="other-bank-toggle"
                     checked={isOtherBank}
+                    disabled={isPreview}
                     onCheckedChange={(checked) => {
                       if (checked) {
                         onBankSelect("other");
