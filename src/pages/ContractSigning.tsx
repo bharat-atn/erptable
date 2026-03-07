@@ -24,7 +24,7 @@ const COC_LANGUAGES = [
 ];
 
 // PDFs that actually exist in public/documents/
-const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th"]);
+const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th", "uk"]);
 
 // Swedish public holidays calculation
 function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
@@ -380,23 +380,33 @@ export default function ContractSigning() {
                         </a>
                       </div>
 
-                      {/* CoC confirmation checkbox - hidden until user scrolls to bottom of document */}
+                      {/* CoC confirmation toggle — only appears after scrolling to bottom */}
                       {cocScrolledToBottom && (
-                        <label
-                          className="flex items-start gap-3 cursor-pointer rounded-lg border border-border bg-muted/20 p-4"
+                        <button
+                          type="button"
                           onClick={() => setCocConfirmed(!cocConfirmed)}
+                          className={cn(
+                            "w-full flex items-center gap-3 rounded-lg border-2 p-4 transition-all text-left",
+                            cocConfirmed
+                              ? "border-primary bg-primary/10"
+                              : "border-primary/50 bg-muted/20 animate-pulse"
+                          )}
                         >
                           <div className={cn(
-                            "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                            cocConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
+                            "w-10 h-6 rounded-full relative shrink-0 transition-colors",
+                            cocConfirmed ? "bg-primary" : "bg-muted-foreground/30"
                           )}>
-                            {cocConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
+                            <div className={cn(
+                              "absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-transform",
+                              cocConfirmed ? "translate-x-[18px]" : "translate-x-0.5"
+                            )} />
                           </div>
-                          <span className="text-sm">
+                          <span className={cn("text-sm font-medium", cocConfirmed && "text-primary")}>
+                            {cocConfirmed ? "✓ " : ""}
                             I have read and understood the Code of Conduct. /
                             <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
                           </span>
-                        </label>
+                        </button>
                       )}
                     </>
                   )}
@@ -509,7 +519,8 @@ export default function ContractSigning() {
           </Card>
         )}
 
-        {/* Signing Area */}
+        {/* Signing Area — only visible after CoC is confirmed (or already signed) */}
+        {(cocConfirmed || signed || alreadySigned) && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-base">Employee Signature / Anställds underskrift</CardTitle>
@@ -669,6 +680,7 @@ export default function ContractSigning() {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
