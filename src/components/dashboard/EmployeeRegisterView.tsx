@@ -21,6 +21,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { CsvImportDialog } from "./CsvImportDialog";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { ContractPreviewDialog } from "./ContractPreviewDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
