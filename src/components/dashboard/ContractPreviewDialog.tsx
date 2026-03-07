@@ -149,7 +149,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
         const holidayName = lang === "SE" ? (row.holiday_name_sv || "") : (row.holiday_name_en || row.holiday_name_sv || "");
         scheduleHtml += `<tr${trClass}>`;
         scheduleHtml += `<td>${fmtDate(row.schedule_date)}</td>`;
-        scheduleHtml += `<td>${esc(row.day_type)}</td>`;
+        scheduleHtml += `<td>${esc(translateDayType(row.day_type, lang))}</td>`;
         scheduleHtml += `<td>${row.scheduled_hours}</td>`;
         scheduleHtml += `<td>${esc(row.start_time) || "—"}</td>`;
         scheduleHtml += `<td>${esc(row.end_time) || "—"}</td>`;
