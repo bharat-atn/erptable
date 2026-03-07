@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2, Info } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
 import {
   Select,
