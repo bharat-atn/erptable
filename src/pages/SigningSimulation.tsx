@@ -514,7 +514,6 @@ export default function SigningSimulation() {
                   }}
                   className="gap-2"
                 >
-                  <ExternalLink className="w-4 h-4" />
                   Open Full Schedule / Öppna fullständigt schema
                 </Button>
                 {!scheduleReviewed && (
