@@ -550,7 +550,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
               <div className="sig-field">
                 <div className="sig-line">
                   {employeeSigningMetadata?.place && employeeSigningMetadata?.date && (
-                    <span className="sig-prefill">{employeeSigningMetadata.place}, {employeeSigningMetadata.date}</span>
+                    <span className="sig-prefill">{employeeSigningMetadata.place}, {fmtDate(employeeSigningMetadata.date)}</span>
                   )}
                 </div>
                 <span className="sig-label">{bl(CL.placeAndDate, lang)}</span>

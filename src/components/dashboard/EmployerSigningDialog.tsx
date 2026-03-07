@@ -216,7 +216,9 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
                       <Label htmlFor="employer-signing-date" className="text-sm">Date / Datum</Label>
                       <Input
                         id="employer-signing-date"
-                        type="date"
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        maxLength={10}
                         value={signingDate}
                         onChange={(e) => setSigningDate(e.target.value)}
                       />

@@ -22,6 +22,14 @@ Deno.serve(async (req) => {
   try {
     const { token, signatureDataUrl, signingPlace, signingDate } = await req.json();
 
+    // Validate ISO date format if provided
+    if (signingDate && typeof signingDate === "string" && !/^\d{4}-\d{2}-\d{2}$/.test(signingDate)) {
+      return new Response(JSON.stringify({ error: "Date must follow ISO 8601 format (YYYY-MM-DD)" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!token || typeof token !== "string" || token.length < 10) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 400,

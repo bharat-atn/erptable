@@ -295,7 +295,8 @@ export default function SigningSimulation() {
                         </span>
                       </div>
                     </>
-                  )}
+                    );
+                  })()}
                 </div>
               )}
             </CardContent>

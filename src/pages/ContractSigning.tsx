@@ -381,7 +381,8 @@ export default function ContractSigning() {
                         </span>
                       </div>
                     </>
-                  )}
+                    );
+                  })()}
                 </div>
               )}
             </CardContent>
