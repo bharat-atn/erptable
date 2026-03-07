@@ -124,6 +124,7 @@ export function EmployeeRegisterView() {
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const [sendingContractFor, setSendingContractFor] = useState<string | null>(null);
+  const [previewContractId, setPreviewContractId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
 
