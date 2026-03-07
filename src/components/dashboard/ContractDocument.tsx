@@ -307,11 +307,11 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
 
         {/* Clause: contract comes into force */}
         <div className="info-block" style={{ marginTop: 8, marginBottom: 12 }}>
-          <p style={{ margin: 0, fontSize: "0.78rem", color: "hsl(var(--foreground))", fontStyle: "italic" }}>
+          <p style={{ margin: 0, fontSize: "0.78rem", color: "#1a1a1a", fontStyle: "italic" }}>
             {pt(CL.s4_comesIntoForce, lang)}
           </p>
           {lang !== "SE" && (
-            <p style={{ margin: "2px 0 0", fontSize: "0.74rem", color: "hsl(var(--muted-foreground))", fontStyle: "italic" }}>
+            <p style={{ margin: "2px 0 0", fontSize: "0.74rem", color: "#64748b", fontStyle: "italic" }}>
               {svt(CL.s4_comesIntoForce)}
             </p>
           )}

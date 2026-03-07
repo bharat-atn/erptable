@@ -187,6 +187,7 @@ export function EmployerSigningDialog({ contractId, open, onOpenChange }: Employ
                   employeeSignatureUrl={contract.employee_signature_url ? `${contract.employee_signature_url}?t=${Date.now()}` : null}
                   employerSignatureUrl={null}
                   employeeSignedAt={contract.employee_signed_at}
+                  employeeSigningMetadata={contract.employee_signing_metadata as Record<string, any> | undefined}
                 />
               </CardContent>
             </Card>

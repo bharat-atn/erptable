@@ -84,7 +84,7 @@ export default function SigningSimulation() {
       // Load contract (use maybeSingle to avoid error when RLS blocks temporarily)
       const { data: c, error: cErr } = await supabase
         .from("contracts")
-        .select("id, contract_code, season_year, signing_status, signing_token, employee_signature_url, employer_signature_url, form_data, company_id")
+        .select("id, contract_code, season_year, signing_status, signing_token, employee_signature_url, employer_signature_url, form_data, company_id, employee_signing_metadata, employer_signing_metadata, employee_signed_at, employer_signed_at")
         .eq("id", contractId)
         .maybeSingle();
 
@@ -220,6 +220,8 @@ export default function SigningSimulation() {
               formData={fd}
               employeeSignatureUrl={null}
               employerSignatureUrl={null}
+              employeeSigningMetadata={(contract as any).employee_signing_metadata as Record<string, any> | undefined}
+              employerSigningMetadata={(contract as any).employer_signing_metadata as Record<string, any> | undefined}
             />
           </CardContent>
         </Card>
