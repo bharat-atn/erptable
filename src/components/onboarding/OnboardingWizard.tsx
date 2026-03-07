@@ -1230,10 +1230,8 @@ export function OnboardingWizard({
                   value={selectedBankCountry}
                   onValueChange={(val) => {
                     setSelectedBankCountry(val);
-                    setBankDropdownOpen(false);
 
                     onBankSelect(val === "__other__" ? "other" : "");
-                    setBankNameValue("");
                     updateField("otherBankName", "");
                     setBicValue("");
                     updateField("bicCode", "");
