@@ -24,7 +24,7 @@ const COC_LANGUAGES = [
 ];
 
 // PDFs that actually exist in public/documents/
-const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th"]);
+const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th", "uk"]);
 
 // Swedish public holidays calculation
 function getSwedishHolidays(year: number): { date: string; nameEn: string; nameSv: string }[] {
