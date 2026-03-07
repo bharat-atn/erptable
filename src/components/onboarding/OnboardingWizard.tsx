@@ -1323,45 +1323,6 @@ export function OnboardingWizard({
                   placeholder="Type or select bank / Skriv eller välj bank"
                   className={cn("h-11 text-sm font-medium", fieldError(!selectedBank && !isOtherBank && !bankNameValue))}
                 />
-                {/* Autocomplete dropdown */}
-                {bankDropdownOpen && filteredBankSuggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-                    {filteredBankSuggestions.map((bank) => (
-                      <button
-                        key={bank}
-                        type="button"
-                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setBankNameValue(bank);
-                          setBankDropdownOpen(false);
-                          onBankSelect(bank);
-                          updateField("otherBankName", "");
-
-                          const match = banksForSelectedCountry.find(
-                            (b) => b.name.trim().toLowerCase() === bank.trim().toLowerCase()
-                          );
-                          if (match?.bic_code) {
-                            setBicValue(match.bic_code);
-                            updateField("bicCode", match.bic_code);
-                          }
-
-                          if (showAiFill && selectedBankCountry) {
-                            const ACCOUNT_LENGTHS: Record<string, number> = {
-                              Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
-                            };
-                            const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
-                            const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
-                            setBankAccountValue(randomAcct);
-                            updateField("bankAccountNumber", randomAcct);
-                          }
-                        }}
-                      >
-                        {bank}
-                      </button>
-                    ))}
-                  </div>
-                )}
                 {/* Autocomplete dropdown: "Other" option */}
                 {bankDropdownOpen && (
                   <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
