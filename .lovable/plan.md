@@ -1,38 +1,32 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Investigation: Bank Section Not Working on Onboarding Portal
 
-### Root Cause
+### What I Found
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+After extensive code review, the BIC Code and Bank Account Number input fields in the OnboardingWizard have correct `value`/`onChange` bindings and no `disabled` or `readOnly` attributes. The `updateField` function in `OnboardingPortal.tsx` correctly calls `setFormData(prev => ({...prev, [field]: value}))`.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+### Possible Root Causes
 
-**1. Replace generic message with specific missing-condition checklist**
+I identified two likely issues:
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+**1. Bank radio list may not be visible after country selection**
+After selecting Romania, the bank radio list should expand (`setBankListExpanded(true)` on line 1235). If the user doesn't see or interact with the bank radio list, the BIC field won't auto-fill. The screenshot shows "TOGGLE YOUR BANK" with no radio list below it, which suggests the list may have collapsed unexpectedly or wasn't rendered.
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+**2. The BIC and account fields appear always — but without a bank selected, the validation marks them as incomplete**
+The fields are always visible regardless of bank selection state. The user might type in them but the overall section still shows as incomplete because no bank is toggled from the radio list.
 
-This tells the user exactly what's blocking them.
+### Proposed Fix
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+Since I cannot reproduce the exact issue via browser automation (auth wall), I'll make defensive improvements:
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+**File: `src/components/onboarding/OnboardingWizard.tsx`**
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+1. **Ensure bank list stays expanded when no bank is selected**: Add logic so that if no bank is selected and `bankListExpanded` is false, auto-expand it. This prevents the state where the user sees the "Toggle your Bank" label but no radio list.
 
-**3. Add scroll-to-schedule link in the checklist**
+2. **Add a "No bank selected" prompt**: When the bank list is collapsed and no bank is selected, show a clickable message like "Please select a bank" that re-expands the list, rather than showing nothing between the country selector and the BIC fields.
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+3. **Verify inputs work independently of bank selection**: Confirm the BIC and account fields remain fully functional regardless of whether a bank has been toggled from the radio list.
 
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+These are small, targeted changes in one file with no database or schema modifications needed.
 
