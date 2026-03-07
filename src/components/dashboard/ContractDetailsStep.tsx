@@ -32,6 +32,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { ContractDocument } from "./ContractDocument";
 import { SchedulingStep, type SchedulingData } from "./SchedulingStep";
+import { COC_MAP } from "./CodeOfConductViewer";
+import {
+  CONTRACT_LABELS as CL,
+  bilingualLabel as bl_label,
+  type LangCode,
+} from "@/lib/contract-translations";
+
+/** Map contract language code to CoC language key */
+function cocLangKey(lang: string): string {
+  switch (lang) {
+    case "SE": return "sv";
+    case "RO/SE": return "ro";
+    case "TH/SE": return "th";
+    case "UK/SE": return "uk";
+    default: return "en";
+  }
+}
+
+function fmtDatePrint(val: string | null | undefined): string {
+  if (!val) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  try {
+    const d = new Date(val);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  } catch { return val; }
+}
+
+function escHtml(v: any): string {
+  if (v === null || v === undefined) return "—";
+  return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 interface Company {
   id: string;
@@ -327,18 +358,118 @@ export function ContractDetailsStep({
   const [seasonYear, setSeasonYear] = useState<string | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
 
+  // Fetch schedule rows for print appendix
+  const { data: printScheduleRows } = useQuery({
+    queryKey: ["contract-schedule-print", contractId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("contract_schedules")
+        .select("*")
+        .eq("contract_id", contractId)
+        .order("schedule_date", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!contractId,
+  });
+
   const handlePrint = () => {
     const printContent = printRef.current;
     if (!printContent) return;
     const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
+    if (!printWindow) {
+      toast.error("Please allow pop-ups to print");
+      return;
+    }
+
+    const lang: LangCode = contractLanguage as LangCode || "EN/SE";
+    const isSEOnly = lang === "SE";
+
+    // Build Appendix A — Code of Conduct HTML
+    let cocHtml = "";
+    const cocPrimaryKey = cocLangKey(lang);
+    const cocPrimary = !isSEOnly ? COC_MAP[cocPrimaryKey] : null;
+    const cocSv = COC_MAP["sv"];
+
+    cocHtml += `<div style="page-break-before:always;"></div>`;
+    cocHtml += `<h2 class="section-title">${bl_label(CL.appendixCoC, lang)}</h2>`;
+
+    if (cocPrimary && cocPrimaryKey !== "sv") {
+      cocHtml += `<h3 style="font-size:10pt;font-weight:700;text-align:center;margin-bottom:8px;">${escHtml(cocPrimary.title)}</h3>`;
+      cocHtml += `<div class="coc-section">`;
+      for (const s of cocPrimary.sections) {
+        if (s.heading) cocHtml += `<p class="coc-heading">${escHtml(s.heading)}</p>`;
+        cocHtml += `<p class="coc-body">${escHtml(s.body)}</p>`;
+      }
+      cocHtml += `</div>`;
+      cocHtml += `<div style="page-break-before:always;"></div>`;
+    }
+
+    cocHtml += `<h3 style="font-size:10pt;font-weight:700;text-align:center;margin-bottom:8px;">${escHtml(cocSv.title)}</h3>`;
+    cocHtml += `<div class="coc-section">`;
+    for (const s of cocSv.sections) {
+      if (s.heading) cocHtml += `<p class="coc-heading">${escHtml(s.heading)}</p>`;
+      cocHtml += `<p class="coc-body">${escHtml(s.body)}</p>`;
+    }
+    cocHtml += `</div>`;
+
+    // Build Appendix B — Work Schedule HTML
+    let scheduleHtml = "";
+    scheduleHtml += `<div style="page-break-before:always;"></div>`;
+    scheduleHtml += `<h2 class="section-title">${bl_label(CL.appendixSchedule, lang)}</h2>`;
+
+    const rows = printScheduleRows || [];
+    if (rows.length > 0) {
+      scheduleHtml += `<table class="schedule-table"><thead><tr>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleDate, lang)}</th>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleDayType, lang)}</th>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleHours, lang)}</th>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleStart, lang)}</th>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleEnd, lang)}</th>`;
+      scheduleHtml += `<th>${bl_label(CL.scheduleHoliday, lang)}</th>`;
+      scheduleHtml += `</tr></thead><tbody>`;
+
+      for (const row of rows) {
+        const isHoliday = row.day_type === "Holiday";
+        const isWeekend = row.day_type === "Weekend";
+        const trClass = isHoliday ? ' class="holiday"' : isWeekend ? ' class="weekend"' : '';
+        const holidayName = lang === "SE" ? (row.holiday_name_sv || "") : (row.holiday_name_en || row.holiday_name_sv || "");
+        scheduleHtml += `<tr${trClass}>`;
+        scheduleHtml += `<td>${fmtDatePrint(row.schedule_date)}</td>`;
+        scheduleHtml += `<td>${escHtml(row.day_type)}</td>`;
+        scheduleHtml += `<td>${row.scheduled_hours}</td>`;
+        scheduleHtml += `<td>${escHtml(row.start_time) || "—"}</td>`;
+        scheduleHtml += `<td>${escHtml(row.end_time) || "—"}</td>`;
+        scheduleHtml += `<td>${escHtml(holidayName) || "—"}</td>`;
+        scheduleHtml += `</tr>`;
+      }
+      scheduleHtml += `</tbody></table>`;
+
+      const totalHours = rows.reduce((sum, r) => sum + (Number(r.scheduled_hours) || 0), 0);
+      const workdays = rows.filter((r) => r.day_type === "Workday").length;
+      scheduleHtml += `<p style="font-size:8.5pt;color:#555;margin-top:6px;">Total: ${totalHours}h · ${workdays} workdays</p>`;
+    } else {
+      scheduleHtml += `<p class="info-text-muted">${bl_label(CL.noSchedule, lang)}</p>`;
+    }
+
+    const appendixCss = `
+      .coc-section { margin-bottom: 12px; }
+      .coc-heading { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 9pt; font-weight: 700; margin-top: 8px; margin-bottom: 2px; }
+      .coc-body { font-size: 8.5pt; line-height: 1.45; white-space: pre-line; margin-bottom: 4px; }
+      .schedule-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; font-size: 8.5pt; }
+      .schedule-table th { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 7pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #555; text-align: left; padding: 3px 6px; border-bottom: 2px solid #999; }
+      .schedule-table td { padding: 3px 6px; border-bottom: 1px solid #ddd; }
+      .schedule-table tr.weekend { background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .schedule-table tr.holiday { background: #fef3c7; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    `;
+
     printWindow.document.write(`<!DOCTYPE html>
 <html>
 <head>
 <title>Employment Contract / Anställningsavtal${contractCode ? ` — ${contractCode}` : ''}</title>
-<style>${CONTRACT_PRINT_CSS}</style>
+<style>${CONTRACT_PRINT_CSS}${appendixCss}</style>
 </head>
-<body>${printContent.innerHTML}</body>
+<body>${printContent.innerHTML}${cocHtml}${scheduleHtml}</body>
 </html>`);
     printWindow.document.close();
     printWindow.focus();
