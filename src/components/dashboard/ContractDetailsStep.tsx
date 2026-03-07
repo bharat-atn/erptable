@@ -36,6 +36,7 @@ import { COC_MAP } from "./CodeOfConductViewer";
 import {
   CONTRACT_LABELS as CL,
   bilingualLabel as bl_label,
+  translateDayType,
   type LangCode,
 } from "@/lib/contract-translations";
 
