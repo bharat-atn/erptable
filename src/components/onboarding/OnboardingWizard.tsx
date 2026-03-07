@@ -713,6 +713,24 @@ export function OnboardingWizard({
     return bankList.filter((b) => b.toLowerCase().includes(q));
   }, [bankList, bankNameValue]);
 
+  useEffect(() => {
+    setBicValue(formData.bicCode || "");
+  }, [formData.bicCode]);
+
+  useEffect(() => {
+    setBankAccountValue(formData.bankAccountNumber || "");
+  }, [formData.bankAccountNumber]);
+
+  useEffect(() => {
+    if (selectedBank) {
+      setBankNameValue(selectedBank);
+      return;
+    }
+    if (isOtherBank && formData.otherBankName) {
+      setBankNameValue(formData.otherBankName);
+    }
+  }, [selectedBank, isOtherBank, formData.otherBankName]);
+
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
     if (formData.country) {
