@@ -1555,8 +1555,12 @@ export type Database = {
           employee_first_name: string
           employee_last_name: string
           employee_phone: string
+          employee_signature_url: string
           employee_signed_at: string
+          employee_signing_metadata: Json
+          employer_signature_url: string
           employer_signed_at: string
+          employer_signing_metadata: Json
           end_date: string
           form_data: Json
           salary: number
