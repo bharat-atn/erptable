@@ -722,14 +722,47 @@ export function OnboardingWizard({
   }, [formData.bankAccountNumber]);
 
   useEffect(() => {
+    if (!selectedBankCountry) {
+      const hasAnyBankData = Boolean(
+        bankNameValue ||
+        formData.bicCode ||
+        formData.bankAccountNumber ||
+        formData.otherBankName ||
+        selectedBank ||
+        isOtherBank
+      );
+
+      if (!hasAnyBankData) return;
+
+      onBankSelect("");
+      updateField("otherBankName", "");
+      setBankNameValue("");
+      setBicValue("");
+      updateField("bicCode", "");
+      setBankAccountValue("");
+      updateField("bankAccountNumber", "");
+      return;
+    }
+
     if (selectedBank) {
       setBankNameValue(selectedBank);
       return;
     }
+
     if (isOtherBank && formData.otherBankName) {
       setBankNameValue(formData.otherBankName);
     }
-  }, [selectedBank, isOtherBank, formData.otherBankName]);
+  }, [
+    selectedBankCountry,
+    selectedBank,
+    isOtherBank,
+    formData.otherBankName,
+    formData.bicCode,
+    formData.bankAccountNumber,
+    bankNameValue,
+    onBankSelect,
+    updateField,
+  ]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
