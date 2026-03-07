@@ -2104,7 +2104,7 @@ export function ContractDetailsStep({
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="end">
-                            <Calendar mode="single" selected={tempReplacementNoLaterThan} onSelect={setTempReplacementNoLaterThan} initialFocus className="p-3 pointer-events-auto" />
+                            <Calendar mode="single" selected={tempReplacementNoLaterThan} defaultMonth={tempReplacementNoLaterThan || undefined} onSelect={setTempReplacementNoLaterThan} initialFocus className="p-3 pointer-events-auto" />
                           </PopoverContent>
                         </Popover>
                       </div>
