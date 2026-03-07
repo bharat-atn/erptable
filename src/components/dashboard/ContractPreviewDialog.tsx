@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ContractDocument } from "./ContractDocument";
+import { CodeOfConductViewer } from "./CodeOfConductViewer";
 import { Printer, Mail, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { COC_MAP } from "./CodeOfConductViewer";
