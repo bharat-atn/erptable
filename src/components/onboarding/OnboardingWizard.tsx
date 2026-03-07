@@ -1280,7 +1280,7 @@ export function OnboardingWizard({
                       setSelectedBankValue(bankName);
                       onBankSelect(bankName);
                       updateField("bankName", bankName);
-
+                      updateField("otherBankName", "");
                       const match = banksForSelectedCountry.find(
                         (b) => b.name === bankName
                       );
