@@ -15,6 +15,7 @@ import {
   CONTRACT_LABELS as CL,
   bilingualLabel as bl,
   primaryText as pt,
+  translateDayType,
   type LangCode,
 } from "@/lib/contract-translations";
 
@@ -148,7 +149,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
         const holidayName = lang === "SE" ? (row.holiday_name_sv || "") : (row.holiday_name_en || row.holiday_name_sv || "");
         scheduleHtml += `<tr${trClass}>`;
         scheduleHtml += `<td>${fmtDate(row.schedule_date)}</td>`;
-        scheduleHtml += `<td>${esc(row.day_type)}</td>`;
+        scheduleHtml += `<td>${esc(translateDayType(row.day_type, lang))}</td>`;
         scheduleHtml += `<td>${row.scheduled_hours}</td>`;
         scheduleHtml += `<td>${esc(row.start_time) || "—"}</td>`;
         scheduleHtml += `<td>${esc(row.end_time) || "—"}</td>`;
@@ -321,7 +322,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
                               }
                             >
                               <td className="p-1.5 border-b border-border">{fmtDate(row.schedule_date)}</td>
-                              <td className="p-1.5 border-b border-border">{row.day_type}</td>
+                              <td className="p-1.5 border-b border-border">{translateDayType(row.day_type, lang)}</td>
                               <td className="p-1.5 border-b border-border">{row.scheduled_hours}</td>
                               <td className="p-1.5 border-b border-border">{row.start_time || "—"}</td>
                               <td className="p-1.5 border-b border-border">{row.end_time || "—"}</td>

@@ -262,6 +262,13 @@ export const CONTRACT_LABELS = {
   scheduleEnd: L("End", "Slut", "Sfârșit", "สิ้นสุด", "Кінець"),
   scheduleHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
   noSchedule: L("No schedule data available.", "Ingen schemadata tillgänglig.", "Nu sunt disponibile date privind programul.", "ไม่มีข้อมูลตารางงาน", "Дані розкладу відсутні."),
+
+  // Day type values
+  dayTypeWorkday: L("Workday", "Arbetsdag", "Zi lucrătoare", "วันทำงาน", "Робочий день"),
+  dayTypeWeekend: L("Weekend", "Helg", "Weekend", "วันหยุดสุดสัปดาห์", "Вихідний"),
+  dayTypeHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
+  dayTypeVacation: L("Vacation", "Semester", "Vacanță", "วันลาพักร้อน", "Відпустка"),
+  dayTypeOffSeason: L("Off-season", "Lågsäsong", "Extrasezon", "นอกฤดูกาล", "Міжсезоння"),
 } as const;
 
 /**
@@ -308,6 +315,21 @@ export function primaryText(label: LabelSet, lang: LangCode): string {
  */
 export function swedishText(label: LabelSet): string {
   return label.sv;
+}
+
+const DAY_TYPE_MAP: Record<string, LabelSet> = {
+  Workday: CONTRACT_LABELS.dayTypeWorkday,
+  Weekend: CONTRACT_LABELS.dayTypeWeekend,
+  Holiday: CONTRACT_LABELS.dayTypeHoliday,
+  Vacation: CONTRACT_LABELS.dayTypeVacation,
+  "Off-season": CONTRACT_LABELS.dayTypeOffSeason,
+};
+
+/** Translate a day_type DB value (e.g. "Weekend") into a bilingual label */
+export function translateDayType(dayType: string, lang: LangCode): string {
+  const label = DAY_TYPE_MAP[dayType];
+  if (!label) return dayType;
+  return bilingualLabel(label, lang);
 }
 
 // ── Experience Level shared data ──
