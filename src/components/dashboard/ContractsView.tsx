@@ -132,11 +132,21 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
 
   const deleteContract = useMutation({
     mutationFn: async (contract: ContractRow) => {
-      const { error } = await supabase
+      if (!orgId) throw new Error("No organization selected");
+
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
+
+      const { data, error } = await supabase
         .from("contracts")
         .delete()
-        .eq("id", contract.id);
+        .eq("id", contract.id)
+        .eq("org_id", orgId)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Delete failed: record not found in active organization or permission denied.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
@@ -154,11 +164,21 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
 
   const bulkDelete = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase
+      if (!orgId) throw new Error("No organization selected");
+
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
+
+      const { data, error } = await supabase
         .from("contracts")
         .delete()
-        .in("id", ids);
+        .in("id", ids)
+        .eq("org_id", orgId)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Delete failed: no selected contracts were deleted.");
+      }
     },
     onSuccess: (_data, ids) => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });

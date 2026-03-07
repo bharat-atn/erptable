@@ -188,8 +188,21 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
 
   const deleteInvitation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("invitations").delete().eq("id", id);
+      if (!orgId) throw new Error("No organization selected");
+
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
+
+      const { data, error } = await supabase
+        .from("invitations")
+        .delete()
+        .eq("id", id)
+        .eq("org_id", orgId)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Delete failed: invitation not found in active organization or permission denied.");
+      }
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["invitations"] }); queryClient.invalidateQueries({ queryKey: ["operations-employees"] }); queryClient.invalidateQueries({ queryKey: ["operations-invitation-stats"] }); queryClient.invalidateQueries({ queryKey: ["operations-contracts"] }); queryClient.invalidateQueries({ queryKey: ["register-employees"] }); toast.success("Invitation deleted"); },
     onError: (error: Error) => { toast.error(error.message); },
@@ -197,8 +210,21 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
 
   const bulkDelete = useMutation({
     mutationFn: async (ids: string[]) => {
-      const { error } = await supabase.from("invitations").delete().in("id", ids);
+      if (!orgId) throw new Error("No organization selected");
+
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
+
+      const { data, error } = await supabase
+        .from("invitations")
+        .delete()
+        .in("id", ids)
+        .eq("org_id", orgId)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Delete failed: no selected invitations were deleted.");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invitations"] });
