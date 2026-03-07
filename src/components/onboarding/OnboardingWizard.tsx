@@ -701,7 +701,7 @@ export function OnboardingWizard({
     formData.country, formData.zipCode, formData.city, formData.address1,
     formData.stateProvince, formData.mobilePhone, formData.emergencyPhone,
     formData.bicCode, formData.bankAccountNumber, formData.birthday,
-    selectedBank, selectedBankCountry,
+    selectedBankValue, selectedBankCountry,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
