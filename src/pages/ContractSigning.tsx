@@ -343,38 +343,11 @@ export default function ContractSigning() {
                     </label>
                   </div>
 
-                  {!AVAILABLE_COC_PDFS.has(cocLanguage!) ? (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        The Code of Conduct document is not yet available in {selectedCocLang.label}. Please select another language. /
-                        <span className="italic"> Uppförandekoden finns ännu inte på {selectedCocLang.label}. Vänligen välj ett annat språk.</span>
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
+                  {(() => {
+                    // All languages have inline HTML content now
+                    return (
                     <>
-                      {/* Scrollable container */}
-                      <div className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto">
-                        <iframe
-                          key={cocLanguage}
-                          src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
-                          className="w-full"
-                          style={{ border: "none", height: "900px" }}
-                          title={`Code of Conduct - ${selectedCocLang.label}`}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <a
-                          href={selectedCocLang.file}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Open in new tab / Öppna i ny flik
-                        </a>
-                      </div>
+                      <CodeOfConductViewer language={cocLanguage!} />
 
                       {/* Warning banner when not yet confirmed */}
                       {!cocConfirmed && (
