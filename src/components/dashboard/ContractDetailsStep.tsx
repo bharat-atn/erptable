@@ -32,6 +32,37 @@ import { supabase } from "@/integrations/supabase/client";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { ContractDocument } from "./ContractDocument";
 import { SchedulingStep, type SchedulingData } from "./SchedulingStep";
+import { COC_MAP } from "./CodeOfConductViewer";
+import {
+  CONTRACT_LABELS as CL,
+  bilingualLabel as bl_label,
+  type LangCode,
+} from "@/lib/contract-translations";
+
+/** Map contract language code to CoC language key */
+function cocLangKey(lang: string): string {
+  switch (lang) {
+    case "SE": return "sv";
+    case "RO/SE": return "ro";
+    case "TH/SE": return "th";
+    case "UK/SE": return "uk";
+    default: return "en";
+  }
+}
+
+function fmtDatePrint(val: string | null | undefined): string {
+  if (!val) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+  try {
+    const d = new Date(val);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  } catch { return val; }
+}
+
+function escHtml(v: any): string {
+  if (v === null || v === undefined) return "—";
+  return String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 interface Company {
   id: string;
