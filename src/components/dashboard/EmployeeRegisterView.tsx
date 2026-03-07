@@ -304,6 +304,25 @@ export function EmployeeRegisterView() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
               <DropdownMenuItem
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const { data: contracts } = await supabase
+                    .from("contracts")
+                    .select("id")
+                    .eq("employee_id", employee.id)
+                    .eq("signing_status", "employer_signed")
+                    .order("updated_at", { ascending: false })
+                    .limit(1);
+                  if (!contracts || contracts.length === 0) {
+                    toast.error("No signed contract found for this employee");
+                    return;
+                  }
+                  setPreviewContractId(contracts[0].id);
+                }}
+              >
+                <FileText className="w-4 h-4 mr-2" /> Preview Contract
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 disabled={sendingContractFor === employee.id}
                 onClick={async (e) => {
                   e.stopPropagation();
