@@ -5,6 +5,7 @@ import {
   bilingualLabel as bl,
   primaryText as pt,
   swedishText as svt,
+  getExperienceLevelLabel,
   type LangCode,
 } from "@/lib/contract-translations";
 
@@ -220,7 +221,7 @@ export const ContractDocument = forwardRef<HTMLDivElement, ContractDocumentProps
               </div>
               <div className="field">
                 <span className="field-label">{bl(CL.experienceLevel, lang)}{numJobs !== "1" ? ` ${idx}` : ""}</span>
-                <span className="field-value">{el || "—"}</span>
+                <span className="field-value">{el ? getExperienceLevelLabel(el, lang) : "—"}</span>
               </div>
             </div>
           ));

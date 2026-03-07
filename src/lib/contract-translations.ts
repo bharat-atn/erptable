@@ -299,4 +299,34 @@ export function swedishText(label: LabelSet): string {
   return label.sv;
 }
 
+// ── Experience Level shared data ──
+
+export const EXPERIENCE_LEVELS_BASE = [
+  { en: "Entry Level", sv: "Nybörjare", ro: "Începător", th: "ระดับเริ่มต้น", uk: "Початківець", detail_en: "0 years / < 1 season", detail_sv: "0 år / < 1 säsong" },
+  { en: "Junior", sv: "Junior", ro: "Junior", th: "จูเนียร์", uk: "Молодший", detail_en: "1 year / 1 season", detail_sv: "1 år / 1 säsong" },
+  { en: "Experienced", sv: "Erfaren", ro: "Experimentat", th: "มีประสบการณ์", uk: "Досвідчений", detail_en: "2 years / seasons", detail_sv: "2 år / säsonger" },
+  { en: "Senior", sv: "Senior", ro: "Senior", th: "อาวุโส", uk: "Старший", detail_en: "3 years / seasons", detail_sv: "3 år / säsonger" },
+  { en: "Expert", sv: "Expert", ro: "Expert", th: "ผู้เชี่ยวชาญ", uk: "Експерт", detail_en: "4+ years / seasons", detail_sv: "4+ år / säsonger" },
+];
+
+export function getExperienceLevelLabel(value: string, lang: string): string {
+  const base = EXPERIENCE_LEVELS_BASE.find(
+    (l) => `${l.en} / ${l.sv} (${l.detail_en} / ${l.detail_sv})` === value
+  );
+  if (!base) return value;
+  switch (lang) {
+    case "SE":
+      return `${base.sv} (${base.detail_sv})`;
+    case "RO/SE":
+      return `${base.ro} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "TH/SE":
+      return `${base.th} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "UK/SE":
+      return `${base.uk} / ${base.sv} (${base.detail_en} / ${base.detail_sv})`;
+    case "EN/SE":
+    default:
+      return value;
+  }
+}
+
 export type { LabelSet, LangCode };
