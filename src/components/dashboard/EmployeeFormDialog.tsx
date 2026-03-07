@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -218,7 +219,7 @@ export function EmployeeFormDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold uppercase tracking-wide">Country / Land *</Label>
-                    <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+                    <SearchableCountrySelect value={form.country} onValueChange={(v) => setForm({ ...form, country: v })} placeholder="Select country" />
                   </div>
                 </div>
               </CollapsibleContent>
@@ -238,11 +239,11 @@ export function EmployeeFormDialog({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold uppercase tracking-wide">Country of Birth? / Födelseland? *</Label>
-                    <Input value={info.country_of_birth} onChange={(e) => updateInfo("country_of_birth", e.target.value)} />
+                    <SearchableCountrySelect value={info.country_of_birth} onValueChange={(v) => updateInfo("country_of_birth", v)} placeholder="Select country" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold uppercase tracking-wide">Citizenship? / Medborgarskap? *</Label>
-                    <Input value={info.citizenship} onChange={(e) => updateInfo("citizenship", e.target.value)} />
+                    <SearchableCountrySelect value={info.citizenship} onValueChange={(v) => updateInfo("citizenship", v)} placeholder="Select country" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
