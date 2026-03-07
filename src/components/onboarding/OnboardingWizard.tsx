@@ -704,13 +704,6 @@ export function OnboardingWizard({
     selectedBank, selectedBankCountry,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Filtered bank suggestions for autocomplete ─── */
-  const filteredBankSuggestions = useMemo(() => {
-    if (!bankNameValue.trim()) return bankList;
-    const q = bankNameValue.toLowerCase();
-    return bankList.filter((b) => b.toLowerCase().includes(q));
-  }, [bankList, bankNameValue]);
-
   useEffect(() => {
     setBicValue(formData.bicCode || "");
   }, [formData.bicCode]);
@@ -718,49 +711,6 @@ export function OnboardingWizard({
   useEffect(() => {
     setBankAccountValue(formData.bankAccountNumber || "");
   }, [formData.bankAccountNumber]);
-
-  useEffect(() => {
-    if (!selectedBankCountry) {
-      const hasAnyBankData = Boolean(
-        bankNameValue ||
-        formData.bicCode ||
-        formData.bankAccountNumber ||
-        formData.otherBankName ||
-        selectedBank ||
-        isOtherBank
-      );
-
-      if (!hasAnyBankData) return;
-
-      onBankSelect("");
-      updateField("otherBankName", "");
-      setBankNameValue("");
-      setBicValue("");
-      updateField("bicCode", "");
-      setBankAccountValue("");
-      updateField("bankAccountNumber", "");
-      return;
-    }
-
-    if (selectedBank) {
-      setBankNameValue(selectedBank);
-      return;
-    }
-
-    if (isOtherBank && formData.otherBankName) {
-      setBankNameValue(formData.otherBankName);
-    }
-  }, [
-    selectedBankCountry,
-    selectedBank,
-    isOtherBank,
-    formData.otherBankName,
-    formData.bicCode,
-    formData.bankAccountNumber,
-    bankNameValue,
-    onBankSelect,
-    updateField,
-  ]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
