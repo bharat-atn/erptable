@@ -220,6 +220,8 @@ export default function SigningSimulation() {
               formData={fd}
               employeeSignatureUrl={null}
               employerSignatureUrl={null}
+              employeeSigningMetadata={(contract as any).employee_signing_metadata as Record<string, any> | undefined}
+              employerSigningMetadata={(contract as any).employer_signing_metadata as Record<string, any> | undefined}
             />
           </CardContent>
         </Card>

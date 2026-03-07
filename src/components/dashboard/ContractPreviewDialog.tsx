@@ -188,6 +188,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
               employerSignatureUrl={contract.employer_signature_url}
               employeeSignedAt={contract.employee_signed_at}
               employerSignedAt={contract.employer_signed_at}
+              employeeSigningMetadata={contract.employee_signing_metadata as Record<string, any> | undefined}
+              employerSigningMetadata={contract.employer_signing_metadata as Record<string, any> | undefined}
             />
           ) : (
             <p className="text-center text-muted-foreground">Contract not found</p>

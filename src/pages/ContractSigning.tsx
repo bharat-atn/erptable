@@ -290,8 +290,12 @@ export default function ContractSigning() {
               contractCode={data.contract_code}
               seasonYear={data.season_year}
               formData={fd}
-              employeeSignatureUrl={null}
-              employerSignatureUrl={null}
+              employeeSignatureUrl={(data as any).employee_signature_url || null}
+              employerSignatureUrl={(data as any).employer_signature_url || null}
+              employeeSignedAt={data.employee_signed_at}
+              employerSignedAt={data.employer_signed_at}
+              employeeSigningMetadata={(data as any).employee_signing_metadata as Record<string, any> | undefined}
+              employerSigningMetadata={(data as any).employer_signing_metadata as Record<string, any> | undefined}
             />
           </CardContent>
         </Card>
