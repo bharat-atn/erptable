@@ -135,6 +135,7 @@ export default function SigningSimulation() {
   const [signed, setSigned] = useState(false);
   const [signingPlace, setSigningPlace] = useState("");
   const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [signingError, setSigningError] = useState<string | null>(null);
 
   // Review states
   const [cocLanguage, setCocLanguage] = useState<string | null>(null);
