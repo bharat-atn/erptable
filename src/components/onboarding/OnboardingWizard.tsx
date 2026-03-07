@@ -704,12 +704,12 @@ export function OnboardingWizard({
     selectedBank, selectedBankCountry,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ─── Auto-collapse bank list if a bank is already selected on mount ─── */
-  useEffect(() => {
-    if (selectedBank && bankListExpanded) {
-      setBankListExpanded(false);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /* ─── Filtered bank suggestions for autocomplete ─── */
+  const filteredBankSuggestions = useMemo(() => {
+    if (!bankSearchQuery.trim()) return bankList;
+    const q = bankSearchQuery.toLowerCase();
+    return bankList.filter((b) => b.toLowerCase().includes(q));
+  }, [bankList, bankSearchQuery]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
