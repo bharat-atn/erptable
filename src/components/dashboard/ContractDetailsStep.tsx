@@ -2009,7 +2009,7 @@ export function ContractDetailsStep({
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
-                      <Calendar mode="single" selected={probationUntilDate} onSelect={setProbationUntilDate} initialFocus className="p-3 pointer-events-auto" />
+                      <Calendar mode="single" selected={probationUntilDate} defaultMonth={probationUntilDate || undefined} onSelect={setProbationUntilDate} initialFocus className="p-3 pointer-events-auto" />
                     </PopoverContent>
                   </Popover>
                   <span className="text-[10px] text-muted-foreground align-super">2)</span>
