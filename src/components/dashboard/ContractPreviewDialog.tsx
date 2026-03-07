@@ -322,7 +322,7 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
                               }
                             >
                               <td className="p-1.5 border-b border-border">{fmtDate(row.schedule_date)}</td>
-                              <td className="p-1.5 border-b border-border">{row.day_type}</td>
+                              <td className="p-1.5 border-b border-border">{translateDayType(row.day_type, lang)}</td>
                               <td className="p-1.5 border-b border-border">{row.scheduled_hours}</td>
                               <td className="p-1.5 border-b border-border">{row.start_time || "—"}</td>
                               <td className="p-1.5 border-b border-border">{row.end_time || "—"}</td>
