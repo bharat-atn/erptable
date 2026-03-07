@@ -251,6 +251,17 @@ export const CONTRACT_LABELS = {
   employee: L("Employee", "Arbetstagare", "Angajat", "ลูกจ้าง", "Працівник"),
   employeeSignature: L("Employee's signature", "Arbetstagarens underskrift", "Semnătura angajatului", "ลายเซ็นลูกจ้าง", "Підпис працівника"),
   signed: L("Signed", "Undertecknad", "Semnat", "ลงนามแล้ว", "Підписано"),
+
+  // Appendices
+  appendixCoC: L("Appendix A — Code of Conduct", "Bilaga A — Uppförandekod", "Anexa A — Codul de conduită", "ภาคผนวก ก — จรรยาบรรณ", "Додаток А — Кодекс поведінки"),
+  appendixSchedule: L("Appendix B — Work Schedule", "Bilaga B — Arbetsschema", "Anexa B — Programul de lucru", "ภาคผนวก ข — ตารางการทำงาน", "Додаток Б — Графік роботи"),
+  scheduleDate: L("Date", "Datum", "Data", "วันที่", "Дата"),
+  scheduleDayType: L("Day Type", "Dagtyp", "Tip zi", "ประเภทวัน", "Тип дня"),
+  scheduleHours: L("Hours", "Timmar", "Ore", "ชั่วโมง", "Години"),
+  scheduleStart: L("Start", "Början", "Început", "เริ่ม", "Початок"),
+  scheduleEnd: L("End", "Slut", "Sfârșit", "สิ้นสุด", "Кінець"),
+  scheduleHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
+  noSchedule: L("No schedule data available.", "Ingen schemadata tillgänglig.", "Nu sunt disponibile date privind programul.", "ไม่มีข้อมูลตารางงาน", "Дані розкладу відсутні."),
 } as const;
 
 /**
