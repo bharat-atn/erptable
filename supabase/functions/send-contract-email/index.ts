@@ -179,7 +179,24 @@ const CL = {
   scheduleEnd: L("End", "Slut", "Sfârșit", "สิ้นสุด", "Кінець"),
   scheduleHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
   noSchedule: L("No schedule data available.", "Ingen schemadata tillgänglig.", "Nu sunt disponibile date privind programul.", "ไม่มีข้อมูลตารางงาน", "Дані розкладу відсутні."),
+  dayTypeWorkday: L("Workday", "Arbetsdag", "Zi lucrătoare", "วันทำงาน", "Робочий день"),
+  dayTypeWeekend: L("Weekend", "Helg", "Weekend", "วันหยุดสุดสัปดาห์", "Вихідний"),
+  dayTypeHoliday: L("Holiday", "Helgdag", "Sărbătoare", "วันหยุด", "Свято"),
+  dayTypeVacation: L("Vacation", "Semester", "Vacanță", "วันลาพักร้อน", "Відпустка"),
+  dayTypeOffSeason: L("Off-season", "Lågsäsong", "Extrasezon", "นอกฤดูกาล", "Міжсезоння"),
 };
+
+const DAY_TYPE_MAP: Record<string, LS> = {
+  Workday: CL.dayTypeWorkday,
+  Weekend: CL.dayTypeWeekend,
+  Holiday: CL.dayTypeHoliday,
+  Vacation: CL.dayTypeVacation,
+  "Off-season": CL.dayTypeOffSeason,
+};
+function translateDayType(dayType: string, lang: string): string {
+  const label = DAY_TYPE_MAP[dayType];
+  return label ? bl(label, lang) : dayType;
+}
 
 /* ══════════════════════════════════════════════════════════════
    CODE OF CONDUCT — full content in all 5 languages
