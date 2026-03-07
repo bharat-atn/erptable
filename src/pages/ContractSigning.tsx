@@ -258,6 +258,9 @@ export default function ContractSigning() {
   const hasSchedule = !!schedData;
   const canSign = cocConfirmed && contractConfirmed && signingPlace.trim().length > 0 && (!hasSchedule || scheduleReviewed);
 
+  const stepNumberSchedule = hasSchedule ? 3 : null;
+  const stepNumberSign = hasSchedule ? 4 : 3;
+
   return (
     <div className="min-h-screen bg-muted/30 p-2 sm:p-4 md:p-8 safe-area-top safe-area-bottom">
       <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
@@ -266,9 +269,14 @@ export default function ContractSigning() {
           <img src={logoImg} alt="Logo" className="h-10 sm:h-12 mx-auto" />
         </div>
 
-        {/* Full Contract Document */}
+        {/* Step 1: Full Contract Document */}
         <Card className="shadow-md overflow-hidden">
-          <CardContent className="p-0">
+          <CardHeader className="bg-accent/30 border-b border-border">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Step 1: Review Employment Contract / Steg 1: Granska anställningsavtalet
+            </CardTitle>
+          </CardHeader>
             <ContractDocument
               companyName={data.company_name}
               companyOrgNumber={data.company_org_number}
