@@ -93,8 +93,10 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
           signing_token: null,
           employee_signature_url: null,
           employee_signed_at: null,
+          employee_signing_metadata: null,
           employer_signature_url: null,
           employer_signed_at: null,
+          employer_signing_metadata: null,
           signed_at: null,
           sent_for_signing_at: null,
         })
@@ -103,6 +105,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations"] });
       toast.success("Contract reset to draft — ready for re-signing");
       setResetTarget(null);
     },
