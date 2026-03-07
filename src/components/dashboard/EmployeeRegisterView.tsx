@@ -406,6 +406,12 @@ export function EmployeeRegisterView() {
       />
 
       <CsvImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["register-employees"] })} />
+
+      <ContractPreviewDialog
+        contractId={previewContractId}
+        open={!!previewContractId}
+        onOpenChange={(open) => { if (!open) setPreviewContractId(null); }}
+      />
     </div>
   );
 }
