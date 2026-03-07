@@ -519,7 +519,8 @@ export default function ContractSigning() {
           </Card>
         )}
 
-        {/* Signing Area */}
+        {/* Signing Area — only visible after CoC is confirmed (or already signed) */}
+        {(cocConfirmed || signed || alreadySigned) && (
         <Card className="shadow-md">
           <CardHeader>
             <CardTitle className="text-base">Employee Signature / Anställds underskrift</CardTitle>

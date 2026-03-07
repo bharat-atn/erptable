@@ -486,7 +486,8 @@ export default function SigningSimulation() {
           </Card>
         )}
 
-        {/* Step 4: Signing */}
+        {/* Step 4: Signing — only visible after CoC is confirmed (or already signed) */}
+        {(cocConfirmed || signed || alreadySigned) && (
         <Card className="shadow-md">
           <CardHeader className="bg-accent/30 border-b border-border">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
