@@ -193,7 +193,7 @@ function getPhoneMaxDigits(phone: string): number {
 
 function isBankAccountValid(account: string): boolean {
   if (!account) return false;
-  return /^\d+$/.test(account);
+  return /^[A-Za-z0-9]+$/.test(account);
 }
 
 export const personalInfoSchema = z.object({
