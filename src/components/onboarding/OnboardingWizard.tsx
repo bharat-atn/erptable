@@ -1362,11 +1362,62 @@ export function OnboardingWizard({
                     ))}
                   </div>
                 )}
-                {/* Show selected bank confirmation */}
-                {selectedBank && !bankDropdownOpen && (
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-xs text-primary font-medium">{selectedBank}</span>
+                {/* Autocomplete dropdown: "Other" option */}
+                {bankDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
+                    style={{ top: "100%" }}>
+                    {filteredBankSuggestions.map((bank) => (
+                      <button
+                        key={bank}
+                        type="button"
+                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setBankNameValue(bank);
+                          setBankDropdownOpen(false);
+                          onBankSelect(bank);
+                          updateField("otherBankName", "");
+
+                          const match = banksForSelectedCountry.find(
+                            (b) => b.name.trim().toLowerCase() === bank.trim().toLowerCase()
+                          );
+                          if (match?.bic_code) {
+                            setBicValue(match.bic_code);
+                            updateField("bicCode", match.bic_code);
+                          }
+
+                          if (showAiFill && selectedBankCountry) {
+                            const ACCOUNT_LENGTHS: Record<string, number> = {
+                              Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
+                            };
+                            const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
+                            const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                            setBankAccountValue(randomAcct);
+                            updateField("bankAccountNumber", randomAcct);
+                          }
+                        }}
+                      >
+                        {bank}
+                      </button>
+                    ))}
+                    {/* "Other bank" option */}
+                    <button
+                      type="button"
+                      className="w-full text-left px-3 py-2.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors border-t border-border"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setBankNameValue("");
+                        setBankDropdownOpen(false);
+                        onBankSelect("other");
+                        updateField("otherBankName", "");
+                        setBicValue("");
+                        updateField("bicCode", "");
+                        setBankAccountValue("");
+                        updateField("bankAccountNumber", "");
+                      }}
+                    >
+                      Other / Annan bank…
+                    </button>
                   </div>
                 )}
               </div>
