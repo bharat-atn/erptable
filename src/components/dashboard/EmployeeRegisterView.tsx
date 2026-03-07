@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2, Mail, Loader2,
+  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2, Mail, Loader2, FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -21,6 +21,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { CsvImportDialog } from "./CsvImportDialog";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
+import { ContractPreviewDialog } from "./ContractPreviewDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
 type Employee = Tables<"employees">;
@@ -123,6 +124,7 @@ export function EmployeeRegisterView() {
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
   const [clearSelectionFn, setClearSelectionFn] = useState<(() => void) | null>(null);
   const [sendingContractFor, setSendingContractFor] = useState<string | null>(null);
+  const [previewContractId, setPreviewContractId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { orgId } = useOrg();
 
@@ -302,6 +304,25 @@ export function EmployeeRegisterView() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
               <DropdownMenuItem
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  const { data: contracts } = await supabase
+                    .from("contracts")
+                    .select("id")
+                    .eq("employee_id", employee.id)
+                    .eq("signing_status", "employer_signed")
+                    .order("updated_at", { ascending: false })
+                    .limit(1);
+                  if (!contracts || contracts.length === 0) {
+                    toast.error("No signed contract found for this employee");
+                    return;
+                  }
+                  setPreviewContractId(contracts[0].id);
+                }}
+              >
+                <FileText className="w-4 h-4 mr-2" /> Preview Contract
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 disabled={sendingContractFor === employee.id}
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -385,6 +406,12 @@ export function EmployeeRegisterView() {
       />
 
       <CsvImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["register-employees"] })} />
+
+      <ContractPreviewDialog
+        contractId={previewContractId}
+        open={!!previewContractId}
+        onOpenChange={(open) => { if (!open) setPreviewContractId(null); }}
+      />
     </div>
   );
 }
