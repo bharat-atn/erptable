@@ -1282,8 +1282,8 @@ export function OnboardingWizard({
                   </div>
                 )}
 
-                {/* Bank list (expanded) */}
-                {bankListExpanded && (
+                {/* Bank list (expanded) – always show if no bank selected yet */}
+                {(bankListExpanded || (!selectedBank && !isOtherBank)) && (
                 <RadioGroup
                   value={isOtherBank ? "other" : selectedBank}
                   onValueChange={(val) => {
