@@ -233,7 +233,7 @@ export default function SigningSimulation() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocScrolledToBottom(false); setCocConfirmed(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
@@ -245,7 +245,6 @@ export default function SigningSimulation() {
                       <p className="font-semibold text-sm">{lang.label}</p>
                       <p className="text-xs text-muted-foreground">{lang.labelEn}</p>
                     </div>
-                    
                   </button>
                 ))}
               </div>
@@ -268,12 +267,8 @@ export default function SigningSimulation() {
                     </Alert>
                   ) : (
                     <>
-                      {/* Scrollable container — user must scroll to bottom to reveal confirmation */}
-                      <div
-                        ref={cocScrollContainerRef}
-                        onScroll={handleCocScroll}
-                        className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto"
-                      >
+                      {/* Scrollable container */}
+                      <div className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto">
                         <iframe
                           key={cocLanguage}
                           src={`https://docs.google.com/gview?embedded=true&url=${PUBLISHED_ORIGIN}${selectedCocLang.file}`}
@@ -295,34 +290,37 @@ export default function SigningSimulation() {
                         </a>
                       </div>
 
-                      {/* CoC confirmation toggle — only appears after scrolling to bottom */}
-                      {cocScrolledToBottom && (
-                        <button
-                          type="button"
-                          onClick={() => setCocConfirmed(!cocConfirmed)}
-                          className={cn(
-                            "w-full flex items-center gap-3 rounded-lg border-2 p-4 transition-all text-left",
-                            cocConfirmed
-                              ? "border-primary bg-primary/10"
-                              : "border-primary/50 bg-muted/20 animate-pulse"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-10 h-6 rounded-full relative shrink-0 transition-colors",
-                            cocConfirmed ? "bg-primary" : "bg-muted-foreground/30"
-                          )}>
-                            <div className={cn(
-                              "absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-transform",
-                              cocConfirmed ? "translate-x-[18px]" : "translate-x-0.5"
-                            )} />
-                          </div>
-                          <span className={cn("text-sm font-medium", cocConfirmed && "text-primary")}>
-                            {cocConfirmed ? "✓ " : ""}
-                            I have read and understood the Code of Conduct. /
-                            <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                          </span>
-                        </button>
+                      {/* Warning banner when not yet confirmed */}
+                      {!cocConfirmed && (
+                        <div className="rounded-lg border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
+                          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            ⚠ You must confirm that you have read the Code of Conduct to proceed. /
+                            <span className="italic font-normal"> Du måste bekräfta att du har läst uppförandekoden för att fortsätta.</span>
+                          </p>
+                        </div>
                       )}
+
+                      {/* CoC confirmation toggle — always visible */}
+                      <div
+                        className={cn(
+                          "w-full flex items-center gap-4 rounded-lg border-2 p-4 transition-all",
+                          cocConfirmed
+                            ? "border-primary bg-primary/10"
+                            : "border-primary/50 bg-muted/20"
+                        )}
+                      >
+                        <Switch
+                          checked={cocConfirmed}
+                          onCheckedChange={setCocConfirmed}
+                          className="scale-125"
+                        />
+                        <span className={cn("text-sm font-medium", cocConfirmed && "text-primary")}>
+                          {cocConfirmed ? "✓ " : ""}
+                          I have read and understood the Code of Conduct. /
+                          <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                        </span>
+                      </div>
                     </>
                   )}
                 </div>
