@@ -488,7 +488,7 @@ const COC_RO = {
     },
     {
       heading: "Identificarea și raportarea riscurilor",
-      body: "• Identificarea și raportarea riscurilor este o parte esențială a operațiunilor. Prin urmare, fiecare angajat este responsabil pentru menținerea unui mediu de lucru sigur și pentru contribuția la îmbunătățirea acestuia.\n• În fiecare vehicul există o „evaluare a riscurilor" care identifică riscurile potențiale și măsurile ce trebuie luate împreună cu compania pentru prevenirea accidentelor la locul de muncă. Este obligația dumneavoastră să citiți și să vă familiarizați cu aceste riscuri potențiale și să luați măsurile necesare pentru prevenirea accidentelor.",
+      body: "• Identificarea și raportarea riscurilor este o parte esențială a operațiunilor. Prin urmare, fiecare angajat este responsabil pentru menținerea unui mediu de lucru sigur și pentru contribuția la îmbunătățirea acestuia.\n• În fiecare vehicul există o \"evaluare a riscurilor\" care identifică riscurile potențiale și măsurile ce trebuie luate împreună cu compania pentru prevenirea accidentelor la locul de muncă. Este obligația dumneavoastră să citiți și să vă familiarizați cu aceste riscuri potențiale și să luați măsurile necesare pentru prevenirea accidentelor.",
     },
     {
       heading: "Articole de igienă personală",
