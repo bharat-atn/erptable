@@ -1,38 +1,72 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Unify Contract Document — One Version Everywhere
 
-### Root Cause
+### The Problem
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+After a thorough audit, I've identified that the contract is rendered in **6 different places**, and several of them are **not passing all the data** that `ContractDocument` supports. This means the contract looks different depending on where you view it.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+Here are the 6 render points and what's missing:
 
-**1. Replace generic message with specific missing-condition checklist**
+```text
+RENDER POINT                         MISSING DATA
+─────────────────────────────────────────────────────────────
+1. ContractDetailsStep (wizard §14)   ✓ All data (live from state)
+2. ContractPreviewDialog (register)   ✗ No signing metadata passed
+3. EmployerSigningDialog              ✗ No signing metadata passed
+4. ContractSigning (/sign/:token)     ✗ No signing metadata passed
+5. SigningSimulation                   ✗ No signing metadata passed
+6. Print (via handlePrint in          ✗ Uses CSS that differs from
+   ContractPreviewDialog &              the main index.css styles
+   ContractDetailsStep)                 (duplicate style blocks)
+```
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+### Root Causes
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+1. **Signing metadata not passed**: `ContractPreviewDialog`, `EmployerSigningDialog`, `ContractSigning`, and `SigningSimulation` all render `ContractDocument` but **never pass** `employeeSigningMetadata` or `employerSigningMetadata`. This means the Place/Date fields in the signature section are always empty in those views, even after signing.
 
-This tells the user exactly what's blocking them.
+2. **Print CSS divergence**: `ContractPreviewDialog` and `ContractDetailsStep` each have their own inline `<style>` block for printing. These are ~100-line duplicates that can drift. The §4 "comes into force" clause uses `hsl(var(--foreground))` which won't resolve in a print window that lacks the CSS variables.
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+3. **§4 clause color**: The `s4_comesIntoForce` clause uses `hsl(var(--foreground))` inline style, which fails in print views (no CSS variables available). Should use a hardcoded color like the rest of the print styles.
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+### Changes
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+#### 1. `ContractPreviewDialog.tsx` — Pass signing metadata
+- Fetch `employee_signing_metadata` and `employer_signing_metadata` from the contracts query (already available in the `select *`)
+- Pass them as props to `ContractDocument`
 
-**3. Add scroll-to-schedule link in the checklist**
+#### 2. `EmployerSigningDialog.tsx` — Pass signing metadata
+- The contract fetch already uses `select *`, so the metadata is available
+- Pass `employeeSigningMetadata` from `contract.employee_signing_metadata`
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+#### 3. `ContractSigning.tsx` — Pass signing metadata
+- The `get_contract_for_signing` RPC **does not return** signing metadata columns. Need to update the DB function to include them.
+- Once available, pass to `ContractDocument`
 
-### Estimated changes
+#### 4. `SigningSimulation.tsx` — Pass signing metadata
+- The contract fetch already uses `select *`, so metadata is available
+- Pass both metadata props to `ContractDocument`
 
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+#### 5. `ContractDocument.tsx` — Fix §4 clause colors for print
+- Replace `hsl(var(--foreground))` with `#1a1a1a` and `hsl(var(--muted-foreground))` with `#64748b` in the inline styles of the `s4_comesIntoForce` block
+
+#### 6. Database Migration — Add metadata to `get_contract_for_signing`
+- Update the RPC function to also return `employee_signing_metadata` and `employer_signing_metadata`
+
+#### 7. Print style unification
+- Extract the common print CSS into a shared utility string so `ContractPreviewDialog` and `ContractDetailsStep` use the exact same styles
+
+### Summary of Files
+
+| File | Change |
+|------|--------|
+| `ContractDocument.tsx` lines 310-315 | Replace `hsl(var(...))` with hardcoded colors |
+| `ContractPreviewDialog.tsx` lines 177-191 | Pass signing metadata props |
+| `EmployerSigningDialog.tsx` lines 178-192 | Pass employee signing metadata |
+| `ContractSigning.tsx` lines 284-295 | Pass signing metadata from RPC data |
+| `SigningSimulation.tsx` lines 212-223 | Pass signing metadata from contract data |
+| DB migration | Update `get_contract_for_signing` to return metadata columns |
+| `src/lib/contract-print-styles.ts` (new) | Shared print CSS string used by both print handlers |
+| `ContractPreviewDialog.tsx` lines 50-97 | Use shared print CSS |
+| `ContractDetailsStep.tsx` lines 360-435 | Use shared print CSS |
 
