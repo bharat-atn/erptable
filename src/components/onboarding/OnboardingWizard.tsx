@@ -1305,7 +1305,7 @@ export function OnboardingWizard({
                       tabIndex={23}
                       className={cn(
                         "h-11 text-sm font-medium",
-                        fieldError(!!selectedBankCountry && !selectedBank && !isOtherBank)
+                        fieldError(!!selectedBankCountry && !selectedBankValue && !isOtherBank)
                       )}
                     >
                       <SelectValue placeholder={
