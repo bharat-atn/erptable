@@ -1334,8 +1334,8 @@ export function OnboardingWizard({
                     onCheckedChange={(checked) => {
                       if (checked) {
                         onBankSelect("other");
-                        updateField("otherBankName", "");
-                        setBicValue("");
+                        setSelectedBankValue("");
+                        updateField("bankName", "");
                         updateField("bicCode", "");
                         setBankAccountValue("");
                         updateField("bankAccountNumber", "");
