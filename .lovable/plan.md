@@ -1,60 +1,38 @@
 
 
-## Plan: Redesign Bank Selection as a Two-Step Picker
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-The current hybrid text-input-with-autocomplete approach has multiple issues:
-- "Swedbank" appears as a default/persisted value due to `useEffect` sync loops between parent `selectedBank` state and local `bankNameValue`
-- The "Other bank" option is buried inside the autocomplete dropdown
-- BIC/account fields are sometimes unresponsive due to state conflicts
+### Root Cause
 
-### Solution: Replace with a clean Select + Toggle pattern
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-**File: `src/components/onboarding/OnboardingWizard.tsx`**
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**1. Replace the text input + autocomplete with a proper Select dropdown**
-- After country is selected, show a `<Select>` (or the existing `SearchableCountrySelect`-style searchable popover) listing banks for that country
-- No default selection — placeholder says "Select bank / Välj bank"
-- This eliminates the `bankNameValue` local state and all its sync issues
+**1. Replace generic message with specific missing-condition checklist**
 
-**2. Add a separate "Other bank" toggle below the select**
-- A checkbox or small link/button: "My bank is not listed / Min bank finns inte i listan"
-- When toggled ON: hide the bank select, show a plain text `<Input>` for custom bank name
-- When toggled OFF: show the bank select again, clear custom bank name
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-**3. BIC and Account Number fields always visible and editable**
-- When a bank is picked from the list: auto-fill BIC but keep it editable
-- When "Other bank" is toggled: BIC starts empty, fully manual
-- Account number is always empty and manual
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-**4. Remove the `bankNameValue` local state and the problematic `useEffect` (lines 724-765)**
-- The select component manages its own value via `selectedBank` prop from parent
-- No more sync loops or stale values
+This tells the user exactly what's blocking them.
 
-**5. Remove `bankDropdownOpen`, `bankInputRef`, `filteredBankSuggestions` state/memo**
-- No longer needed with a proper select component
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-### UI Layout (after country is selected)
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-```text
-┌─────────────────────────────────┐
-│ BANK NAME / BANKNAMN *          │
-│ [▼ Select bank / Välj bank    ]│  ← searchable select from bank list
-└─────────────────────────────────┘
-☐ My bank is not listed / Min bank finns inte i listan
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
 
-(if checked:)
-┌─────────────────────────────────┐
-│ OTHER BANK NAME / ANNAT BANKNAMN│
-│ [                              ]│  ← free text input
-└─────────────────────────────────┘
+**3. Add scroll-to-schedule link in the checklist**
 
-┌───────────────┐ ┌───────────────┐
-│ BIC CODE      │ │ ACCOUNT NUMBER│
-│ [auto/manual ]│ │ [manual      ]│
-└───────────────┘ └───────────────┘
-```
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
 
-### Files to edit
-- `src/components/onboarding/OnboardingWizard.tsx` — bank section rewrite (~80 lines changed in the bank section, remove ~40 lines of stale state management)
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
