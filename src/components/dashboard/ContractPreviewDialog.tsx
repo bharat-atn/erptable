@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ContractDocument } from "./ContractDocument";
+import { CodeOfConductViewer } from "./CodeOfConductViewer";
 import { Printer, Mail, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { COC_MAP } from "./CodeOfConductViewer";
@@ -95,13 +96,10 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
 
     const contractCode = contract?.contract_code || "Draft";
     const docTitle = `Employment Contract — ${contractCode}`;
-    const fd = (contract?.form_data as Record<string, any>) || {};
-    const lang: LangCode = fd.contractLanguage || "EN/SE";
     const isSEOnly = lang === "SE";
 
     // Build Appendix A — Code of Conduct HTML
     let cocHtml = "";
-    const cocPrimaryKey = cocLangKey(lang);
     const cocPrimary = !isSEOnly ? COC_MAP[cocPrimaryKey] : null;
     const cocSv = COC_MAP["sv"];
 
@@ -211,6 +209,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   const fd = (contract?.form_data as Record<string, any>) || {};
   const emp = contract?.employees as any;
   const comp = contract?.companies as any;
+  const lang: LangCode = fd.contractLanguage || "EN/SE";
+  const cocPrimaryKey = cocLangKey(lang);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -260,23 +260,86 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : contract ? (
-            <ContractDocument
-              ref={printRef}
-              companyName={comp?.name || "—"}
-              companyOrgNumber={comp?.org_number}
-              companyAddress={comp?.address}
-              companyPostcode={comp?.postcode}
-              companyCity={comp?.city}
-              contractCode={contract.contract_code}
-              seasonYear={contract.season_year}
-              formData={fd}
-              employeeSignatureUrl={contract.employee_signature_url}
-              employerSignatureUrl={contract.employer_signature_url}
-              employeeSignedAt={contract.employee_signed_at}
-              employerSignedAt={contract.employer_signed_at}
-              employeeSigningMetadata={contract.employee_signing_metadata as Record<string, any> | undefined}
-              employerSigningMetadata={contract.employer_signing_metadata as Record<string, any> | undefined}
-            />
+            <>
+              <ContractDocument
+                ref={printRef}
+                companyName={comp?.name || "—"}
+                companyOrgNumber={comp?.org_number}
+                companyAddress={comp?.address}
+                companyPostcode={comp?.postcode}
+                companyCity={comp?.city}
+                contractCode={contract.contract_code}
+                seasonYear={contract.season_year}
+                formData={fd}
+                employeeSignatureUrl={contract.employee_signature_url}
+                employerSignatureUrl={contract.employer_signature_url}
+                employeeSignedAt={contract.employee_signed_at}
+                employerSignedAt={contract.employer_signed_at}
+                employeeSigningMetadata={contract.employee_signing_metadata as Record<string, any> | undefined}
+                employerSigningMetadata={contract.employer_signing_metadata as Record<string, any> | undefined}
+              />
+
+              {/* Appendix A — Code of Conduct */}
+              <div className="mt-8 border-t pt-6">
+                <h3 className="text-sm font-bold text-center mb-4">{bl(CL.appendixCoC, lang)}</h3>
+                {cocPrimaryKey !== "sv" && (
+                  <div className="mb-6">
+                    <CodeOfConductViewer language={cocPrimaryKey} />
+                  </div>
+                )}
+                <CodeOfConductViewer language="sv" />
+              </div>
+
+              {/* Appendix B — Work Schedule */}
+              <div className="mt-8 border-t pt-6">
+                <h3 className="text-sm font-bold text-center mb-4">{bl(CL.appendixSchedule, lang)}</h3>
+                {(scheduleRows || []).length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b-2 border-border">
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleDate, lang)}</th>
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleDayType, lang)}</th>
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleHours, lang)}</th>
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleStart, lang)}</th>
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleEnd, lang)}</th>
+                          <th className="text-left p-1.5 font-semibold text-muted-foreground uppercase text-[10px]">{bl(CL.scheduleHoliday, lang)}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(scheduleRows || []).map((row) => {
+                          const isHoliday = row.day_type === "Holiday";
+                          const isWeekend = row.day_type === "Weekend";
+                          const holidayName = lang === "SE"
+                            ? (row.holiday_name_sv || "")
+                            : (row.holiday_name_en || row.holiday_name_sv || "");
+                          return (
+                            <tr
+                              key={row.id}
+                              className={
+                                isHoliday ? "bg-amber-50" : isWeekend ? "bg-muted/50" : ""
+                              }
+                            >
+                              <td className="p-1.5 border-b border-border">{fmtDate(row.schedule_date)}</td>
+                              <td className="p-1.5 border-b border-border">{row.day_type}</td>
+                              <td className="p-1.5 border-b border-border">{row.scheduled_hours}</td>
+                              <td className="p-1.5 border-b border-border">{row.start_time || "—"}</td>
+                              <td className="p-1.5 border-b border-border">{row.end_time || "—"}</td>
+                              <td className="p-1.5 border-b border-border">{holidayName || "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <p className="text-[10px] text-muted-foreground mt-2">
+                      Total: {(scheduleRows || []).reduce((s, r) => s + (Number(r.scheduled_hours) || 0), 0)}h · {(scheduleRows || []).filter(r => r.day_type === "Workday").length} workdays
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center">{bl(CL.noSchedule, lang)}</p>
+                )}
+              </div>
+            </>
           ) : (
             <p className="text-center text-muted-foreground">Contract not found</p>
           )}
