@@ -193,7 +193,7 @@ function getPhoneMaxDigits(phone: string): number {
 
 function isBankAccountValid(account: string): boolean {
   if (!account) return false;
-  return /^\d+$/.test(account);
+  return /^[A-Za-z0-9]+$/.test(account);
 }
 
 export const personalInfoSchema = z.object({
@@ -222,8 +222,8 @@ export const personalInfoSchema = z.object({
   bankCountryName: z.string().max(100).optional(),
   bicCode: z.string().min(1, "BIC Code is required").max(20),
   bankAccountNumber: z.string().min(1, "Bank account number is required").max(50).refine(
-    (val) => /^\d+$/.test(val),
-    { message: "Bank account number must contain only digits" }
+    (val) => /^[A-Za-z0-9]+$/.test(val),
+    { message: "Bank account number must contain only letters and digits" }
   ),
   emergencyFirstName: z.string().min(1, "Emergency contact first name is required").max(100),
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
@@ -774,7 +774,7 @@ export function OnboardingWizard({
   if (isOtherBank && !formData.otherBankName) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
-  else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (digits only)");
+  else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (invalid characters)");
 
   const s5Missing: string[] = [];
   if (!uploadedFile) s5Missing.push("ID / Passport Document");
@@ -1342,17 +1342,16 @@ export function OnboardingWizard({
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
                     tabIndex={25}
-                    inputMode="numeric"
                     value={formData.bankAccountNumber || ""}
                     onChange={(e) => {
-                      const digitsOnly = e.target.value.replace(/\D/g, "");
-                      updateField("bankAccountNumber", digitsOnly);
+                      const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "");
+                      updateField("bankAccountNumber", cleaned);
                     }}
-                    placeholder="Digits only"
+                    placeholder="Letters and digits (e.g. SE35500000000549)"
                     className={cn("h-11 text-sm font-medium", fieldError(!formData.bankAccountNumber || !isBankAccountValid(formData.bankAccountNumber || "")))}
                   />
                   {formData.bankAccountNumber && !isBankAccountValid(formData.bankAccountNumber) && (
-                    <p className="text-[11px] text-destructive">Bank account number must contain only digits — no letters or special characters</p>
+                    <p className="text-[11px] text-destructive">Bank account number must contain only letters and digits — no special characters</p>
                   )}
                   <AiFieldHint validation={aiValidation.bankAccountNumber} isValidating={aiValidating} />
                 </div>

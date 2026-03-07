@@ -1,27 +1,38 @@
 
 
-## Plan: Allow Letters and Numbers in Bank Account Number and BIC Code Fields
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-The bank account number field in the Onboarding Wizard currently strips all non-digit characters (`/\D/g` replacement) and validates with `/^\d+$/`. IBAN codes (e.g., `SE3550000000054910000003`) contain letters, so this restriction is wrong. The BIC code field already accepts letters — no change needed there.
+### Root Cause
 
-### Changes
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-**File: `src/components/onboarding/OnboardingWizard.tsx`**
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-1. **Update `isBankAccountValid` function** (~line 194): Change regex from `/^\d+$/` to `/^[A-Za-z0-9]+$/` (alphanumeric)
+**1. Replace generic message with specific missing-condition checklist**
 
-2. **Update Zod schema** (~line 224): Change `.refine((val) => /^\d+$/.test(val), ...)` to `.refine((val) => /^[A-Za-z0-9]+$/.test(val), ...)` with updated message
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-3. **Remove digit-stripping in onChange** (~line 1348): Change `e.target.value.replace(/\D/g, "")` to `e.target.value.replace(/[^A-Za-z0-9]/g, "")` (allow letters, strip only special chars)
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-4. **Update inputMode** (~line 1345): Remove `inputMode="numeric"` (or change to `"text"`)
+This tells the user exactly what's blocking them.
 
-5. **Update placeholder** (~line 1351): Change from `"Digits only"` to `"Letters and digits"` (or similar)
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-6. **Update error message** (~line 1355): Change "digits only" text to "letters and digits only"
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-7. **Update missing-field label** (~line 777): Change `"Account Number (digits only)"` to `"Account Number (invalid characters)"`
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
 
-All changes are in a single file.
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
