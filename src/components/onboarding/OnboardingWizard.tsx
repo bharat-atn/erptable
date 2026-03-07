@@ -544,7 +544,7 @@ export function OnboardingWizard({
       updateField("otherBankName", "");
       updateField("bicCode", "");
       updateField("bankAccountNumber", "");
-      // bankNameValue removed — Select manages its own display
+      setSelectedBankValue("");
       setS4Open(true);
 
       // Ensure emergency contact section is visible
