@@ -1265,144 +1265,106 @@ export function OnboardingWizard({
                 </div>
               )}
 
-              {/* Bank name — hybrid: text input with autocomplete suggestions */}
-              <div className="space-y-1.5 relative">
-                <FieldLabel en="Bank Name" sv="Banknamn" />
-                <Input
-                  ref={bankInputRef}
-                  tabIndex={23}
-                  value={bankNameValue}
-                  onChange={(e) => {
-                    const nextValue = e.target.value;
-                    setBankNameValue(nextValue);
+              {/* Bank name — Select dropdown (hidden when "Other bank" is toggled) */}
+              {!isOtherBank && (
+                <div className="space-y-1.5">
+                  <FieldLabel en="Bank Name" sv="Banknamn" />
+                  <Select
+                    value={selectedBank || ""}
+                    onValueChange={(bankName) => {
+                      onBankSelect(bankName);
+                      updateField("otherBankName", "");
 
-                    if (!selectedBankCountry) return;
+                      const match = banksForSelectedCountry.find(
+                        (b) => b.name === bankName
+                      );
+                      if (match?.bic_code) {
+                        setBicValue(match.bic_code);
+                        updateField("bicCode", match.bic_code);
+                      } else {
+                        setBicValue("");
+                        updateField("bicCode", "");
+                      }
 
-                    setBankDropdownOpen(true);
-                    if (isOtherBank) {
-                      updateField("otherBankName", nextValue);
-                    }
-                  }}
-                  onFocus={() => {
-                    if (selectedBankCountry) {
-                      setBankDropdownOpen(true);
-                    }
-                  }}
-                  onBlur={() => {
-                    // Delay to allow click on suggestion first
-                    setTimeout(() => {
-                      setBankDropdownOpen(false);
+                      if (showAiFill && selectedBankCountry) {
+                        const ACCOUNT_LENGTHS: Record<string, number> = {
+                          Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
+                        };
+                        const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
+                        const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                        setBankAccountValue(randomAcct);
+                        updateField("bankAccountNumber", randomAcct);
+                      }
+                    }}
+                    disabled={!selectedBankCountry}
+                  >
+                    <SelectTrigger
+                      tabIndex={23}
+                      className={cn(
+                        "h-11 text-sm font-medium",
+                        fieldError(!!selectedBankCountry && !selectedBank && !isOtherBank)
+                      )}
+                    >
+                      <SelectValue placeholder={
+                        selectedBankCountry
+                          ? "Select bank / Välj bank"
+                          : "Select country first / Välj land först"
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bankList.map((bank) => (
+                        <SelectItem key={bank} value={bank}>
+                          {bank}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-                      const trimmed = bankNameValue.trim();
-                      if (!trimmed) {
+              {/* "Other bank" checkbox toggle */}
+              {selectedBankCountry && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="other-bank-toggle"
+                    checked={isOtherBank}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        onBankSelect("other");
+                        updateField("otherBankName", "");
+                        setBicValue("");
+                        updateField("bicCode", "");
+                        setBankAccountValue("");
+                        updateField("bankAccountNumber", "");
+                      } else {
                         onBankSelect("");
                         updateField("otherBankName", "");
                         setBicValue("");
                         updateField("bicCode", "");
                         setBankAccountValue("");
                         updateField("bankAccountNumber", "");
-                        return;
                       }
+                    }}
+                  />
+                  <label htmlFor="other-bank-toggle" className="text-sm text-muted-foreground cursor-pointer select-none">
+                    My bank is not listed / Min bank finns inte i listan
+                  </label>
+                </div>
+              )}
 
-                      const exact = banksForSelectedCountry.find(
-                        (b) => b.name.trim().toLowerCase() === trimmed.toLowerCase()
-                      );
-
-                      if (exact) {
-                        onBankSelect(exact.name);
-                        updateField("otherBankName", "");
-                        if (exact.bic_code) {
-                          setBicValue(exact.bic_code);
-                          updateField("bicCode", exact.bic_code);
-                        } else {
-                          setBicValue("");
-                          updateField("bicCode", "");
-                        }
-                      } else {
-                        onBankSelect("other");
-                        updateField("otherBankName", trimmed);
-                      }
-                    }, 150);
-                  }}
-                  placeholder={
-                    selectedBankCountry
-                      ? "Type or select bank / Skriv eller välj bank"
-                      : "Select country first / Välj land först"
-                  }
-                  disabled={!selectedBankCountry}
-                  autoComplete="off"
-                  className={cn(
-                    "h-11 text-sm font-medium",
-                    fieldError(!!selectedBankCountry && !selectedBank && !isOtherBank && !bankNameValue)
-                  )}
-                />
-                {/* Autocomplete dropdown: includes "Other bank" option */}
-                {bankDropdownOpen && selectedBankCountry && (
-                  <div className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
-                    style={{ top: "100%" }}>
-                    {filteredBankSuggestions.map((bank) => (
-                      <button
-                        key={bank}
-                        type="button"
-                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setBankNameValue(bank);
-                          setBankDropdownOpen(false);
-                          onBankSelect(bank);
-                          updateField("otherBankName", "");
-
-                          const match = banksForSelectedCountry.find(
-                            (b) => b.name.trim().toLowerCase() === bank.trim().toLowerCase()
-                          );
-                          if (match?.bic_code) {
-                            setBicValue(match.bic_code);
-                            updateField("bicCode", match.bic_code);
-                          } else {
-                            setBicValue("");
-                            updateField("bicCode", "");
-                          }
-
-                          if (showAiFill && selectedBankCountry) {
-                            const ACCOUNT_LENGTHS: Record<string, number> = {
-                              Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
-                            };
-                            const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
-                            const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
-                            setBankAccountValue(randomAcct);
-                            updateField("bankAccountNumber", randomAcct);
-                          }
-                        }}
-                      >
-                        {bank}
-                      </button>
-                    ))}
-                    {filteredBankSuggestions.length === 0 && (
-                      <p className="px-3 py-2 text-xs text-muted-foreground">
-                        No listed banks for this country. Choose “Other bank” below.
-                      </p>
-                    )}
-                    {/* "Other bank" option */}
-                    <button
-                      type="button"
-                      className="w-full text-left px-3 py-2.5 text-sm font-medium text-primary hover:bg-accent hover:text-accent-foreground cursor-pointer transition-colors border-t border-border"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setBankNameValue("");
-                        setBankDropdownOpen(false);
-                        onBankSelect("other");
-                        updateField("otherBankName", "");
-                        setBicValue("");
-                        updateField("bicCode", "");
-                        setBankAccountValue("");
-                        updateField("bankAccountNumber", "");
-                      }}
-                    >
-                      Other bank / Annan bank…
-                    </button>
-                  </div>
-                )}
-              </div>
+              {/* Other bank name — free text input (shown when toggle is ON) */}
+              {isOtherBank && (
+                <div className="space-y-1.5">
+                  <FieldLabel en="Other Bank Name" sv="Annat banknamn" />
+                  <Input
+                    tabIndex={23}
+                    value={formData.otherBankName || ""}
+                    onChange={(e) => updateField("otherBankName", e.target.value)}
+                    placeholder="Enter bank name / Ange banknamn"
+                    className={cn("h-11 text-sm font-medium", fieldError(isOtherBank && !formData.otherBankName?.trim()))}
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
