@@ -1307,12 +1307,15 @@ export function OnboardingWizard({
                   }}
                   className="space-y-2"
                 >
-                  {bankList.map((bank) => (
-                    <div key={bank} className="flex items-center space-x-2.5 min-h-[44px]">
-                      <RadioGroupItem value={bank} id={bank} className="shrink-0" />
-                      <Label htmlFor={bank} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
-                    </div>
-                  ))}
+                  {bankList.map((bank) => {
+                    const safeId = "bank-" + bank.replace(/[^a-zA-Z0-9]/g, "-");
+                    return (
+                      <div key={bank} className="flex items-center space-x-2.5 min-h-[44px]">
+                        <RadioGroupItem value={bank} id={safeId} className="shrink-0" />
+                        <Label htmlFor={safeId} className="font-normal cursor-pointer text-sm text-primary">{bank}</Label>
+                      </div>
+                    );
+                  })}
                   <div className="pt-3 mt-2 border-t border-border">
                     <label className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2 block">
                       Toggle here if your bank is not in the list above / Välj här om din bank inte finns i listan ovan
