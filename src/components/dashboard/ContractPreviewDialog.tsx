@@ -15,6 +15,7 @@ import {
   CONTRACT_LABELS as CL,
   bilingualLabel as bl,
   primaryText as pt,
+  translateDayType,
   type LangCode,
 } from "@/lib/contract-translations";
 
