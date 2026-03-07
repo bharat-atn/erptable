@@ -3,19 +3,20 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { SignatureCanvas } from "@/components/dashboard/SignatureCanvas";
 import { ContractDocument } from "@/components/dashboard/ContractDocument";
 import {
-  CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink,
+  CheckCircle, Loader2, AlertTriangle, FileText, Check,
   Calendar, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
 import { CodeOfConductViewer } from "@/components/dashboard/CodeOfConductViewer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { format, addDays, eachDayOfInterval, getDay } from "date-fns";
 import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
-
-const PUBLISHED_ORIGIN = "https://erptable.lovable.app";
 
 const COC_LANGUAGES = [
   { code: "sv", label: "Svenska", labelEn: "Swedish", file: "/documents/code-of-conduct-sv.pdf" },
@@ -25,7 +26,81 @@ const COC_LANGUAGES = [
   { code: "uk", label: "Українська", labelEn: "Ukrainian", file: "/documents/code-of-conduct-uk.pdf" },
 ];
 
-const AVAILABLE_COC_PDFS = new Set(["sv", "en", "ro", "th", "uk"]);
+// ── Swedish holidays (shared with ContractSigning) ──
+function getSwedishHolidays(year: number) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  const easter = new Date(year, month, day);
+  const fixed = [
+    { m: 1, d: 1, nameEn: "New Year's Day", nameSv: "Nyårsdagen" },
+    { m: 1, d: 6, nameEn: "Epiphany", nameSv: "Trettondedag jul" },
+    { m: 5, d: 1, nameEn: "May Day", nameSv: "Första maj" },
+    { m: 6, d: 6, nameEn: "National Day", nameSv: "Nationaldagen" },
+    { m: 12, d: 24, nameEn: "Christmas Eve", nameSv: "Julafton" },
+    { m: 12, d: 25, nameEn: "Christmas Day", nameSv: "Juldagen" },
+    { m: 12, d: 26, nameEn: "Boxing Day", nameSv: "Annandag jul" },
+    { m: 12, d: 31, nameEn: "New Year's Eve", nameSv: "Nyårsafton" },
+  ];
+  const easterBased = [
+    { offset: -2, nameEn: "Good Friday", nameSv: "Långfredagen" },
+    { offset: 0, nameEn: "Easter Sunday", nameSv: "Påskdagen" },
+    { offset: 1, nameEn: "Easter Monday", nameSv: "Annandag påsk" },
+    { offset: 39, nameEn: "Ascension Day", nameSv: "Kristi himmelsfärdsdag" },
+    { offset: 49, nameEn: "Whit Sunday", nameSv: "Pingstdagen" },
+  ];
+  let midsummerEve = new Date(year, 5, 19);
+  while (midsummerEve.getDay() !== 5) midsummerEve = addDays(midsummerEve, 1);
+  let allSaints = new Date(year, 9, 31);
+  while (allSaints.getDay() !== 6) allSaints = addDays(allSaints, 1);
+  const holidays = fixed.map(h => ({
+    date: `${year}-${String(h.m).padStart(2, "0")}-${String(h.d).padStart(2, "0")}`,
+    nameEn: h.nameEn, nameSv: h.nameSv,
+  }));
+  easterBased.forEach(eb => {
+    const dd = addDays(easter, eb.offset);
+    holidays.push({ date: format(dd, "yyyy-MM-dd"), nameEn: eb.nameEn, nameSv: eb.nameSv });
+  });
+  holidays.push({ date: format(midsummerEve, "yyyy-MM-dd"), nameEn: "Midsummer Eve", nameSv: "Midsommarafton" });
+  holidays.push({ date: format(addDays(midsummerEve, 1), "yyyy-MM-dd"), nameEn: "Midsummer Day", nameSv: "Midsommardagen" });
+  holidays.push({ date: format(allSaints, "yyyy-MM-dd"), nameEn: "All Saints' Day", nameSv: "Alla helgons dag" });
+  return holidays;
+}
+
+function generateScheduleFromFormData(schedData: Record<string, any>): ScheduleDay[] {
+  const startStr = schedData.workStartDate || schedData.contractStartDate;
+  const endStr = schedData.workEndDate || schedData.contractEndDate;
+  if (!startStr || !endStr) return [];
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+  const weeklyHours = Number(schedData.weeklyHours) || 40;
+  const dailyHours = weeklyHours / 5;
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+  const holidayMap = new Map<string, { nameEn: string; nameSv: string }>();
+  for (let y = startYear; y <= endYear; y++) {
+    getSwedishHolidays(y).forEach(h => holidayMap.set(h.date, { nameEn: h.nameEn, nameSv: h.nameSv }));
+  }
+  const vacStart = schedData.vacationEnabled && schedData.vacationStartDate ? new Date(schedData.vacationStartDate) : null;
+  const vacEnd = schedData.vacationEnabled && schedData.vacationEndDate ? new Date(schedData.vacationEndDate) : null;
+  const days = eachDayOfInterval({ start, end });
+  return days.map(d => {
+    const dateStr = format(d, "yyyy-MM-dd");
+    const dow = getDay(d);
+    const holiday = holidayMap.get(dateStr);
+    const isVacation = vacStart && vacEnd && d >= vacStart && d <= vacEnd;
+    if (holiday) return { schedule_date: dateStr, day_type: "Holiday", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: holiday.nameEn, holiday_name_sv: holiday.nameSv };
+    if (isVacation) return { schedule_date: dateStr, day_type: "Vacation", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: null, holiday_name_sv: null };
+    if (dow === 0 || dow === 6) return { schedule_date: dateStr, day_type: "Weekend", scheduled_hours: 0, start_time: null, end_time: null, holiday_name_en: null, holiday_name_sv: null };
+    return { schedule_date: dateStr, day_type: "Workday", scheduled_hours: Math.round(dailyHours * 100) / 100, start_time: schedData.startTime || "06:30", end_time: schedData.endTime || "17:00", holiday_name_en: null, holiday_name_sv: null };
+  });
+}
 
 interface ContractRow {
   id: string;
@@ -58,6 +133,8 @@ export default function SigningSimulation() {
   const [schedule, setSchedule] = useState<ScheduleDay[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
+  const [signingPlace, setSigningPlace] = useState("");
+  const [signingDate, setSigningDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [signingError, setSigningError] = useState<string | null>(null);
 
   // Review states
@@ -105,7 +182,16 @@ export default function SigningSimulation() {
         .select("schedule_date, day_type, scheduled_hours, start_time, end_time, holiday_name_en, holiday_name_sv")
         .eq("contract_id", contractId)
         .order("schedule_date");
-      if (sched) setSchedule(sched);
+      if (sched && sched.length > 0) {
+        setSchedule(sched);
+      } else {
+        // Fallback: generate from form_data schedulingData
+        const fd = (c.form_data || {}) as Record<string, any>;
+        const sd = fd.schedulingData as Record<string, any> | undefined;
+        if (sd) {
+          setSchedule(generateScheduleFromFormData(sd));
+        }
+      }
 
       setLoading(false);
     };
@@ -118,7 +204,7 @@ export default function SigningSimulation() {
     try {
       const { data: result, error: fnErr } = await supabase.functions.invoke(
         "upload-employee-signature",
-        { body: { token: contract.signing_token, signatureDataUrl: dataUrl } }
+        { body: { token: contract.signing_token, signatureDataUrl: dataUrl, signingPlace, signingDate } }
       );
 
       if (fnErr) throw fnErr;
@@ -158,7 +244,7 @@ export default function SigningSimulation() {
   const alreadySigned = contract.signing_status !== "sent_to_employee" || contract.employee_signature_url;
   const selectedCocLang = COC_LANGUAGES.find((l) => l.code === cocLanguage);
   const hasSchedule = schedule.length > 0 || schedData;
-  const canSign = cocConfirmed && contractConfirmed && (scheduleReviewed || !hasSchedule);
+  const canSign = cocConfirmed && contractConfirmed && (scheduleReviewed || !hasSchedule) && signingPlace.trim().length > 0;
 
   // Day type colors
   const dayTypeColor = (t: string) => {
@@ -429,7 +515,6 @@ export default function SigningSimulation() {
                   }}
                   className="gap-2"
                 >
-                  <ExternalLink className="w-4 h-4" />
                   Open Full Schedule / Öppna fullständigt schema
                 </Button>
                 {!scheduleReviewed && (
@@ -495,6 +580,35 @@ export default function SigningSimulation() {
                   </div>
                 </div>
 
+                {/* Place & Date fields */}
+                <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground/70">
+                    Place and Date / Plats och datum
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-place" className="text-sm">Place / Plats *</Label>
+                      <Input
+                        id="signing-place"
+                        value={signingPlace}
+                        onChange={(e) => setSigningPlace(e.target.value)}
+                        placeholder="e.g. Stockholm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signing-date" className="text-sm">Date / Datum</Label>
+                      <Input
+                        id="signing-date"
+                        type="text"
+                        placeholder="YYYY-MM-DD"
+                        maxLength={10}
+                        value={signingDate}
+                        onChange={(e) => setSigningDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {signingError && (
                   <Alert variant="destructive" className="mb-2">
                     <AlertTriangle className="h-4 w-4" />
@@ -518,6 +632,7 @@ export default function SigningSimulation() {
                         { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
                         { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
                         ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat" }] : []),
+                        { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-2">
                           {item.done ? (
