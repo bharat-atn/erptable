@@ -105,6 +105,7 @@ export function ContractsView({ onContinueContract }: ContractsViewProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["operations"] });
       toast.success("Contract reset to draft — ready for re-signing");
       setResetTarget(null);
     },
