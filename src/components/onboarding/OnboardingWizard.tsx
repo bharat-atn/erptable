@@ -653,9 +653,9 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+  const [selectedBankValue, setSelectedBankValue] = useState(selectedBank || "");
   const [bicValue, setBicValue] = useState(formData.bicCode || "");
   const [bankAccountValue, setBankAccountValue] = useState(formData.bankAccountNumber || "");
-  const [validationAttempted, setValidationAttempted] = useState(false);
 
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
