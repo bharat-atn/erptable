@@ -1339,6 +1339,8 @@ export function OnboardingWizard({
                         onBankSelect("other");
                         setSelectedBankValue("");
                         updateField("bankName", "");
+                        updateField("otherBankName", "");
+                        setBicValue("");
                         updateField("bicCode", "");
                         setBankAccountValue("");
                         updateField("bankAccountNumber", "");
@@ -1346,6 +1348,8 @@ export function OnboardingWizard({
                         onBankSelect("");
                         setSelectedBankValue("");
                         updateField("bankName", "");
+                        updateField("otherBankName", "");
+                        setBicValue("");
                         updateField("bicCode", "");
                         setBankAccountValue("");
                         updateField("bankAccountNumber", "");
