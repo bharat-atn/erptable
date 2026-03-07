@@ -1,38 +1,43 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Fix Employer Signing — RLS, Experience Level, Place, Upload
 
-### Root Cause
+### Issue 1: RLS Error on Employer Signature Upload (Critical)
+The screenshot shows "new row violates row-level security policy" when submitting the employer signature. The `employer/` folder in the `signatures` bucket has an INSERT policy for HR users, but **no UPDATE policy**. Since the code uses `upsert: true`, Supabase needs both INSERT and UPDATE policies.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+**Fix:** Add a migration with an UPDATE policy for the `employer/` folder for HR users.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+```sql
+CREATE POLICY "HR can update employer signatures"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'signatures' AND (storage.foldername(name))[1] = 'employer' AND (SELECT is_hr_user()))
+WITH CHECK (bucket_id = 'signatures' AND (storage.foldername(name))[1] = 'employer' AND (SELECT is_hr_user()));
+```
 
-**1. Replace generic message with specific missing-condition checklist**
+### Issue 2: Experience Level Not Displaying Properly in Contract §3
+The `ContractDocument.tsx` renders `fd.experienceLevel` as-is, which is the raw stored value like `"Entry Level / Nybörjare (0 years / < 1 season / 0 år / < 1 säsong)"`. The user wants it translated per contract language. The `getExperienceLevelLabel` function already exists in `ContractDetailsStep.tsx` but isn't used in `ContractDocument.tsx`.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+**Fix:** Move `EXPERIENCE_LEVELS_BASE` and `getExperienceLevelLabel` to a shared location (e.g. `contract-translations.ts`) and use it in `ContractDocument.tsx` to render the experience level with proper translation based on the contract language.
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+### Issue 3: Employee Signing Place Should Default to "Ljungaverk"
+In the contract document signature section, the employee's Place field should show "Ljungaverk" (the company location). This should be set as the default `signingPlace` value in both `ContractSigning.tsx` and `SigningSimulation.tsx`.
 
-This tells the user exactly what's blocking them.
+**Fix:** In `ContractSigning.tsx` and `SigningSimulation.tsx`, after loading contract data, set `signingPlace` default to the company city/address (e.g., from contract `companyCity` or `form_data.companySnapshot.city`). If not available, fall back to "Ljungaverk".
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+### Issue 4: Employer Upload Signature Option
+The `EmployerSigningDialog` already has a "Use saved signature" option from the profile's `default_signature_url`. The user wants an additional option to **upload a signature image file** directly during the counter-signing flow (not just draw or use saved).
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+**Fix:** Add a file upload button (`<input type="file" accept="image/png,image/jpeg">`) in `EmployerSigningDialog.tsx` that reads the file as a data URL and sets it as `pendingSignature`, alongside the existing draw and saved-signature options.
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+### Files to Edit
 
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+| File | Change |
+|------|--------|
+| Migration (new) | Add UPDATE storage policy for `employer/` folder |
+| `src/lib/contract-translations.ts` | Export `EXPERIENCE_LEVELS_BASE` and `getExperienceLevelLabel` |
+| `src/components/dashboard/ContractDetailsStep.tsx` | Import from shared location instead of local definition |
+| `src/components/dashboard/ContractDocument.tsx` | Use `getExperienceLevelLabel` to render experience levels in §3 |
+| `src/pages/ContractSigning.tsx` | Default `signingPlace` to company city |
+| `src/pages/SigningSimulation.tsx` | Default `signingPlace` to company city |
+| `src/components/dashboard/EmployerSigningDialog.tsx` | Add file upload option for signature |
 
