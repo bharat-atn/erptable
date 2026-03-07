@@ -437,7 +437,7 @@ export function ContractDetailsStep({
         const holidayName = lang === "SE" ? (row.holiday_name_sv || "") : (row.holiday_name_en || row.holiday_name_sv || "");
         scheduleHtml += `<tr${trClass}>`;
         scheduleHtml += `<td>${fmtDatePrint(row.schedule_date)}</td>`;
-        scheduleHtml += `<td>${escHtml(row.day_type)}</td>`;
+        scheduleHtml += `<td>${escHtml(translateDayType(row.day_type, lang))}</td>`;
         scheduleHtml += `<td>${row.scheduled_hours}</td>`;
         scheduleHtml += `<td>${escHtml(row.start_time) || "—"}</td>`;
         scheduleHtml += `<td>${escHtml(row.end_time) || "—"}</td>`;
