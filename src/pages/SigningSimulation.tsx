@@ -10,6 +10,7 @@ import {
   Calendar, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/ljungan-forestry-logo-new.jpg";
 

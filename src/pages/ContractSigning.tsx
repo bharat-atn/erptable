@@ -277,6 +277,7 @@ export default function ContractSigning() {
               Step 1: Review Employment Contract / Steg 1: Granska anställningsavtalet
             </CardTitle>
           </CardHeader>
+          <CardContent className="p-0">
             <ContractDocument
               companyName={data.company_name}
               companyOrgNumber={data.company_org_number}
@@ -296,17 +297,16 @@ export default function ContractSigning() {
           </CardContent>
         </Card>
 
-        {/* Code of Conduct Review */}
+        {/* Step 2: Code of Conduct Review */}
         {!alreadySigned && !signed && (
           <Card className="shadow-md">
-            <CardHeader>
+            <CardHeader className="bg-accent/30 border-b border-border">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
-                Code of Conduct
-                <span className="text-muted-foreground font-normal text-sm">/ Uppförandekod</span>
+                Step 2: Code of Conduct / Steg 2: Uppförandekod
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
+            <CardContent className="space-y-5 pt-5">
               <p className="text-sm text-muted-foreground">
                 Please review the Code of Conduct before signing. Select your preferred language. /
                 <span className="italic"> Vänligen granska uppförandekoden innan du signerar. Välj önskat språk.</span>
@@ -317,7 +317,7 @@ export default function ContractSigning() {
                 {COC_LANGUAGES.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); setCocScrolledToBottom(false); }}
+                    onClick={() => { setCocLanguage(lang.code); setCocConfirmed(false); }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg border-2 p-3 sm:p-4 text-left transition-all",
                       cocLanguage === lang.code
@@ -343,7 +343,6 @@ export default function ContractSigning() {
                   </div>
 
                   {!AVAILABLE_COC_PDFS.has(cocLanguage!) ? (
-                    /* PDF not available for this language */
                     <Alert>
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
@@ -353,12 +352,8 @@ export default function ContractSigning() {
                     </Alert>
                   ) : (
                     <>
-                      {/* Scrollable container — user must scroll to bottom to reveal confirmation */}
-                      <div
-                        ref={cocScrollContainerRef}
-                        onScroll={handleCocScroll}
-                        className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto"
-                      >
+                      {/* Scrollable container */}
+                      <div className="rounded-lg border border-border overflow-hidden bg-muted/20 max-h-[500px] overflow-y-auto">
                         <iframe
                           key={cocLanguage}
                           src={selectedCocLang.file}
@@ -380,34 +375,37 @@ export default function ContractSigning() {
                         </a>
                       </div>
 
-                      {/* CoC confirmation toggle — only appears after scrolling to bottom */}
-                      {cocScrolledToBottom && (
-                        <button
-                          type="button"
-                          onClick={() => setCocConfirmed(!cocConfirmed)}
-                          className={cn(
-                            "w-full flex items-center gap-3 rounded-lg border-2 p-4 transition-all text-left",
-                            cocConfirmed
-                              ? "border-primary bg-primary/10"
-                              : "border-primary/50 bg-muted/20 animate-pulse"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-10 h-6 rounded-full relative shrink-0 transition-colors",
-                            cocConfirmed ? "bg-primary" : "bg-muted-foreground/30"
-                          )}>
-                            <div className={cn(
-                              "absolute top-0.5 w-5 h-5 rounded-full bg-background shadow transition-transform",
-                              cocConfirmed ? "translate-x-[18px]" : "translate-x-0.5"
-                            )} />
-                          </div>
-                          <span className={cn("text-sm font-medium", cocConfirmed && "text-primary")}>
-                            {cocConfirmed ? "✓ " : ""}
-                            I have read and understood the Code of Conduct. /
-                            <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
-                          </span>
-                        </button>
+                      {/* Warning banner when not yet confirmed */}
+                      {!cocConfirmed && (
+                        <div className="rounded-lg border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4 flex items-start gap-3">
+                          <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                            ⚠ You must confirm that you have read the Code of Conduct to proceed. /
+                            <span className="italic font-normal"> Du måste bekräfta att du har läst uppförandekoden för att fortsätta.</span>
+                          </p>
+                        </div>
                       )}
+
+                      {/* CoC confirmation toggle — always visible */}
+                      <div
+                        className={cn(
+                          "w-full flex items-center gap-4 rounded-lg border-2 p-4 transition-all",
+                          cocConfirmed
+                            ? "border-primary bg-primary/10"
+                            : "border-primary/50 bg-muted/20"
+                        )}
+                      >
+                        <Switch
+                          checked={cocConfirmed}
+                          onCheckedChange={setCocConfirmed}
+                          className="scale-125"
+                        />
+                        <span className={cn("text-sm font-medium", cocConfirmed && "text-primary")}>
+                          {cocConfirmed ? "✓ " : ""}
+                          I have read and understood the Code of Conduct. /
+                          <span className="italic text-muted-foreground"> Jag har läst och förstått uppförandekoden.</span>
+                        </span>
+                      </div>
                     </>
                   )}
                 </div>
@@ -522,10 +520,12 @@ export default function ContractSigning() {
         {/* Signing Area — only visible after CoC is confirmed (or already signed) */}
         {(cocConfirmed || signed || alreadySigned) && (
         <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle className="text-base">Employee Signature / Anställds underskrift</CardTitle>
+          <CardHeader className="bg-accent/30 border-b border-border">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              ✍️ {alreadySigned || signed ? "Signature / Underskrift" : `Step ${stepNumberSign}: Sign Contract / Steg ${stepNumberSign}: Signera avtal`}
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-5">
             {signed || alreadySigned ? (
               <div className="text-center py-8 space-y-3">
                 <CheckCircle className="w-16 h-16 text-primary mx-auto" />
@@ -539,26 +539,30 @@ export default function ContractSigning() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Confirmation checkboxes */}
+                {/* Contract terms confirmation with Switch */}
                 <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2">
                     Confirmations / Bekräftelser
                   </p>
-                  <label
-                    className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => setContractConfirmed(!contractConfirmed)}
+                  <div
+                    className={cn(
+                      "flex items-center gap-4 rounded-lg border-2 p-3 transition-all",
+                      contractConfirmed
+                        ? "border-primary bg-primary/10"
+                        : "border-muted-foreground/30 bg-background"
+                    )}
                   >
-                    <div className={cn(
-                      "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                      contractConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    )}>
-                      {contractConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                    </div>
-                    <span className="text-sm">
+                    <Switch
+                      checked={contractConfirmed}
+                      onCheckedChange={setContractConfirmed}
+                      className="scale-125"
+                    />
+                    <span className={cn("text-sm font-medium", contractConfirmed && "text-primary")}>
+                      {contractConfirmed ? "✓ " : ""}
                       I have read and agree to the terms of this employment contract and schedule. /
                       <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
                     </span>
-                  </label>
+                  </div>
                 </div>
 
                 {/* Place & Date fields */}
@@ -611,7 +615,7 @@ export default function ContractSigning() {
                       {[
                         { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
                         { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
-                        ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat" }] : []),
+                        ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat", onClick: scrollToSchedule }] : []),
                         { done: signingPlace.trim().length > 0, label: "Enter signing place / Ange ort" },
                       ].map((item, i) => (
                         <li key={i} className="flex items-center gap-2">
@@ -620,7 +624,13 @@ export default function ContractSigning() {
                           ) : (
                             <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 shrink-0" />
                           )}
-                          <span className={cn(item.done ? "text-muted-foreground line-through" : "text-foreground")}>
+                          <span
+                            className={cn(
+                              item.done ? "text-muted-foreground line-through" : "text-foreground",
+                              !item.done && (item as any).onClick && "underline cursor-pointer"
+                            )}
+                            onClick={!item.done ? (item as any).onClick : undefined}
+                          >
                             {item.label}
                           </span>
                         </li>
