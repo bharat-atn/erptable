@@ -1482,12 +1482,7 @@ export function ContractDetailsStep({
                     <Calendar
                       mode="single"
                       selected={birthday}
-                      defaultMonth={birthday || undefined}
-                      onSelect={setBirthday}
-                      disabled={(date) =>
-                        date > maxBirthDate || date < minBirthDate
-                      }
-                      defaultMonth={maxBirthDate}
+                      defaultMonth={birthday || maxBirthDate}
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
