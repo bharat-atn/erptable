@@ -495,26 +495,30 @@ export default function SigningSimulation() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Confirmation checkboxes */}
+                {/* Contract terms confirmation with Switch */}
                 <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-4">
                   <p className="text-xs font-bold uppercase tracking-wider text-foreground/70 mb-2">
                     Confirmations / Bekräftelser
                   </p>
-                  <label
-                    className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => setContractConfirmed(!contractConfirmed)}
+                  <div
+                    className={cn(
+                      "flex items-center gap-4 rounded-lg border-2 p-3 transition-all",
+                      contractConfirmed
+                        ? "border-primary bg-primary/10"
+                        : "border-muted-foreground/30 bg-background"
+                    )}
                   >
-                    <div className={cn(
-                      "mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                      contractConfirmed ? "border-primary bg-primary" : "border-muted-foreground/40"
-                    )}>
-                      {contractConfirmed && <Check className="w-3 h-3 text-primary-foreground" />}
-                    </div>
-                    <span className="text-sm">
+                    <Switch
+                      checked={contractConfirmed}
+                      onCheckedChange={setContractConfirmed}
+                      className="scale-125"
+                    />
+                    <span className={cn("text-sm font-medium", contractConfirmed && "text-primary")}>
+                      {contractConfirmed ? "✓ " : ""}
                       I have read and agree to the terms of this employment contract and schedule. /
                       <span className="italic text-muted-foreground"> Jag har läst och godkänner villkoren i detta anställningsavtal och schema.</span>
                     </span>
-                  </label>
+                  </div>
                 </div>
 
                 {signingError && (
@@ -527,6 +531,33 @@ export default function SigningSimulation() {
                       </Button>
                     </AlertDescription>
                   </Alert>
+                )}
+
+                {/* Missing steps checklist */}
+                {!canSign && (
+                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-4 space-y-3">
+                    <p className="text-sm font-medium text-foreground">
+                      Complete these steps to sign / Slutför dessa steg för att signera:
+                    </p>
+                    <ul className="space-y-2 text-sm">
+                      {[
+                        { done: contractConfirmed, label: "Confirm contract terms / Bekräfta avtalsvillkoren" },
+                        { done: cocConfirmed, label: "Confirm Code of Conduct / Bekräfta uppförandekoden" },
+                        ...(hasSchedule ? [{ done: scheduleReviewed, label: "Review schedule / Granska schemat" }] : []),
+                      ].map((item, i) => (
+                        <li key={i} className="flex items-center gap-2">
+                          {item.done ? (
+                            <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 shrink-0" />
+                          )}
+                          <span className={cn(item.done ? "text-muted-foreground line-through" : "text-foreground")}>
+                            {item.label}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
 
                 {canSign ? (
@@ -543,12 +574,12 @@ export default function SigningSimulation() {
                     )}
                   </>
                 ) : (
-                  <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-8 text-center">
+                  <>
                     <p className="text-sm text-muted-foreground">
-                      Please complete all review steps and confirm both checkboxes above to enable signing. /
-                      <span className="italic"> Slutför alla granskningssteg och bekräfta båda kryssrutorna ovan för att aktivera signering.</span>
+                      Complete the steps above to enable signing. / Slutför stegen ovan för att kunna signera.
                     </p>
-                  </div>
+                    <SignatureCanvas onSave={handleSign} disabled={true} />
+                  </>
                 )}
               </div>
             )}
