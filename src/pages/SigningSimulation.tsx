@@ -9,6 +9,7 @@ import {
   CheckCircle, Loader2, AlertTriangle, FileText, Check, ExternalLink,
   Calendar, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
+import { CodeOfConductViewer } from "@/components/dashboard/CodeOfConductViewer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
