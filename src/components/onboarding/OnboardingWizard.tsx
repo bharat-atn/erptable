@@ -222,8 +222,8 @@ export const personalInfoSchema = z.object({
   bankCountryName: z.string().max(100).optional(),
   bicCode: z.string().min(1, "BIC Code is required").max(20),
   bankAccountNumber: z.string().min(1, "Bank account number is required").max(50).refine(
-    (val) => /^\d+$/.test(val),
-    { message: "Bank account number must contain only digits" }
+    (val) => /^[A-Za-z0-9]+$/.test(val),
+    { message: "Bank account number must contain only letters and digits" }
   ),
   emergencyFirstName: z.string().min(1, "Emergency contact first name is required").max(100),
   emergencyLastName: z.string().min(1, "Emergency contact last name is required").max(100),
