@@ -130,6 +130,9 @@ export function EmployeeRegisterView() {
 
   const addDummyEmployee = useMutation({
     mutationFn: async (country: DummyCountry) => {
+      if (!orgId) throw new Error("No organization selected");
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
       const dummy = generateDummyEmployee(country);
       // For register, only create ACTIVE or INACTIVE employees
       const status = Math.random() > 0.3 ? "ACTIVE" : "INACTIVE";

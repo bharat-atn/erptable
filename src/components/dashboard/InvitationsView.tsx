@@ -81,6 +81,9 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
 
   const addDummyInvitation = useMutation({
     mutationFn: async (country: DummyCountry) => {
+      if (!orgId) throw new Error("No organization selected");
+      const { error: contextError } = await supabase.rpc("set_org_context", { _org_id: orgId });
+      if (contextError) throw contextError;
       const dummy = generateDummyEmployee(country);
       // Create employee with ONBOARDING status (simulating completed submission)
       const { data: emp, error: empErr } = await supabase.from("employees").insert([{
