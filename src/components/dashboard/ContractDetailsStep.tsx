@@ -1483,6 +1483,10 @@ export function ContractDetailsStep({
                       mode="single"
                       selected={birthday}
                       defaultMonth={birthday || maxBirthDate}
+                      onSelect={setBirthday}
+                      disabled={(date) =>
+                        date > maxBirthDate || date < minBirthDate
+                      }
                       initialFocus
                       className={cn("p-3 pointer-events-auto")}
                     />
