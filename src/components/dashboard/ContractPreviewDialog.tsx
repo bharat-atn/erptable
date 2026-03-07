@@ -96,13 +96,10 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
 
     const contractCode = contract?.contract_code || "Draft";
     const docTitle = `Employment Contract — ${contractCode}`;
-    const fd = (contract?.form_data as Record<string, any>) || {};
-    const lang: LangCode = fd.contractLanguage || "EN/SE";
     const isSEOnly = lang === "SE";
 
     // Build Appendix A — Code of Conduct HTML
     let cocHtml = "";
-    const cocPrimaryKey = cocLangKey(lang);
     const cocPrimary = !isSEOnly ? COC_MAP[cocPrimaryKey] : null;
     const cocSv = COC_MAP["sv"];
 
