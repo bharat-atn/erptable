@@ -1236,8 +1236,8 @@ export function OnboardingWizard({
                     setSelectedBankCountry(val);
 
                     onBankSelect(val === "__other__" ? "other" : "");
-                    updateField("otherBankName", "");
-                    setBicValue("");
+                    setSelectedBankValue("");
+                    updateField("bankName", "");
                     updateField("bicCode", "");
                     setBankAccountValue("");
                     updateField("bankAccountNumber", "");
