@@ -301,6 +301,43 @@ export function EmployeeRegisterView() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => { setEditEmployee(employee); setFormOpen(true); }}>Edit Employee</DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={sendingContractFor === employee.id}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setSendingContractFor(employee.id);
+                  try {
+                    // Find the latest signed contract for this employee
+                    const { data: contracts, error: cErr } = await supabase
+                      .from("contracts")
+                      .select("id, contract_code")
+                      .eq("employee_id", employee.id)
+                      .eq("signing_status", "employer_signed")
+                      .order("updated_at", { ascending: false })
+                      .limit(1);
+                    if (cErr) throw cErr;
+                    if (!contracts || contracts.length === 0) {
+                      toast.error("No signed contract found for this employee");
+                      return;
+                    }
+                    const { error } = await supabase.functions.invoke("send-contract-email", {
+                      body: { contractId: contracts[0].id, recipientEmail: employee.email },
+                    });
+                    if (error) throw error;
+                    toast.success(`Contract ${contracts[0].contract_code || ""} sent to ${employee.email}`);
+                  } catch (err: any) {
+                    toast.error(err.message || "Failed to send contract email");
+                  } finally {
+                    setSendingContractFor(null);
+                  }
+                }}
+              >
+                {sendingContractFor === employee.id ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                ) : (
+                  <><Mail className="w-4 h-4 mr-2" /> Send Contract Email</>
+                )}
+              </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteEmployee(employee)}>Delete Employee</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
