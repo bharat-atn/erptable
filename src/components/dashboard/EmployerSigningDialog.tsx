@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { ContractDocument } from "./ContractDocument";
-import { Loader2, CheckCircle, FileText, Calendar, RotateCcw, Send, Image } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Calendar, RotateCcw, Send, Image, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
