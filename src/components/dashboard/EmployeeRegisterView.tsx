@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2, Mail, Loader2,
+  Plus, MoreVertical, Users, Calendar, Download, Upload, Trash2, Mail, Loader2, FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
