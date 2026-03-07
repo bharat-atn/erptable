@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, createContext, useContext } from "react";
+import { useState, useEffect, useMemo, createContext, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -544,7 +544,7 @@ export function OnboardingWizard({
       updateField("otherBankName", "");
       updateField("bicCode", "");
       updateField("bankAccountNumber", "");
-      // bankNameValue removed — Select manages its own display
+      setSelectedBankValue("");
       setS4Open(true);
 
       // Ensure emergency contact section is visible
@@ -653,6 +653,7 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+  const [selectedBankValue, setSelectedBankValue] = useState(selectedBank || "");
   const [bicValue, setBicValue] = useState(formData.bicCode || "");
   const [bankAccountValue, setBankAccountValue] = useState(formData.bankAccountNumber || "");
   const [validationAttempted, setValidationAttempted] = useState(false);
@@ -681,7 +682,7 @@ export function OnboardingWizard({
             emergencyPhone: formData.emergencyPhone,
             bicCode: formData.bicCode,
             bankAccountNumber: formData.bankAccountNumber,
-            bankName: selectedBank || formData.otherBankName,
+            bankName: selectedBankValue || formData.otherBankName,
             bankCountry: selectedBankCountry,
             birthday: formData.birthday,
           },
@@ -701,7 +702,7 @@ export function OnboardingWizard({
     formData.country, formData.zipCode, formData.city, formData.address1,
     formData.stateProvince, formData.mobilePhone, formData.emergencyPhone,
     formData.bicCode, formData.bankAccountNumber, formData.birthday,
-    selectedBank, selectedBankCountry,
+    selectedBankValue, selectedBankCountry,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -711,6 +712,10 @@ export function OnboardingWizard({
   useEffect(() => {
     setBankAccountValue(formData.bankAccountNumber || "");
   }, [formData.bankAccountNumber]);
+
+  useEffect(() => {
+    setSelectedBankValue(selectedBank || "");
+  }, [selectedBank]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
@@ -773,7 +778,7 @@ export function OnboardingWizard({
   const s4Missing: string[] = [];
   if (!selectedBankCountry) s4Missing.push("Country");
   else if (selectedBankCountry === "__other__" && !formData.bankCountryName) s4Missing.push("Country Name");
-  if (!selectedBank && (!isOtherBank || !formData.otherBankName?.trim())) s4Missing.push("Bank Name");
+  if (!selectedBankValue && (!isOtherBank || !formData.otherBankName?.trim())) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
   else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (invalid characters)");
@@ -1232,6 +1237,8 @@ export function OnboardingWizard({
                     setSelectedBankCountry(val);
 
                     onBankSelect(val === "__other__" ? "other" : "");
+                    setSelectedBankValue("");
+                    updateField("bankName", "");
                     updateField("otherBankName", "");
                     setBicValue("");
                     updateField("bicCode", "");
@@ -1268,11 +1275,12 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
                   <Select
-                    value={selectedBank || ""}
+                    value={selectedBankValue}
                     onValueChange={(bankName) => {
+                      setSelectedBankValue(bankName);
                       onBankSelect(bankName);
+                      updateField("bankName", bankName);
                       updateField("otherBankName", "");
-
                       const match = banksForSelectedCountry.find(
                         (b) => b.name === bankName
                       );
@@ -1300,7 +1308,7 @@ export function OnboardingWizard({
                       tabIndex={23}
                       className={cn(
                         "h-11 text-sm font-medium",
-                        fieldError(!!selectedBankCountry && !selectedBank && !isOtherBank)
+                        fieldError(!!selectedBankCountry && !selectedBankValue && !isOtherBank)
                       )}
                     >
                       <SelectValue placeholder={
@@ -1329,6 +1337,8 @@ export function OnboardingWizard({
                     onCheckedChange={(checked) => {
                       if (checked) {
                         onBankSelect("other");
+                        setSelectedBankValue("");
+                        updateField("bankName", "");
                         updateField("otherBankName", "");
                         setBicValue("");
                         updateField("bicCode", "");
@@ -1336,6 +1346,8 @@ export function OnboardingWizard({
                         updateField("bankAccountNumber", "");
                       } else {
                         onBankSelect("");
+                        setSelectedBankValue("");
+                        updateField("bankName", "");
                         updateField("otherBankName", "");
                         setBicValue("");
                         updateField("bicCode", "");
