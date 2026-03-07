@@ -212,6 +212,8 @@ export function ContractPreviewDialog({ contractId, open, onOpenChange }: Contra
   const fd = (contract?.form_data as Record<string, any>) || {};
   const emp = contract?.employees as any;
   const comp = contract?.companies as any;
+  const lang: LangCode = fd.contractLanguage || "EN/SE";
+  const cocPrimaryKey = cocLangKey(lang);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
