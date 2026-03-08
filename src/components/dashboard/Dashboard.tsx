@@ -97,8 +97,8 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "contract-data": return <ContractDataRegistryView />;
         case "version-management": return <VersionManagementView />;
         case "iso-standards": return <IsoStandardsView />;
-        case "gantt-view":
-        case "kanban-board":
+        case "gantt-view": return <ForestryDashboardView onNavigate={setActiveView} />;
+        case "kanban-board": return <KanbanBoardView />;
         case "client-register": return <ClientRegisterView />;
         case "project-id": return <ProjectIdSettingsView />;
         case "comp-groups": return <CompGroupView />;
