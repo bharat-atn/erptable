@@ -205,6 +205,22 @@ export function DataHandlingView() {
     enabled: !!orgId,
   });
 
+  // Fetch companies for this org
+  const { data: companies } = useQuery({
+    queryKey: ["companies-for-import", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data } = await supabase
+        .from("companies")
+        .select("id, name")
+        .eq("org_id", orgId);
+      return data || [];
+    },
+    enabled: !!orgId,
+  });
+
+  const companyNames = companies?.map((c) => c.name).join(", ") || "—";
+
   // Fetch employee ID settings
   const { data: idSettings } = useQuery({
     queryKey: ["employee-id-settings", orgId],
