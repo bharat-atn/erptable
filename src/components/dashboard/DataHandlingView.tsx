@@ -120,12 +120,13 @@ function autoMapHeader(header: string): string {
 function splitName(fullName: string): { first: string; middle: string; last: string } {
   const tokens = fullName.trim().split(/\s+/);
   if (tokens.length === 0) return { first: "", middle: "", last: "" };
-  if (tokens.length === 1) return { first: tokens[0], middle: "", last: "" };
-  if (tokens.length === 2) return { first: tokens[0], middle: "", last: tokens[1] };
+  if (tokens.length === 1) return { first: "", middle: "", last: tokens[0] };
+  if (tokens.length === 2) return { first: tokens[1], middle: "", last: tokens[0] };
+  // Token 1 = last name, Token 2 = first name, Token 3+ = middle name(s)
   return {
-    first: tokens[0],
-    middle: tokens.slice(1, -1).join(" "),
-    last: tokens[tokens.length - 1],
+    last: tokens[0],
+    first: tokens[1],
+    middle: tokens.slice(2).join(" "),
   };
 }
 
