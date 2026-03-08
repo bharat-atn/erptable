@@ -87,6 +87,7 @@ Deno.serve(async (req) => {
       await admin.from("invitations").delete().eq("org_id", sandboxOrgId);
       await admin.from("employees").delete().eq("org_id", sandboxOrgId);
       await admin.from("companies").delete().eq("org_id", sandboxOrgId);
+      await admin.from("forestry_clients").delete().eq("org_id", sandboxOrgId);
     }
 
     // Insert seed company
