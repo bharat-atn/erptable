@@ -96,7 +96,7 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
     hr_manager: [
       "dashboard", "operations", "invitations", "contracts",
       "contract-template", "invitation-template", "contract-data",
-      "bank-list", "employee-register", "company-register", "process-guide",
+      "bank-list", "employee-register", "company-register", "data-handling", "process-guide",
     ],
     project_manager: ["dashboard", "operations"],
     payroll_manager: ["dashboard", "employee-register"],

@@ -137,6 +137,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       case "role-permissions": return <RolePermissionMatrix />;
       case "version-management": return <VersionManagementView />;
       case "issue-tracker": return <IssueTrackerView />;
+      case "data-handling": return <DataHandlingView />;
       default: return <DashboardView />;
     }
   };
