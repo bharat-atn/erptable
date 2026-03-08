@@ -36,7 +36,7 @@ function generateProjectId() {
   return `PJ-${year}-${num}`;
 }
 
-export function ForestryProjectsView() {
+export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: string) => void }) {
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
