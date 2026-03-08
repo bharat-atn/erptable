@@ -957,25 +957,42 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const isPublished = isPublishedEnvironment();
 
   const isForestry = appId === "forestry-project";
-  const [menuItems, setMenuItems] = useState(() => loadOrder("menu", isForestry ? forestryMenuItems : defaultMenuItems));
-  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", isForestry ? forestrySettingsItems : defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => loadOrder("config", isForestry ? forestryAuditItems : defaultConfigItems));
-  const [bottomItems, setBottomItems] = useState(() => isForestry ? forestryBottomItems : []);
+  const isPayroll = appId === "payroll";
+
+  const getMenuDefaults = () => {
+    if (isPayroll) return payrollMenuItems;
+    if (isForestry) return forestryMenuItems;
+    return defaultMenuItems;
+  };
+  const getSettingsDefaults = () => {
+    if (isPayroll) return payrollSettingsItems;
+    if (isForestry) return forestrySettingsItems;
+    return defaultSettingsItems;
+  };
+  const getConfigDefaults = () => {
+    if (isPayroll) return payrollAuditItems;
+    if (isForestry) return forestryAuditItems;
+    return defaultConfigItems;
+  };
+  const getBottomDefaults = () => {
+    if (isForestry) return forestryBottomItems;
+    return [];
+  };
+
+  const menuPrefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+  const [menuItems, setMenuItems] = useState(() => loadOrder(`${menuPrefix}-menu`, getMenuDefaults()));
+  const [settingsItems, setSettingsItems] = useState(() => loadOrder(`${menuPrefix}-settings`, getSettingsDefaults()));
+  const [configItems, setConfigItems] = useState(() => loadOrder(`${menuPrefix}-audit`, getConfigDefaults()));
+  const [bottomItems, setBottomItems] = useState(getBottomDefaults);
 
   // Reset menu items when app changes
   useEffect(() => {
-    if (isForestry) {
-      setMenuItems(loadOrder("forestry-menu", forestryMenuItems));
-      setSettingsItems(loadOrder("forestry-settings", forestrySettingsItems));
-      setConfigItems(loadOrder("forestry-audit", forestryAuditItems));
-      setBottomItems(forestryBottomItems);
-    } else {
-      setMenuItems(loadOrder("menu", defaultMenuItems));
-      setSettingsItems(loadOrder("settings", defaultSettingsItems));
-      setConfigItems(loadOrder("config", defaultConfigItems));
-      setBottomItems([]);
-    }
-  }, [appId, isForestry]);
+    const prefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+    setMenuItems(loadOrder(`${prefix}-menu`, getMenuDefaults()));
+    setSettingsItems(loadOrder(`${prefix}-settings`, getSettingsDefaults()));
+    setConfigItems(loadOrder(`${prefix}-audit`, getConfigDefaults()));
+    setBottomItems(getBottomDefaults());
+  }, [appId, isForestry, isPayroll]);
 
   // Fetch sidebar permissions for current role + app
   const { data: allowedItems } = useQuery({
