@@ -54,6 +54,7 @@ const SYSTEM_FIELDS: SystemField[] = [
   { key: "first_name", label: "First Name", group: "core" },
   { key: "middle_name", label: "Middle Name", group: "core" },
   { key: "last_name", label: "Last Name", group: "core" },
+  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" },
   { key: "email", label: "Email", group: "core", required: true },
   { key: "phone", label: "Phone", group: "core" },
   { key: "city", label: "City", group: "address" },
