@@ -227,6 +227,9 @@ export function ForestryDashboardView({ onNavigate }: ForestryDashboardViewProps
           </Table>
         </CardContent>
       </Card>
+
+      {/* Sandbox Tools */}
+      <SandboxToolsCard />
     </div>
   );
 }
