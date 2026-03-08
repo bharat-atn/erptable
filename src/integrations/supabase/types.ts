@@ -1551,6 +1551,88 @@ export type Database = {
           },
         ]
       }
+      project_id_settings: {
+        Row: {
+          created_at: string
+          id: string
+          include_year: boolean
+          next_number: number
+          org_id: string
+          padding: number
+          prefix: string
+          separator: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          include_year?: boolean
+          next_number?: number
+          org_id: string
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          include_year?: boolean
+          next_number?: number
+          org_id?: string
+          padding?: number
+          prefix?: string
+          separator?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_id_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_id_year_counters: {
+        Row: {
+          created_at: string
+          id: string
+          issued_count: number
+          next_number: number
+          org_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          issued_count?: number
+          next_number?: number
+          org_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          issued_count?: number
+          next_number?: number
+          org_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_id_year_counters_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_app_access: {
         Row: {
           app_id: string
