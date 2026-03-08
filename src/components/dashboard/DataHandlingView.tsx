@@ -525,12 +525,21 @@ export function DataHandlingView() {
     for (let i = 0; i < toImport.length; i++) {
       const row = toImport[i];
       try {
-        const personalInfo: Record<string, string> = {
+        const personalInfo: Record<string, any> = {
           ...row.personalInfo,
           mobilePhone: row.phone,
           city: row.city,
           country: row.country,
         };
+
+        // Build emergency contact object from split fields
+        if (personalInfo.emergencyFirstName || personalInfo.emergencyLastName) {
+          personalInfo.emergencyContact = {
+            firstName: personalInfo.emergencyFirstName || "",
+            lastName: personalInfo.emergencyLastName || "",
+            phone: personalInfo.emergencyPhone || "",
+          };
+        }
 
         const { error } = await supabase.from("employees").insert({
           org_id: orgId,
