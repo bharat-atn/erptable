@@ -67,62 +67,66 @@ const SEED_PER_GROUP: Array<{
   typeLabel: string;
   typeFull: string;
   client: string;
-  classes: Array<{ sla: string; s1: number; s2: number; s3: number; s4: number; s5: number; gross: number }>;
+  classes: Array<{ sla: string; s1: number; s2: number; s3: number; s4: number; s5: number; gross: number; net: number }>;
 }> = [
   {
+    // Group 0: Clearing Hourly Salary
     typeLabel: "Clearing Type 1",
     typeFull: "Clearing Type 1 (Hourly Salary)",
     client: "Standard Inc.",
     classes: [
-      { sla: "104", s1: 125, s2: 135, s3: 145, s4: 155, s5: 170, gross: 145 },
-      { sla: "105", s1: 130, s2: 140, s3: 150, s4: 160, s5: 175, gross: 150 },
-      { sla: "106", s1: 135, s2: 145, s3: 155, s4: 165, s5: 180, gross: 155 },
-      { sla: "107", s1: 140, s2: 150, s3: 160, s4: 170, s5: 185, gross: 160 },
-      { sla: "108", s1: 145, s2: 155, s3: 165, s4: 175, s5: 190, gross: 165 },
-      { sla: "109", s1: 150, s2: 160, s3: 170, s4: 180, s5: 195, gross: 170 },
-      { sla: "110", s1: 155, s2: 165, s3: 175, s4: 185, s5: 200, gross: 175 },
+      { sla: "104", s1: 125, s2: 135, s3: 145, s4: 155, s5: 170, gross: 145, net: 0 },
+      { sla: "105", s1: 130, s2: 140, s3: 150, s4: 160, s5: 175, gross: 150, net: 0 },
+      { sla: "106", s1: 135, s2: 145, s3: 155, s4: 165, s5: 180, gross: 155, net: 0 },
+      { sla: "107", s1: 140, s2: 150, s3: 160, s4: 170, s5: 185, gross: 160, net: 0 },
+      { sla: "108", s1: 145, s2: 155, s3: 165, s4: 175, s5: 190, gross: 165, net: 0 },
+      { sla: "109", s1: 150, s2: 160, s3: 170, s4: 180, s5: 195, gross: 170, net: 0 },
+      { sla: "110", s1: 155, s2: 165, s3: 175, s4: 185, s5: 200, gross: 175, net: 0 },
     ],
   },
   {
+    // Group 1: Planting Hourly Salary
     typeLabel: "Planting Type 1",
     typeFull: "Planting Type 1 (Hourly Salary)",
     client: "Standard Inc.",
     classes: [
-      { sla: "104", s1: 157, s2: 167, s3: 177, s4: 187, s5: 197, gross: 420 },
-      { sla: "105", s1: 158, s2: 168, s3: 178, s4: 188, s5: 198, gross: 430 },
-      { sla: "106", s1: 159, s2: 169, s3: 179, s4: 189, s5: 199, gross: 440 },
-      { sla: "107", s1: 160, s2: 170, s3: 180, s4: 190, s5: 200, gross: 450 },
-      { sla: "108", s1: 161, s2: 171, s3: 181, s4: 191, s5: 201, gross: 460 },
-      { sla: "109", s1: 162, s2: 172, s3: 182, s4: 192, s5: 202, gross: 470 },
-      { sla: "110", s1: 163, s2: 173, s3: 183, s4: 193, s5: 203, gross: 480 },
+      { sla: "104", s1: 157, s2: 167, s3: 177, s4: 187, s5: 197, gross: 420, net: 0 },
+      { sla: "105", s1: 158, s2: 168, s3: 178, s4: 188, s5: 198, gross: 430, net: 0 },
+      { sla: "106", s1: 159, s2: 169, s3: 179, s4: 189, s5: 199, gross: 440, net: 0 },
+      { sla: "107", s1: 160, s2: 170, s3: 180, s4: 190, s5: 200, gross: 450, net: 0 },
+      { sla: "108", s1: 161, s2: 171, s3: 181, s4: 191, s5: 201, gross: 460, net: 0 },
+      { sla: "109", s1: 162, s2: 172, s3: 182, s4: 192, s5: 202, gross: 470, net: 0 },
+      { sla: "110", s1: 163, s2: 173, s3: 183, s4: 193, s5: 203, gross: 480, net: 0 },
     ],
   },
   {
+    // Group 2: Clearing Piece Work Salary
     typeLabel: "Clearing Type 1",
     typeFull: "Clearing Type 1 (Piece Work)",
     client: "Standard Inc.",
     classes: [
-      { sla: "104", s1: 85, s2: 95, s3: 105, s4: 115, s5: 130, gross: 105 },
-      { sla: "105", s1: 88, s2: 98, s3: 108, s4: 118, s5: 133, gross: 108 },
-      { sla: "106", s1: 91, s2: 101, s3: 111, s4: 121, s5: 136, gross: 111 },
-      { sla: "107", s1: 94, s2: 104, s3: 114, s4: 124, s5: 139, gross: 114 },
-      { sla: "108", s1: 97, s2: 107, s3: 117, s4: 127, s5: 142, gross: 117 },
-      { sla: "109", s1: 100, s2: 110, s3: 120, s4: 130, s5: 145, gross: 120 },
-      { sla: "110", s1: 103, s2: 113, s3: 123, s4: 133, s5: 148, gross: 123 },
+      { sla: "104", s1: 1.05, s2: 1.15, s3: 1.25, s4: 1.35, s5: 1.45, gross: 3200, net: 1145 },
+      { sla: "105", s1: 1.00, s2: 1.10, s3: 1.20, s4: 1.30, s5: 1.40, gross: 3300, net: 1200 },
+      { sla: "106", s1: 0.95, s2: 1.05, s3: 1.15, s4: 1.25, s5: 1.35, gross: 3400, net: 1270 },
+      { sla: "107", s1: 0.90, s2: 1.00, s3: 1.10, s4: 1.20, s5: 1.30, gross: 3500, net: 1335 },
+      { sla: "108", s1: 0.85, s2: 0.95, s3: 1.05, s4: 1.15, s5: 1.25, gross: 3725, net: 1415 },
+      { sla: "109", s1: 0.80, s2: 0.90, s3: 1.00, s4: 1.10, s5: 1.20, gross: 3950, net: 1500 },
+      { sla: "110", s1: 0.75, s2: 0.85, s3: 0.95, s4: 1.05, s5: 1.15, gross: 4175, net: 1650 },
     ],
   },
   {
+    // Group 3: Planting Piece Work Salary
     typeLabel: "Planting Type 1",
     typeFull: "Planting Type 1 (Piece Work)",
     client: "Standard Inc.",
     classes: [
-      { sla: "104", s1: 110, s2: 120, s3: 130, s4: 140, s5: 155, gross: 310 },
-      { sla: "105", s1: 112, s2: 122, s3: 132, s4: 142, s5: 157, gross: 320 },
-      { sla: "106", s1: 114, s2: 124, s3: 134, s4: 144, s5: 159, gross: 330 },
-      { sla: "107", s1: 116, s2: 126, s3: 136, s4: 146, s5: 161, gross: 340 },
-      { sla: "108", s1: 118, s2: 128, s3: 138, s4: 148, s5: 163, gross: 350 },
-      { sla: "109", s1: 120, s2: 130, s3: 140, s4: 150, s5: 165, gross: 360 },
-      { sla: "110", s1: 122, s2: 132, s3: 142, s4: 152, s5: 167, gross: 370 },
+      { sla: "104", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "105", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "106", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "107", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "108", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "109", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "110", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
     ],
   },
 ];
