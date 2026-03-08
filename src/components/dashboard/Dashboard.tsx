@@ -28,6 +28,7 @@ import { ForestryProjectsView } from "./ForestryProjectsView";
 import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { ClientRegisterView } from "./ClientRegisterView";
+import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
@@ -96,7 +97,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "gantt-view":
         case "kanban-board":
         case "client-register": return <ClientRegisterView />;
-        case "project-id":
+        case "project-id": return <ProjectIdSettingsView />;
         case "comp-groups":
         case "project-defaults":
           return (
