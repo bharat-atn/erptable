@@ -1,23 +1,38 @@
 
 
-## Plan: Add Swedish Personal Number and Coordination Number to Data Handling
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-1. The Data Handling CSV import is missing "Swedish Personal Number" and "Swedish Coordination Number" as mappable fields — these exist in the onboarding wizard and CsvImportDialog but were omitted from DataHandlingView.
-2. The aliases `personnr` and `personnummer` are **incorrectly mapped** to `employee_code` — they should map to `swedishPersonalNumber` instead.
+### Root Cause
 
-### Changes (single file: `src/components/dashboard/DataHandlingView.tsx`)
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-**1. Add two fields to `SYSTEM_FIELDS` (~line 71)**
-```
-{ key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "personal" }
-{ key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "personal" }
-```
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-**2. Fix aliases in `HEADER_ALIASES` (~line 100)**
-- Move `personnr` and `personnummer` from `employee_code` to `swedishPersonalNumber`
-- Add aliases: `personal_number`, `samordningsnummer`, `coordination_number`, `swedishpersonalnumber`, `swedishcoordinationnumber`
+**1. Replace generic message with specific missing-condition checklist**
 
-**3. Ensure values flow into `personalInfo` during mapping**
-- These are `personal` group fields, so they should already be stored in the `personalInfo` JSONB sub-object during the mapping step. Verify and fix if needed.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
+
+This tells the user exactly what's blocking them.
+
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
