@@ -8,12 +8,10 @@ import { OnboardingStatusChart } from "./OnboardingStatusChart";
 import { RecentInvitationsTable } from "./RecentInvitationsTable";
 import { CreateInvitationDialog } from "./CreateInvitationDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Mail, FileCheck, AlertCircle, PenTool, Send, Database, RotateCcw, Loader2, Trash2 } from "lucide-react";
-import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { Users, Mail, FileCheck, AlertCircle, PenTool, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { useUserRole } from "@/hooks/useUserRole";
+import { SandboxToolsCard } from "./SandboxToolsCard";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface DashboardViewProps {
