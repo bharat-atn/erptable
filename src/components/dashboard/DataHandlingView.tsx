@@ -1132,7 +1132,7 @@ export function DataHandlingView() {
                 <Button variant="outline" onClick={() => setStep(3)} disabled={importing}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={handleImport} disabled={importing || toImport.length === 0}>
+                <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
                   {importing ? "Importing..." : `Import ${toImport.length} Employees`}
                 </Button>
               </div>
