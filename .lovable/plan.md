@@ -1,38 +1,57 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Compensation Group View for Forestry Project Manager
 
-### Root Cause
+### What We're Building
+A full "Compensation Group" management interface matching the screenshot. Each group (e.g., "Comp. group clearing hourly salary") contains SLA classes (101-113) with star-based hourly rates (1-5 stars), client assignments, type selections, and hourly gross values.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+### Database
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+**Table: `comp_groups`**
+- `id`, `org_id`, `name` (text), `category` (clearing/planting), `method` (hourly/piecework), `sort_order`, `created_at`, `updated_at`
+- RLS: org member current
 
-**1. Replace generic message with specific missing-condition checklist**
+**Table: `comp_group_classes`**
+- `id`, `org_id`, `group_id` (FK to comp_groups), `sla_class_id` (text, e.g. "104"), `type_label` (text), `client` (text), `star_1` (numeric), `star_2`, `star_3`, `star_4`, `star_5`, `hourly_gross` (numeric), `sort_order`, `created_at`, `updated_at`
+- RLS: org member current
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+**Table: `comp_group_types`**
+- `id`, `org_id`, `group_id` (FK), `label` (text), `sort_order`
+- For the "Manage Types" feature (e.g., "Clearing Type 1 (Hourly Salary)")
+- RLS: org member current
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+### UI Component: `CompGroupView.tsx`
 
-This tells the user exactly what's blocking them.
+**Top section — Group tabs:**
+- Horizontal pill/chip selector for groups with edit/delete icons
+- Toolbar: "Manage Types", "Lock Cells", "Compare Groups", "+ New Group", "Duplicate Group"
+- Active group highlighted with checkmark
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+**Filter bar:**
+- "Type for 101-113" dropdown, "Show classes" dropdown (default 7), "Client for All" dropdown
+- "Reset to Defaults" button, search input
+- "Export CSV" and "Import CSV" buttons, "+ Add Class" button
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+**Table:**
+- Columns: checkbox, SLA Class ID, Type (dropdown), Client, Star 1-5 (editable numeric), Hourly Gross (editable), Actions (delete)
+- Inline editing for star rates and gross values
+- Row highlighting for key classes (e.g., SLA 107)
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+**CRUD operations:**
+- Create/rename/delete/duplicate groups
+- Add/edit/delete SLA classes within a group
+- Inline cell editing with auto-save
+- CSV export/import for class data
 
-**3. Add scroll-to-schedule link in the checklist**
+### Routing
+- Wire `comp-groups` case in `Dashboard.tsx` to render `<CompGroupView />`
+- Already registered in sidebar registry
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+### Files
+- **New:** `src/components/dashboard/CompGroupView.tsx`
+- **New:** Migration SQL for 3 tables + RLS + audit triggers
+- **Edit:** `src/components/dashboard/Dashboard.tsx` — import and route
 
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+### Seed Data
+On first load for an org, auto-create the 4 default groups and seed 7 default SLA classes (104-110) with the star rating values shown in the screenshot.
 
