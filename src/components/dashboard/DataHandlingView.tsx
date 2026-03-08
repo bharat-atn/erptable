@@ -774,8 +774,40 @@ export function DataHandlingView() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Column Mapping</CardTitle>
-                  <CardDescription>Map each CSV column to the corresponding employee field</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">Column Mapping</CardTitle>
+                      <CardDescription>Map each CSV column to the corresponding employee field</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {presets.length > 0 && (
+                        <Select onValueChange={(val) => {
+                          const preset = presets.find((p) => p.id === val);
+                          if (preset) handleLoadPreset(preset);
+                        }}>
+                          <SelectTrigger className="h-8 text-xs w-auto gap-1">
+                            <FolderOpen className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Load Preset" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {presets.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setPresetName(""); setShowSavePresetDialog(true); }}
+                        className="h-8 text-xs"
+                      >
+                        <Save className="h-3.5 w-3.5 mr-1" /> Save Preset
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
