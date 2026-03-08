@@ -23,6 +23,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "employee-id-settings", label: "Employee ID", group: "settings" },
     { id: "contract-id-settings", label: "Contract ID", group: "settings" },
     { id: "iso-standards", label: "ISO Standards", group: "settings" },
+    { id: "data-handling", label: "Data Handling", group: "settings" },
     { id: "issue-tracker", label: "Issue Tracker", group: "others" },
     { id: "version-management", label: "Version Management", group: "others" },
     { id: "process-guide", label: "Process Guide", group: "others" },
