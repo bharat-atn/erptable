@@ -905,14 +905,15 @@ export function DataHandlingView() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          const cleared: Record<string, string> = {};
-                          csvHeaders.forEach((h) => { cleared[h] = "_skip"; });
-                          setColumnMapping(cleared);
-                          toast.info("All mappings cleared");
+                          setHideColors((prev) => !prev);
+                          toast.info(hideColors ? "Colors restored" : "Colors cleared — mappings preserved");
                         }}
                         className="h-8 text-xs"
                       >
-                        <X className="h-3.5 w-3.5 mr-1" /> Clear All
+                        {hideColors
+                          ? <><Eye className="h-3.5 w-3.5 mr-1" /> Show Colors</>
+                          : <><EyeOff className="h-3.5 w-3.5 mr-1" /> Clear Colors</>
+                        }
                       </Button>
                       <Button
                         variant="outline"
