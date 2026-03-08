@@ -11,13 +11,13 @@ import { MapPin, Plus, Search, Pencil, Trash2, CheckCircle2 } from "lucide-react
 import { toast } from "sonner";
 
 const SLA_OPTIONS = [
-  { value: "101", label: "101 - Easy" },
-  { value: "103", label: "103 - Easy-Std" },
-  { value: "105", label: "105 - Standard" },
-  { value: "107", label: "107 - Std-Diff" },
-  { value: "109", label: "109 - Difficult" },
-  { value: "111", label: "111 - Diff-Ext" },
-  { value: "113", label: "113 - Extreme" },
+  { value: "101", label: "101 – Easy" },
+  { value: "103", label: "103 – Easy/Standard" },
+  { value: "105", label: "105 – Standard" },
+  { value: "107", label: "107 – Standard/Difficult" },
+  { value: "109", label: "109 – Difficult" },
+  { value: "111", label: "111 – Difficult/Extreme" },
+  { value: "113", label: "113 – Extreme" },
 ];
 
 interface Props {

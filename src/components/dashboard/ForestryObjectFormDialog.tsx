@@ -16,10 +16,13 @@ interface ForestryObjectFormDialogProps {
 }
 
 const SLA_CLASSES = [
-  { value: "easy", label: "Easy" },
-  { value: "standard", label: "Standard" },
-  { value: "difficult", label: "Difficult" },
-  { value: "extreme", label: "Extreme" },
+  { value: "101", label: "101 – Easy" },
+  { value: "103", label: "103 – Easy/Standard" },
+  { value: "105", label: "105 – Standard" },
+  { value: "107", label: "107 – Standard/Difficult" },
+  { value: "109", label: "109 – Difficult" },
+  { value: "111", label: "111 – Difficult/Extreme" },
+  { value: "113", label: "113 – Extreme" },
 ];
 
 const STATUSES = [
