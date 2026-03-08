@@ -93,6 +93,11 @@ const HEADER_ALIASES: Record<string, string> = {
   emergencycontact: "emergencyContact", emergency_contact: "emergencyContact",
   emergencyphone: "emergencyPhone", emergency_phone: "emergencyPhone",
   preferredname: "preferredName", preferred_name: "preferredName",
+  employee_code: "employee_code", employeecode: "employee_code",
+  employeeid: "employee_code", employee_id: "employee_code",
+  empid: "employee_code", emp_id: "employee_code",
+  anstallid: "employee_code", "anställdid": "employee_code",
+  personnr: "employee_code", personnummer: "employee_code",
 };
 
 function autoMapHeader(header: string): string {
