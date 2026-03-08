@@ -355,10 +355,11 @@ export function DataHandlingView() {
         else if (sysField === "last_name") entry.last_name = val;
         else if (sysField === "email") entry.email = val.toLowerCase().trim();
         else if (sysField === "phone") entry.phone = val;
+        else if (sysField === "mobilePhone") { entry.phone = val; entry.personalInfo.mobilePhone = val; }
         else if (sysField === "city") entry.city = val;
         else if (sysField === "country") entry.country = val;
         else {
-          // personal_info sub-field
+          // personal_info sub-field (address1, address2, stateProvince, bankName, etc.)
           entry.personalInfo[sysField] = val;
         }
       }
