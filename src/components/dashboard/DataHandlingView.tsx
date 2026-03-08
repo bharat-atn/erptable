@@ -1274,8 +1274,26 @@ export function DataHandlingView() {
                   {counts.duplicate > 0 && <Badge variant="secondary">{counts.duplicate} duplicate</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Improvement #8: Undo/Redo */}
+                  <Button variant="ghost" size="sm" onClick={undo} disabled={editHistoryIndex <= 0} title="Undo (Ctrl+Z)">
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={redo} disabled={editHistoryIndex >= editHistory.length - 1} title="Redo (Ctrl+Shift+Z)">
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                  <div className="w-px h-5 bg-border" />
                   <Button variant="outline" size="sm" onClick={selectAllValid}>Select All Valid</Button>
                   <Button variant="outline" size="sm" onClick={deselectDuplicates}>Deselect Duplicates</Button>
+                  {/* Improvement #5: Batch delete */}
+                  {counts.selected > 0 && (
+                    <Button variant="destructive" size="sm" onClick={deleteSelectedRows}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete Selected ({counts.selected})
+                    </Button>
+                  )}
+                  {/* Improvement #7: Export cleaned CSV */}
+                  <Button variant="outline" size="sm" onClick={exportCleanedCsv}>
+                    <Download className="h-4 w-4 mr-1" /> Export CSV
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -1291,6 +1309,20 @@ export function DataHandlingView() {
           </Tabs>
 
           <Card>
+            {/* Improvement #6: Toggle personalInfo columns */}
+            {mappedPersonalInfoKeys.length > 0 && (
+              <div className="px-4 pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPersonalInfo(!showPersonalInfo)}
+                  className="text-xs gap-1"
+                >
+                  {showPersonalInfo ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {showPersonalInfo ? "Hide" : "Show"} extended fields ({mappedPersonalInfoKeys.length})
+                </Button>
+              </div>
+            )}
             <ScrollArea className="max-h-[500px]">
               <Table>
                 <TableHeader>
@@ -1313,6 +1345,9 @@ export function DataHandlingView() {
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>City</TableHead>
+                    {showPersonalInfo && mappedPersonalInfoKeys.map((k) => (
+                      <TableHead key={k} className="text-xs">{SYSTEM_FIELDS.find((f) => f.key === k)?.label || k}</TableHead>
+                    ))}
                     <TableHead>Errors</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1343,6 +1378,12 @@ export function DataHandlingView() {
                       <TableCell>{renderEditableCell(row, "email", row.email)}</TableCell>
                       <TableCell>{renderEditableCell(row, "phone", row.phone)}</TableCell>
                       <TableCell>{renderEditableCell(row, "city", row.city)}</TableCell>
+                      {/* Improvement #6: personalInfo columns */}
+                      {showPersonalInfo && mappedPersonalInfoKeys.map((k) => (
+                        <TableCell key={k} className="text-xs text-muted-foreground truncate max-w-[120px]">
+                          {row.personalInfo[k] || "—"}
+                        </TableCell>
+                      ))}
                       <TableCell>
                         {row.errors.length > 0 && (
                           <span className="text-xs text-destructive">{row.errors.join("; ")}</span>
@@ -1352,7 +1393,7 @@ export function DataHandlingView() {
                   ))}
                   {filteredData.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9 + (showPersonalInfo ? mappedPersonalInfoKeys.length : 0)} className="text-center py-8 text-muted-foreground">
                         No rows match this filter
                       </TableCell>
                     </TableRow>
