@@ -159,12 +159,21 @@ Deno.serve(async (req) => {
       contractsCreated = cts?.length || 0;
     }
 
+    // Insert seed clients
+    const clientRows = SEED_CLIENTS.map((c) => ({ ...c, org_id: sandboxOrgId }));
+    const { data: insertedClients, error: cliErr } = await admin
+      .from("forestry_clients")
+      .insert(clientRows)
+      .select("id");
+    if (cliErr) throw cliErr;
+
     return new Response(
       JSON.stringify({
         companies: 1,
         employees: insertedEmployees?.length || 0,
         invitations: invitationsCreated,
         contracts: contractsCreated,
+        clients: insertedClients?.length || 0,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
