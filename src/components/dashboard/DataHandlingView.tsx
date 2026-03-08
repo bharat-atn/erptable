@@ -328,8 +328,24 @@ export function DataHandlingView() {
   }, []);
 
   const downloadTemplate = useCallback(() => {
-    const template = "name,email,phone,city,country,address,postcode,dateOfBirth,citizenship,bankName,bankAccount,bicCode\nLazea Dorin Felician,dorin@example.com,+46701234567,Stockholm,Sweden,Street 1,12345,1990-01-15,Romania,Nordea,1234567890,NDEASESS";
-    const blob = new Blob([template], { type: "text/csv" });
+    // Improvement #10: Enhanced template with all sections and Swedish-format samples
+    const headers = [
+      "# Section 2.1 — Name & Address",
+      "name,first_name,middle_name,last_name,preferredName,address1,address2,city,postcode,stateProvince,country",
+      "# Section 2.2 — Birth & Contact",
+      "email,phone,mobilePhone,dateOfBirth,countryOfBirth,citizenship,nationality,swedishPersonalNumber,swedishCoordinationNumber",
+      "# Section 2.3 — Emergency Contact",
+      "emergencyFirstName,emergencyLastName,emergencyPhone",
+      "# Section 3 — Bank Information",
+      "bankName,bankAccount,bicCode,bankCountry",
+      "# Section 4 — ID / Employment",
+      "employee_code",
+    ];
+    const allFields = "name,first_name,middle_name,last_name,preferredName,address1,address2,city,postcode,stateProvince,country,email,phone,mobilePhone,dateOfBirth,countryOfBirth,citizenship,nationality,swedishPersonalNumber,swedishCoordinationNumber,emergencyFirstName,emergencyLastName,emergencyPhone,bankName,bankAccount,bicCode,bankCountry,employee_code";
+    const sampleRow1 = "Lazea Dorin Felician,,,,,Storgatan 1,,Stockholm,111 22,,Sweden,dorin@example.com,+46701234567,,1990-05-15,Romania,Romanian,,19900515-1234,,Maria,Lazea,+40721234567,Nordea,1234-5678901,NDEASESS,Sweden,";
+    const sampleRow2 = "Pettersson Anna,,,,Anna P,Björkvägen 12,Lgh 302,Göteborg,412 56,,Sweden,anna.p@example.com,,+46731234567,1985-11-22,Sweden,Swedish,Swedish,19851122-5678,,Erik,Pettersson,+46709876543,Swedbank,9876-5432109,SWEDSESS,Sweden,";
+    const csv = headers.join("\n") + "\n\n" + allFields + "\n" + sampleRow1 + "\n" + sampleRow2 + "\n";
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
