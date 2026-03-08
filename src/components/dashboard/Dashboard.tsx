@@ -29,6 +29,7 @@ import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { ClientRegisterView } from "./ClientRegisterView";
 import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
+import { CompGroupView } from "./CompGroupView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
@@ -98,7 +99,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "kanban-board":
         case "client-register": return <ClientRegisterView />;
         case "project-id": return <ProjectIdSettingsView />;
-        case "comp-groups":
+        case "comp-groups": return <CompGroupView />;
         case "project-defaults":
           return (
             <div className="flex flex-col items-center justify-center py-24 text-center">
