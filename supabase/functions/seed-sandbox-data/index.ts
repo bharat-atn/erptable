@@ -58,7 +58,7 @@ const SEED_PROJECT = {
   name: "Värmland Forest Clearing 2026",
   project_id_display: "PJ-26-0001",
   type: "clearing",
-  status: "active",
+  status: "in_progress",
   location: "Värmland, Sweden",
   description: "Scenario 1 – Forest clearing project for Swedish Forestry Corporation. 3 objects, 49.8 hectares total, SLA 107, piece-work compensation.",
   start_date: "2026-05-01",
