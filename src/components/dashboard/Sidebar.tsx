@@ -187,6 +187,20 @@ const employeeHubMenuItems: MenuItem[] = [
 const employeeHubSettingsItems: MenuItem[] = [
 { id: "settings", label: "Settings", icon: Settings }];
 
+// Time & Status Reporting menu items
+const timeReportingMenuItems: MenuItem[] = [
+{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+{ id: "weekly-attendance", label: "Weekly Attendance", icon: CheckSquare },
+{ id: "progress-reporting", label: "Progress Reporting", icon: BarChart3 },
+{ id: "approvals", label: "Approvals", icon: Shield },
+{ id: "reports", label: "Reports", icon: FileText }];
+
+const timeReportingSettingsItems: MenuItem[] = [
+{ id: "settings", label: "Settings", icon: Settings }];
+
+const timeReportingAuditItems: MenuItem[] = [
+{ id: "audit-log", label: "Audit Log", icon: Shield }];
+
 
 
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
