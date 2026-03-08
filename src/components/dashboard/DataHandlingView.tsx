@@ -864,38 +864,51 @@ export function DataHandlingView() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {csvHeaders.map((header) => (
-                      <div key={header} className="flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <Label className="text-xs text-muted-foreground">CSV Column</Label>
-                          <p className="text-sm font-medium truncate">{header}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            e.g. "{csvRows[0]?.[header] || ""}"
-                          </p>
+                    {csvHeaders.map((header) => {
+                      const mappedValue = columnMapping[header] || "_skip";
+                      const isMapped = mappedValue !== "_skip";
+                      return (
+                        <div
+                          key={header}
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-lg border transition-colors",
+                            isMapped
+                              ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
+                              : "bg-muted/30 border-border"
+                          )}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <Label className="text-xs text-muted-foreground">CSV Column</Label>
+                            <p className="text-sm font-medium truncate">{header}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              e.g. "{csvRows[0]?.[header] || ""}"
+                            </p>
+                          </div>
+                          <ArrowRight className={cn("h-4 w-4 shrink-0", isMapped ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
+                          <div className="flex-1">
+                            <Label className="text-xs text-muted-foreground">System Field</Label>
+                            <Select
+                              value={mappedValue}
+                              onValueChange={(val) =>
+                                setColumnMapping((prev) => ({ ...prev, [header]: val }))
+                              }
+                            >
+                              <SelectTrigger className={cn("h-8 text-xs", isMapped && "border-green-300 dark:border-green-700")}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {SYSTEM_FIELDS.map((f) => (
+                                  <SelectItem key={f.key} value={f.key}>
+                                    {f.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {isMapped && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="flex-1">
-                          <Label className="text-xs text-muted-foreground">System Field</Label>
-                          <Select
-                            value={columnMapping[header] || "_skip"}
-                            onValueChange={(val) =>
-                              setColumnMapping((prev) => ({ ...prev, [header]: val }))
-                            }
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SYSTEM_FIELDS.map((f) => (
-                                <SelectItem key={f.key} value={f.key}>
-                                  {f.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {hasNameColumn && (
