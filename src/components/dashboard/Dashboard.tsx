@@ -22,6 +22,7 @@ import { UserManagementView } from "./UserManagementView";
 import { RolePermissionMatrix } from "./RolePermissionMatrix";
 import { VersionManagementView } from "./VersionManagementView";
 import { IssueTrackerView } from "./IssueTrackerView";
+import { DataHandlingView } from "./DataHandlingView";
 import { ForestryDashboardView } from "./ForestryDashboardView";
 import { ForestryProjectsView } from "./ForestryProjectsView";
 import { ForestryObjectsView } from "./ForestryObjectsView";
