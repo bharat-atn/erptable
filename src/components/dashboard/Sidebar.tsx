@@ -977,18 +977,22 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   const isForestry = appId === "forestry-project";
   const isPayroll = appId === "payroll";
+  const isEmployeeHub = appId === "employee-hub";
 
   const getMenuDefaults = () => {
+    if (isEmployeeHub) return employeeHubMenuItems;
     if (isPayroll) return payrollMenuItems;
     if (isForestry) return forestryMenuItems;
     return defaultMenuItems;
   };
   const getSettingsDefaults = () => {
+    if (isEmployeeHub) return employeeHubSettingsItems;
     if (isPayroll) return payrollSettingsItems;
     if (isForestry) return forestrySettingsItems;
     return defaultSettingsItems;
   };
   const getConfigDefaults = () => {
+    if (isEmployeeHub) return [];
     if (isPayroll) return payrollAuditItems;
     if (isForestry) return forestryAuditItems;
     return defaultConfigItems;
@@ -998,7 +1002,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
     return [];
   };
 
-  const menuPrefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+  const menuPrefix = isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
   const [menuItems, setMenuItems] = useState(() => loadOrder(`${menuPrefix}-menu`, getMenuDefaults()));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder(`${menuPrefix}-settings`, getSettingsDefaults()));
   const [configItems, setConfigItems] = useState(() => loadOrder(`${menuPrefix}-audit`, getConfigDefaults()));
@@ -1006,12 +1010,12 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   // Reset menu items when app changes
   useEffect(() => {
-    const prefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+    const prefix = isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
     setMenuItems(loadOrder(`${prefix}-menu`, getMenuDefaults()));
     setSettingsItems(loadOrder(`${prefix}-settings`, getSettingsDefaults()));
     setConfigItems(loadOrder(`${prefix}-audit`, getConfigDefaults()));
     setBottomItems(getBottomDefaults());
-  }, [appId, isForestry, isPayroll]);
+  }, [appId, isForestry, isPayroll, isEmployeeHub]);
 
   // Fetch sidebar permissions for current role + app
   const { data: allowedItems } = useQuery({
