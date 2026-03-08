@@ -725,6 +725,73 @@ export type Database = {
           },
         ]
       }
+      employee_deductions: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          deduction_type: string
+          employee_id: string
+          frequency: string
+          id: string
+          is_active: boolean
+          note: string | null
+          org_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          contract_id: string
+          created_at?: string
+          deduction_type: string
+          employee_id: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          note?: string | null
+          org_id: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          deduction_type?: string
+          employee_id?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          note?: string | null
+          org_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_deductions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_deductions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_deductions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_id_settings: {
         Row: {
           created_at: string
