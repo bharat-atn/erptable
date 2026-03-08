@@ -538,7 +538,80 @@ export function DataHandlingView() {
     setMappedData([]);
     setImportResults(null);
     setImportProgress(0);
+    setActiveDraftId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
+  /* ─── Preset helpers ─── */
+
+  const handleSavePreset = useCallback(() => {
+    if (!presetName.trim()) return;
+    // Strip _skip mappings for cleaner storage
+    const cleanedMappings: Record<string, string> = {};
+    for (const [csvCol, sysField] of Object.entries(columnMapping)) {
+      if (sysField !== "_skip") cleanedMappings[csvCol] = sysField;
+    }
+    savePreset.mutate({ name: presetName.trim(), mappings: cleanedMappings });
+    setPresetName("");
+    setShowSavePresetDialog(false);
+  }, [presetName, columnMapping, savePreset]);
+
+  const handleLoadPreset = useCallback((preset: { mappings: Record<string, string> }) => {
+    const storedMappings = preset.mappings as Record<string, string>;
+    // Re-apply: for each current CSV header, find if the preset has a mapping for the same header name
+    const newMapping: Record<string, string> = {};
+    csvHeaders.forEach((h) => {
+      const normalized = h.toLowerCase().trim();
+      // Try exact header match first, then normalized
+      if (storedMappings[h]) {
+        newMapping[h] = storedMappings[h];
+      } else if (storedMappings[normalized]) {
+        newMapping[h] = storedMappings[normalized];
+      } else {
+        // Try matching by normalized key
+        const match = Object.entries(storedMappings).find(
+          ([k]) => k.toLowerCase().trim() === normalized
+        );
+        newMapping[h] = match ? match[1] : "_skip";
+      }
+    });
+    setColumnMapping(newMapping);
+    toast.success("Preset applied");
+  }, [csvHeaders]);
+
+  /* ─── Draft helpers ─── */
+
+  const handleSaveDraft = useCallback(() => {
+    const name = draftName.trim() || `Import ${new Date().toLocaleDateString()}`;
+    // Serialize mapped data without the raw CSV rows (too large)
+    const serializableData = mappedData.map(({ raw, ...rest }) => rest);
+    saveDraft.mutate({
+      id: activeDraftId || undefined,
+      name,
+      step,
+      file_name: fileName,
+      raw_headers: csvHeaders,
+      mappings: columnMapping,
+      mapped_data: step >= 2 ? serializableData : [],
+      row_count: mappedData.length || csvRows.length,
+    });
+    setDraftName("");
+    setShowSaveDraftDialog(false);
+  }, [draftName, activeDraftId, step, fileName, csvHeaders, columnMapping, mappedData, csvRows, saveDraft]);
+
+  const handleLoadDraft = useCallback((draft: any) => {
+    setCsvHeaders(draft.raw_headers || []);
+    setColumnMapping(draft.mappings || {});
+    setFileName(draft.file_name || "");
+    setActiveDraftId(draft.id);
+    if (draft.mapped_data && draft.mapped_data.length > 0) {
+      // Restore mapped data with empty raw objects
+      setMappedData(draft.mapped_data.map((d: any) => ({ ...d, raw: {} })));
+      setStep(Math.min(draft.step, 2)); // Can resume from step 2 max since CSV rows aren't stored
+    } else {
+      setStep(1);
+    }
+    toast.success(`Draft "${draft.name}" loaded`);
   }, []);
 
   /* ─── Render ─── */
