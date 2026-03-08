@@ -17,6 +17,7 @@ import { format, differenceInDays, isPast } from "date-fns";
 
 interface ForestryDashboardViewProps {
   onNavigate?: (view: string) => void;
+  onOpenSetup?: (projectId: string) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
