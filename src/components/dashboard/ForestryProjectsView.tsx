@@ -63,7 +63,7 @@ export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: strin
 
   const createMutation = useMutation({
     mutationFn: async (form: any) => {
-      const { error } = await supabase.from("forestry_projects" as any).insert({
+      const { data, error } = await supabase.from("forestry_projects" as any).insert({
         org_id: orgId!,
         project_id_display: generateProjectId(),
         name: form.name,
@@ -75,13 +75,15 @@ export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: strin
         start_date: form.start_date || null,
         end_date: form.end_date || null,
         budget: Number(form.budget) || 0,
-      } as any);
+      } as any).select("id").single();
       if (error) throw error;
+      return data as any;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["forestry-projects"] });
       setFormOpen(false);
       toast.success("Project created");
+      if (onOpenSetup && data?.id) onOpenSetup(data.id);
     },
     onError: (e: any) => toast.error(e.message),
   });
