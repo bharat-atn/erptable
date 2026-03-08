@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { SandboxToolsCard } from "./SandboxToolsCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
