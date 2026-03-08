@@ -150,6 +150,26 @@ const forestryAuditItems: MenuItem[] = [
 const forestryBottomItems: MenuItem[] = [
 { id: "process-guide", label: "Process Guide", icon: BookOpen }];
 
+// Payroll Management menu items
+import { DollarSign, MinusCircle, CreditCard } from "lucide-react";
+
+const payrollMenuItems: MenuItem[] = [
+{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+{ id: "payroll-runs", label: "Payroll Runs", icon: Calendar },
+{ id: "salary-slips", label: "Salary Slips", icon: FileText },
+{ id: "tax-reports", label: "Tax Reports", icon: BarChart3 },
+{ id: "deductions", label: "Deductions", icon: MinusCircle },
+{ id: "employee-register", label: "Employees", icon: Users }];
+
+const payrollSettingsItems: MenuItem[] = [
+{ id: "salary-tables", label: "Salary Tables", icon: DollarSign },
+{ id: "tax-settings", label: "Tax Settings", icon: Shield },
+{ id: "payment-methods", label: "Payment Methods", icon: CreditCard },
+{ id: "settings", label: "Settings", icon: Settings }];
+
+const payrollAuditItems: MenuItem[] = [
+{ id: "audit-log", label: "Audit Log", icon: Shield }];
+
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
   try {
     const saved = localStorage.getItem(`sidebar-order-${key}`);
@@ -937,25 +957,42 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const isPublished = isPublishedEnvironment();
 
   const isForestry = appId === "forestry-project";
-  const [menuItems, setMenuItems] = useState(() => loadOrder("menu", isForestry ? forestryMenuItems : defaultMenuItems));
-  const [settingsItems, setSettingsItems] = useState(() => loadOrder("settings", isForestry ? forestrySettingsItems : defaultSettingsItems));
-  const [configItems, setConfigItems] = useState(() => loadOrder("config", isForestry ? forestryAuditItems : defaultConfigItems));
-  const [bottomItems, setBottomItems] = useState(() => isForestry ? forestryBottomItems : []);
+  const isPayroll = appId === "payroll";
+
+  const getMenuDefaults = () => {
+    if (isPayroll) return payrollMenuItems;
+    if (isForestry) return forestryMenuItems;
+    return defaultMenuItems;
+  };
+  const getSettingsDefaults = () => {
+    if (isPayroll) return payrollSettingsItems;
+    if (isForestry) return forestrySettingsItems;
+    return defaultSettingsItems;
+  };
+  const getConfigDefaults = () => {
+    if (isPayroll) return payrollAuditItems;
+    if (isForestry) return forestryAuditItems;
+    return defaultConfigItems;
+  };
+  const getBottomDefaults = () => {
+    if (isForestry) return forestryBottomItems;
+    return [];
+  };
+
+  const menuPrefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+  const [menuItems, setMenuItems] = useState(() => loadOrder(`${menuPrefix}-menu`, getMenuDefaults()));
+  const [settingsItems, setSettingsItems] = useState(() => loadOrder(`${menuPrefix}-settings`, getSettingsDefaults()));
+  const [configItems, setConfigItems] = useState(() => loadOrder(`${menuPrefix}-audit`, getConfigDefaults()));
+  const [bottomItems, setBottomItems] = useState(getBottomDefaults);
 
   // Reset menu items when app changes
   useEffect(() => {
-    if (isForestry) {
-      setMenuItems(loadOrder("forestry-menu", forestryMenuItems));
-      setSettingsItems(loadOrder("forestry-settings", forestrySettingsItems));
-      setConfigItems(loadOrder("forestry-audit", forestryAuditItems));
-      setBottomItems(forestryBottomItems);
-    } else {
-      setMenuItems(loadOrder("menu", defaultMenuItems));
-      setSettingsItems(loadOrder("settings", defaultSettingsItems));
-      setConfigItems(loadOrder("config", defaultConfigItems));
-      setBottomItems([]);
-    }
-  }, [appId, isForestry]);
+    const prefix = isPayroll ? "payroll" : isForestry ? "forestry" : "";
+    setMenuItems(loadOrder(`${prefix}-menu`, getMenuDefaults()));
+    setSettingsItems(loadOrder(`${prefix}-settings`, getSettingsDefaults()));
+    setConfigItems(loadOrder(`${prefix}-audit`, getConfigDefaults()));
+    setBottomItems(getBottomDefaults());
+  }, [appId, isForestry, isPayroll]);
 
   // Fetch sidebar permissions for current role + app
   const { data: allowedItems } = useQuery({

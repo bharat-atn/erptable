@@ -61,9 +61,11 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "salary-slips", label: "Salary Slips", group: "main" },
     { id: "tax-reports", label: "Tax Reports", group: "main" },
     { id: "deductions", label: "Deductions", group: "main" },
+    { id: "employee-register", label: "Employees", group: "main" },
     { id: "salary-tables", label: "Salary Tables", group: "settings" },
     { id: "tax-settings", label: "Tax Settings", group: "settings" },
     { id: "payment-methods", label: "Payment Methods", group: "settings" },
+    { id: "settings", label: "Settings", group: "settings" },
     { id: "audit-log", label: "Audit Log", group: "others" },
   ],
   "employee-hub": [
@@ -118,7 +120,7 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
     admin: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
     payroll_manager: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
-    hr_manager: ["dashboard", "payroll-runs", "salary-slips", "salary-tables"],
+    hr_manager: ["dashboard", "payroll-runs", "salary-slips", "employee-register", "salary-tables"],
     user: ["dashboard"],
   },
   "employee-hub": {
