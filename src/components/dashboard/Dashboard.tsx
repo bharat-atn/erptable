@@ -124,6 +124,20 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
       }
     }
 
+    // Time & Status Reporting views
+    if (appId === "time-reporting") {
+      switch (activeView) {
+        case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveView} />;
+        case "weekly-attendance": return <WeeklyAttendanceView />;
+        case "progress-reporting": return <ProgressReportingView />;
+        case "approvals": return <ApprovalsView />;
+        case "reports": return <TimeReportsView />;
+        case "audit-log": return <AuditLogView />;
+        case "settings": return <SettingsView />;
+        default: return <TimeReportingDashboardView onNavigate={setActiveView} />;
+      }
+    }
+
     // Payroll Management views
     if (appId === "payroll") {
       switch (activeView) {
