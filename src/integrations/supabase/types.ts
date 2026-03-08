@@ -1709,6 +1709,71 @@ export type Database = {
           },
         ]
       }
+      project_defaults: {
+        Row: {
+          accommodation_per_night: number
+          bedding_cleaning_per_night: number
+          created_at: string
+          daily_allowance: number
+          daily_hours: number
+          end_time: string
+          id: string
+          org_id: string
+          project_end_date: string | null
+          project_start_date: string | null
+          start_time: string
+          transport_cost_per_km: number
+          updated_at: string
+          weekly_hours: number
+          work_end_date: string | null
+          work_start_date: string | null
+        }
+        Insert: {
+          accommodation_per_night?: number
+          bedding_cleaning_per_night?: number
+          created_at?: string
+          daily_allowance?: number
+          daily_hours?: number
+          end_time?: string
+          id?: string
+          org_id: string
+          project_end_date?: string | null
+          project_start_date?: string | null
+          start_time?: string
+          transport_cost_per_km?: number
+          updated_at?: string
+          weekly_hours?: number
+          work_end_date?: string | null
+          work_start_date?: string | null
+        }
+        Update: {
+          accommodation_per_night?: number
+          bedding_cleaning_per_night?: number
+          created_at?: string
+          daily_allowance?: number
+          daily_hours?: number
+          end_time?: string
+          id?: string
+          org_id?: string
+          project_end_date?: string | null
+          project_start_date?: string | null
+          start_time?: string
+          transport_cost_per_km?: number
+          updated_at?: string
+          weekly_hours?: number
+          work_end_date?: string | null
+          work_start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_defaults_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_id_settings: {
         Row: {
           created_at: string
