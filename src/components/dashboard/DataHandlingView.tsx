@@ -99,7 +99,10 @@ const HEADER_ALIASES: Record<string, string> = {
   employeeid: "employee_code", employee_id: "employee_code",
   empid: "employee_code", emp_id: "employee_code",
   anstallid: "employee_code", "anställdid": "employee_code",
-  personnr: "employee_code", personnummer: "employee_code",
+  personnr: "swedishPersonalNumber", personnummer: "swedishPersonalNumber",
+  personal_number: "swedishPersonalNumber", swedishpersonalnumber: "swedishPersonalNumber",
+  samordningsnummer: "swedishCoordinationNumber", coordination_number: "swedishCoordinationNumber",
+  swedishcoordinationnumber: "swedishCoordinationNumber",
 };
 
 function autoMapHeader(header: string): string {
