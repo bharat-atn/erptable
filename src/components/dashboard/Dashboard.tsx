@@ -90,7 +90,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     // Forestry Project Manager views
     if (appId === "forestry-project") {
       switch (activeView) {
-        case "dashboard": return <ForestryDashboardView onNavigate={setActiveView} />;
+        case "dashboard": return <ForestryDashboardView onNavigate={setActiveView} onOpenSetup={(id) => { setSetupProjectId(id); setActiveView("project-setup"); }} />;
         case "forestry-projects": return <ForestryProjectsView onOpenSetup={(id) => { setSetupProjectId(id); setActiveView("project-setup"); }} />;
         case "project-setup": return <ProjectSetupView projectId={setupProjectId} onBack={() => setActiveView("forestry-projects")} />;
         case "forestry-objects": return <ForestryObjectsView />;
