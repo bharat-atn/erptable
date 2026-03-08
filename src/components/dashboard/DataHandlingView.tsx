@@ -497,17 +497,57 @@ export function DataHandlingView() {
       }
     });
 
+    // Initialize edit history
+    setEditHistory([mapped]);
+    setEditHistoryIndex(0);
     setMappedData(mapped);
     setStep(2);
   }, [csvRows, columnMapping, existingEmployees]);
 
   /* ─── Step 2: Data washing helpers ─── */
 
+  // Improvement #8: push to history on meaningful changes
+  const pushHistory = useCallback((newData: MappedEmployee[]) => {
+    setEditHistory((prev) => {
+      const trimmed = prev.slice(0, editHistoryIndex + 1);
+      return [...trimmed, newData].slice(-30); // Keep last 30 states
+    });
+    setEditHistoryIndex((prev) => Math.min(prev + 1, 29));
+  }, [editHistoryIndex]);
+
+  const undo = useCallback(() => {
+    if (editHistoryIndex <= 0) return;
+    const newIdx = editHistoryIndex - 1;
+    setEditHistoryIndex(newIdx);
+    setMappedData(editHistory[newIdx]);
+  }, [editHistoryIndex, editHistory]);
+
+  const redo = useCallback(() => {
+    if (editHistoryIndex >= editHistory.length - 1) return;
+    const newIdx = editHistoryIndex + 1;
+    setEditHistoryIndex(newIdx);
+    setMappedData(editHistory[newIdx]);
+  }, [editHistoryIndex, editHistory]);
+
+  // Keyboard undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        if (e.shiftKey) { redo(); } else { undo(); }
+        e.preventDefault();
+      }
+    };
+    if (step === 2) window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [step, undo, redo]);
+
   const updateRow = useCallback((rowId: string, updates: Partial<MappedEmployee>) => {
-    setMappedData((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
-    );
-  }, []);
+    setMappedData((prev) => {
+      const newData = prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r));
+      pushHistory(newData);
+      return newData;
+    });
+  }, [pushHistory]);
 
   const toggleRow = useCallback((rowId: string) => {
     setMappedData((prev) =>
@@ -527,6 +567,16 @@ export function DataHandlingView() {
     );
   }, []);
 
+  // Improvement #5: batch delete selected rows
+  const deleteSelectedRows = useCallback(() => {
+    setMappedData((prev) => {
+      const newData = prev.filter((r) => !r.selected);
+      pushHistory(newData);
+      toast.success(`Deleted ${prev.length - newData.length} rows`);
+      return newData;
+    });
+  }, [pushHistory]);
+
   const startEdit = useCallback((rowId: string, field: string, currentValue: string) => {
     setEditingCell({ rowId, field });
     setEditValue(currentValue);
@@ -537,6 +587,30 @@ export function DataHandlingView() {
     updateRow(editingCell.rowId, { [editingCell.field]: editValue } as any);
     setEditingCell(null);
   }, [editingCell, editValue, updateRow]);
+
+  // Improvement #7: export cleaned CSV
+  const exportCleanedCsv = useCallback(() => {
+    const selected = mappedData.filter((r) => r.selected);
+    if (selected.length === 0) { toast.error("No rows selected"); return; }
+    const piKeys = mappedPersonalInfoKeys;
+    const headers = ["first_name", "middle_name", "last_name", "email", "phone", "city", "country", "employee_code", ...piKeys];
+    const csvLines = [headers.join(",")];
+    for (const row of selected) {
+      const vals = [
+        row.first_name, row.middle_name, row.last_name, row.email, row.phone, row.city, row.country, row.employee_code,
+        ...piKeys.map((k) => row.personalInfo[k] || ""),
+      ].map((v) => `"${(v || "").replace(/"/g, '""')}"`);
+      csvLines.push(vals.join(","));
+    }
+    const blob = new Blob([csvLines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cleaned-employees-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${selected.length} rows`);
+  }, [mappedData, mappedPersonalInfoKeys]);
 
   const filteredData = useMemo(() => {
     if (filterTab === "all") return mappedData;
