@@ -101,18 +101,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "client-register": return <ClientRegisterView />;
         case "project-id": return <ProjectIdSettingsView />;
         case "comp-groups": return <CompGroupView />;
-        case "project-defaults":
-          return (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="rounded-full bg-muted p-4 mb-4">
-                <Settings className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Coming Soon</h2>
-              <p className="text-muted-foreground max-w-md">
-                This module is currently under development and will be available in a future release.
-              </p>
-            </div>
-          );
+        case "project-defaults": return <ProjectDefaultsView onBack={() => setActiveView("settings")} />;
         default: return <ForestryDashboardView onNavigate={setActiveView} />;
       }
     }
