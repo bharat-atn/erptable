@@ -107,7 +107,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "project-id": return <ProjectIdSettingsView />;
         case "comp-groups": return <CompGroupView />;
         case "project-defaults": return <ProjectDefaultsView onBack={() => setActiveView("settings")} />;
-        default: return <ForestryDashboardView onNavigate={setActiveView} />;
+        default: return <ForestryDashboardView onNavigate={setActiveView} onOpenSetup={(id) => { setSetupProjectId(id); setActiveView("project-setup"); }} />;
       }
     }
 
