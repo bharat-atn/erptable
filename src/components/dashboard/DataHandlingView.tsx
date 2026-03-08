@@ -191,6 +191,7 @@ export function DataHandlingView() {
   const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [showLoadDraftDialog, setShowLoadDraftDialog] = useState(false);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
