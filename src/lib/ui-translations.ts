@@ -39,6 +39,34 @@ const translations: Record<string, Record<UiLang, string>> = {
   "menu.project-defaults": { en: "Project Defaults", sv: "Projektstandard", ro: "Valori implicite proiect" },
   "group.audit": { en: "Audit", sv: "Granskning", ro: "Audit" },
 
+  // Payroll menu items
+  "menu.salary-events": { en: "Salary Events", sv: "Lönehändelser", ro: "Evenimente salariale" },
+  "menu.absence": { en: "Absence", sv: "Frånvaro", ro: "Absență" },
+  "menu.holiday": { en: "Holiday", sv: "Semester", ro: "Concediu" },
+  "menu.attestation": { en: "Attestation", sv: "Attestering", ro: "Atestare" },
+  "menu.payroll-runs": { en: "Payroll Runs", sv: "Lönekörningar", ro: "Procesare salarii" },
+  "menu.salary-slips": { en: "Salary Slips", sv: "Lönespecifikationer", ro: "Fluturași de salariu" },
+  "menu.salary-tables": { en: "Salary Tables", sv: "Lönetabeller", ro: "Tabele salariale" },
+  "menu.tax-reports": { en: "Tax Reports", sv: "Skatterapporter", ro: "Rapoarte fiscale" },
+  "menu.reports": { en: "Reports", sv: "Rapporter", ro: "Rapoarte" },
+  "menu.deductions": { en: "Deductions", sv: "Avdrag", ro: "Deduceri" },
+  "menu.tax-settings": { en: "Tax Settings", sv: "Skatteinställningar", ro: "Setări fiscale" },
+  "menu.payment-methods": { en: "Payment Methods", sv: "Betalningsmetoder", ro: "Metode de plată" },
+
+  // Employee Hub menu items
+  "menu.my-profile": { en: "My Profile", sv: "Min profil", ro: "Profilul meu" },
+  "menu.my-contracts": { en: "My Contracts", sv: "Mina kontrakt", ro: "Contractele mele" },
+  "menu.my-schedule": { en: "My Schedule", sv: "Mitt schema", ro: "Programul meu" },
+  "menu.my-payslips": { en: "My Payslips", sv: "Mina lönespecifikationer", ro: "Fluturașii mei" },
+  "menu.leave-requests": { en: "Leave Requests", sv: "Ledighetsansökningar", ro: "Cereri de concediu" },
+
+  // Time Reporting menu items
+  "menu.time-entries": { en: "Time Entries", sv: "Tidrapporter", ro: "Înregistrări timp" },
+  "menu.timesheets": { en: "Timesheets", sv: "Tidrapporter", ro: "Foi de pontaj" },
+  "menu.approvals": { en: "Approvals", sv: "Godkännanden", ro: "Aprobări" },
+  "menu.project-codes": { en: "Project Codes", sv: "Projektkoder", ro: "Coduri proiect" },
+  "menu.overtime-rules": { en: "Overtime Rules", sv: "Övertidsregler", ro: "Reguli ore suplimentare" },
+
   // Common UI strings
   "ui.signOut": { en: "Sign Out", sv: "Logga ut", ro: "Deconectare" },
   "ui.allApps": { en: "All Apps", sv: "Alla appar", ro: "Toate aplicațiile" },
