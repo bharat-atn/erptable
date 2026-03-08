@@ -61,19 +61,25 @@ const SYSTEM_FIELDS: SystemField[] = [
   { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" },
   { key: "email", label: "Email", group: "core", required: true },
   { key: "phone", label: "Phone", group: "core" },
+  { key: "mobilePhone", label: "Mobile Phone", group: "core" },
+  { key: "address1", label: "Address Line 1", group: "address" },
+  { key: "address2", label: "Address Line 2", group: "address" },
   { key: "city", label: "City", group: "address" },
-  { key: "country", label: "Country", group: "address" },
-  { key: "address", label: "Address", group: "address" },
   { key: "postcode", label: "Postcode", group: "address" },
+  { key: "stateProvince", label: "State / Province", group: "address" },
+  { key: "country", label: "Country", group: "address" },
   { key: "dateOfBirth", label: "Date of Birth", group: "personal" },
+  { key: "countryOfBirth", label: "Country of Birth", group: "personal" },
   { key: "citizenship", label: "Citizenship", group: "personal" },
   { key: "nationality", label: "Nationality", group: "personal" },
+  { key: "preferredName", label: "Preferred Name", group: "personal" },
   { key: "bankName", label: "Bank Name", group: "personal" },
   { key: "bankAccount", label: "Bank Account", group: "personal" },
   { key: "bicCode", label: "BIC Code", group: "personal" },
-  { key: "emergencyContact", label: "Emergency Contact", group: "personal" },
+  { key: "bankCountry", label: "Bank Country", group: "personal" },
+  { key: "emergencyFirstName", label: "Emergency Contact First Name", group: "personal" },
+  { key: "emergencyLastName", label: "Emergency Contact Last Name", group: "personal" },
   { key: "emergencyPhone", label: "Emergency Phone", group: "personal" },
-  { key: "preferredName", label: "Preferred Name", group: "personal" },
   { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "personal" },
   { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "personal" },
   { key: "_skip", label: "— Skip this column —", group: "core" },
@@ -85,20 +91,27 @@ const HEADER_ALIASES: Record<string, string> = {
   middle_name: "middle_name", middlename: "middle_name",
   last_name: "last_name", lastname: "last_name", surname: "last_name",
   email: "email", "e-mail": "email", mail: "email",
-  phone: "phone", mobile: "phone", mobilephone: "phone", telephone: "phone",
+  phone: "phone", telephone: "phone",
+  mobile: "mobilePhone", mobilephone: "mobilePhone", mobile_phone: "mobilePhone", "mobile phone": "mobilePhone",
   city: "city", town: "city",
   country: "country",
-  address: "address", street: "address",
+  address: "address1", street: "address1", address1: "address1", address_1: "address1", "address 1": "address1", "address line 1": "address1",
+  address2: "address2", address_2: "address2", "address 2": "address2", "address line 2": "address2",
   postcode: "postcode", zip: "postcode", zip_code: "postcode", postal_code: "postcode",
+  state: "stateProvince", province: "stateProvince", stateprovince: "stateProvince", state_province: "stateProvince", "state province": "stateProvince",
   dateofbirth: "dateOfBirth", birthday: "dateOfBirth", dob: "dateOfBirth", date_of_birth: "dateOfBirth",
+  countryofbirth: "countryOfBirth", country_of_birth: "countryOfBirth", "country of birth": "countryOfBirth",
   citizenship: "citizenship",
   nationality: "nationality",
-  bankname: "bankName", bank_name: "bankName", bank: "bankName",
-  bankaccount: "bankAccount", bank_account: "bankAccount", account: "bankAccount",
-  biccode: "bicCode", bic: "bicCode", bic_code: "bicCode",
-  emergencycontact: "emergencyContact", emergency_contact: "emergencyContact",
-  emergencyphone: "emergencyPhone", emergency_phone: "emergencyPhone",
   preferredname: "preferredName", preferred_name: "preferredName",
+  bankname: "bankName", bank_name: "bankName", bank: "bankName",
+  bankaccount: "bankAccount", bank_account: "bankAccount", account: "bankAccount", iban: "bankAccount", bank_account_number: "bankAccount",
+  biccode: "bicCode", bic: "bicCode", bic_code: "bicCode", swift: "bicCode", swift_code: "bicCode",
+  bankcountry: "bankCountry", bank_country: "bankCountry", "bank country": "bankCountry",
+  emergencyfirstname: "emergencyFirstName", emergency_first_name: "emergencyFirstName", "emergency first name": "emergencyFirstName", ice_first_name: "emergencyFirstName",
+  emergencylastname: "emergencyLastName", emergency_last_name: "emergencyLastName", "emergency last name": "emergencyLastName", ice_last_name: "emergencyLastName",
+  emergencycontact: "emergencyFirstName",
+  emergencyphone: "emergencyPhone", emergency_phone: "emergencyPhone", ice_phone: "emergencyPhone",
   employee_code: "employee_code", employeecode: "employee_code",
   employeeid: "employee_code", employee_id: "employee_code",
   empid: "employee_code", emp_id: "employee_code",
@@ -342,10 +355,11 @@ export function DataHandlingView() {
         else if (sysField === "last_name") entry.last_name = val;
         else if (sysField === "email") entry.email = val.toLowerCase().trim();
         else if (sysField === "phone") entry.phone = val;
+        else if (sysField === "mobilePhone") { entry.phone = val; entry.personalInfo.mobilePhone = val; }
         else if (sysField === "city") entry.city = val;
         else if (sysField === "country") entry.country = val;
         else {
-          // personal_info sub-field
+          // personal_info sub-field (address1, address2, stateProvince, bankName, etc.)
           entry.personalInfo[sysField] = val;
         }
       }
@@ -511,12 +525,21 @@ export function DataHandlingView() {
     for (let i = 0; i < toImport.length; i++) {
       const row = toImport[i];
       try {
-        const personalInfo: Record<string, string> = {
+        const personalInfo: Record<string, any> = {
           ...row.personalInfo,
           mobilePhone: row.phone,
           city: row.city,
           country: row.country,
         };
+
+        // Build emergency contact object from split fields
+        if (personalInfo.emergencyFirstName || personalInfo.emergencyLastName) {
+          personalInfo.emergencyContact = {
+            firstName: personalInfo.emergencyFirstName || "",
+            lastName: personalInfo.emergencyLastName || "",
+            phone: personalInfo.emergencyPhone || "",
+          };
+        }
 
         const { error } = await supabase.from("employees").insert({
           org_id: orgId,
