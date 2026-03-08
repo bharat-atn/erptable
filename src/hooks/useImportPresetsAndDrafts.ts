@@ -131,6 +131,7 @@ export function useImportDrafts(orgId: string | null) {
           raw_headers: draft.raw_headers,
           mappings: draft.mappings,
           mapped_data: draft.mapped_data,
+          raw_csv_rows: draft.raw_csv_rows,
           row_count: draft.row_count,
           created_by: userData.user?.id || null,
         } as any);
