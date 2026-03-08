@@ -1,0 +1,1 @@
+ALTER TABLE public.import_drafts ADD COLUMN raw_csv_rows jsonb DEFAULT '[]'::jsonb;

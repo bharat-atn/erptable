@@ -861,6 +861,7 @@ export type Database = {
           mappings: Json | null
           name: string
           org_id: string
+          raw_csv_rows: Json | null
           raw_headers: Json | null
           row_count: number | null
           step: number
@@ -875,6 +876,7 @@ export type Database = {
           mappings?: Json | null
           name?: string
           org_id: string
+          raw_csv_rows?: Json | null
           raw_headers?: Json | null
           row_count?: number | null
           step?: number
@@ -889,6 +891,7 @@ export type Database = {
           mappings?: Json | null
           name?: string
           org_id?: string
+          raw_csv_rows?: Json | null
           raw_headers?: Json | null
           row_count?: number | null
           step?: number
