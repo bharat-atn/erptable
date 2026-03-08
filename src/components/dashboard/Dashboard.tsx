@@ -35,6 +35,7 @@ import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { CompGroupView } from "./CompGroupView";
 import { ProjectDefaultsView } from "./ProjectDefaultsView";
 import { TopVersionBadge } from "./TopVersionBadge";
+import { PayrollDashboardView } from "./PayrollDashboardView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,24 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
+    // Payroll Management views
+    if (appId === "payroll") {
+      switch (activeView) {
+        case "dashboard": return <PayrollDashboardView onNavigate={setActiveView} />;
+        case "audit-log": return <AuditLogView />;
+        case "settings": return <SettingsView />;
+        case "payroll-runs":
+        case "salary-slips":
+        case "tax-reports":
+        case "deductions":
+        case "salary-tables":
+        case "tax-settings":
+        case "payment-methods":
+          return <PayrollDashboardView onNavigate={setActiveView} />;
+        default: return <PayrollDashboardView onNavigate={setActiveView} />;
+      }
+    }
+
     // Forestry Project Manager views
     if (appId === "forestry-project") {
       switch (activeView) {

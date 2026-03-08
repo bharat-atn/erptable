@@ -19,7 +19,12 @@ interface Props {
   project: any;
 }
 
-const STAR_RATINGS = [1, 2, 3] as const;
+const STAR_RATINGS = [1, 2, 3, 4, 5] as const;
+
+function parseNotes(notes: string | null | undefined): Record<string, any> {
+  if (!notes) return {};
+  try { return JSON.parse(notes); } catch { return {}; }
+}
 
 export function TeamMembersTab({ projectId, orgId, project }: Props) {
   const queryClient = useQueryClient();
@@ -53,6 +58,33 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
     },
     enabled: !!projectId,
   });
+
+  // Fetch project objects to calculate hours per star rating
+  const { data: objects = [] } = useQuery({
+    queryKey: ["forestry-objects", projectId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("forestry_objects" as any)
+        .select("*")
+        .eq("project_id", projectId);
+      return (data || []) as any[];
+    },
+    enabled: !!projectId,
+  });
+
+  // Sum hours per star from objects notes JSON
+  const hoursByStar = useMemo(() => {
+    const totals: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    objects.forEach((obj: any) => {
+      const nd = parseNotes(obj.notes);
+      for (let s = 1; s <= 5; s++) {
+        totals[s] += Number(nd[`hours_${s}`]) || 0;
+      }
+    });
+    return totals;
+  }, [objects]);
+
+  const totalHoursAllStars = Object.values(hoursByStar).reduce((a, b) => a + b, 0);
 
   const teamMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -95,7 +127,6 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
   // Set leader
   const setLeader = useMutation({
     mutationFn: async (employeeId: string) => {
-      // Reset current leader
       if (teamLeaderId) {
         await supabase
           .from("forestry_project_members" as any)
@@ -103,7 +134,6 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
           .eq("project_id", projectId)
           .eq("employee_id", teamLeaderId);
       }
-      // Ensure member exists
       if (!teamMap.has(employeeId)) {
         await supabase.from("forestry_project_members" as any).insert({
           project_id: projectId,
@@ -148,6 +178,19 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
   const teamSize = teamMembers.length;
   const dailyHours = project?.daily_hours || 8;
 
+  // Required team size per star = hours_for_star / (workDays × dailyHours)
+  const requiredByStar = useMemo(() => {
+    const perPersonHours = workDays * dailyHours;
+    if (perPersonHours === 0) return { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const result: Record<number, number> = {};
+    for (let s = 1; s <= 5; s++) {
+      result[s] = hoursByStar[s] / perPersonHours;
+    }
+    return result;
+  }, [hoursByStar, workDays, dailyHours]);
+
+  const totalRequired = Object.values(requiredByStar).reduce((a, b) => a + b, 0);
+
   const filteredEmployees = useMemo(() => {
     return employees.filter((e: any) => {
       const q = search.toLowerCase();
@@ -180,7 +223,7 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
         <div className="p-2 rounded-lg bg-primary/10"><Users className="w-4 h-4 text-primary" /></div>
         <div>
           <h3 className="font-semibold text-foreground">Team Members</h3>
-          <p className="text-xs text-muted-foreground">Select team leader and 4-6 team members</p>
+          <p className="text-xs text-muted-foreground">Select team leader and assign star ratings (1-5)</p>
         </div>
       </div>
 
@@ -268,22 +311,24 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
           <Card className="border-border/60">
             <CardContent className="pt-6 text-center">
               <h4 className="font-semibold text-sm">Team Calculation</h4>
-              <p className="text-[10px] text-muted-foreground mb-4">Based on project requirements</p>
+              <p className="text-[10px] text-muted-foreground mb-4">Based on project objects & schedule</p>
 
               {/* Total Project Hours */}
               <div className="border border-border rounded-lg p-3 mb-3">
                 <span className="text-[10px] font-bold uppercase text-primary">Total Project Hours</span>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-5 gap-1.5 mt-2">
                   {STAR_RATINGS.map((s) => (
                     <div key={s}>
                       <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted-foreground mb-0.5">
-                        {Array.from({ length: s }, (_, i) => <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
-                        <span>{s} Star</span>
+                        {Array.from({ length: s }, (_, i) => <Star key={i} className="w-2 h-2 fill-amber-400 text-amber-400" />)}
                       </div>
-                      <div className="text-lg font-bold">0</div>
-                      <div className="text-[9px] text-primary">hours needed per rating</div>
+                      <div className="text-lg font-bold">{hoursByStar[s].toFixed(0)}</div>
+                      <div className="text-[8px] text-muted-foreground">hours</div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-2 pt-2 border-t border-border">
+                  <span className="text-xs font-semibold text-primary">{totalHoursAllStars.toFixed(0)} total hours</span>
                 </div>
               </div>
 
@@ -291,41 +336,46 @@ export function TeamMembersTab({ projectId, orgId, project }: Props) {
               <div className="border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg p-3 mb-3">
                 <span className="text-[10px] font-bold uppercase text-emerald-600">Total Working Days</span>
                 <div className="text-3xl font-bold text-foreground mt-1">{workDays}</div>
-                <div className="text-[9px] text-emerald-600">workdays available</div>
+                <div className="text-[9px] text-emerald-600">{dailyHours}h/day × {workDays} days = {(workDays * dailyHours).toFixed(0)}h per person</div>
               </div>
 
               {/* Required Team Size */}
               <div className="border border-amber-200 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3 mb-3">
                 <span className="text-[10px] font-bold uppercase text-amber-600">Required Team Size</span>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+                <div className="grid grid-cols-5 gap-1.5 mt-2">
                   {STAR_RATINGS.map((s) => (
                     <div key={s}>
                       <div className="flex items-center justify-center gap-0.5 text-[10px] text-muted-foreground mb-0.5">
-                        {Array.from({ length: s }, (_, i) => <Star key={i} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />)}
+                        {Array.from({ length: s }, (_, i) => <Star key={i} className="w-2 h-2 fill-amber-400 text-amber-400" />)}
                       </div>
-                      <div className="text-lg font-bold">0.0</div>
-                      <div className="text-[9px] text-amber-600">people needed per rating</div>
+                      <div className="text-lg font-bold">{requiredByStar[s].toFixed(1)}</div>
+                      <div className="text-[8px] text-amber-600">people</div>
                     </div>
                   ))}
+                </div>
+                <div className="mt-2 pt-2 border-t border-amber-200">
+                  <span className="text-xs font-semibold text-amber-700">{totalRequired.toFixed(1)} total needed</span>
                 </div>
               </div>
 
               {/* Current Team Size */}
               <div className={`border rounded-lg p-3 ${
-                teamSize >= 4
+                teamSize >= Math.ceil(totalRequired)
                   ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30"
                   : "border-amber-300 bg-amber-50 dark:bg-amber-950/30"
               }`}>
-                <span className={`text-[10px] font-bold uppercase ${teamSize >= 4 ? "text-emerald-600" : "text-amber-600"}`}>
+                <span className={`text-[10px] font-bold uppercase ${teamSize >= Math.ceil(totalRequired) ? "text-emerald-600" : "text-amber-600"}`}>
                   Current Team Size
                 </span>
                 <div className="text-4xl font-bold text-foreground mt-1">{teamSize}</div>
-                {teamSize >= 4 ? (
+                {teamSize >= Math.ceil(totalRequired) && totalRequired > 0 ? (
                   <div className="flex items-center justify-center gap-1 text-[10px] text-emerald-600">
                     <CheckCircle2 className="w-3 h-3" /> Sufficient team allocated
                   </div>
+                ) : totalRequired > 0 ? (
+                  <div className="text-[10px] text-amber-600">Need at least {Math.ceil(totalRequired)} members</div>
                 ) : (
-                  <div className="text-[10px] text-amber-600">Need at least 4 members</div>
+                  <div className="text-[10px] text-muted-foreground">Add hours in Objects tab to calculate</div>
                 )}
               </div>
             </CardContent>
