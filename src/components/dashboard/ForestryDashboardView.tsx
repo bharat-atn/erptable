@@ -42,7 +42,7 @@ const TYPE_LABELS: Record<string, string> = {
   mixed: "Mixed",
 };
 
-export function ForestryDashboardView({ onNavigate }: ForestryDashboardViewProps) {
+export function ForestryDashboardView({ onNavigate, onOpenSetup }: ForestryDashboardViewProps) {
   const { orgId } = useOrg();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
