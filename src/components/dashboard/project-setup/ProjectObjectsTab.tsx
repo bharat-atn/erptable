@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,12 @@ function generateObjectId() {
   const y = new Date().getFullYear().toString().slice(-2);
   const n = String(Math.floor(Math.random() * 999) + 1).padStart(3, "0");
   return `OBJ-${y}-${n}`;
+}
+
+/** Parse notes JSON safely */
+function parseNotes(notes: string | null | undefined): Record<string, any> {
+  if (!notes) return {};
+  try { return JSON.parse(notes); } catch { return {}; }
 }
 
 export function ProjectObjectsTab({ projectId, orgId }: Props) {
@@ -83,7 +89,7 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
     },
   });
 
-  const updateField = async (id: string, field: string, value: any) => {
+  const updateField = useCallback(async (id: string, field: string, value: any) => {
     const { error } = await supabase
       .from("forestry_objects" as any)
       .update({ [field]: value } as any)
@@ -94,7 +100,14 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
-  };
+  }, [projectId, queryClient]);
+
+  /** Update a nested key inside notes JSON */
+  const updateNotesKey = useCallback(async (id: string, currentNotes: string | null, key: string, value: any) => {
+    const existing = parseNotes(currentNotes);
+    const updated = { ...existing, [key]: value };
+    await updateField(id, "notes", JSON.stringify(updated));
+  }, [updateField]);
 
   const filtered = useMemo(() => {
     return objects.filter((o: any) => {
@@ -105,6 +118,18 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
   }, [objects, search]);
 
   const starHeaders = ["1★", "2★", "3★", "4★", "5★"];
+
+  // Calculate totals for hours columns
+  const hoursTotals = useMemo(() => {
+    const totals = [0, 0, 0, 0, 0];
+    filtered.forEach((obj: any) => {
+      const nd = parseNotes(obj.notes);
+      for (let s = 1; s <= 5; s++) {
+        totals[s - 1] += Number(nd[`hours_${s}`]) || 0;
+      }
+    });
+    return totals;
+  }, [filtered]);
 
   return (
     <div className="space-y-5">
@@ -181,10 +206,7 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
                 </TableRow>
               ) : (
                 filtered.map((obj: any) => {
-                  let sd: any = {};
-                  if (obj.notes) {
-                    try { sd = JSON.parse(obj.notes); } catch { sd = {}; }
-                  }
+                  const nd = parseNotes(obj.notes);
                   return (
                     <TableRow key={obj.id}>
                       <TableCell className="font-mono text-xs">{obj.object_id_display}</TableCell>
@@ -214,24 +236,26 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      {/* Execution units - 5 star cols */}
+                      {/* Execution units - 5 star cols (persisted in notes as exec_1..exec_5) */}
                       {[1, 2, 3, 4, 5].map((star) => (
                         <TableCell key={"e" + star} className="text-center">
                           <Input
                             type="number"
-                            defaultValue={0}
+                            defaultValue={nd[`exec_${star}`] ?? 0}
+                            onBlur={(e) => updateNotesKey(obj.id, obj.notes, `exec_${star}`, Number(e.target.value))}
                             className="h-8 text-xs w-14 text-center"
                           />
                         </TableCell>
                       ))}
-                      {/* Total hours - 5 star cols with colored bg */}
+                      {/* Total hours - 5 star cols with colored bg (persisted as hours_1..hours_5) */}
                       {[1, 2, 3, 4, 5].map((star) => {
                         const colors = ["bg-blue-50", "bg-blue-100", "bg-rose-50", "bg-rose-100", "bg-rose-200"];
                         return (
                           <TableCell key={"h" + star} className={`text-center ${colors[star - 1]}`}>
                             <Input
                               type="number"
-                              defaultValue={0}
+                              defaultValue={nd[`hours_${star}`] ?? 0}
+                              onBlur={(e) => updateNotesKey(obj.id, obj.notes, `hours_${star}`, Number(e.target.value))}
                               className={`h-8 text-xs w-14 text-center font-semibold ${colors[star - 1]} border-0`}
                             />
                           </TableCell>
@@ -264,7 +288,7 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
                     const colors = ["bg-blue-100 text-blue-700", "bg-blue-200 text-blue-700", "bg-rose-100 text-rose-700", "bg-rose-200 text-rose-700", "bg-rose-300 text-rose-700"];
                     return (
                       <TableCell key={"t" + star} className="text-center">
-                        <Badge className={`text-[10px] ${colors[star - 1]}`}>0.00</Badge>
+                        <Badge className={`text-[10px] ${colors[star - 1]}`}>{hoursTotals[star - 1].toFixed(2)}</Badge>
                       </TableCell>
                     );
                   })}
