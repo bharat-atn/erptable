@@ -736,6 +736,40 @@ export function DataHandlingView() {
     }
   }, [toImport, orgId]);
 
+  // Improvement #9: dry-run import
+  const handleDryRun = useCallback(async () => {
+    if (!orgId) return;
+    setIsDryRunning(true);
+    setDryRunResults(null);
+    const results = { valid: 0, duplicates: [] as string[], errors: [] as string[] };
+
+    // Check for duplicate emails against existing DB
+    const emails = toImport.map((r) => r.email.toLowerCase());
+    const { data: existingDups } = await supabase
+      .from("employees")
+      .select("email")
+      .eq("org_id", orgId)
+      .in("email", emails);
+
+    const dupSet = new Set((existingDups || []).map((e) => e.email.toLowerCase()));
+
+    for (const row of toImport) {
+      if (dupSet.has(row.email.toLowerCase())) {
+        results.duplicates.push(row.email);
+      } else if (!row.email || !EMAIL_REGEX.test(row.email)) {
+        results.errors.push(`${row.email || "(blank)"}: Invalid email`);
+      } else if (!row.first_name && !row.last_name) {
+        results.errors.push(`${row.email}: Missing name`);
+      } else {
+        results.valid++;
+      }
+    }
+
+    setDryRunResults(results);
+    setIsDryRunning(false);
+    toast.info("Dry run complete — no data was imported");
+  }, [toImport, orgId]);
+
   const resetAll = useCallback(() => {
     setStep(1);
     setCsvHeaders([]);
