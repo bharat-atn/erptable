@@ -215,6 +215,8 @@ export function DataHandlingView() {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+  const [dryRunResults, setDryRunResults] = useState<{ valid: number; duplicates: string[]; errors: string[] } | null>(null);
+  const [isDryRunning, setIsDryRunning] = useState(false);
 
   // Preset & Draft state
   const { presets, savePreset, deletePreset } = useImportPresets(orgId);
@@ -226,6 +228,13 @@ export function DataHandlingView() {
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [showLoadDraftDialog, setShowLoadDraftDialog] = useState(false);
   const [hideColors, setHideColors] = useState(false);
+
+  // Undo/Redo state (improvement #8)
+  const [editHistory, setEditHistory] = useState<MappedEmployee[][]>([]);
+  const [editHistoryIndex, setEditHistoryIndex] = useState(-1);
+
+  // Step 2 expanded personalInfo columns (improvement #6)
+  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
