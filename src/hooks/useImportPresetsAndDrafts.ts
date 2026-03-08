@@ -44,7 +44,9 @@ export function useImportPresets(orgId: string | null) {
   const savePreset = useMutation({
     mutationFn: async ({ name, mappings }: { name: string; mappings: Record<string, string> }) => {
       const { data: userData } = await supabase.auth.getUser();
+      if (!orgId) throw new Error("No organization selected");
       const { error } = await supabase.from("import_mapping_presets" as any).insert({
+        org_id: orgId,
         name,
         mappings,
         created_by: userData.user?.id || null,
