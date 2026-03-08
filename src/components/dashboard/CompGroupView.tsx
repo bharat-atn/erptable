@@ -365,7 +365,7 @@ export function CompGroupView() {
     if (!newGroup) return;
     if (classes.length > 0) {
       await supabase.from("comp_group_classes").insert(
-        classes.map(c => ({ org_id: currentOrgId, group_id: newGroup.id, sla_class_id: c.sla_class_id, type_label: c.type_label, client: c.client, star_1: c.star_1, star_2: c.star_2, star_3: c.star_3, star_4: c.star_4, star_5: c.star_5, hourly_gross: c.hourly_gross, sort_order: c.sort_order }))
+        classes.map(c => ({ org_id: currentOrgId, group_id: newGroup.id, sla_class_id: c.sla_class_id, type_label: c.type_label, client: c.client, star_1: c.star_1, star_2: c.star_2, star_3: c.star_3, star_4: c.star_4, star_5: c.star_5, hourly_gross: c.hourly_gross, net_value: c.net_value, sort_order: c.sort_order }))
       );
     }
     toast.success("Group duplicated");
