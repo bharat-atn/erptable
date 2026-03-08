@@ -17,6 +17,7 @@ interface ImportDraft {
   raw_headers: string[];
   mappings: Record<string, string>;
   mapped_data: any[];
+  raw_csv_rows: any[];
   row_count: number;
   created_at: string;
   updated_at: string;
