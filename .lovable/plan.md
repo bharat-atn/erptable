@@ -1,23 +1,23 @@
 
 
-## Why "Data Handling" is not visible
+## Plan: Add Employee Code/ID Field to Data Handling Column Mapping
 
-The sidebar item exists in the code (Sidebar.tsx line 119, sidebar-registry.ts). However, the sidebar loads permissions from the `role_sidebar_access` database table. Since that table was populated **before** the `data-handling` item was added, it has no entry for this menu item — and because there ARE other entries for your role/app combo, the fallback to defaults doesn't kick in.
+### Problem
+The Data Handling CSV import has no "Employee Code" or "Employee ID" option in the system field mapping dropdown. The CSV file contains columns like `[Anställd]Id` and `PersonNr` that should be mappable to the `employee_code` column on the `employees` table.
 
-## Fix
+### Changes (single file: `src/components/dashboard/DataHandlingView.tsx`)
 
-**Option A (recommended)**: Use the "Reset to Defaults" button in **User Management → Role Permissions → Sidebar Permissions tab**. This will re-seed all sidebar permissions from the registry, including the new `data-handling` item.
+**1. Add `employee_code` to `SYSTEM_FIELDS` array (~line 52)**
+- Add `{ key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" }` to the field list, placed after the name fields and before email.
 
-**Option B (code fix)**: Add a database migration that inserts the missing `data-handling` entry into `role_sidebar_access` for the relevant roles (`admin`, `org_admin`, `hr_manager`) and `app_id = 'hr-management'`.
+**2. Add aliases to `HEADER_ALIASES` (~line 75)**
+- Map common Swedish/English CSV headers to `employee_code`:
+  - `personnr`, `personnummer`, `personnr` → `employee_code`
+  - `anstallid`, `anställdid`, `employeeid`, `employee_id`, `employee_code`, `empid`, `emp_id` → `employee_code`
 
-```sql
-INSERT INTO role_sidebar_access (role, app_id, menu_item_id)
-VALUES 
-  ('admin', 'hr-management', 'data-handling'),
-  ('org_admin', 'hr-management', 'data-handling'),
-  ('hr_manager', 'hr-management', 'data-handling')
-ON CONFLICT DO NOTHING;
-```
+**3. Ensure `employee_code` is carried through the mapping pipeline**
+- The `MappedEmployee` interface already has `employee_code` (line 36), so no interface change needed.
+- Verify the `proceedToWashing` callback maps the field correctly to `employee_code` on each row (it likely already handles any key in `SYSTEM_FIELDS` that matches a top-level `MappedEmployee` property).
 
-I'd recommend going with **Option B** (migration) so it's automatic for all users, plus doing the Reset to Defaults from the UI for your current session.
+This is a small, targeted change — roughly 5 lines added.
 
