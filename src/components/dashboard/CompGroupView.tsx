@@ -74,7 +74,7 @@ const ALL_SLA_IDS = ["101","102","103","104","105","106","107","108","109","110"
 /* ------------------------------------------------------------------ */
 
 export function CompGroupView() {
-  const { currentOrgId } = useOrgContext();
+  const { orgId: currentOrgId } = useOrg();
 
   const [groups, setGroups] = useState<CompGroup[]>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
