@@ -61,9 +61,11 @@ const translations: Record<string, Record<UiLang, string>> = {
   "menu.leave-requests": { en: "Leave Requests", sv: "Ledighetsansökningar", ro: "Cereri de concediu" },
 
   // Time Reporting menu items
+  "menu.weekly-attendance": { en: "Weekly Attendance", sv: "Veckonärvaro", ro: "Prezență săptămânală" },
+  "menu.progress-reporting": { en: "Progress Reporting", sv: "Framstegsrapportering", ro: "Raportare progres" },
+  "menu.approvals": { en: "Approvals", sv: "Godkännanden", ro: "Aprobări" },
   "menu.time-entries": { en: "Time Entries", sv: "Tidrapporter", ro: "Înregistrări timp" },
   "menu.timesheets": { en: "Timesheets", sv: "Tidrapporter", ro: "Foi de pontaj" },
-  "menu.approvals": { en: "Approvals", sv: "Godkännanden", ro: "Aprobări" },
   "menu.project-codes": { en: "Project Codes", sv: "Projektkoder", ro: "Coduri proiect" },
   "menu.overtime-rules": { en: "Overtime Rules", sv: "Övertidsregler", ro: "Reguli ore suplimentare" },
 

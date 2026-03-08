@@ -166,6 +166,57 @@ export type Database = {
           },
         ]
       }
+      attendance_entries: {
+        Row: {
+          created_at: string
+          employee_id: string
+          hours: number | null
+          id: string
+          note: string | null
+          report_id: string
+          updated_at: string
+          work_date: string
+          worked: boolean
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          hours?: number | null
+          id?: string
+          note?: string | null
+          report_id: string
+          updated_at?: string
+          work_date: string
+          worked?: boolean
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          hours?: number | null
+          id?: string
+          note?: string | null
+          report_id?: string
+          updated_at?: string
+          work_date?: string
+          worked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_entries_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -1855,6 +1906,51 @@ export type Database = {
           },
         ]
       }
+      progress_entries: {
+        Row: {
+          completion_pct: number
+          created_at: string
+          id: string
+          notes: string | null
+          object_id: string
+          report_id: string
+          updated_at: string
+        }
+        Insert: {
+          completion_pct?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          object_id: string
+          report_id: string
+          updated_at?: string
+        }
+        Update: {
+          completion_pct?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          object_id?: string
+          report_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_entries_object_id_fkey"
+            columns: ["object_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_objects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_entries_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_defaults: {
         Row: {
           accommodation_per_night: number
@@ -2135,6 +2231,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      weekly_reports: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          org_id: string
+          project_id: string
+          status: string
+          submitted_at: string | null
+          submitted_by: string
+          updated_at: string
+          week_number: number
+          week_start: string
+          year: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id: string
+          project_id: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by: string
+          updated_at?: string
+          week_number: number
+          week_start: string
+          year: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          org_id?: string
+          project_id?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string
+          updated_at?: string
+          week_number?: number
+          week_start?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -187,6 +187,20 @@ const employeeHubMenuItems: MenuItem[] = [
 const employeeHubSettingsItems: MenuItem[] = [
 { id: "settings", label: "Settings", icon: Settings }];
 
+// Time & Status Reporting menu items
+const timeReportingMenuItems: MenuItem[] = [
+{ id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+{ id: "weekly-attendance", label: "Weekly Attendance", icon: CheckSquare },
+{ id: "progress-reporting", label: "Progress Reporting", icon: BarChart3 },
+{ id: "approvals", label: "Approvals", icon: Shield },
+{ id: "reports", label: "Reports", icon: FileText }];
+
+const timeReportingSettingsItems: MenuItem[] = [
+{ id: "settings", label: "Settings", icon: Settings }];
+
+const timeReportingAuditItems: MenuItem[] = [
+{ id: "audit-log", label: "Audit Log", icon: Shield }];
+
 
 
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
@@ -978,20 +992,24 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
   const isForestry = appId === "forestry-project";
   const isPayroll = appId === "payroll";
   const isEmployeeHub = appId === "employee-hub";
+  const isTimeReporting = appId === "time-reporting";
 
   const getMenuDefaults = () => {
+    if (isTimeReporting) return timeReportingMenuItems;
     if (isEmployeeHub) return employeeHubMenuItems;
     if (isPayroll) return payrollMenuItems;
     if (isForestry) return forestryMenuItems;
     return defaultMenuItems;
   };
   const getSettingsDefaults = () => {
+    if (isTimeReporting) return timeReportingSettingsItems;
     if (isEmployeeHub) return employeeHubSettingsItems;
     if (isPayroll) return payrollSettingsItems;
     if (isForestry) return forestrySettingsItems;
     return defaultSettingsItems;
   };
   const getConfigDefaults = () => {
+    if (isTimeReporting) return timeReportingAuditItems;
     if (isEmployeeHub) return [];
     if (isPayroll) return payrollAuditItems;
     if (isForestry) return forestryAuditItems;
@@ -1002,7 +1020,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
     return [];
   };
 
-  const menuPrefix = isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
+  const menuPrefix = isTimeReporting ? "time-reporting" : isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
   const [menuItems, setMenuItems] = useState(() => loadOrder(`${menuPrefix}-menu`, getMenuDefaults()));
   const [settingsItems, setSettingsItems] = useState(() => loadOrder(`${menuPrefix}-settings`, getSettingsDefaults()));
   const [configItems, setConfigItems] = useState(() => loadOrder(`${menuPrefix}-audit`, getConfigDefaults()));
@@ -1010,12 +1028,12 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
 
   // Reset menu items when app changes
   useEffect(() => {
-    const prefix = isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
+    const prefix = isTimeReporting ? "time-reporting" : isEmployeeHub ? "employee-hub" : isPayroll ? "payroll" : isForestry ? "forestry" : "";
     setMenuItems(loadOrder(`${prefix}-menu`, getMenuDefaults()));
     setSettingsItems(loadOrder(`${prefix}-settings`, getSettingsDefaults()));
     setConfigItems(loadOrder(`${prefix}-audit`, getConfigDefaults()));
     setBottomItems(getBottomDefaults());
-  }, [appId, isForestry, isPayroll, isEmployeeHub]);
+  }, [appId, isForestry, isPayroll, isEmployeeHub, isTimeReporting]);
 
   // Fetch sidebar permissions for current role + app
   const { data: allowedItems } = useQuery({

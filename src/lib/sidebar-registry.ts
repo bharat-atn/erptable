@@ -84,12 +84,11 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
   ],
   "time-reporting": [
     { id: "dashboard", label: "Dashboard", group: "main" },
-    { id: "time-entries", label: "Time Entries", group: "main" },
-    { id: "timesheets", label: "Timesheets", group: "main" },
+    { id: "weekly-attendance", label: "Weekly Attendance", group: "main" },
+    { id: "progress-reporting", label: "Progress Reporting", group: "main" },
     { id: "approvals", label: "Approvals", group: "main" },
     { id: "reports", label: "Reports", group: "main" },
-    { id: "project-codes", label: "Project Codes", group: "settings" },
-    { id: "overtime-rules", label: "Overtime Rules", group: "settings" },
+    { id: "settings", label: "Settings", group: "settings" },
     { id: "audit-log", label: "Audit Log", group: "others" },
   ],
 };
@@ -140,10 +139,10 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
   "time-reporting": {
     admin: SIDEBAR_ITEMS_BY_APP["time-reporting"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["time-reporting"].map((i) => i.id),
-    project_manager: ["dashboard", "time-entries", "timesheets", "approvals", "reports", "project-codes"],
-    team_leader: ["dashboard", "time-entries", "timesheets", "approvals"],
-    hr_manager: ["dashboard", "timesheets", "reports"],
-    payroll_manager: ["dashboard", "timesheets", "reports"],
-    user: ["dashboard", "time-entries", "timesheets"],
+    project_manager: ["dashboard", "weekly-attendance", "progress-reporting", "approvals", "reports"],
+    team_leader: ["dashboard", "weekly-attendance", "progress-reporting"],
+    hr_manager: ["dashboard", "reports"],
+    payroll_manager: ["dashboard", "reports"],
+    user: ["dashboard"],
   },
 };
