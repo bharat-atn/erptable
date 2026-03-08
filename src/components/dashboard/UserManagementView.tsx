@@ -1427,6 +1427,14 @@ export function UserManagementView() {
         allOrgs={allOrgs}
       />
 
+      <UserCsvImportDialog
+        open={csvImportOpen}
+        onClose={() => setCsvImportOpen(false)}
+        onSuccess={invalidateAll}
+        apps={apps}
+        allOrgs={allOrgs}
+      />
+
       {editNameDialog && (
         <EditNameDialog
           open
