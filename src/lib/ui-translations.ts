@@ -21,6 +21,7 @@ const translations: Record<string, Record<UiLang, string>> = {
   "menu.employee-id-settings": { en: "Employee ID", sv: "Anställnings-ID", ro: "ID angajat" },
   "menu.contract-id-settings": { en: "Contract ID", sv: "Kontrakts-ID", ro: "ID contract" },
   "menu.iso-standards": { en: "ISO Standards", sv: "ISO-standarder", ro: "Standarde ISO" },
+  "menu.data-handling": { en: "Data Handling", sv: "Datahantering", ro: "Gestionare date" },
   "menu.version-management": { en: "Version Management", sv: "Versionshantering", ro: "Gestionare versiuni" },
   "menu.process-guide": { en: "Process Guide", sv: "Processguide", ro: "Ghid procese" },
   "menu.audit-log": { en: "Audit Log", sv: "Revisionslogg", ro: "Jurnal audit" },
