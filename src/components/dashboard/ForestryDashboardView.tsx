@@ -212,7 +212,7 @@ export function ForestryDashboardView({ onNavigate, onOpenSetup }: ForestryDashb
                 <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No projects found</TableCell></TableRow>
               ) : (
                 filtered.slice(0, 20).map((p: any) => (
-                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/50">
+                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onOpenSetup?.(p.id)}>
                     <TableCell className="font-mono text-xs">{p.project_id_display}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{TYPE_LABELS[p.type] || p.type}</Badge></TableCell>
