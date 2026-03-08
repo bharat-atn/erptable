@@ -639,9 +639,10 @@ export function CompGroupView() {
                     <TableHead className="w-52">Type</TableHead>
                     <TableHead className="w-32">Client</TableHead>
                     <TableHead colSpan={5} className="text-center border-l">
-                      <span className="font-semibold">{methodLabel}</span>
+                      <span className="font-semibold">{starGroupLabel}</span>
                     </TableHead>
-                    <TableHead className="w-28 text-center">Hourly Gross</TableHead>
+                    <TableHead className="w-28 text-center">{grossLabel}</TableHead>
+                    {netLabel && <TableHead className="w-28 text-center">{netLabel}</TableHead>}
                     <TableHead className="w-16">Actions</TableHead>
                   </TableRow>
                   <TableRow>
@@ -657,6 +658,7 @@ export function CompGroupView() {
                       </TableHead>
                     ))}
                     <TableHead />
+                    {netLabel && <TableHead />}
                     <TableHead />
                   </TableRow>
                 </TableHeader>
