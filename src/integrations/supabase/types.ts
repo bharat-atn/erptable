@@ -667,6 +667,68 @@ export type Database = {
           },
         ]
       }
+      forestry_clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          client_number: string
+          company_name: string
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          org_id: string
+          phone: string | null
+          postcode: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          client_number: string
+          company_name: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          org_id: string
+          phone?: string | null
+          postcode?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          client_number?: string
+          company_name?: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          org_id?: string
+          phone?: string | null
+          postcode?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forestry_clients_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forestry_objects: {
         Row: {
           area_hectares: number | null
