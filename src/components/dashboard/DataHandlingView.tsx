@@ -1239,6 +1239,42 @@ export function DataHandlingView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import confirmation dialog */}
+      <AlertDialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              Confirm Employee Import
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  You are about to import <strong>{toImport.length} employees</strong> into:
+                </p>
+                <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
+                  <Building2 className="h-4 w-4 text-primary shrink-0" />
+                  <span className="font-semibold">{orgName || "—"}</span>
+                  {companies && companies.length > 0 && (
+                    <span className="text-muted-foreground text-sm">({companyNames})</span>
+                  )}
+                  {orgType === "sandbox" && (
+                    <Badge variant="warning" className="ml-1">Sandbox</Badge>
+                  )}
+                </div>
+                <p className="text-sm">This action cannot be undone. Please verify the target organization is correct.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowImportConfirm(false); handleImport(); }}>
+              Import {toImport.length} Employees
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
