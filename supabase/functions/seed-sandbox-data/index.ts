@@ -58,7 +58,7 @@ const SEED_PROJECT = {
   name: "Värmland Forest Clearing 2026",
   project_id_display: "PJ-26-0001",
   type: "clearing",
-  status: "active",
+  status: "in_progress",
   location: "Värmland, Sweden",
   description: "Scenario 1 – Forest clearing project for Swedish Forestry Corporation. 3 objects, 49.8 hectares total, SLA 107, piece-work compensation.",
   start_date: "2026-05-01",
@@ -126,9 +126,11 @@ Deno.serve(async (req) => {
       await admin.from("employees").delete().eq("org_id", sandboxOrgId);
       await admin.from("companies").delete().eq("org_id", sandboxOrgId);
       await admin.from("forestry_objects").delete().eq("org_id", sandboxOrgId);
-      await admin.from("forestry_project_members").delete().in("project_id",
-        (await admin.from("forestry_projects").select("id").eq("org_id", sandboxOrgId)).data?.map((p: any) => p.id) || []
-      );
+      const projIds = (await admin.from("forestry_projects").select("id").eq("org_id", sandboxOrgId)).data?.map((p: any) => p.id) || [];
+      if (projIds.length > 0) {
+        await admin.from("forestry_tasks").delete().in("project_id", projIds);
+        await admin.from("forestry_project_members").delete().in("project_id", projIds);
+      }
       await admin.from("forestry_projects").delete().eq("org_id", sandboxOrgId);
       await admin.from("forestry_clients").delete().eq("org_id", sandboxOrgId);
       // Reset comp group data
