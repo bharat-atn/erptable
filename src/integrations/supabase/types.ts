@@ -260,6 +260,161 @@ export type Database = {
           },
         ]
       }
+      comp_group_classes: {
+        Row: {
+          client: string
+          created_at: string
+          group_id: string
+          hourly_gross: number
+          id: string
+          org_id: string
+          sla_class_id: string
+          sort_order: number
+          star_1: number
+          star_2: number
+          star_3: number
+          star_4: number
+          star_5: number
+          type_label: string
+          updated_at: string
+        }
+        Insert: {
+          client?: string
+          created_at?: string
+          group_id: string
+          hourly_gross?: number
+          id?: string
+          org_id: string
+          sla_class_id?: string
+          sort_order?: number
+          star_1?: number
+          star_2?: number
+          star_3?: number
+          star_4?: number
+          star_5?: number
+          type_label?: string
+          updated_at?: string
+        }
+        Update: {
+          client?: string
+          created_at?: string
+          group_id?: string
+          hourly_gross?: number
+          id?: string
+          org_id?: string
+          sla_class_id?: string
+          sort_order?: number
+          star_1?: number
+          star_2?: number
+          star_3?: number
+          star_4?: number
+          star_5?: number
+          type_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_group_classes_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "comp_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comp_group_classes_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comp_group_types: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          label: string
+          org_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          label: string
+          org_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          label?: string
+          org_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_group_types_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "comp_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comp_group_types_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comp_groups: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          method: string
+          name: string
+          org_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          method?: string
+          name: string
+          org_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          method?: string
+          name?: string
+          org_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comp_groups_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
