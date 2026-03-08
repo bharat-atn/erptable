@@ -830,7 +830,14 @@ export function DataHandlingView() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-base">Column Mapping</CardTitle>
-                      <CardDescription>Map each CSV column to the corresponding employee field</CardDescription>
+                      <CardDescription>
+                        Map each CSV column to the corresponding employee field —{" "}
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {csvHeaders.filter(h => columnMapping[h] && columnMapping[h] !== "_skip").length} mapped
+                        </span>
+                        {" / "}
+                        <span className="text-muted-foreground">{csvHeaders.filter(h => !columnMapping[h] || columnMapping[h] === "_skip").length} skipped</span>
+                      </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                       {presets.length > 0 && (
