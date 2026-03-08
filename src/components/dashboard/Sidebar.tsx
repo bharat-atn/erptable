@@ -151,18 +151,23 @@ const forestryBottomItems: MenuItem[] = [
 { id: "process-guide", label: "Process Guide", icon: BookOpen }];
 
 // Payroll Management menu items
-import { DollarSign, MinusCircle, CreditCard } from "lucide-react";
+import { DollarSign, MinusCircle, CreditCard, Zap, Umbrella, Thermometer, CheckSquare } from "lucide-react";
 
 const payrollMenuItems: MenuItem[] = [
 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+{ id: "salary-events", label: "Salary Events", icon: Zap },
+{ id: "absence", label: "Absence", icon: Thermometer },
+{ id: "holiday", label: "Holiday", icon: Umbrella },
+{ id: "attestation", label: "Attestation", icon: Shield },
 { id: "payroll-runs", label: "Payroll Runs", icon: Calendar },
 { id: "salary-slips", label: "Salary Slips", icon: FileText },
-{ id: "tax-reports", label: "Tax Reports", icon: BarChart3 },
-{ id: "deductions", label: "Deductions", icon: MinusCircle },
 { id: "employee-register", label: "Employees", icon: Users }];
 
 const payrollSettingsItems: MenuItem[] = [
 { id: "salary-tables", label: "Salary Tables", icon: DollarSign },
+{ id: "tax-reports", label: "Tax Reports", icon: BarChart3 },
+{ id: "reports", label: "Reports", icon: FileSpreadsheet },
+{ id: "deductions", label: "Deductions", icon: MinusCircle },
 { id: "tax-settings", label: "Tax Settings", icon: Shield },
 { id: "payment-methods", label: "Payment Methods", icon: CreditCard },
 { id: "settings", label: "Settings", icon: Settings }];

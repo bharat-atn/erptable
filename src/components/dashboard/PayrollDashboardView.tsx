@@ -224,10 +224,14 @@ export function PayrollDashboardView({ onNavigate }: PayrollDashboardViewProps) 
       {/* Quick links */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Payroll Runs", desc: "Process monthly payroll", icon: Calendar, view: "payroll-runs" },
-          { label: "Salary Slips", desc: "View & distribute", icon: FileText, view: "salary-slips" },
+          { label: "Salary Events", desc: "Lönehändelser", icon: FileText, view: "salary-events" },
+          { label: "Absence", desc: "Frånvarohantering", icon: Clock, view: "absence" },
+          { label: "Holiday", desc: "Semesterhantering", icon: Calendar, view: "holiday" },
+          { label: "Attestation", desc: "Attestflöde", icon: CheckCircle2, view: "attestation" },
+          { label: "Payroll Runs", desc: "Lönekörningar", icon: Calendar, view: "payroll-runs" },
+          { label: "Reports", desc: "Rapporter & exports", icon: TrendingUp, view: "reports" },
+          { label: "Salary Tables", desc: "Lönearter", icon: DollarSign, view: "salary-tables" },
           { label: "Tax Reports", desc: "AGI & annual reports", icon: TrendingUp, view: "tax-reports" },
-          { label: "Salary Tables", desc: "Collective agreement rates", icon: DollarSign, view: "salary-tables" },
         ].map((item) => {
           const Icon = item.icon;
           return (
