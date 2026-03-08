@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -11,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Plus, Trash2, Check, Copy, Download, Upload, Search, RotateCcw, Lock, BarChart3, Settings2, Star, Pencil } from "lucide-react";
-import { formatNumber } from "@/lib/format-currency";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -62,7 +60,6 @@ const DEFAULT_GROUPS = [
   { name: "Comp. group planting piece work salary", category: "planting", method: "piecework", sort_order: 3 },
 ];
 
-/* Type labels and default classes per group index */
 const SEED_PER_GROUP: Array<{
   typeLabel: string;
   typeFull: string;
@@ -70,7 +67,6 @@ const SEED_PER_GROUP: Array<{
   classes: Array<{ sla: string; s1: number; s2: number; s3: number; s4: number; s5: number; gross: number; net: number }>;
 }> = [
   {
-    // Group 0: Clearing Hourly Salary
     typeLabel: "Clearing Type 1",
     typeFull: "Clearing Type 1 (Hourly Salary)",
     client: "Standard Inc.",
@@ -85,7 +81,6 @@ const SEED_PER_GROUP: Array<{
     ],
   },
   {
-    // Group 1: Planting Hourly Salary
     typeLabel: "Planting Type 1",
     typeFull: "Planting Type 1 (Hourly Salary)",
     client: "Standard Inc.",
@@ -100,7 +95,6 @@ const SEED_PER_GROUP: Array<{
     ],
   },
   {
-    // Group 2: Clearing Piece Work Salary
     typeLabel: "Clearing Type 1",
     typeFull: "Clearing Type 1 (Piece Work)",
     client: "Standard Inc.",
@@ -115,7 +109,6 @@ const SEED_PER_GROUP: Array<{
     ],
   },
   {
-    // Group 3: Planting Piece Work Salary
     typeLabel: "Planting Type 1",
     typeFull: "Planting Type 1 (Piece Work)",
     client: "Standard Inc.",
@@ -132,6 +125,28 @@ const SEED_PER_GROUP: Array<{
 ];
 
 const ALL_SLA_IDS = ["101","102","103","104","105","106","107","108","109","110","111","112","113"];
+const SHOW_CLASS_OPTIONS = [
+  { label: "All (13)", value: 13 },
+  { label: "1", value: 1 },
+  { label: "3", value: 3 },
+  { label: "5", value: 5 },
+  { label: "7 (default)", value: 7 },
+  { label: "9", value: 9 },
+  { label: "11", value: 11 },
+  { label: "13", value: 13 },
+];
+
+const DEFAULT_CLIENTS = [
+  "Swedish Forestry Corporation",
+  "Standard Inc.",
+  "Green Valley Enterprises",
+  "Pacific Forest Management",
+  "Sveaskog Norrland",
+  "SCA Skog AB",
+  "Northwest Logging Co.",
+  "Forest Solutions Inc.",
+  "Timber Tech Ltd",
+];
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
@@ -144,10 +159,15 @@ export function CompGroupView() {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [classes, setClasses] = useState<CompGroupClass[]>([]);
   const [types, setTypes] = useState<CompGroupType[]>([]);
+  const [allTypes, setAllTypes] = useState<CompGroupType[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [locked, setLocked] = useState(false);
+  const [showClassCount, setShowClassCount] = useState(7);
+  const [typeFilter, setTypeFilter] = useState<string>("__all__");
+  const [clientForAll, setClientForAll] = useState<string>("__none__");
+  const [forestryClients, setForestryClients] = useState<string[]>([]);
 
   // Dialogs
   const [newGroupOpen, setNewGroupOpen] = useState(false);
@@ -163,12 +183,36 @@ export function CompGroupView() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const [manageTypesOpen, setManageTypesOpen] = useState(false);
+  const [manageTypesGroupId, setManageTypesGroupId] = useState<string | null>(null);
   const [newTypeLabel, setNewTypeLabel] = useState("");
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [editingTypeLabel, setEditingTypeLabel] = useState("");
 
   const [addClassOpen, setAddClassOpen] = useState(false);
   const [newClassId, setNewClassId] = useState("104");
 
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [duplicateName, setDuplicateName] = useState("");
+
+  const [compareOpen, setCompareOpen] = useState(false);
+  const [compareSelected, setCompareSelected] = useState<Set<string>>(new Set());
+
   const seeded = useRef(false);
+
+  /* ---- Fetch forestry clients ---- */
+  const fetchForestryClients = useCallback(async () => {
+    if (!currentOrgId) return;
+    const { data } = await supabase
+      .from("forestry_clients")
+      .select("company_name")
+      .eq("org_id", currentOrgId)
+      .eq("status", "active")
+      .order("company_name");
+    const names = data?.map(d => d.company_name) || [];
+    // Merge with defaults, deduplicate
+    const merged = Array.from(new Set([...names, ...DEFAULT_CLIENTS]));
+    setForestryClients(merged);
+  }, [currentOrgId]);
 
   /* ---- Fetch groups ---- */
   const fetchGroups = useCallback(async () => {
@@ -187,7 +231,7 @@ export function CompGroupView() {
     return data;
   }, [currentOrgId, activeGroupId]);
 
-  /* ---- Seed defaults for ALL 4 groups ---- */
+  /* ---- Seed defaults ---- */
   const seedDefaults = useCallback(async () => {
     if (!currentOrgId || seeded.current) return;
     seeded.current = true;
@@ -200,7 +244,6 @@ export function CompGroupView() {
 
     if (existing && existing.length > 0) return;
 
-    // Create all 4 default groups
     const { data: createdGroups } = await supabase
       .from("comp_groups")
       .insert(DEFAULT_GROUPS.map(g => ({ ...g, org_id: currentOrgId })))
@@ -209,10 +252,13 @@ export function CompGroupView() {
 
     if (!createdGroups || createdGroups.length === 0) return;
 
-    // Seed classes and types for EACH group
     for (let i = 0; i < createdGroups.length && i < SEED_PER_GROUP.length; i++) {
       const group = createdGroups[i];
       const seed = SEED_PER_GROUP[i];
+      const method = DEFAULT_GROUPS[i].method;
+      const category = DEFAULT_GROUPS[i].category;
+      const methodLabel = method === "hourly" ? "Hourly Salary" : "Piece Work";
+      const catLabel = category === "clearing" ? "Clearing" : "Planting";
 
       await supabase.from("comp_group_classes").insert(
         seed.classes.map((c, idx) => ({
@@ -221,23 +267,21 @@ export function CompGroupView() {
           sla_class_id: c.sla,
           type_label: seed.typeLabel,
           client: seed.client,
-          star_1: c.s1,
-          star_2: c.s2,
-          star_3: c.s3,
-          star_4: c.s4,
-          star_5: c.s5,
+          star_1: c.s1, star_2: c.s2, star_3: c.s3, star_4: c.s4, star_5: c.s5,
           hourly_gross: c.gross,
           net_value: c.net,
           sort_order: idx,
         }))
       );
 
-      await supabase.from("comp_group_types").insert({
+      // Seed 10 types per group
+      const typeInserts = Array.from({ length: 10 }, (_, idx) => ({
         org_id: currentOrgId,
         group_id: group.id,
-        label: seed.typeFull,
-        sort_order: 0,
-      });
+        label: `${catLabel} Type ${idx + 1} (${methodLabel})`,
+        sort_order: idx,
+      }));
+      await supabase.from("comp_group_types").insert(typeInserts);
     }
 
     await fetchGroups();
@@ -267,11 +311,25 @@ export function CompGroupView() {
     if (data) setTypes(data as unknown as CompGroupType[]);
   }, [activeGroupId, currentOrgId]);
 
+  /* ---- Fetch ALL types across all groups (for Manage Types dialog) ---- */
+  const fetchAllTypes = useCallback(async () => {
+    if (!currentOrgId) return;
+    const { data } = await supabase
+      .from("comp_group_types")
+      .select("*")
+      .eq("org_id", currentOrgId)
+      .order("sort_order");
+    if (data) setAllTypes(data as unknown as CompGroupType[]);
+  }, [currentOrgId]);
+
   /* ---- Init ---- */
   useEffect(() => {
     if (!currentOrgId) return;
     setLoading(true);
-    seedDefaults().then(() => fetchGroups()).finally(() => setLoading(false));
+    Promise.all([
+      seedDefaults().then(() => fetchGroups()),
+      fetchForestryClients(),
+    ]).finally(() => setLoading(false));
   }, [currentOrgId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -310,6 +368,34 @@ export function CompGroupView() {
       .eq("id", classId);
     if (error) { toast.error("Failed to update"); return; }
     setClasses(prev => prev.map(c => c.id === classId ? { ...c, client } : c));
+  };
+
+  /* ---- Apply type filter to all classes in group ---- */
+  const applyTypeFilter = async (typeLabel: string) => {
+    setTypeFilter(typeLabel);
+    if (typeLabel === "__all__" || !activeGroupId) return;
+    // Set the type_label on all classes in this group
+    const shortLabel = typeLabel.split(" (")[0];
+    const { error } = await supabase
+      .from("comp_group_classes")
+      .update({ type_label: shortLabel } as any)
+      .eq("group_id", activeGroupId);
+    if (error) { toast.error("Failed to apply type"); return; }
+    setClasses(prev => prev.map(c => ({ ...c, type_label: shortLabel })));
+    toast.success(`Applied "${shortLabel}" to all classes`);
+  };
+
+  /* ---- Apply client for all ---- */
+  const applyClientForAll = async (client: string) => {
+    setClientForAll(client);
+    if (client === "__none__" || !activeGroupId) return;
+    const { error } = await supabase
+      .from("comp_group_classes")
+      .update({ client } as any)
+      .eq("group_id", activeGroupId);
+    if (error) { toast.error("Failed to apply client"); return; }
+    setClasses(prev => prev.map(c => ({ ...c, client })));
+    toast.success(`Set client "${client}" for all classes`);
   };
 
   /* ---- Group CRUD ---- */
@@ -354,12 +440,12 @@ export function CompGroupView() {
   };
 
   const duplicateGroup = async () => {
-    if (!activeGroupId || !currentOrgId) return;
+    if (!activeGroupId || !currentOrgId || !duplicateName.trim()) return;
     const src = groups.find(g => g.id === activeGroupId);
     if (!src) return;
     const { data: newGroup } = await supabase
       .from("comp_groups")
-      .insert({ org_id: currentOrgId, name: `${src.name} (Copy)`, category: src.category, method: src.method, sort_order: groups.length })
+      .insert({ org_id: currentOrgId, name: duplicateName.trim(), category: src.category, method: src.method, sort_order: groups.length })
       .select()
       .single();
     if (!newGroup) return;
@@ -368,7 +454,15 @@ export function CompGroupView() {
         classes.map(c => ({ org_id: currentOrgId, group_id: newGroup.id, sla_class_id: c.sla_class_id, type_label: c.type_label, client: c.client, star_1: c.star_1, star_2: c.star_2, star_3: c.star_3, star_4: c.star_4, star_5: c.star_5, hourly_gross: c.hourly_gross, net_value: c.net_value, sort_order: c.sort_order }))
       );
     }
+    // Also duplicate types
+    if (types.length > 0) {
+      await supabase.from("comp_group_types").insert(
+        types.map(t => ({ org_id: currentOrgId, group_id: newGroup.id, label: t.label, sort_order: t.sort_order }))
+      );
+    }
     toast.success("Group duplicated");
+    setDuplicateOpen(false);
+    setDuplicateName("");
     await fetchGroups();
     setActiveGroupId(newGroup.id);
   };
@@ -384,6 +478,7 @@ export function CompGroupView() {
       client: "",
       star_1: 0, star_2: 0, star_3: 0, star_4: 0, star_5: 0,
       hourly_gross: 0,
+      net_value: 0,
       sort_order: classes.length,
     });
     if (error) { toast.error("Failed to add class"); return; }
@@ -409,28 +504,37 @@ export function CompGroupView() {
   };
 
   /* ---- Types CRUD ---- */
-  const addType = async () => {
-    if (!activeGroupId || !currentOrgId || !newTypeLabel.trim()) return;
+  const addType = async (groupId: string) => {
+    if (!currentOrgId || !newTypeLabel.trim()) return;
+    const targetTypes = allTypes.filter(t => t.group_id === groupId);
     await supabase.from("comp_group_types").insert({
       org_id: currentOrgId,
-      group_id: activeGroupId,
+      group_id: groupId,
       label: newTypeLabel.trim(),
-      sort_order: types.length,
+      sort_order: targetTypes.length,
     });
     setNewTypeLabel("");
-    await fetchTypes();
+    await Promise.all([fetchTypes(), fetchAllTypes()]);
   };
 
   const deleteType = async (id: string) => {
     await supabase.from("comp_group_types").delete().eq("id", id);
-    await fetchTypes();
+    await Promise.all([fetchTypes(), fetchAllTypes()]);
+  };
+
+  const updateType = async (id: string, label: string) => {
+    await supabase.from("comp_group_types").update({ label } as any).eq("id", id);
+    setEditingTypeId(null);
+    setEditingTypeLabel("");
+    await Promise.all([fetchTypes(), fetchAllTypes()]);
   };
 
   /* ---- CSV Export ---- */
   const exportCsv = () => {
     if (classes.length === 0) return;
-    const headers = ["SLA Class", "Type", "Client", "Star 1", "Star 2", "Star 3", "Star 4", "Star 5", "Hourly Gross"];
-    const rows = classes.map(c => [c.sla_class_id, c.type_label, c.client, c.star_1, c.star_2, c.star_3, c.star_4, c.star_5, c.hourly_gross].join(","));
+    const isPw = activeGroup?.method === "piecework";
+    const headers = ["SLA Class", "Type", "Client", "Star 1", "Star 2", "Star 3", "Star 4", "Star 5", "Gross", ...(isPw ? ["Net"] : [])];
+    const rows = classes.map(c => [c.sla_class_id, c.type_label, c.client, c.star_1, c.star_2, c.star_3, c.star_4, c.star_5, c.hourly_gross, ...(isPw ? [c.net_value] : [])].join(","));
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -441,7 +545,7 @@ export function CompGroupView() {
     URL.revokeObjectURL(url);
   };
 
-  /* ---- Reset to defaults for the active group ---- */
+  /* ---- Reset to defaults ---- */
   const resetDefaults = async () => {
     if (!activeGroupId || !currentOrgId) return;
     const groupIdx = groups.findIndex(g => g.id === activeGroupId);
@@ -469,7 +573,6 @@ export function CompGroupView() {
   const isPiecework = activeGroup?.method === "piecework";
   const isClearing = activeGroup?.category === "clearing";
 
-  // Method-specific column labels
   const starGroupLabel = isPiecework
     ? (isClearing ? "Clearing units/day" : "Planting units/hr")
     : "Hourly salary";
@@ -480,11 +583,22 @@ export function CompGroupView() {
     ? (isClearing ? "Clear Net" : "Plant Net")
     : null;
 
-  const filteredClasses = search
+  // Filter by search then limit by showClassCount
+  let filteredClasses = search
     ? classes.filter(c => c.sla_class_id.includes(search) || c.type_label.toLowerCase().includes(search.toLowerCase()) || c.client.toLowerCase().includes(search.toLowerCase()))
     : classes;
+  
+  // Apply show class count limit
+  if (showClassCount < 13 && !search) {
+    filteredClasses = filteredClasses.slice(0, showClassCount);
+  }
 
   const allSelected = filteredClasses.length > 0 && filteredClasses.every(c => selectedRows.has(c.id));
+
+  // For manage types dialog
+  const manageTypesGroup = manageTypesGroupId ? groups.find(g => g.id === manageTypesGroupId) : null;
+  const manageTypesGroupTypes = manageTypesGroupId ? allTypes.filter(t => t.group_id === manageTypesGroupId) : [];
+  const manageTypesMethodLabel = manageTypesGroup?.method === "piecework" ? "Piece Work" : "Hourly Salary";
 
   if (loading) {
     return <div className="flex items-center justify-center py-24 text-muted-foreground">Loading compensation groups…</div>;
@@ -504,19 +618,27 @@ export function CompGroupView() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">Groups</h2>
             <div className="flex flex-wrap gap-2 items-center">
-              <Button size="sm" variant="outline" onClick={() => setManageTypesOpen(true)}>
+              <Button size="sm" variant="outline" onClick={() => {
+                setManageTypesGroupId(activeGroupId);
+                setManageTypesOpen(true);
+                fetchAllTypes();
+              }}>
                 <Settings2 className="w-4 h-4 mr-1" /> Manage Types
               </Button>
               <Button size="sm" variant="outline" onClick={() => setLocked(!locked)}>
                 <Lock className="w-4 h-4 mr-1" /> {locked ? "Unlock Cells" : "Lock Cells"}
               </Button>
-              <Button size="sm" variant="outline" disabled>
+              <Button size="sm" variant="outline" onClick={() => { setCompareSelected(new Set()); setCompareOpen(true); }}>
                 <BarChart3 className="w-4 h-4 mr-1" /> Compare Groups
               </Button>
               <Button size="sm" onClick={() => setNewGroupOpen(true)}>
                 <Plus className="w-4 h-4 mr-1" /> New Group
               </Button>
-              <Button size="sm" variant="outline" onClick={duplicateGroup} disabled={!activeGroupId}>
+              <Button size="sm" variant="outline" onClick={() => {
+                if (!activeGroup) return;
+                setDuplicateName("");
+                setDuplicateOpen(true);
+              }} disabled={!activeGroupId}>
                 <Copy className="w-4 h-4 mr-1" /> Duplicate Group
               </Button>
             </div>
@@ -531,7 +653,7 @@ export function CompGroupView() {
                     ? "bg-primary text-primary-foreground border-primary"
                     : "bg-muted text-muted-foreground border-border hover:bg-accent"
                 }`}
-                onClick={() => { setActiveGroupId(g.id); setSelectedRows(new Set()); }}
+                onClick={() => { setActiveGroupId(g.id); setSelectedRows(new Set()); setTypeFilter("__all__"); setClientForAll("__none__"); }}
               >
                 {g.id === activeGroupId && <Check className="w-3.5 h-3.5" />}
                 <span className="mr-1">{g.name}</span>
@@ -563,32 +685,55 @@ export function CompGroupView() {
 
             {/* Filter bar */}
             <div className="flex flex-wrap gap-3 items-center mb-4">
+              {/* Type for 101-113 */}
               <div className="flex items-center gap-2 border rounded-md px-3 py-1.5">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Type for 101-113:</span>
-                <Select value="" onValueChange={() => {}}>
-                  <SelectTrigger className="h-7 w-32 border-0 p-0 text-xs shadow-none">
-                    <SelectValue placeholder="All" />
+                <Select value={typeFilter} onValueChange={applyTypeFilter}>
+                  <SelectTrigger className="h-7 w-44 border-0 p-0 text-xs shadow-none">
+                    <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="__all__">None</SelectItem>
                     {types.map(t => (
-                      <SelectItem key={t.id} value={t.label}>{t.label.split(" (")[0]}</SelectItem>
+                      <SelectItem key={t.id} value={t.label}>{t.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* Show classes */}
               <div className="flex items-center gap-2 border rounded-md px-3 py-1.5">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Show classes:</span>
-                <span className="text-sm">7 (default)</span>
+                <Select value={String(showClassCount)} onValueChange={v => setShowClassCount(Number(v))}>
+                  <SelectTrigger className="h-7 w-28 border-0 p-0 text-xs shadow-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SHOW_CLASS_OPTIONS.map(opt => (
+                      <SelectItem key={opt.label} value={String(opt.value)}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Client for All */}
               <div className="flex items-center gap-2 border rounded-md px-3 py-1.5">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">Client for All:</span>
-                <Input
-                  value={classes[0]?.client || ""}
-                  className="h-7 w-28 border-0 p-0 text-sm shadow-none"
-                  readOnly
-                />
+                <Select value={clientForAll} onValueChange={applyClientForAll}>
+                  <SelectTrigger className="h-7 w-40 border-0 p-0 text-xs shadow-none">
+                    <SelectValue placeholder="Select client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {forestryClients.map(c => (
+                      <SelectItem key={c} value={c}>
+                        {c}{c === "Standard Inc." ? " (Standard)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <Button size="sm" variant="outline" onClick={resetDefaults}>
@@ -604,22 +749,22 @@ export function CompGroupView() {
                 <Button size="sm" variant="outline" onClick={exportCsv}>
                   <Download className="w-4 h-4 mr-1" /> Export CSV
                 </Button>
+                <Button size="sm" variant="outline" disabled>
+                  <Upload className="w-4 h-4 mr-1" /> Import CSV
+                </Button>
                 <Button size="sm" onClick={() => setAddClassOpen(true)}>
                   <Plus className="w-4 h-4 mr-1" /> Add Class
                 </Button>
               </div>
             </div>
 
-            <div className="flex gap-2 mb-4">
-              <Button size="sm" variant="outline" disabled>
-                <Upload className="w-4 h-4 mr-1" /> Import CSV
-              </Button>
-              {selectedRows.size > 0 && (
+            {selectedRows.size > 0 && (
+              <div className="flex gap-2 mb-4">
                 <Button size="sm" variant="destructive" onClick={deleteSelected}>
                   <Trash2 className="w-4 h-4 mr-1" /> Delete {selectedRows.size}
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Table */}
             <div className="border rounded-lg overflow-x-auto">
@@ -683,9 +828,7 @@ export function CompGroupView() {
                             }}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">
-                          SLA Class {cls.sla_class_id}
-                        </TableCell>
+                        <TableCell className="font-medium">SLA Class {cls.sla_class_id}</TableCell>
                         <TableCell>
                           {locked ? (
                             <span className="text-sm text-muted-foreground">{cls.type_label ? `${cls.type_label} (${isPiecework ? "Piece Work" : "Hourly Salary"})` : "—"}</span>
@@ -707,7 +850,17 @@ export function CompGroupView() {
                           {locked ? (
                             <span className="text-sm">{cls.client || "—"}</span>
                           ) : (
-                            <Input value={cls.client} onChange={e => updateClassClient(cls.id, e.target.value)} className="h-8 text-xs" placeholder="All" />
+                            <Select value={cls.client || "__empty__"} onValueChange={v => updateClassClient(cls.id, v === "__empty__" ? "" : v)}>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="Select client" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__empty__">—</SelectItem>
+                                {forestryClients.map(c => (
+                                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           )}
                         </TableCell>
                         {([1,2,3,4,5] as const).map(star => {
@@ -861,30 +1014,152 @@ export function CompGroupView() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Types */}
-      <Dialog open={manageTypesOpen} onOpenChange={setManageTypesOpen}>
+      {/* Duplicate Group */}
+      <Dialog open={duplicateOpen} onOpenChange={setDuplicateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Manage Types</DialogTitle>
-            <DialogDescription>Define compensation types for this group (e.g. "Clearing Type 1 (Hourly Salary)").</DialogDescription>
+            <DialogTitle>Duplicate: {activeGroup?.name}</DialogTitle>
+            <DialogDescription>Create a copy of this group with all its classes and types.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {types.map(t => (
-              <div key={t.id} className="flex items-center justify-between gap-2 px-3 py-2 border rounded-md">
-                <span className="text-sm">{t.label}</span>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteType(t.id)}>
-                  <Trash2 className="w-4 h-4 text-destructive" />
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">New Group Name</label>
+              <Input
+                value={duplicateName}
+                onChange={e => setDuplicateName(e.target.value)}
+                placeholder="Enter name for duplicated group"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              This will create a new group with all {classes.length} classes copied from "{activeGroup?.name}".
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDuplicateOpen(false)}>Cancel</Button>
+            <Button onClick={duplicateGroup} disabled={!duplicateName.trim()}>Duplicate Group</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Compare Groups */}
+      <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Compare Groups</DialogTitle>
+            <DialogDescription>Select groups to compare side by side.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {groups.map(g => (
+              <label key={g.id} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={compareSelected.has(g.id)}
+                  onCheckedChange={v => {
+                    const next = new Set(compareSelected);
+                    if (v) next.add(g.id); else next.delete(g.id);
+                    setCompareSelected(next);
+                  }}
+                />
+                <span className="text-sm">{g.name}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompareOpen(false)}>Close</Button>
+            <Button disabled={compareSelected.size < 2} onClick={() => {
+              toast.info(`Compare view for ${compareSelected.size} groups coming soon`);
+              setCompareOpen(false);
+            }}>
+              Compare {compareSelected.size} Groups
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Compensation Types */}
+      <Dialog open={manageTypesOpen} onOpenChange={v => { setManageTypesOpen(v); if (!v) { setEditingTypeId(null); setEditingTypeLabel(""); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Manage Compensation Types</DialogTitle>
+            <DialogDescription>Define compensation types for each group. Each group has its own set of types.</DialogDescription>
+          </DialogHeader>
+
+          {/* Group selector */}
+          <div>
+            <label className="text-sm font-medium">Select Compensation Group</label>
+            <Select value={manageTypesGroupId || ""} onValueChange={v => setManageTypesGroupId(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select group" />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map(g => (
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {manageTypesGroup && (
+            <>
+              <div className="bg-muted/50 rounded-md px-4 py-2">
+                <h3 className="text-sm font-semibold">{manageTypesMethodLabel} Types ({manageTypesGroupTypes.length})</h3>
+              </div>
+
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {manageTypesGroupTypes.map((t, idx) => (
+                  <div key={t.id} className="flex items-center justify-between gap-3 px-4 py-3 border rounded-md">
+                    <div className="flex-1 min-w-0">
+                      {editingTypeId === t.id ? (
+                        <div className="flex gap-2">
+                          <Input
+                            value={editingTypeLabel}
+                            onChange={e => setEditingTypeLabel(e.target.value)}
+                            className="h-8 text-sm"
+                            autoFocus
+                            onKeyDown={e => { if (e.key === "Enter") updateType(t.id, editingTypeLabel); if (e.key === "Escape") { setEditingTypeId(null); setEditingTypeLabel(""); } }}
+                          />
+                          <Button size="sm" onClick={() => updateType(t.id, editingTypeLabel)}>Save</Button>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-muted-foreground">Type {idx + 1}</span>
+                            <span className="text-sm font-semibold">{t.label}</span>
+                            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{manageTypesMethodLabel}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            1★: 0.00 | 2★: 0.00 | 3★: 0.00 | 4★: 0.00 | 5★: 0.00 | Gross: 0.00
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingTypeId(t.id); setEditingTypeLabel(t.label); }}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteType(t.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {manageTypesGroupTypes.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No types defined yet.</p>}
+              </div>
+
+              <div className="flex gap-2">
+                <Input value={newTypeLabel} onChange={e => setNewTypeLabel(e.target.value)} placeholder={`e.g. ${manageTypesGroup.category === "clearing" ? "Clearing" : "Planting"} Type ${manageTypesGroupTypes.length + 1} (${manageTypesMethodLabel})`} className="flex-1" />
+                <Button onClick={() => addType(manageTypesGroupId!)} disabled={!newTypeLabel.trim()} size="sm">
+                  <Plus className="w-4 h-4 mr-1" /> Add
                 </Button>
               </div>
-            ))}
-            {types.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No types defined yet.</p>}
-          </div>
-          <div className="flex gap-2">
-            <Input value={newTypeLabel} onChange={e => setNewTypeLabel(e.target.value)} placeholder="e.g. Clearing Type 2 (Hourly Salary)" className="flex-1" />
-            <Button onClick={addType} disabled={!newTypeLabel.trim()} size="sm">
-              <Plus className="w-4 h-4 mr-1" /> Add
-            </Button>
-          </div>
+
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md px-4 py-3">
+                <p className="text-xs text-amber-800 dark:text-amber-200">
+                  <strong>Note:</strong> Each compensation group has its own set of types. Define rates specific to each group's piece work or hourly compensation structure.
+                </p>
+              </div>
+            </>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setManageTypesOpen(false)}>Close</Button>
           </DialogFooter>
