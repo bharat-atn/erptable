@@ -103,6 +103,7 @@ export function useImportDrafts(orgId: string | null) {
       raw_headers: string[];
       mappings: Record<string, string>;
       mapped_data: any[];
+      raw_csv_rows: any[];
       row_count: number;
     }) => {
       const { data: userData } = await supabase.auth.getUser();
