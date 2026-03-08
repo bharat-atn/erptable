@@ -39,7 +39,8 @@ import {
   FolderKanban,
   BarChart3,
    TreePine,
-   MapPin } from
+   MapPin,
+   FileSpreadsheet } from
 "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logoutWithAudit } from "@/lib/audit-helpers";
