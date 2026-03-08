@@ -124,7 +124,9 @@ export function useImportDrafts(orgId: string | null) {
           .eq("id", draft.id);
         if (error) throw error;
       } else {
+        if (!orgId) throw new Error("No organization selected");
         const { error } = await supabase.from("import_drafts" as any).insert({
+          org_id: orgId,
           name: draft.name,
           step: draft.step,
           file_name: draft.file_name,
