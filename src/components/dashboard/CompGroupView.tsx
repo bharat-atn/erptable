@@ -742,6 +742,21 @@ export function CompGroupView() {
                             />
                           )}
                         </TableCell>
+                        {netLabel && (
+                          <TableCell className="text-center">
+                            {locked ? (
+                              <span className="text-sm font-semibold">{(cls.net_value as number).toFixed(2)}</span>
+                            ) : (
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={cls.net_value}
+                                onChange={e => updateClassField(cls.id, "net_value", Number(e.target.value))}
+                                className="h-8 w-24 text-center text-xs mx-auto font-semibold"
+                              />
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteClass(cls.id)} disabled={locked}>
                             <Trash2 className="w-4 h-4 text-destructive" />
