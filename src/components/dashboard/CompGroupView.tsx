@@ -505,7 +505,7 @@ export function CompGroupView() {
               ) : filteredClasses.map(cls => {
                 const isHighlighted = cls.sla_class_id === "107";
                 return (
-                  <TableRow key={cls.id} className={isHighlighted ? "bg-amber-50 dark:bg-amber-950/20" : ""}>
+                  <TableRow key={cls.id} className={isHighlighted ? "bg-accent/50" : ""}>
                     <TableCell>
                       <Checkbox
                         checked={selectedRows.has(cls.id)}
