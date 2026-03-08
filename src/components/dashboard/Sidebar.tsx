@@ -175,6 +175,20 @@ const payrollSettingsItems: MenuItem[] = [
 const payrollAuditItems: MenuItem[] = [
 { id: "audit-log", label: "Audit Log", icon: Shield }];
 
+// Employee Hub menu items
+const employeeHubMenuItems: MenuItem[] = [
+{ id: "dashboard", label: "Time Clock", icon: Clock },
+{ id: "my-profile", label: "My Profile", icon: Users },
+{ id: "my-contracts", label: "My Contracts", icon: FileText },
+{ id: "my-schedule", label: "My Schedule", icon: Calendar },
+{ id: "my-payslips", label: "My Payslips", icon: FileSpreadsheet },
+{ id: "leave-requests", label: "Leave Requests", icon: Calendar }];
+
+const employeeHubSettingsItems: MenuItem[] = [
+{ id: "settings", label: "Settings", icon: Settings }];
+
+
+
 function loadOrder(key: string, defaults: MenuItem[]): MenuItem[] {
   try {
     const saved = localStorage.getItem(`sidebar-order-${key}`);
