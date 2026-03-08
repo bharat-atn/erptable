@@ -603,7 +603,6 @@ export function DataHandlingView() {
 
   const handleSaveDraft = useCallback(() => {
     const name = draftName.trim() || `Import ${new Date().toLocaleDateString()}`;
-    // Serialize mapped data without the raw CSV rows (too large)
     const serializableData = mappedData.map(({ raw, ...rest }) => rest);
     saveDraft.mutate({
       id: activeDraftId || undefined,
@@ -613,6 +612,7 @@ export function DataHandlingView() {
       raw_headers: csvHeaders,
       mappings: columnMapping,
       mapped_data: step >= 2 ? serializableData : [],
+      raw_csv_rows: csvRows,
       row_count: mappedData.length || csvRows.length,
     });
     setDraftName("");
