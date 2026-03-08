@@ -648,11 +648,21 @@ export function DataHandlingView() {
           <h1 className="text-2xl font-bold">Data Handling</h1>
           <p className="text-sm text-muted-foreground">Import, map, clean, and validate employee data from CSV</p>
         </div>
-        {step > 1 && !importResults && (
-          <Button variant="outline" size="sm" onClick={resetAll}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Start Over
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {step > 0 && step < 4 && (csvHeaders.length > 0 || mappedData.length > 0) && !importResults && (
+            <Button variant="outline" size="sm" onClick={() => {
+              setDraftName(activeDraftId ? fileName : "");
+              setShowSaveDraftDialog(true);
+            }}>
+              <Save className="h-4 w-4 mr-1" /> Save Draft
+            </Button>
+          )}
+          {step > 1 && !importResults && (
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Start Over
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Step indicator */}
