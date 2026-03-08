@@ -193,8 +193,8 @@ export function ProjectSetupView({ projectId, onBack }: ProjectSetupViewProps) {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-border overflow-x-auto">
-        <div className="flex gap-0 min-w-max">
+      <div className="border-b border-border">
+        <div className="flex w-full">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -202,7 +202,7 @@ export function ProjectSetupView({ projectId, onBack }: ProjectSetupViewProps) {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex-1 flex items-center justify-center gap-2.5 py-3.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   isActive
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
