@@ -212,7 +212,7 @@ export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: strin
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditProject(p); setFormOpen(true); }}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenSetup ? onOpenSetup(p.id) : (() => { setEditProject(p); setFormOpen(true); })()}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(p)}>
