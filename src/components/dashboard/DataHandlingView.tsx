@@ -15,7 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useImportPresets, useImportDrafts } from "@/hooks/useImportPresetsAndDrafts";
 
@@ -155,7 +157,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /* ─── Component ─────────────────────────────────────── */
 
 export function DataHandlingView() {
-  const { orgId } = useOrg();
+  const { orgId, orgName, orgType } = useOrg();
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [step, setStep] = useState(1);
 
   // Step 1 state
@@ -201,6 +204,22 @@ export function DataHandlingView() {
     },
     enabled: !!orgId,
   });
+
+  // Fetch companies for this org
+  const { data: companies } = useQuery({
+    queryKey: ["companies-for-import", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data } = await supabase
+        .from("companies")
+        .select("id, name")
+        .eq("org_id", orgId);
+      return data || [];
+    },
+    enabled: !!orgId,
+  });
+
+  const companyNames = companies?.map((c) => c.name).join(", ") || "—";
 
   // Fetch employee ID settings
   const { data: idSettings } = useQuery({
@@ -692,6 +711,21 @@ export function DataHandlingView() {
         ))}
       </div>
 
+      {/* Organization context banner */}
+      <Alert className="border-primary/30 bg-primary/5">
+        <Building2 className="h-4 w-4 text-primary" />
+        <AlertDescription className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium">Importing to:</span>
+          <span className="font-bold">{orgName || "—"}</span>
+          {companies && companies.length > 0 && (
+            <span className="text-muted-foreground">({companyNames})</span>
+          )}
+          {orgType === "sandbox" && (
+            <Badge variant="warning" className="ml-1">Sandbox</Badge>
+          )}
+        </AlertDescription>
+      </Alert>
+
       {/* ─── STEP 1: Upload & Column Mapping ─── */}
       {step === 1 && (
         <div className="space-y-6">
@@ -1098,7 +1132,7 @@ export function DataHandlingView() {
                 <Button variant="outline" onClick={() => setStep(3)} disabled={importing}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={handleImport} disabled={importing || toImport.length === 0}>
+                <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
                   {importing ? "Importing..." : `Import ${toImport.length} Employees`}
                 </Button>
               </div>
@@ -1205,6 +1239,42 @@ export function DataHandlingView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import confirmation dialog */}
+      <AlertDialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              Confirm Employee Import
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  You are about to import <strong>{toImport.length} employees</strong> into:
+                </p>
+                <div className="flex items-center gap-2 p-3 rounded-md bg-primary/5 border border-primary/20">
+                  <Building2 className="h-4 w-4 text-primary shrink-0" />
+                  <span className="font-semibold">{orgName || "—"}</span>
+                  {companies && companies.length > 0 && (
+                    <span className="text-muted-foreground text-sm">({companyNames})</span>
+                  )}
+                  {orgType === "sandbox" && (
+                    <Badge variant="warning" className="ml-1">Sandbox</Badge>
+                  )}
+                </div>
+                <p className="text-sm">This action cannot be undone. Please verify the target organization is correct.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowImportConfirm(false); handleImport(); }}>
+              Import {toImport.length} Employees
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
