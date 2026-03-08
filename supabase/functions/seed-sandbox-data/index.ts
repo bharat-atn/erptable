@@ -32,6 +32,15 @@ const SEED_EMPLOYEES = [
   { first_name: "Petra", last_name: "Nilsson", email: "petra.nilsson@sandbox.test", phone: "+46704567890", city: "Uppsala", country: "Sweden", status: "ACTIVE" },
 ];
 
+const SEED_CLIENTS = [
+  { client_number: "CT-0001", company_name: "SCA Skog AB", contact_person: "Erik Svensson", email: "erik@scaskog.se", phone: "+46 70 123 4567", address: "Skogsvägen 12", city: "Östersund", postcode: "83135", country: "Sweden", status: "active" },
+  { client_number: "CT-0002", company_name: "Sveaskog Norrland", contact_person: "Anna Johansson", email: "anna@sveaskog.se", phone: "+46 70 987 6543", address: "Industrigatan 5", city: "Umeå", postcode: "90320", country: "Sweden", status: "active" },
+  { client_number: "CT-0003", company_name: "Holmen Skog AB", contact_person: "Lars Petersson", email: "lars.petersson@holmen.se", phone: "+46 60 456 7890", address: "Strandvägen 8", city: "Sundsvall", postcode: "85230", country: "Sweden", status: "active" },
+  { client_number: "CT-0004", company_name: "Norra Skog", contact_person: "Maria Lindgren", email: "maria@norraskog.se", phone: "+46 70 234 5678", address: "Skogsindustrivägen 3", city: "Härnösand", postcode: "87133", country: "Sweden", status: "active" },
+  { client_number: "CT-0005", company_name: "Stora Enso Forest", contact_person: "Anders Bergström", email: "anders.bergstrom@storaenso.com", phone: "+46 70 345 6789", address: "Bruksvägen 15", city: "Falun", postcode: "79131", country: "Sweden", status: "active" },
+  { client_number: "CT-0006", company_name: "Södra Skogsägarna", contact_person: "Karin Nilsson", email: "karin.nilsson@sodra.com", phone: "+46 70 456 7801", address: "Skogsallén 22", city: "Växjö", postcode: "35234", country: "Sweden", status: "inactive" },
+];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
