@@ -227,6 +227,7 @@ export function CompGroupView() {
           star_4: c.s4,
           star_5: c.s5,
           hourly_gross: c.gross,
+          net_value: c.net,
           sort_order: idx,
         }))
       );
