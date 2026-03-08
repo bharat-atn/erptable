@@ -157,7 +157,7 @@ export function ProjectSetupView({ projectId, onBack }: ProjectSetupViewProps) {
   const tabIndex = TABS.findIndex((t) => t.id === activeTab);
 
   return (
-    <div className="space-y-5 pt-4 max-w-6xl mx-auto">
+    <div className="space-y-5 pt-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
