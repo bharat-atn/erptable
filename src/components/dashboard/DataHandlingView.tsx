@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -191,6 +191,7 @@ export function DataHandlingView() {
   const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [showLoadDraftDialog, setShowLoadDraftDialog] = useState(false);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
@@ -681,6 +682,11 @@ export function DataHandlingView() {
           <p className="text-sm text-muted-foreground">Import, map, clean, and validate employee data from CSV</p>
         </div>
         <div className="flex items-center gap-2">
+          {drafts.length > 0 && !importResults && (
+            <Button variant="outline" size="sm" onClick={() => setShowLoadDraftDialog(true)}>
+              <FolderOpen className="h-4 w-4 mr-1" /> Load Draft
+            </Button>
+          )}
           {step > 0 && step < 4 && (csvHeaders.length > 0 || mappedData.length > 0) && !importResults && (
             <Button variant="outline" size="sm" onClick={() => {
               setDraftName(activeDraftId ? fileName : "");
@@ -1288,6 +1294,62 @@ export function DataHandlingView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Load Draft Dialog ─── */}
+      <Dialog open={showLoadDraftDialog} onOpenChange={setShowLoadDraftDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FolderOpen className="h-5 w-5 text-primary" />
+              Load Saved Draft
+            </DialogTitle>
+            <DialogDescription>Select a draft to resume your import</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {drafts.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No saved drafts</p>
+            ) : (
+              drafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                >
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => {
+                      handleLoadDraft(draft);
+                      setShowLoadDraftDialog(false);
+                    }}
+                  >
+                    <p className="text-sm font-medium truncate">{draft.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {draft.file_name} · {draft.row_count} rows · Step {draft.step} · {new Date(draft.updated_at).toLocaleDateString()}
+                    </p>
+                    {(draft as any).raw_csv_rows && (draft as any).raw_csv_rows.length > 0 && (
+                      <Badge variant="secondary" className="mt-1 text-[10px]">CSV data stored</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        handleLoadDraft(draft);
+                        setShowLoadDraftDialog(false);
+                      }}
+                    >
+                      Resume
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => deleteDraft.mutate(draft.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
