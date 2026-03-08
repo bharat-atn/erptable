@@ -1,57 +1,38 @@
 
 
-## Plan: User CSV Import with Data Washing
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Context
-The User Management view currently only supports inviting users one-by-one. You want to bulk-import users from CSV with the ability to review, filter, translate, and clean data before committing.
+### Root Cause
 
-### What We'll Build
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-**New component: `src/components/dashboard/UserCsvImportDialog.tsx`**
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-A multi-step import dialog with data washing capabilities:
+**1. Replace generic message with specific missing-condition checklist**
 
-**Step 1 — Upload & Parse**
-- Drag-and-drop or file picker for CSV
-- Download template button with columns: `email, full_name, role, org_access, app_access`
-- Role values: `admin`, `org_admin`, `hr_manager`, `team_leader`, `user`
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-**Step 2 — Data Washing (the key differentiator)**
-- Full preview table of all parsed rows with validation status per row
-- **Row-level filtering**: Checkboxes to include/exclude individual rows or filter by status (valid/invalid/duplicates)
-- **Duplicate detection**: Flag emails that already exist in `profiles` or `pending_role_assignments`
-- **Role translation**: Dropdown per row to override/correct the role assignment
-- **Bulk actions toolbar**: "Select all valid", "Deselect duplicates", "Set role for selected"
-- **Inline editing**: Click a cell to correct name or email before import
-- **Summary bar**: Shows "X of Y rows selected for import, Z errors, W duplicates"
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-**Step 3 — Organization & App Assignment**
-- Before committing, choose which organization(s) and app access to assign to ALL imported users (same UI as current InviteUserDialog org/app pickers)
-- Option to override per-row if the CSV includes `org_access` column
+This tells the user exactly what's blocking them.
 
-**Step 4 — Confirmation & Import**
-- Final summary of what will be created
-- Import uses the existing `invite-user` edge function in a batch loop
-- Progress bar showing import status
-- Results summary with success/failure counts
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-### CSV Template Columns
-```text
-email,full_name,role
-user@company.com,John Doe,user
-admin@company.com,Jane Smith,org_admin
-```
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-### Integration Point
-- Add an "Import CSV" button next to the existing "Invite User" button in `UserManagementView.tsx`
-- On success, invalidate the `admin-profiles` and `pending-role-assignments` queries
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
 
-### Files to Create/Edit
-1. **Create** `src/components/dashboard/UserCsvImportDialog.tsx` — the full multi-step import dialog with data washing
-2. **Edit** `src/components/dashboard/UserManagementView.tsx` — add Import CSV button and wire up the dialog
+**3. Add scroll-to-schedule link in the checklist**
 
-### Technical Notes
-- Duplicate detection queries `profiles` (by email) and `pending_role_assignments` (by email) before showing the preview
-- Each row is imported via the existing `invite-user` edge function to ensure consistent role assignment, org membership, and notification logic
-- Invalid emails are flagged with regex validation; empty required fields are highlighted in red
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 

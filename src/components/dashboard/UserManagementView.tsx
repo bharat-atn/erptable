@@ -12,7 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw, UserCog } from "lucide-react";
+import { Shield, ShieldCheck, UserCheck, Trash2, RefreshCw, UserPlus, Mail, Copy, Eye, EyeOff, ChevronDown, Info, Pencil, User, CircleDot, ShieldOff, Users, Briefcase, Wallet, Eraser, Send, Clock, Building2, Plus, X, AlertTriangle, RotateCcw, UserCog, Upload } from "lucide-react";
 import { parsePhone, combinePhone } from "@/lib/profile-utils";
 import { ProfileIdentityFields, type ProfileData } from "@/components/profile/ProfileIdentityFields";
 import type { UiLang } from "@/lib/ui-translations";
@@ -20,6 +20,7 @@ import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import type { Database } from "@/integrations/supabase/types";
+import { UserCsvImportDialog } from "./UserCsvImportDialog";
 
 type AppRole = string;
 
@@ -771,6 +772,7 @@ export function UserManagementView() {
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [cleaningUp, setCleaningUp] = useState<string | null>(null);
   
@@ -1344,6 +1346,10 @@ export function UserManagementView() {
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
             {t("action.refresh")}
           </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setCsvImportOpen(true)}>
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
           <Button size="sm" className="gap-2" onClick={() => setInviteOpen(true)}>
             <UserPlus className="w-4 h-4" />
             {t("action.inviteUser")}
@@ -1416,6 +1422,14 @@ export function UserManagementView() {
       <InviteUserDialog
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
+        onSuccess={invalidateAll}
+        apps={apps}
+        allOrgs={allOrgs}
+      />
+
+      <UserCsvImportDialog
+        open={csvImportOpen}
+        onClose={() => setCsvImportOpen(false)}
         onSuccess={invalidateAll}
         apps={apps}
         allOrgs={allOrgs}
