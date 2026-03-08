@@ -39,6 +39,7 @@ interface CompGroupClass {
   star_4: number;
   star_5: number;
   hourly_gross: number;
+  net_value: number;
   sort_order: number;
 }
 
