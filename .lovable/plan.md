@@ -1,38 +1,23 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Why "Data Handling" is not visible
 
-### Root Cause
+The sidebar item exists in the code (Sidebar.tsx line 119, sidebar-registry.ts). However, the sidebar loads permissions from the `role_sidebar_access` database table. Since that table was populated **before** the `data-handling` item was added, it has no entry for this menu item — and because there ARE other entries for your role/app combo, the fallback to defaults doesn't kick in.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+## Fix
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+**Option A (recommended)**: Use the "Reset to Defaults" button in **User Management → Role Permissions → Sidebar Permissions tab**. This will re-seed all sidebar permissions from the registry, including the new `data-handling` item.
 
-**1. Replace generic message with specific missing-condition checklist**
+**Option B (code fix)**: Add a database migration that inserts the missing `data-handling` entry into `role_sidebar_access` for the relevant roles (`admin`, `org_admin`, `hr_manager`) and `app_id = 'hr-management'`.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+```sql
+INSERT INTO role_sidebar_access (role, app_id, menu_item_id)
+VALUES 
+  ('admin', 'hr-management', 'data-handling'),
+  ('org_admin', 'hr-management', 'data-handling'),
+  ('hr_manager', 'hr-management', 'data-handling')
+ON CONFLICT DO NOTHING;
+```
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
-
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+I'd recommend going with **Option B** (migration) so it's automatic for all users, plus doing the Reset to Defaults from the UI for your current session.
 
