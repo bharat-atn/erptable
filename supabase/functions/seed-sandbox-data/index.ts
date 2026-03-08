@@ -27,51 +27,56 @@ const SEED_EMPLOYEES = [
   { first_name: "Apinya", last_name: "Wongchai", email: "apinya.wongchai@forestry.com", phone: "+66832345678", city: "Bangkok", country: "Thailand", status: "ONBOARDING" },
   { first_name: "Niran", last_name: "Chairat", email: "niran.chairat@forestry.com", phone: "+66822345678", city: "Bangkok", country: "Thailand", status: "ACTIVE" },
   { first_name: "Somchai", last_name: "Rattanakul", email: "somchai.rattanakul@forestry.com", phone: "+66812345678", city: "Bangkok", country: "Thailand", status: "ACTIVE" },
-  { first_name: "Andrei", last_name: "Popescu", email: "andrei.popescu@forestry.com", phone: "+40721234567", city: "Bucharest", country: "Romania", status: "ONBOARDING" },
+  { first_name: "Andrei", last_name: "Popescu", email: "andrei.popescu@forestry.com", phone: "+40721234567", city: "Bucharest", country: "Romania", status: "ACTIVE" },
   { first_name: "Anna", last_name: "Lindqvist", email: "anna.lindqvist@forestry.se", phone: "+46704567890", city: "Malmö", country: "Sweden", status: "ACTIVE" },
   { first_name: "Ana", last_name: "Dumitru", email: "ana.dumitru@forestry.com", phone: "+40724567890", city: "Cluj-Napoca", country: "Romania", status: "ACTIVE" },
   { first_name: "Yash", last_name: "Gandhi", email: "ygandhi@gmail.com", phone: "+919786368000", city: "Nagpur", country: "India", status: "INVITED" },
 ];
 
+// Scenario 1 star-rating map: employee email → star rating
+const STAR_RATINGS: Record<string, number> = {
+  "anna.lindqvist@forestry.se": 5,
+  "niran.chairat@forestry.com": 3,
+  "andrei.popescu@forestry.com": 2,
+  "somchai.rattanakul@forestry.com": 2,
+  "elena.ionescu@forestry.com": 4,
+  "ana.dumitru@forestry.com": 3,
+};
+
 const SEED_CLIENTS = [
-  { client_number: "CT-0001", company_name: "SCA Skog AB", contact_person: "Erik Svensson", email: "erik@scaskog.se", phone: "+46 70 123 4567", address: "Skogsvägen 12", city: "Östersund", postcode: "83135", country: "Sweden", status: "active" },
-  { client_number: "CT-0002", company_name: "Sveaskog Norrland", contact_person: "Anna Johansson", email: "anna@sveaskog.se", phone: "+46 70 987 6543", address: "Industrigatan 5", city: "Umeå", postcode: "90320", country: "Sweden", status: "active" },
-  { client_number: "CT-0003", company_name: "Holmen Skog AB", contact_person: "Lars Petersson", email: "lars.petersson@holmen.se", phone: "+46 60 456 7890", address: "Strandvägen 8", city: "Sundsvall", postcode: "85230", country: "Sweden", status: "active" },
-  { client_number: "CT-0004", company_name: "Norra Skog", contact_person: "Maria Lindgren", email: "maria@norraskog.se", phone: "+46 70 234 5678", address: "Skogsindustrivägen 3", city: "Härnösand", postcode: "87133", country: "Sweden", status: "active" },
-  { client_number: "CT-0005", company_name: "Stora Enso Forest", contact_person: "Anders Bergström", email: "anders.bergstrom@storaenso.com", phone: "+46 70 345 6789", address: "Bruksvägen 15", city: "Falun", postcode: "79131", country: "Sweden", status: "active" },
-  { client_number: "CT-0006", company_name: "Södra Skogsägarna", contact_person: "Karin Nilsson", email: "karin.nilsson@sodra.com", phone: "+46 70 456 7801", address: "Skogsallén 22", city: "Växjö", postcode: "35234", country: "Sweden", status: "inactive" },
+  { client_number: "CT-0001", company_name: "Swedish Forestry Corporation", contact_person: "Karl Gustavsson", email: "karl@sweforest.se", phone: "+46 70 111 2233", address: "Skogsvägen 1", city: "Karlstad", postcode: "65225", country: "Sweden", status: "active" },
+  { client_number: "CT-0002", company_name: "SCA Skog AB", contact_person: "Erik Svensson", email: "erik@scaskog.se", phone: "+46 70 123 4567", address: "Skogsvägen 12", city: "Östersund", postcode: "83135", country: "Sweden", status: "active" },
+  { client_number: "CT-0003", company_name: "Sveaskog Norrland", contact_person: "Anna Johansson", email: "anna@sveaskog.se", phone: "+46 70 987 6543", address: "Industrigatan 5", city: "Umeå", postcode: "90320", country: "Sweden", status: "active" },
+  { client_number: "CT-0004", company_name: "Holmen Skog AB", contact_person: "Lars Petersson", email: "lars.petersson@holmen.se", phone: "+46 60 456 7890", address: "Strandvägen 8", city: "Sundsvall", postcode: "85230", country: "Sweden", status: "active" },
+  { client_number: "CT-0005", company_name: "Norra Skog", contact_person: "Maria Lindgren", email: "maria@norraskog.se", phone: "+46 70 234 5678", address: "Skogsindustrivägen 3", city: "Härnösand", postcode: "87133", country: "Sweden", status: "active" },
+  { client_number: "CT-0006", company_name: "Nordic Green Solutions AB", contact_person: "Karin Nilsson", email: "karin@nordicgreen.se", phone: "+46 70 345 6789", address: "Plantvägen 4", city: "Borlänge", postcode: "78132", country: "Sweden", status: "active" },
+  { client_number: "CT-0007", company_name: "Scandinavian Forest Alliance", contact_person: "Anders Bergström", email: "anders@scanforest.se", phone: "+46 70 456 7801", address: "Skogsallén 22", city: "Falun", postcode: "79131", country: "Sweden", status: "active" },
 ];
 
-// Seed project to attach objects to
+// Seed project matching Scenario 1: Forest Clearing Project
 const SEED_PROJECT = {
-  name: "Kvissleby Clearing 2026",
+  name: "Värmland Forest Clearing 2026",
   project_id_display: "PJ-26-0001",
   type: "clearing",
   status: "active",
-  location: "Kvissleby, Sundsvall",
-  description: "Main clearing project for spring 2026 season",
-  start_date: "2026-03-01",
-  end_date: "2026-09-30",
-  work_start_date: "2026-03-15",
-  work_end_date: "2026-09-15",
+  location: "Värmland, Sweden",
+  description: "Scenario 1 – Forest clearing project for Swedish Forestry Corporation. 3 objects, 49.8 hectares total, SLA 107, piece-work compensation.",
+  start_date: "2026-05-01",
+  end_date: "2026-07-31",
+  work_start_date: "2026-06-10",
+  work_end_date: "2026-06-12",
   daily_hours: 8,
   start_time: "06:30",
   end_time: "17:00",
+  budget: 124500,
+  revenue: 124500,
 };
 
-// Objects matching the screenshot reference
+// 3 clearing objects matching Scenario 1: all SLA 107
 const SEED_OBJECTS = [
-  { object_id_display: "D00001", name: "Forest Planting A", sla_class: "standard", area_hectares: null, description: "10000 forest plants", status: "registered" },
-  { object_id_display: "D00002", name: "Forest Planting B", sla_class: "standard", area_hectares: null, description: "20000 forest plants", status: "registered" },
-  { object_id_display: "D00003", name: "Forest Planting C", sla_class: "standard", area_hectares: null, description: "30000 forest plants", status: "registered" },
-  { object_id_display: "D00004", name: "Forest Clearing A", sla_class: "standard", area_hectares: 100, description: null, status: "registered" },
-  { object_id_display: "D00005", name: "Forest Clearing B", sla_class: "standard", area_hectares: 200, description: null, status: "planned" },
-  { object_id_display: "D00006", name: "Forest Clearing C", sla_class: "difficult", area_hectares: 300, description: null, status: "planned" },
-  { object_id_display: "D330470", name: "Young Forest Clearing 1", sla_class: "standard", area_hectares: 15.5, description: null, notes: "Young Forest Clearing – Scenario 1", status: "in_progress" },
-  { object_id_display: "D330471", name: "Young Forest Clearing 2", sla_class: "standard", area_hectares: 12.3, description: null, notes: "Young Forest Clearing – Scenario 1", status: "in_progress" },
-  { object_id_display: "D330472", name: "Undergrowth Clearing 1", sla_class: "difficult", area_hectares: 18.7, description: null, notes: "Forest Clearing Type 2 (Undergrowth) – Scenario 1", status: "registered" },
-  { object_id_display: "D330473", name: "Undergrowth Clearing 2", sla_class: "difficult", area_hectares: 14.2, description: null, notes: "Forest Clearing Type 2 (Undergrowth) – Scenario 1", status: "registered" },
-  { object_id_display: "D330474", name: "Undergrowth Clearing 3", sla_class: "extreme", area_hectares: 16.9, description: null, notes: "Forest Clearing Type 2 (Undergrowth) – Scenario 1", status: "registered" },
+  { object_id_display: "D330474", name: "Undergrowth Clearing – North Ridge", sla_class: "107", area_hectares: 15.2, description: "Forest Clearing Type 2 (Undergrowth)", notes: "Scenario 1 – Object 1", status: "registered" },
+  { object_id_display: "D330473", name: "Undergrowth Clearing – East Slope", sla_class: "107", area_hectares: 18.4, description: "Forest Clearing Type 2 (Undergrowth)", notes: "Scenario 1 – Object 2", status: "registered" },
+  { object_id_display: "D330472", name: "Undergrowth Clearing – South Valley", sla_class: "107", area_hectares: 16.2, description: "Forest Clearing Type 2 (Undergrowth)", notes: "Scenario 1 – Object 3", status: "registered" },
 ];
 
 Deno.serve(async (req) => {
@@ -126,6 +131,10 @@ Deno.serve(async (req) => {
       );
       await admin.from("forestry_projects").delete().eq("org_id", sandboxOrgId);
       await admin.from("forestry_clients").delete().eq("org_id", sandboxOrgId);
+      // Reset comp group data
+      await admin.from("comp_group_classes").delete().eq("org_id", sandboxOrgId);
+      await admin.from("comp_group_types").delete().eq("org_id", sandboxOrgId);
+      await admin.from("comp_groups").delete().eq("org_id", sandboxOrgId);
     }
 
     // Insert seed company
@@ -202,18 +211,20 @@ Deno.serve(async (req) => {
     const { data: insertedClients, error: cliErr } = await admin
       .from("forestry_clients")
       .insert(clientRows)
-      .select("id");
+      .select("id, company_name");
     if (cliErr) throw cliErr;
 
-    // Insert seed project (linked to first client)
-    const firstClientId = insertedClients?.[0]?.id || null;
+    // Find the "Swedish Forestry Corporation" client for Scenario 1
+    const sweForestClient = insertedClients?.find((c: any) => c.company_name === "Swedish Forestry Corporation");
+
+    // Insert seed project (linked to Swedish Forestry Corporation)
     const { data: insertedProject, error: projErr } = await admin
       .from("forestry_projects")
       .insert({
         ...SEED_PROJECT,
         org_id: sandboxOrgId,
-        client_id: firstClientId,
-        client: "SCA Skog AB",
+        client_id: sweForestClient?.id || null,
+        client: "Swedish Forestry Corporation",
       })
       .select("id")
       .single();
@@ -235,17 +246,52 @@ Deno.serve(async (req) => {
       if (objErr) throw objErr;
       objectsCreated = insertedObjects?.length || 0;
 
-      // Assign some ACTIVE employees as project members
-      const activeEmps = insertedEmployees?.filter((e: any) => e.status === "ACTIVE") || [];
-      if (activeEmps.length > 0) {
-        const memberRows = activeEmps.map((e: any, i: number) => ({
+      // Assign Scenario 1 team members with correct star ratings
+      // Anna (5★), Niran (3★), Andrei (2★), Somchai (2★)
+      const scenarioTeamEmails = [
+        "anna.lindqvist@forestry.se",
+        "niran.chairat@forestry.com",
+        "andrei.popescu@forestry.com",
+        "somchai.rattanakul@forestry.com",
+      ];
+      const teamEmps = insertedEmployees?.filter((e: any) => scenarioTeamEmails.includes(e.email)) || [];
+      if (teamEmps.length > 0) {
+        const memberRows = teamEmps.map((e: any) => ({
           project_id: projectId,
           employee_id: e.id,
-          role: i === 0 ? "leader" : "member",
-          star_rating: Math.min(5, Math.max(1, 5 - i)),
+          role: e.email === "anna.lindqvist@forestry.se" ? "leader" : "member",
+          star_rating: STAR_RATINGS[e.email] || 1,
         }));
         await admin.from("forestry_project_members").insert(memberRows);
       }
+    }
+
+    // Seed Compensation Group for Scenario 1: SLA 107 Piece Work
+    const { data: compGroup, error: cgErr } = await admin
+      .from("comp_groups")
+      .insert({
+        org_id: sandboxOrgId,
+        name: "Clearing – Piece Work",
+        category: "clearing",
+        method: "piece_work",
+        sort_order: 1,
+      })
+      .select("id")
+      .single();
+
+    let compClassesCreated = 0;
+    if (!cgErr && compGroup) {
+      // SLA 107 rates: Star 1→108, Star 2→144, Star 3→162, Star 4→180, Star 5→198 SEK/h
+      const classRows = [
+        { org_id: sandboxOrgId, group_id: compGroup.id, sla_class_id: "107", type_label: "Forest Clearing Type 2 (Undergrowth)", client: "Swedish Forestry Corporation", star_1: 108, star_2: 144, star_3: 162, star_4: 180, star_5: 198, hourly_gross: 162, net_value: 2500, sort_order: 1 },
+        { org_id: sandboxOrgId, group_id: compGroup.id, sla_class_id: "105", type_label: "Young Forest Clearing", client: "Swedish Forestry Corporation", star_1: 90, star_2: 120, star_3: 135, star_4: 150, star_5: 165, hourly_gross: 135, net_value: 2000, sort_order: 2 },
+        { org_id: sandboxOrgId, group_id: compGroup.id, sla_class_id: "109", type_label: "Heavy Undergrowth Clearing", client: "Swedish Forestry Corporation", star_1: 126, star_2: 168, star_3: 189, star_4: 210, star_5: 231, hourly_gross: 189, net_value: 3000, sort_order: 3 },
+      ];
+      const { data: insertedClasses, error: ccErr } = await admin
+        .from("comp_group_classes")
+        .insert(classRows)
+        .select("id");
+      if (!ccErr) compClassesCreated = insertedClasses?.length || 0;
     }
 
     return new Response(
@@ -257,6 +303,7 @@ Deno.serve(async (req) => {
         clients: insertedClients?.length || 0,
         projects: 1,
         objects: objectsCreated,
+        comp_classes: compClassesCreated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
