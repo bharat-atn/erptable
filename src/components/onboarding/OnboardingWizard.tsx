@@ -658,6 +658,13 @@ export function OnboardingWizard({
   const [bankAccountValue, setBankAccountValue] = useState(formData.bankAccountNumber || "");
   const [validationAttempted, setValidationAttempted] = useState(false);
 
+  // Sync local bank fields when parent clears them (e.g. toggling "Other bank")
+  useEffect(() => {
+    if (!formData.bicCode && bicValue) setBicValue("");
+    if (!formData.bankAccountNumber && bankAccountValue) setBankAccountValue("");
+    if (!formData.bankName && selectedBankValue) setSelectedBankValue("");
+  }, [formData.bicCode, formData.bankAccountNumber, formData.bankName]);
+
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
   const [aiValidation, setAiValidation] = useState<Record<string, FieldValidation>>({});
