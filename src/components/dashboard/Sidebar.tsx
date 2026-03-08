@@ -39,7 +39,8 @@ import {
   FolderKanban,
   BarChart3,
    TreePine,
-   MapPin } from
+   MapPin,
+   FileSpreadsheet } from
 "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { logoutWithAudit } from "@/lib/audit-helpers";
@@ -114,7 +115,8 @@ const defaultSettingsItems: MenuItem[] = [
 { id: "company-register", label: "Company Register", icon: Building2 },
 { id: "employee-id-settings", label: "Employee ID", icon: Users },
 { id: "contract-id-settings", label: "Contract ID", icon: FileText },
-{ id: "iso-standards", label: "ISO Standards", icon: Shield }];
+{ id: "iso-standards", label: "ISO Standards", icon: Shield },
+{ id: "data-handling", label: "Data Handling", icon: FileSpreadsheet }];
 
 
 const defaultConfigItems: MenuItem[] = [
