@@ -688,7 +688,7 @@ export function CompGroupView() {
                         </TableCell>
                         <TableCell>
                           {locked ? (
-                            <span className="text-sm text-muted-foreground">{cls.type_label ? `${cls.type_label} (${methodLabel})` : "—"}</span>
+                            <span className="text-sm text-muted-foreground">{cls.type_label ? `${cls.type_label} (${isPiecework ? "Piece Work" : "Hourly Salary"})` : "—"}</span>
                           ) : (
                             <Select value={cls.type_label} onValueChange={v => updateClassType(cls.id, v)}>
                               <SelectTrigger className="h-8 text-xs">
