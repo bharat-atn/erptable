@@ -179,6 +179,15 @@ export function DataHandlingView() {
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
 
+  // Preset & Draft state
+  const { presets, savePreset, deletePreset } = useImportPresets(orgId);
+  const { drafts, saveDraft, deleteDraft } = useImportDrafts(orgId);
+  const [showSavePresetDialog, setShowSavePresetDialog] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
     queryKey: ["employees-for-dedup", orgId],
