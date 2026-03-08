@@ -201,7 +201,7 @@ export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: strin
                 <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No projects found</TableCell></TableRow>
               ) : (
                 filtered.map((p: any) => (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onOpenSetup?.(p.id)}>
                     <TableCell className="font-mono text-xs">{p.project_id_display}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{TYPE_LABELS[p.type] || p.type}</Badge></TableCell>
@@ -213,8 +213,8 @@ export function ForestryProjectsView({ onOpenSetup }: { onOpenSetup?: (id: strin
                       {p.start_date ? format(new Date(p.start_date), "MM/dd") : "—"} → {p.end_date ? format(new Date(p.end_date), "MM/dd") : "—"}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onOpenSetup ? onOpenSetup(p.id) : (() => { setEditProject(p); setFormOpen(true); })()}>
+                      <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditProject(p); setFormOpen(true); }}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeleteTarget(p)}>
