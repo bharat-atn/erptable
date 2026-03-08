@@ -681,6 +681,11 @@ export function DataHandlingView() {
           <p className="text-sm text-muted-foreground">Import, map, clean, and validate employee data from CSV</p>
         </div>
         <div className="flex items-center gap-2">
+          {drafts.length > 0 && !importResults && (
+            <Button variant="outline" size="sm" onClick={() => setShowLoadDraftDialog(true)}>
+              <FolderOpen className="h-4 w-4 mr-1" /> Load Draft
+            </Button>
+          )}
           {step > 0 && step < 4 && (csvHeaders.length > 0 || mappedData.length > 0) && !importResults && (
             <Button variant="outline" size="sm" onClick={() => {
               setDraftName(activeDraftId ? fileName : "");
