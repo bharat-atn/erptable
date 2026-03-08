@@ -939,9 +939,9 @@ export function DataHandlingView() {
                 <CardTitle className="text-base">Import Complete</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-500/10 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">{importResults.success}</p>
+                  <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-primary/10 rounded-lg">
+                    <p className="text-2xl font-bold text-primary">{importResults.success}</p>
                     <p className="text-xs text-muted-foreground">Successfully imported</p>
                   </div>
                   <div className="text-center p-4 bg-destructive/10 rounded-lg">
