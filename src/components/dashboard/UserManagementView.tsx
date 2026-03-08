@@ -772,6 +772,7 @@ export function UserManagementView() {
   const [deleteUser, setDeleteUser] = useState<{ user_id: string; email: string } | null>(null);
   const [deletePendingUser, setDeletePendingUser] = useState<{ user_id: string; email: string } | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [cleaningUp, setCleaningUp] = useState<string | null>(null);
   
