@@ -20,6 +20,7 @@ import { loadApps, type AppDefinition } from "./AppLauncher";
 import { cn } from "@/lib/utils";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 import type { Database } from "@/integrations/supabase/types";
+import { UserCsvImportDialog } from "./UserCsvImportDialog";
 
 type AppRole = string;
 
