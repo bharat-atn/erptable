@@ -48,6 +48,12 @@ import { HolidayView } from "./payroll/HolidayView";
 import { AttestationView } from "./payroll/AttestationView";
 import { PayrollReportsView } from "./payroll/PayrollReportsView";
 import { SalaryEventsView } from "./payroll/SalaryEventsView";
+import { EmployeeHubDashboardView } from "./employee-hub/EmployeeHubDashboardView";
+import { EmployeeHubProfileView } from "./employee-hub/EmployeeHubProfileView";
+import { EmployeeHubContractView } from "./employee-hub/EmployeeHubContractView";
+import { EmployeeHubScheduleView } from "./employee-hub/EmployeeHubScheduleView";
+import { EmployeeHubPayslipsView } from "./employee-hub/EmployeeHubPayslipsView";
+import { EmployeeHubLeaveView } from "./employee-hub/EmployeeHubLeaveView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
@@ -100,6 +106,19 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
+    // Employee Hub views
+    if (appId === "employee-hub") {
+      switch (activeView) {
+        case "dashboard": return <EmployeeHubDashboardView />;
+        case "my-profile": return <EmployeeHubProfileView />;
+        case "my-contracts": return <EmployeeHubContractView />;
+        case "my-schedule": return <EmployeeHubScheduleView />;
+        case "my-payslips": return <EmployeeHubPayslipsView />;
+        case "leave-requests": return <EmployeeHubLeaveView />;
+        default: return <EmployeeHubDashboardView />;
+      }
+    }
+
     // Payroll Management views
     if (appId === "payroll") {
       switch (activeView) {

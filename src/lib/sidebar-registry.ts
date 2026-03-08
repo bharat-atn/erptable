@@ -74,11 +74,11 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "audit-log", label: "Audit Log", group: "others" },
   ],
   "employee-hub": [
+    { id: "dashboard", label: "Time Clock", group: "main" },
     { id: "my-profile", label: "My Profile", group: "main" },
     { id: "my-contracts", label: "My Contracts", group: "main" },
     { id: "my-schedule", label: "My Schedule", group: "main" },
     { id: "my-payslips", label: "My Payslips", group: "main" },
-    { id: "documents", label: "Documents", group: "main" },
     { id: "leave-requests", label: "Leave Requests", group: "main" },
     { id: "settings", label: "Settings", group: "settings" },
   ],
