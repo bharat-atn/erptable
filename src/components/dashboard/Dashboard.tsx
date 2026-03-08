@@ -106,6 +106,19 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
+    // Employee Hub views
+    if (appId === "employee-hub") {
+      switch (activeView) {
+        case "dashboard": return <EmployeeHubDashboardView />;
+        case "my-profile": return <EmployeeHubProfileView />;
+        case "my-contracts": return <EmployeeHubContractView />;
+        case "my-schedule": return <EmployeeHubScheduleView />;
+        case "my-payslips": return <EmployeeHubPayslipsView />;
+        case "leave-requests": return <EmployeeHubLeaveView />;
+        default: return <EmployeeHubDashboardView />;
+      }
+    }
+
     // Payroll Management views
     if (appId === "payroll") {
       switch (activeView) {

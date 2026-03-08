@@ -143,7 +143,7 @@ const defaultApps: AppDefinition[] = [
     iconName: "Smartphone",
     colorIndex: 4,
     enabled: true,
-    available: false,
+    available: true,
     allowedRoles: ["admin", "org_admin", "hr_manager", "project_manager", "payroll_manager", "team_leader", "user"],
   },
   {
