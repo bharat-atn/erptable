@@ -30,6 +30,7 @@ import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { ClientRegisterView } from "./ClientRegisterView";
 import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { CompGroupView } from "./CompGroupView";
+import { ProjectDefaultsView } from "./ProjectDefaultsView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
