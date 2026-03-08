@@ -1,38 +1,33 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Section-based mapping UI + "Clear Colors" (not mappings)
 
-### Root Cause
+### Two changes
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+**1. "Clear All" button becomes "Clear Colors"**
+- Rename button to "Clear Colors" / add a separate button
+- Instead of resetting `columnMapping` to `_skip`, introduce a `colorConfirmed` state (`Set<string>`) that tracks which mappings have been visually "confirmed"
+- Actually simpler approach: add a `hideColors` boolean toggle. When true, all rows render in the neutral style regardless of mapping status. Clicking "Show Colors" re-enables the green highlighting. The mappings themselves are never touched.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+**2. Group system fields by invitation template sections**
+- Replace the flat `SYSTEM_FIELDS` array grouping (`core`/`address`/`personal`) with section-based grouping that matches the invitation template:
+  - **Section 2.1 — Name & Address**: `name`, `first_name`, `middle_name`, `last_name`, `preferredName`, `address1`, `address2`, `city`, `postcode`, `stateProvince`, `country`
+  - **Section 2.2 — Birth & Contact**: `email`, `phone`, `mobilePhone`, `dateOfBirth`, `countryOfBirth`, `citizenship`, `nationality`, `swedishPersonalNumber`, `swedishCoordinationNumber`
+  - **Section 2.3 — Emergency Contact**: `emergencyFirstName`, `emergencyLastName`, `emergencyPhone`
+  - **Section 3 — Bank Information**: `bankName`, `bankAccount`, `bicCode`, `bankCountry`
+  - **Section 4 — ID / Employment**: `employee_code`
+  - **Skip**: `_skip`
+- Update the `<Select>` dropdown to show `<SelectGroup>` with `<SelectLabel>` headers for each section
+- Update the mapping card grid to optionally group CSV columns by their mapped section (or keep flat, but the dropdown itself is sectioned)
 
-**1. Replace generic message with specific missing-condition checklist**
+### File: `src/components/dashboard/DataHandlingView.tsx`
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
-
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
-
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+**Changes:**
+1. Update `SystemField.group` type to use section keys (`"2.1"` | `"2.2"` | `"2.3"` | `"3"` | `"4"` | `"skip"`)
+2. Re-assign each field's group to match invitation template sections
+3. Add section labels constant matching `InvitationTemplateView`
+4. Update the `<Select>` for system field mapping to use `<SelectGroup>` + `<SelectLabel>` per section
+5. Add `hideColors` state boolean, default `false`
+6. Change "Clear All" button to "Clear Colors" — toggles `hideColors` on (hides green styling). Add "Show Colors" to toggle it back.
+7. Update the `isMapped` visual styling to respect `hideColors`: when true, all rows use neutral styling regardless of mapping
 
