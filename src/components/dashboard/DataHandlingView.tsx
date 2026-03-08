@@ -711,6 +711,21 @@ export function DataHandlingView() {
         ))}
       </div>
 
+      {/* Organization context banner */}
+      <Alert className="border-primary/30 bg-primary/5">
+        <Building2 className="h-4 w-4 text-primary" />
+        <AlertDescription className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium">Importing to:</span>
+          <span className="font-bold">{orgName || "—"}</span>
+          {companies && companies.length > 0 && (
+            <span className="text-muted-foreground">({companyNames})</span>
+          )}
+          {orgType === "sandbox" && (
+            <Badge variant="warning" className="ml-1">Sandbox</Badge>
+          )}
+        </AlertDescription>
+      </Alert>
+
       {/* ─── STEP 1: Upload & Column Mapping ─── */}
       {step === 1 && (
         <div className="space-y-6">
