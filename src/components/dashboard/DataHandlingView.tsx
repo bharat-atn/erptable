@@ -54,6 +54,7 @@ const SYSTEM_FIELDS: SystemField[] = [
   { key: "first_name", label: "First Name", group: "core" },
   { key: "middle_name", label: "Middle Name", group: "core" },
   { key: "last_name", label: "Last Name", group: "core" },
+  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" },
   { key: "email", label: "Email", group: "core", required: true },
   { key: "phone", label: "Phone", group: "core" },
   { key: "city", label: "City", group: "address" },
@@ -92,6 +93,11 @@ const HEADER_ALIASES: Record<string, string> = {
   emergencycontact: "emergencyContact", emergency_contact: "emergencyContact",
   emergencyphone: "emergencyPhone", emergency_phone: "emergencyPhone",
   preferredname: "preferredName", preferred_name: "preferredName",
+  employee_code: "employee_code", employeecode: "employee_code",
+  employeeid: "employee_code", employee_id: "employee_code",
+  empid: "employee_code", emp_id: "employee_code",
+  anstallid: "employee_code", "anställdid": "employee_code",
+  personnr: "employee_code", personnummer: "employee_code",
 };
 
 function autoMapHeader(header: string): string {
