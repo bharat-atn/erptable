@@ -27,6 +27,7 @@ import { ForestryDashboardView } from "./ForestryDashboardView";
 import { ForestryProjectsView } from "./ForestryProjectsView";
 import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
+import { ClientRegisterView } from "./ClientRegisterView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
@@ -94,7 +95,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "iso-standards": return <IsoStandardsView />;
         case "gantt-view":
         case "kanban-board":
-        case "client-register":
+        case "client-register": return <ClientRegisterView />;
         case "project-id":
         case "comp-groups":
         case "project-defaults":
