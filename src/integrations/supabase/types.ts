@@ -267,6 +267,7 @@ export type Database = {
           group_id: string
           hourly_gross: number
           id: string
+          net_value: number
           org_id: string
           sla_class_id: string
           sort_order: number
@@ -284,6 +285,7 @@ export type Database = {
           group_id: string
           hourly_gross?: number
           id?: string
+          net_value?: number
           org_id: string
           sla_class_id?: string
           sort_order?: number
@@ -301,6 +303,7 @@ export type Database = {
           group_id?: string
           hourly_gross?: number
           id?: string
+          net_value?: number
           org_id?: string
           sla_class_id?: string
           sort_order?: number
