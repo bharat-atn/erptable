@@ -665,7 +665,7 @@ export function CompGroupView() {
                 <TableBody>
                   {filteredClasses.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={netLabel ? 12 : 11} className="text-center text-muted-foreground py-8">
                         No classes added yet. Click "+ Add Class" to begin.
                       </TableCell>
                     </TableRow>
