@@ -54,6 +54,11 @@ import { EmployeeHubContractView } from "./employee-hub/EmployeeHubContractView"
 import { EmployeeHubScheduleView } from "./employee-hub/EmployeeHubScheduleView";
 import { EmployeeHubPayslipsView } from "./employee-hub/EmployeeHubPayslipsView";
 import { EmployeeHubLeaveView } from "./employee-hub/EmployeeHubLeaveView";
+import { TimeReportingDashboardView } from "./time-reporting/TimeReportingDashboardView";
+import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
+import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
+import { ApprovalsView } from "./time-reporting/ApprovalsView";
+import { TimeReportsView } from "./time-reporting/TimeReportsView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
