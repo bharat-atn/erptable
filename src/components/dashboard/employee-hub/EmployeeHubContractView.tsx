@@ -17,7 +17,6 @@ export function EmployeeHubContractView() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      // Find employee by email
       const { data: profile } = await supabase.from("profiles").select("email").eq("user_id", user.id).single();
       if (!profile?.email) return [];
       const { data: emp } = await supabase.from("employees").select("id").eq("email", profile.email).maybeSingle();
@@ -38,11 +37,11 @@ export function EmployeeHubContractView() {
   const formData = (c: any) => (c.form_data || {}) as Record<string, any>;
 
   return (
-    <div className="space-y-6 pt-4">
-      <h1 className="text-2xl font-bold">My Contracts</h1>
+    <div className="space-y-4 px-1 pt-3 pb-8 max-w-lg mx-auto">
+      <h1 className="text-xl font-bold px-2">My Contracts — Mina kontrakt</h1>
 
       {contracts.length === 0 ? (
-        <Card className="border-border/60">
+        <Card className="border-border/60 mx-2">
           <CardContent className="pt-6 text-center py-12">
             <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No contracts found</p>
@@ -52,11 +51,11 @@ export function EmployeeHubContractView() {
         contracts.map((c: any) => {
           const fd = formData(c);
           return (
-            <Card key={c.id} className="border-border/60">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
+            <Card key={c.id} className="border-border/60 mx-2">
+              <CardContent className="pt-5 pb-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       {c.contract_code && (
                         <Badge variant="outline" className="font-mono text-xs">{c.contract_code}</Badge>
                       )}
@@ -69,86 +68,47 @@ export function EmployeeHubContractView() {
                     </div>
                     <p className="text-sm text-muted-foreground">Season {c.season_year || "—"}</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setPreviewContract(c)}>
+                  <Button variant="outline" size="sm" className="h-10 min-w-[70px]" onClick={() => setPreviewContract(c)}>
                     <Eye className="w-3.5 h-3.5 mr-1" /> View
                   </Button>
                 </div>
 
                 <Separator />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <div className="flex items-start gap-2">
-                    <Building2 className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase">Employer</p>
-                      <p className="text-xs font-medium">{(c as any).companies?.name || fd.companySnapshot?.name || "—"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase">Period</p>
-                      <p className="text-xs font-medium">{c.start_date || "—"} → {c.end_date || "—"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase">Salary</p>
-                      <p className="text-xs font-medium">{c.salary ? `${Number(c.salary).toLocaleString()} SEK` : "—"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase">Signing</p>
-                      <p className="text-xs font-medium">{c.signing_status?.replace(/_/g, " ") || "—"}</p>
-                    </div>
-                  </div>
+                {/* Stacked info for mobile instead of 4-col grid */}
+                <div className="space-y-2.5">
+                  <ContractInfoRow icon={Building2} label="Employer" value={(c as any).companies?.name || fd.companySnapshot?.name || "—"} />
+                  <ContractInfoRow icon={Calendar} label="Period" value={`${c.start_date || "—"} → ${c.end_date || "—"}`} />
+                  <ContractInfoRow icon={DollarSign} label="Salary" value={c.salary ? `${Number(c.salary).toLocaleString()} SEK` : "—"} />
+                  <ContractInfoRow icon={FileText} label="Signing" value={c.signing_status?.replace(/_/g, " ") || "—"} />
                 </div>
-
-                {/* Contract clauses from form_data */}
-                {fd.clauses && Object.keys(fd.clauses).length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-xs font-semibold mb-2 text-muted-foreground uppercase">Contract Terms</p>
-                      <div className="space-y-1.5">
-                        {Object.entries(fd.clauses).map(([key, val]: [string, any]) => (
-                          <div key={key} className="flex items-start gap-2 text-xs">
-                            <span className="font-medium min-w-[120px] text-muted-foreground">{key}:</span>
-                            <span>{String(val)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
               </CardContent>
             </Card>
           );
         })
       )}
 
-      {/* Full Contract Dialog */}
+      {/* Full Contract Dialog — optimized for mobile */}
       <Dialog open={!!previewContract} onOpenChange={(o) => !o && setPreviewContract(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh]">
+        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[90vh] rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Employment Contract {previewContract?.contract_code && `— ${previewContract.contract_code}`}</DialogTitle>
+            <DialogTitle className="text-base">
+              Contract {previewContract?.contract_code && `— ${previewContract.contract_code}`}
+            </DialogTitle>
           </DialogHeader>
-          <ScrollArea className="max-h-[65vh]">
+          <ScrollArea className="max-h-[70vh]">
             {previewContract && (
-              <div className="space-y-4 pr-4">
+              <div className="space-y-4 pr-2">
                 <ContractSection title="§1 Employer" content={`${(previewContract as any).companies?.name || formData(previewContract).companySnapshot?.name || "—"}`} />
                 <ContractSection title="§2 Employment Period" content={`${previewContract.start_date || "—"} to ${previewContract.end_date || "—"} (Season ${previewContract.season_year || "—"})`} />
                 <ContractSection title="§3 Compensation" content={`${previewContract.salary ? `${Number(previewContract.salary).toLocaleString()} SEK` : "—"}`} />
                 <ContractSection title="§4 Working Hours" content={formData(previewContract).workingHours || "According to schedule"} />
                 <ContractSection title="§5 Place of Work" content={formData(previewContract).placeOfWork || "As assigned by employer"} />
                 <ContractSection title="§6 Collective Agreement" content={formData(previewContract).collectiveAgreement || "GS Kollektivavtal — Skogs- och Lantbruksarbetsgivareförbundet"} />
-                
+
                 {/* Signatures */}
                 <Separator />
-                <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground mb-2">Employee Signature</p>
                     {previewContract.employee_signature_url ? (
@@ -177,6 +137,18 @@ export function EmployeeHubContractView() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function ContractInfoRow({ icon: Icon, label, value }: { icon: typeof FileText; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 min-h-[36px]">
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-muted-foreground uppercase">{label}</p>
+        <p className="text-xs font-medium truncate">{value}</p>
+      </div>
     </div>
   );
 }
