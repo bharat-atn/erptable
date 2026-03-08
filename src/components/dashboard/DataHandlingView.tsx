@@ -1108,17 +1108,64 @@ export function DataHandlingView() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Improvement #1: Section mapping progress bar */}
+                  <div className="flex flex-wrap gap-3 mb-4 p-3 bg-muted/30 rounded-lg text-xs">
+                    {SECTION_ORDER.filter((s) => s !== "skip").map((sKey) => {
+                      const p = sectionProgress[sKey];
+                      if (!p) return null;
+                      const pct = p.total > 0 ? Math.round((p.mapped / p.total) * 100) : 0;
+                      return (
+                        <div key={sKey} className="flex items-center gap-1.5">
+                          <span className="font-medium text-muted-foreground">{sKey}:</span>
+                          <span className={cn("font-bold", p.mapped > 0 ? "text-primary" : "text-muted-foreground")}>{p.mapped}/{p.total}</span>
+                          <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Improvement #4: Unmapped required fields alert */}
+                  {unmappedRequired.length > 0 && csvHeaders.length > 0 && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Required fields not mapped:</strong>{" "}
+                        {unmappedRequired.map((f) => f.label).join(", ")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Improvement #3: Duplicate mapping warnings */}
+                  {Object.keys(duplicateMappings).length > 0 && (
+                    <Alert className="mb-4 border-yellow-500/50 bg-yellow-500/5">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                        <strong>Duplicate mappings detected:</strong>{" "}
+                        {Object.entries(duplicateMappings).map(([field, cols]) => {
+                          const label = SYSTEM_FIELDS.find((f) => f.key === field)?.label || field;
+                          return `"${label}" mapped from: ${cols.join(", ")}`;
+                        }).join(" · ")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {csvHeaders.map((header) => {
                       const mappedValue = columnMapping[header] || "_skip";
                       const isMapped = mappedValue !== "_skip";
                       const showColor = isMapped && !hideColors;
+                      // Improvement #3: check if this column's mapped field is a duplicate
+                      const isDupe = isMapped && duplicateMappings[mappedValue];
                       return (
                         <div
                           key={header}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                            showColor
+                            isDupe
+                              ? "bg-yellow-50 border-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-700"
+                              : showColor
                               ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
                               : "bg-muted/30 border-border"
                           )}
@@ -1126,9 +1173,19 @@ export function DataHandlingView() {
                           <div className="flex-1 min-w-0">
                             <Label className="text-xs text-muted-foreground">CSV Column</Label>
                             <p className="text-sm font-medium truncate">{header}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              e.g. "{csvRows[0]?.[header] || ""}"
-                            </p>
+                            {/* Improvement #2: Show 2-3 sample values */}
+                            <div className="space-y-0.5">
+                              {csvRows.slice(0, 3).map((row, i) => (
+                                <p key={i} className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  {i === 0 ? "e.g. " : ""}{`"${(row[header] || "").slice(0, 40)}${(row[header] || "").length > 40 ? "…" : ""}"`}
+                                </p>
+                              ))}
+                            </div>
+                            {isDupe && (
+                              <Badge variant="outline" className="mt-1 text-[10px] border-yellow-400 text-yellow-700 dark:text-yellow-300">
+                                ⚠ Also mapped from {duplicateMappings[mappedValue]?.filter((c) => c !== header).join(", ")}
+                              </Badge>
+                            )}
                           </div>
                           <ArrowRight className={cn("h-4 w-4 shrink-0", showColor ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
                           <div className="flex-1">
@@ -1160,7 +1217,7 @@ export function DataHandlingView() {
                               </SelectContent>
                             </Select>
                           </div>
-                          {showColor && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
+                          {showColor && !isDupe && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
                         </div>
                       );
                     })}
