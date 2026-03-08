@@ -120,7 +120,7 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
     admin: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
     payroll_manager: SIDEBAR_ITEMS_BY_APP["payroll"].map((i) => i.id),
-    hr_manager: ["dashboard", "payroll-runs", "salary-slips", "salary-tables"],
+    hr_manager: ["dashboard", "payroll-runs", "salary-slips", "employee-register", "salary-tables"],
     user: ["dashboard"],
   },
   "employee-hub": {
