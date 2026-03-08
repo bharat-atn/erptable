@@ -70,6 +70,8 @@ const SYSTEM_FIELDS: SystemField[] = [
   { key: "emergencyContact", label: "Emergency Contact", group: "personal" },
   { key: "emergencyPhone", label: "Emergency Phone", group: "personal" },
   { key: "preferredName", label: "Preferred Name", group: "personal" },
+  { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "personal" },
+  { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "personal" },
   { key: "_skip", label: "— Skip this column —", group: "core" },
 ];
 
