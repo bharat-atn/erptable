@@ -68,6 +68,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
   const [resumeMode, setResumeMode] = useState<ResumeMode>("resume");
   const [preselectedEmployeeId, setPreselectedEmployeeId] = useState<string | null>(null);
+  const [setupProjectId, setSetupProjectId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
