@@ -29,6 +29,7 @@ import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { KanbanBoardView } from "./KanbanBoardView";
 import { GanttView } from "./GanttView";
+import { ProjectSetupView } from "./ProjectSetupView";
 import { ClientRegisterView } from "./ClientRegisterView";
 import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { CompGroupView } from "./CompGroupView";
