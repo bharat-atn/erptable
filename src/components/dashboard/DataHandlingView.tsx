@@ -1510,6 +1510,41 @@ export function DataHandlingView() {
                       <p className="text-xs text-muted-foreground text-center">{importProgress}% complete</p>
                     </div>
                   )}
+
+                  {/* Improvement #9: Dry-run results */}
+                  {dryRunResults && (
+                    <div className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <FlaskConical className="h-4 w-4 text-primary" />
+                        Dry Run Results
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-primary">{dryRunResults.valid}</p>
+                          <p className="text-xs text-muted-foreground">Would succeed</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-yellow-600">{dryRunResults.duplicates.length}</p>
+                          <p className="text-xs text-muted-foreground">Duplicates found</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-destructive">{dryRunResults.errors.length}</p>
+                          <p className="text-xs text-muted-foreground">Errors</p>
+                        </div>
+                      </div>
+                      {dryRunResults.duplicates.length > 0 && (
+                        <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                          <strong>Duplicates:</strong> {dryRunResults.duplicates.join(", ")}
+                        </div>
+                      )}
+                      {dryRunResults.errors.length > 0 && (
+                        <div className="text-xs text-destructive">
+                          {dryRunResults.errors.slice(0, 5).map((e, i) => <p key={i}>{e}</p>)}
+                          {dryRunResults.errors.length > 5 && <p>...and {dryRunResults.errors.length - 5} more</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1517,9 +1552,16 @@ export function DataHandlingView() {
                 <Button variant="outline" onClick={() => setStep(3)} disabled={importing}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
-                  {importing ? "Importing..." : `Import ${toImport.length} Employees`}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Improvement #9: Dry-run button */}
+                  <Button variant="outline" onClick={handleDryRun} disabled={importing || isDryRunning || toImport.length === 0}>
+                    <FlaskConical className="h-4 w-4 mr-1" />
+                    {isDryRunning ? "Testing..." : "Test Import"}
+                  </Button>
+                  <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
+                    {importing ? "Importing..." : `Import ${toImport.length} Employees`}
+                  </Button>
+                </div>
               </div>
             </>
           ) : (
