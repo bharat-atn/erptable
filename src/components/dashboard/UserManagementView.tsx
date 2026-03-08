@@ -1346,6 +1346,10 @@ export function UserManagementView() {
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
             {t("action.refresh")}
           </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setCsvImportOpen(true)}>
+            <Upload className="w-4 h-4" />
+            Import CSV
+          </Button>
           <Button size="sm" className="gap-2" onClick={() => setInviteOpen(true)}>
             <UserPlus className="w-4 h-4" />
             {t("action.inviteUser")}
