@@ -35,6 +35,7 @@ import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { CompGroupView } from "./CompGroupView";
 import { ProjectDefaultsView } from "./ProjectDefaultsView";
 import { TopVersionBadge } from "./TopVersionBadge";
+import { PayrollDashboardView } from "./PayrollDashboardView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
