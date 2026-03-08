@@ -931,12 +931,13 @@ export function DataHandlingView() {
                     {csvHeaders.map((header) => {
                       const mappedValue = columnMapping[header] || "_skip";
                       const isMapped = mappedValue !== "_skip";
+                      const showColor = isMapped && !hideColors;
                       return (
                         <div
                           key={header}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                            isMapped
+                            showColor
                               ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
                               : "bg-muted/30 border-border"
                           )}
@@ -948,7 +949,7 @@ export function DataHandlingView() {
                               e.g. "{csvRows[0]?.[header] || ""}"
                             </p>
                           </div>
-                          <ArrowRight className={cn("h-4 w-4 shrink-0", isMapped ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
+                          <ArrowRight className={cn("h-4 w-4 shrink-0", showColor ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
                           <div className="flex-1">
                             <Label className="text-xs text-muted-foreground">System Field</Label>
                             <Select
@@ -957,19 +958,28 @@ export function DataHandlingView() {
                                 setColumnMapping((prev) => ({ ...prev, [header]: val }))
                               }
                             >
-                              <SelectTrigger className={cn("h-8 text-xs", isMapped && "border-green-300 dark:border-green-700")}>
+                              <SelectTrigger className={cn("h-8 text-xs", showColor && "border-green-300 dark:border-green-700")}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {SYSTEM_FIELDS.map((f) => (
-                                  <SelectItem key={f.key} value={f.key}>
-                                    {f.label}
-                                  </SelectItem>
-                                ))}
+                                {SECTION_ORDER.map((sectionKey) => {
+                                  const fields = SYSTEM_FIELDS.filter((f) => f.group === sectionKey);
+                                  if (fields.length === 0) return null;
+                                  return (
+                                    <SelectGroup key={sectionKey}>
+                                      <SelectLabel className="text-xs font-semibold text-muted-foreground">{SECTION_LABELS[sectionKey]}</SelectLabel>
+                                      {fields.map((f) => (
+                                        <SelectItem key={f.key} value={f.key}>
+                                          {f.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  );
+                                })}
                               </SelectContent>
                             </Select>
                           </div>
-                          {isMapped && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
+                          {showColor && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
                         </div>
                       );
                     })}
