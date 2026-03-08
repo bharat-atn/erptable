@@ -95,7 +95,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "iso-standards": return <IsoStandardsView />;
         case "gantt-view":
         case "kanban-board":
-        case "client-register":
+        case "client-register": return <ClientRegisterView />;
         case "project-id":
         case "comp-groups":
         case "project-defaults":
