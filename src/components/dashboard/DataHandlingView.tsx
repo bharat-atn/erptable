@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2 } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2, Eye, EyeOff } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
@@ -46,43 +46,62 @@ interface MappedEmployee {
   personalInfo: Record<string, string>;
 }
 
+type SectionKey = "2.1" | "2.2" | "2.3" | "3" | "4" | "skip";
+
 type SystemField = {
   key: string;
   label: string;
-  group: "core" | "address" | "personal";
+  group: SectionKey;
   required?: boolean;
 };
 
+const SECTION_LABELS: Record<SectionKey, string> = {
+  "2.1": "2.1 — Name & Address",
+  "2.2": "2.2 — Birth & Contact",
+  "2.3": "2.3 — Emergency Contact",
+  "3": "3 — Bank Information",
+  "4": "4 — ID / Employment",
+  "skip": "Other",
+};
+
+const SECTION_ORDER: SectionKey[] = ["2.1", "2.2", "2.3", "3", "4", "skip"];
+
 const SYSTEM_FIELDS: SystemField[] = [
-  { key: "name", label: "Full Name (will split)", group: "core" },
-  { key: "first_name", label: "First Name", group: "core" },
-  { key: "middle_name", label: "Middle Name", group: "core" },
-  { key: "last_name", label: "Last Name", group: "core" },
-  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" },
-  { key: "email", label: "Email", group: "core", required: true },
-  { key: "phone", label: "Phone", group: "core" },
-  { key: "mobilePhone", label: "Mobile Phone", group: "core" },
-  { key: "address1", label: "Address Line 1", group: "address" },
-  { key: "address2", label: "Address Line 2", group: "address" },
-  { key: "city", label: "City", group: "address" },
-  { key: "postcode", label: "Postcode", group: "address" },
-  { key: "stateProvince", label: "State / Province", group: "address" },
-  { key: "country", label: "Country", group: "address" },
-  { key: "dateOfBirth", label: "Date of Birth", group: "personal" },
-  { key: "countryOfBirth", label: "Country of Birth", group: "personal" },
-  { key: "citizenship", label: "Citizenship", group: "personal" },
-  { key: "nationality", label: "Nationality", group: "personal" },
-  { key: "preferredName", label: "Preferred Name", group: "personal" },
-  { key: "bankName", label: "Bank Name", group: "personal" },
-  { key: "bankAccount", label: "Bank Account", group: "personal" },
-  { key: "bicCode", label: "BIC Code", group: "personal" },
-  { key: "bankCountry", label: "Bank Country", group: "personal" },
-  { key: "emergencyFirstName", label: "Emergency Contact First Name", group: "personal" },
-  { key: "emergencyLastName", label: "Emergency Contact Last Name", group: "personal" },
-  { key: "emergencyPhone", label: "Emergency Phone", group: "personal" },
-  { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "personal" },
-  { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "personal" },
-  { key: "_skip", label: "— Skip this column —", group: "core" },
+  // 2.1 — Name & Address
+  { key: "name", label: "Full Name (will split)", group: "2.1" },
+  { key: "first_name", label: "First Name", group: "2.1" },
+  { key: "middle_name", label: "Middle Name", group: "2.1" },
+  { key: "last_name", label: "Last Name", group: "2.1" },
+  { key: "preferredName", label: "Preferred Name", group: "2.1" },
+  { key: "address1", label: "Address Line 1", group: "2.1" },
+  { key: "address2", label: "Address Line 2", group: "2.1" },
+  { key: "city", label: "City", group: "2.1" },
+  { key: "postcode", label: "Postcode", group: "2.1" },
+  { key: "stateProvince", label: "State / Province", group: "2.1" },
+  { key: "country", label: "Country", group: "2.1" },
+  // 2.2 — Birth & Contact
+  { key: "email", label: "Email", group: "2.2", required: true },
+  { key: "phone", label: "Phone", group: "2.2" },
+  { key: "mobilePhone", label: "Mobile Phone", group: "2.2" },
+  { key: "dateOfBirth", label: "Date of Birth", group: "2.2" },
+  { key: "countryOfBirth", label: "Country of Birth", group: "2.2" },
+  { key: "citizenship", label: "Citizenship", group: "2.2" },
+  { key: "nationality", label: "Nationality", group: "2.2" },
+  { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "2.2" },
+  { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "2.2" },
+  // 2.3 — Emergency Contact
+  { key: "emergencyFirstName", label: "Emergency Contact First Name", group: "2.3" },
+  { key: "emergencyLastName", label: "Emergency Contact Last Name", group: "2.3" },
+  { key: "emergencyPhone", label: "Emergency Phone", group: "2.3" },
+  // 3 — Bank Information
+  { key: "bankName", label: "Bank Name", group: "3" },
+  { key: "bankAccount", label: "Bank Account", group: "3" },
+  { key: "bicCode", label: "BIC Code", group: "3" },
+  { key: "bankCountry", label: "Bank Country", group: "3" },
+  // 4 — ID / Employment
+  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "4" },
+  // Skip
+  { key: "_skip", label: "— Skip this column —", group: "skip" },
 ];
 
 const HEADER_ALIASES: Record<string, string> = {
@@ -205,6 +224,7 @@ export function DataHandlingView() {
   const [draftName, setDraftName] = useState("");
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [showLoadDraftDialog, setShowLoadDraftDialog] = useState(false);
+  const [hideColors, setHideColors] = useState(false);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
@@ -885,14 +905,15 @@ export function DataHandlingView() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          const cleared: Record<string, string> = {};
-                          csvHeaders.forEach((h) => { cleared[h] = "_skip"; });
-                          setColumnMapping(cleared);
-                          toast.info("All mappings cleared");
+                          setHideColors((prev) => !prev);
+                          toast.info(hideColors ? "Colors restored" : "Colors cleared — mappings preserved");
                         }}
                         className="h-8 text-xs"
                       >
-                        <X className="h-3.5 w-3.5 mr-1" /> Clear All
+                        {hideColors
+                          ? <><Eye className="h-3.5 w-3.5 mr-1" /> Show Colors</>
+                          : <><EyeOff className="h-3.5 w-3.5 mr-1" /> Clear Colors</>
+                        }
                       </Button>
                       <Button
                         variant="outline"
@@ -910,12 +931,13 @@ export function DataHandlingView() {
                     {csvHeaders.map((header) => {
                       const mappedValue = columnMapping[header] || "_skip";
                       const isMapped = mappedValue !== "_skip";
+                      const showColor = isMapped && !hideColors;
                       return (
                         <div
                           key={header}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                            isMapped
+                            showColor
                               ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
                               : "bg-muted/30 border-border"
                           )}
@@ -927,7 +949,7 @@ export function DataHandlingView() {
                               e.g. "{csvRows[0]?.[header] || ""}"
                             </p>
                           </div>
-                          <ArrowRight className={cn("h-4 w-4 shrink-0", isMapped ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
+                          <ArrowRight className={cn("h-4 w-4 shrink-0", showColor ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
                           <div className="flex-1">
                             <Label className="text-xs text-muted-foreground">System Field</Label>
                             <Select
@@ -936,19 +958,28 @@ export function DataHandlingView() {
                                 setColumnMapping((prev) => ({ ...prev, [header]: val }))
                               }
                             >
-                              <SelectTrigger className={cn("h-8 text-xs", isMapped && "border-green-300 dark:border-green-700")}>
+                              <SelectTrigger className={cn("h-8 text-xs", showColor && "border-green-300 dark:border-green-700")}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {SYSTEM_FIELDS.map((f) => (
-                                  <SelectItem key={f.key} value={f.key}>
-                                    {f.label}
-                                  </SelectItem>
-                                ))}
+                                {SECTION_ORDER.map((sectionKey) => {
+                                  const fields = SYSTEM_FIELDS.filter((f) => f.group === sectionKey);
+                                  if (fields.length === 0) return null;
+                                  return (
+                                    <SelectGroup key={sectionKey}>
+                                      <SelectLabel className="text-xs font-semibold text-muted-foreground">{SECTION_LABELS[sectionKey]}</SelectLabel>
+                                      {fields.map((f) => (
+                                        <SelectItem key={f.key} value={f.key}>
+                                          {f.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  );
+                                })}
                               </SelectContent>
                             </Select>
                           </div>
-                          {isMapped && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
+                          {showColor && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
                         </div>
                       );
                     })}
