@@ -46,43 +46,62 @@ interface MappedEmployee {
   personalInfo: Record<string, string>;
 }
 
+type SectionKey = "2.1" | "2.2" | "2.3" | "3" | "4" | "skip";
+
 type SystemField = {
   key: string;
   label: string;
-  group: "core" | "address" | "personal";
+  group: SectionKey;
   required?: boolean;
 };
 
+const SECTION_LABELS: Record<SectionKey, string> = {
+  "2.1": "2.1 — Name & Address",
+  "2.2": "2.2 — Birth & Contact",
+  "2.3": "2.3 — Emergency Contact",
+  "3": "3 — Bank Information",
+  "4": "4 — ID / Employment",
+  "skip": "Other",
+};
+
+const SECTION_ORDER: SectionKey[] = ["2.1", "2.2", "2.3", "3", "4", "skip"];
+
 const SYSTEM_FIELDS: SystemField[] = [
-  { key: "name", label: "Full Name (will split)", group: "core" },
-  { key: "first_name", label: "First Name", group: "core" },
-  { key: "middle_name", label: "Middle Name", group: "core" },
-  { key: "last_name", label: "Last Name", group: "core" },
-  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "core" },
-  { key: "email", label: "Email", group: "core", required: true },
-  { key: "phone", label: "Phone", group: "core" },
-  { key: "mobilePhone", label: "Mobile Phone", group: "core" },
-  { key: "address1", label: "Address Line 1", group: "address" },
-  { key: "address2", label: "Address Line 2", group: "address" },
-  { key: "city", label: "City", group: "address" },
-  { key: "postcode", label: "Postcode", group: "address" },
-  { key: "stateProvince", label: "State / Province", group: "address" },
-  { key: "country", label: "Country", group: "address" },
-  { key: "dateOfBirth", label: "Date of Birth", group: "personal" },
-  { key: "countryOfBirth", label: "Country of Birth", group: "personal" },
-  { key: "citizenship", label: "Citizenship", group: "personal" },
-  { key: "nationality", label: "Nationality", group: "personal" },
-  { key: "preferredName", label: "Preferred Name", group: "personal" },
-  { key: "bankName", label: "Bank Name", group: "personal" },
-  { key: "bankAccount", label: "Bank Account", group: "personal" },
-  { key: "bicCode", label: "BIC Code", group: "personal" },
-  { key: "bankCountry", label: "Bank Country", group: "personal" },
-  { key: "emergencyFirstName", label: "Emergency Contact First Name", group: "personal" },
-  { key: "emergencyLastName", label: "Emergency Contact Last Name", group: "personal" },
-  { key: "emergencyPhone", label: "Emergency Phone", group: "personal" },
-  { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "personal" },
-  { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "personal" },
-  { key: "_skip", label: "— Skip this column —", group: "core" },
+  // 2.1 — Name & Address
+  { key: "name", label: "Full Name (will split)", group: "2.1" },
+  { key: "first_name", label: "First Name", group: "2.1" },
+  { key: "middle_name", label: "Middle Name", group: "2.1" },
+  { key: "last_name", label: "Last Name", group: "2.1" },
+  { key: "preferredName", label: "Preferred Name", group: "2.1" },
+  { key: "address1", label: "Address Line 1", group: "2.1" },
+  { key: "address2", label: "Address Line 2", group: "2.1" },
+  { key: "city", label: "City", group: "2.1" },
+  { key: "postcode", label: "Postcode", group: "2.1" },
+  { key: "stateProvince", label: "State / Province", group: "2.1" },
+  { key: "country", label: "Country", group: "2.1" },
+  // 2.2 — Birth & Contact
+  { key: "email", label: "Email", group: "2.2", required: true },
+  { key: "phone", label: "Phone", group: "2.2" },
+  { key: "mobilePhone", label: "Mobile Phone", group: "2.2" },
+  { key: "dateOfBirth", label: "Date of Birth", group: "2.2" },
+  { key: "countryOfBirth", label: "Country of Birth", group: "2.2" },
+  { key: "citizenship", label: "Citizenship", group: "2.2" },
+  { key: "nationality", label: "Nationality", group: "2.2" },
+  { key: "swedishPersonalNumber", label: "Swedish Personal Number / Personnummer", group: "2.2" },
+  { key: "swedishCoordinationNumber", label: "Swedish Coordination Number / Samordningsnummer", group: "2.2" },
+  // 2.3 — Emergency Contact
+  { key: "emergencyFirstName", label: "Emergency Contact First Name", group: "2.3" },
+  { key: "emergencyLastName", label: "Emergency Contact Last Name", group: "2.3" },
+  { key: "emergencyPhone", label: "Emergency Phone", group: "2.3" },
+  // 3 — Bank Information
+  { key: "bankName", label: "Bank Name", group: "3" },
+  { key: "bankAccount", label: "Bank Account", group: "3" },
+  { key: "bicCode", label: "BIC Code", group: "3" },
+  { key: "bankCountry", label: "Bank Country", group: "3" },
+  // 4 — ID / Employment
+  { key: "employee_code", label: "Employee ID / Anställnings-ID", group: "4" },
+  // Skip
+  { key: "_skip", label: "— Skip this column —", group: "skip" },
 ];
 
 const HEADER_ALIASES: Record<string, string> = {
