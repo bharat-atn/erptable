@@ -99,16 +99,16 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     if (appId === "payroll") {
       switch (activeView) {
         case "dashboard": return <PayrollDashboardView onNavigate={setActiveView} />;
+        case "payroll-runs": return <PayrollRunsView />;
+        case "salary-slips": return <SalarySlipsView />;
+        case "tax-reports": return <TaxReportsView />;
+        case "deductions": return <DeductionsView />;
+        case "salary-tables": return <SalaryTablesView />;
+        case "tax-settings": return <TaxSettingsView />;
+        case "payment-methods": return <PaymentMethodsView />;
+        case "employee-register": return <EmployeeRegisterView />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
-        case "payroll-runs":
-        case "salary-slips":
-        case "tax-reports":
-        case "deductions":
-        case "salary-tables":
-        case "tax-settings":
-        case "payment-methods":
-          return <PayrollDashboardView onNavigate={setActiveView} />;
         default: return <PayrollDashboardView onNavigate={setActiveView} />;
       }
     }
