@@ -953,65 +953,144 @@ export type Database = {
           },
         ]
       }
+      forestry_project_members: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          project_id: string
+          role: string
+          star_rating: number
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          project_id: string
+          role?: string
+          star_rating?: number
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          project_id?: string
+          role?: string
+          star_rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forestry_project_members_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forestry_project_members_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forestry_projects: {
         Row: {
           budget: number | null
           client: string | null
+          client_id: string | null
           cost: number | null
           created_at: string
           created_by: string | null
+          daily_hours: number | null
           description: string | null
           end_date: string | null
+          end_time: string | null
+          gps_coordinates: string | null
           id: string
           location: string | null
           name: string
           org_id: string
           project_id_display: string
+          purchase_order_number: string | null
           revenue: number | null
+          setup_data: Json | null
+          setup_progress: number | null
           start_date: string | null
+          start_time: string | null
           status: string
           type: string
           updated_at: string
+          work_end_date: string | null
+          work_start_date: string | null
         }
         Insert: {
           budget?: number | null
           client?: string | null
+          client_id?: string | null
           cost?: number | null
           created_at?: string
           created_by?: string | null
+          daily_hours?: number | null
           description?: string | null
           end_date?: string | null
+          end_time?: string | null
+          gps_coordinates?: string | null
           id?: string
           location?: string | null
           name: string
           org_id: string
           project_id_display: string
+          purchase_order_number?: string | null
           revenue?: number | null
+          setup_data?: Json | null
+          setup_progress?: number | null
           start_date?: string | null
+          start_time?: string | null
           status?: string
           type?: string
           updated_at?: string
+          work_end_date?: string | null
+          work_start_date?: string | null
         }
         Update: {
           budget?: number | null
           client?: string | null
+          client_id?: string | null
           cost?: number | null
           created_at?: string
           created_by?: string | null
+          daily_hours?: number | null
           description?: string | null
           end_date?: string | null
+          end_time?: string | null
+          gps_coordinates?: string | null
           id?: string
           location?: string | null
           name?: string
           org_id?: string
           project_id_display?: string
+          purchase_order_number?: string | null
           revenue?: number | null
+          setup_data?: Json | null
+          setup_progress?: number | null
           start_date?: string | null
+          start_time?: string | null
           status?: string
           type?: string
           updated_at?: string
+          work_end_date?: string | null
+          work_start_date?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "forestry_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "forestry_projects_org_id_fkey"
             columns: ["org_id"]

@@ -29,6 +29,7 @@ import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
 import { KanbanBoardView } from "./KanbanBoardView";
 import { GanttView } from "./GanttView";
+import { ProjectSetupView } from "./ProjectSetupView";
 import { ClientRegisterView } from "./ClientRegisterView";
 import { ProjectIdSettingsView } from "./ProjectIdSettingsView";
 import { CompGroupView } from "./CompGroupView";
@@ -67,6 +68,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   const [resumeContractId, setResumeContractId] = useState<string | null>(null);
   const [resumeMode, setResumeMode] = useState<ResumeMode>("resume");
   const [preselectedEmployeeId, setPreselectedEmployeeId] = useState<string | null>(null);
+  const [setupProjectId, setSetupProjectId] = useState<string | null>(null);
   const [screenSize, setScreenSize] = useState<ScreenSizeOption>(screenSizes[screenSizes.length - 1]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
@@ -89,7 +91,8 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     if (appId === "forestry-project") {
       switch (activeView) {
         case "dashboard": return <ForestryDashboardView onNavigate={setActiveView} />;
-        case "forestry-projects": return <ForestryProjectsView />;
+        case "forestry-projects": return <ForestryProjectsView onOpenSetup={(id) => { setSetupProjectId(id); setActiveView("project-setup"); }} />;
+        case "project-setup": return <ProjectSetupView projectId={setupProjectId} onBack={() => setActiveView("forestry-projects")} />;
         case "forestry-objects": return <ForestryObjectsView />;
         case "employee-register": return <EmployeeRegisterView />;
         case "audit-log": return <AuditLogView />;
