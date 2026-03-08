@@ -1135,6 +1135,76 @@ export function DataHandlingView() {
           )}
         </div>
       )}
+
+      {/* ─── Save Preset Dialog ─── */}
+      <Dialog open={showSavePresetDialog} onOpenChange={setShowSavePresetDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save Column Mapping Preset</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Preset Name</Label>
+              <Input
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="e.g. Hogia Export, Visma Format"
+                autoFocus
+              />
+            </div>
+            {presets.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Existing Presets</Label>
+                <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                  {presets.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between text-sm py-1 px-2 rounded bg-muted/50">
+                      <span>{p.name}</span>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => deletePreset.mutate(p.id)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSavePresetDialog(false)}>Cancel</Button>
+            <Button onClick={handleSavePreset} disabled={!presetName.trim() || savePreset.isPending}>
+              {savePreset.isPending ? "Saving..." : "Save Preset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Save Draft Dialog ─── */}
+      <Dialog open={showSaveDraftDialog} onOpenChange={setShowSaveDraftDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{activeDraftId ? "Update Draft" : "Save Import Draft"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Draft Name</Label>
+              <Input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder={`Import ${new Date().toLocaleDateString()}`}
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Saves your current progress (step {step}, {mappedData.length || csvRows.length} rows) so you can resume later.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDraftDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveDraft} disabled={saveDraft.isPending}>
+              {saveDraft.isPending ? "Saving..." : activeDraftId ? "Update Draft" : "Save Draft"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
