@@ -624,12 +624,24 @@ export function DataHandlingView() {
     setColumnMapping(draft.mappings || {});
     setFileName(draft.file_name || "");
     setActiveDraftId(draft.id);
+
+    // Restore raw CSV rows if stored
+    const storedCsvRows = draft.raw_csv_rows || [];
+    if (storedCsvRows.length > 0) {
+      setCsvRows(storedCsvRows);
+    }
+
     if (draft.mapped_data && draft.mapped_data.length > 0) {
-      // Restore mapped data with empty raw objects
-      setMappedData(draft.mapped_data.map((d: any) => ({ ...d, raw: {} })));
-      setStep(Math.min(draft.step, 2)); // Can resume from step 2 max since CSV rows aren't stored
+      // Reconstruct raw references from stored CSV rows
+      const restoredData = draft.mapped_data.map((d: any, idx: number) => ({
+        ...d,
+        raw: storedCsvRows[idx] || {},
+      }));
+      setMappedData(restoredData);
+      // If CSV rows are stored, allow resuming from actual step
+      setStep(storedCsvRows.length > 0 ? draft.step : Math.min(draft.step, 2));
     } else {
-      setStep(1);
+      setStep(storedCsvRows.length > 0 ? 1 : 1);
     }
     toast.success(`Draft "${draft.name}" loaded`);
   }, []);
