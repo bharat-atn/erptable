@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useQuery } from "@tanstack/react-query";
@@ -15,9 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2, Eye, EyeOff } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2, Eye, EyeOff, Undo2, Redo2, FlaskConical, ChevronDown, ChevronRight } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useImportPresets, useImportDrafts } from "@/hooks/useImportPresetsAndDrafts";
 
