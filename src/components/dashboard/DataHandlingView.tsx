@@ -780,6 +780,10 @@ export function DataHandlingView() {
     setImportResults(null);
     setImportProgress(0);
     setActiveDraftId(null);
+    setDryRunResults(null);
+    setEditHistory([]);
+    setEditHistoryIndex(-1);
+    setShowPersonalInfo(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
