@@ -27,6 +27,7 @@ import { ForestryDashboardView } from "./ForestryDashboardView";
 import { ForestryProjectsView } from "./ForestryProjectsView";
 import { ForestryObjectsView } from "./ForestryObjectsView";
 import { ForestryProcessGuideView } from "./ForestryProcessGuideView";
+import { ClientRegisterView } from "./ClientRegisterView";
 import { TopVersionBadge } from "./TopVersionBadge";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
