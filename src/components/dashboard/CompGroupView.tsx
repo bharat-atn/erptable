@@ -1152,8 +1152,8 @@ export function CompGroupView() {
                 </Button>
               </div>
 
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md px-4 py-3">
-                <p className="text-xs text-amber-800 dark:text-amber-200">
+              <div className="bg-accent/50 border border-border rounded-md px-4 py-3">
+                <p className="text-xs text-muted-foreground">
                   <strong>Note:</strong> Each compensation group has its own set of types. Define rates specific to each group's piece work or hourly compensation structure.
                 </p>
               </div>
