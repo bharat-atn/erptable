@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useImportPresets, useImportDrafts } from "@/hooks/useImportPresetsAndDrafts";
 
 /* ─── Types ─────────────────────────────────────────── */
 
@@ -176,6 +178,15 @@ export function DataHandlingView() {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+
+  // Preset & Draft state
+  const { presets, savePreset, deletePreset } = useImportPresets(orgId);
+  const { drafts, saveDraft, deleteDraft } = useImportDrafts(orgId);
+  const [showSavePresetDialog, setShowSavePresetDialog] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [showSaveDraftDialog, setShowSaveDraftDialog] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
@@ -527,7 +538,80 @@ export function DataHandlingView() {
     setMappedData([]);
     setImportResults(null);
     setImportProgress(0);
+    setActiveDraftId(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
+
+  /* ─── Preset helpers ─── */
+
+  const handleSavePreset = useCallback(() => {
+    if (!presetName.trim()) return;
+    // Strip _skip mappings for cleaner storage
+    const cleanedMappings: Record<string, string> = {};
+    for (const [csvCol, sysField] of Object.entries(columnMapping)) {
+      if (sysField !== "_skip") cleanedMappings[csvCol] = sysField;
+    }
+    savePreset.mutate({ name: presetName.trim(), mappings: cleanedMappings });
+    setPresetName("");
+    setShowSavePresetDialog(false);
+  }, [presetName, columnMapping, savePreset]);
+
+  const handleLoadPreset = useCallback((preset: { mappings: Record<string, string> }) => {
+    const storedMappings = preset.mappings as Record<string, string>;
+    // Re-apply: for each current CSV header, find if the preset has a mapping for the same header name
+    const newMapping: Record<string, string> = {};
+    csvHeaders.forEach((h) => {
+      const normalized = h.toLowerCase().trim();
+      // Try exact header match first, then normalized
+      if (storedMappings[h]) {
+        newMapping[h] = storedMappings[h];
+      } else if (storedMappings[normalized]) {
+        newMapping[h] = storedMappings[normalized];
+      } else {
+        // Try matching by normalized key
+        const match = Object.entries(storedMappings).find(
+          ([k]) => k.toLowerCase().trim() === normalized
+        );
+        newMapping[h] = match ? match[1] : "_skip";
+      }
+    });
+    setColumnMapping(newMapping);
+    toast.success("Preset applied");
+  }, [csvHeaders]);
+
+  /* ─── Draft helpers ─── */
+
+  const handleSaveDraft = useCallback(() => {
+    const name = draftName.trim() || `Import ${new Date().toLocaleDateString()}`;
+    // Serialize mapped data without the raw CSV rows (too large)
+    const serializableData = mappedData.map(({ raw, ...rest }) => rest);
+    saveDraft.mutate({
+      id: activeDraftId || undefined,
+      name,
+      step,
+      file_name: fileName,
+      raw_headers: csvHeaders,
+      mappings: columnMapping,
+      mapped_data: step >= 2 ? serializableData : [],
+      row_count: mappedData.length || csvRows.length,
+    });
+    setDraftName("");
+    setShowSaveDraftDialog(false);
+  }, [draftName, activeDraftId, step, fileName, csvHeaders, columnMapping, mappedData, csvRows, saveDraft]);
+
+  const handleLoadDraft = useCallback((draft: any) => {
+    setCsvHeaders(draft.raw_headers || []);
+    setColumnMapping(draft.mappings || {});
+    setFileName(draft.file_name || "");
+    setActiveDraftId(draft.id);
+    if (draft.mapped_data && draft.mapped_data.length > 0) {
+      // Restore mapped data with empty raw objects
+      setMappedData(draft.mapped_data.map((d: any) => ({ ...d, raw: {} })));
+      setStep(Math.min(draft.step, 2)); // Can resume from step 2 max since CSV rows aren't stored
+    } else {
+      setStep(1);
+    }
+    toast.success(`Draft "${draft.name}" loaded`);
   }, []);
 
   /* ─── Render ─── */
@@ -564,11 +648,21 @@ export function DataHandlingView() {
           <h1 className="text-2xl font-bold">Data Handling</h1>
           <p className="text-sm text-muted-foreground">Import, map, clean, and validate employee data from CSV</p>
         </div>
-        {step > 1 && !importResults && (
-          <Button variant="outline" size="sm" onClick={resetAll}>
-            <RefreshCw className="h-4 w-4 mr-1" /> Start Over
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {step > 0 && step < 4 && (csvHeaders.length > 0 || mappedData.length > 0) && !importResults && (
+            <Button variant="outline" size="sm" onClick={() => {
+              setDraftName(activeDraftId ? fileName : "");
+              setShowSaveDraftDialog(true);
+            }}>
+              <Save className="h-4 w-4 mr-1" /> Save Draft
+            </Button>
+          )}
+          {step > 1 && !importResults && (
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              <RefreshCw className="h-4 w-4 mr-1" /> Start Over
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Step indicator */}
@@ -626,6 +720,39 @@ export function DataHandlingView() {
                     <Download className="h-4 w-4 mr-1" /> Download Template
                   </Button>
                 </div>
+
+                {/* Saved Drafts */}
+                {drafts.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      Saved Drafts
+                    </h3>
+                    <div className="grid gap-2">
+                      {drafts.map((draft) => (
+                        <div
+                          key={draft.id}
+                          className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadDraft(draft)}>
+                            <p className="text-sm font-medium truncate">{draft.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {draft.file_name} · {draft.row_count} rows · Step {draft.step} · {new Date(draft.updated_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => handleLoadDraft(draft)}>
+                              <FolderOpen className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => deleteDraft.mutate(draft.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -647,8 +774,40 @@ export function DataHandlingView() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Column Mapping</CardTitle>
-                  <CardDescription>Map each CSV column to the corresponding employee field</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">Column Mapping</CardTitle>
+                      <CardDescription>Map each CSV column to the corresponding employee field</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {presets.length > 0 && (
+                        <Select onValueChange={(val) => {
+                          const preset = presets.find((p) => p.id === val);
+                          if (preset) handleLoadPreset(preset);
+                        }}>
+                          <SelectTrigger className="h-8 text-xs w-auto gap-1">
+                            <FolderOpen className="h-3.5 w-3.5" />
+                            <SelectValue placeholder="Load Preset" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {presets.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setPresetName(""); setShowSavePresetDialog(true); }}
+                        className="h-8 text-xs"
+                      >
+                        <Save className="h-3.5 w-3.5 mr-1" /> Save Preset
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -976,6 +1135,76 @@ export function DataHandlingView() {
           )}
         </div>
       )}
+
+      {/* ─── Save Preset Dialog ─── */}
+      <Dialog open={showSavePresetDialog} onOpenChange={setShowSavePresetDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Save Column Mapping Preset</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Preset Name</Label>
+              <Input
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="e.g. Hogia Export, Visma Format"
+                autoFocus
+              />
+            </div>
+            {presets.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Existing Presets</Label>
+                <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                  {presets.map((p) => (
+                    <div key={p.id} className="flex items-center justify-between text-sm py-1 px-2 rounded bg-muted/50">
+                      <span>{p.name}</span>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => deletePreset.mutate(p.id)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSavePresetDialog(false)}>Cancel</Button>
+            <Button onClick={handleSavePreset} disabled={!presetName.trim() || savePreset.isPending}>
+              {savePreset.isPending ? "Saving..." : "Save Preset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Save Draft Dialog ─── */}
+      <Dialog open={showSaveDraftDialog} onOpenChange={setShowSaveDraftDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{activeDraftId ? "Update Draft" : "Save Import Draft"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Draft Name</Label>
+              <Input
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder={`Import ${new Date().toLocaleDateString()}`}
+                autoFocus
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Saves your current progress (step {step}, {mappedData.length || csvRows.length} rows) so you can resume later.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDraftDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveDraft} disabled={saveDraft.isPending}>
+              {saveDraft.isPending ? "Saving..." : activeDraftId ? "Update Draft" : "Save Draft"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

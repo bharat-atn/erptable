@@ -851,6 +851,97 @@ export type Database = {
           },
         ]
       }
+      import_drafts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string | null
+          id: string
+          mapped_data: Json | null
+          mappings: Json | null
+          name: string
+          org_id: string
+          raw_headers: Json | null
+          row_count: number | null
+          step: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          mapped_data?: Json | null
+          mappings?: Json | null
+          name?: string
+          org_id: string
+          raw_headers?: Json | null
+          row_count?: number | null
+          step?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string | null
+          id?: string
+          mapped_data?: Json | null
+          mappings?: Json | null
+          name?: string
+          org_id?: string
+          raw_headers?: Json | null
+          row_count?: number | null
+          step?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_drafts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_mapping_presets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mappings: Json
+          name: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mappings?: Json
+          name: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mappings?: Json
+          name?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_mapping_presets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitation_template_fields: {
         Row: {
           created_at: string
