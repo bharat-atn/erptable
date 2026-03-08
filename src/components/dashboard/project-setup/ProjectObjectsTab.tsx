@@ -181,7 +181,10 @@ export function ProjectObjectsTab({ projectId, orgId }: Props) {
                 </TableRow>
               ) : (
                 filtered.map((obj: any) => {
-                  const sd = (obj.notes ? JSON.parse(obj.notes) : {}) as any;
+                  let sd: any = {};
+                  if (obj.notes) {
+                    try { sd = JSON.parse(obj.notes); } catch { sd = {}; }
+                  }
                   return (
                     <TableRow key={obj.id}>
                       <TableCell className="font-mono text-xs">{obj.object_id_display}</TableCell>
