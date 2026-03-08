@@ -86,7 +86,7 @@ export function useImportDrafts(orgId: string | null) {
       if (!orgId) return [];
       const { data, error } = await supabase
         .from("import_drafts" as any)
-        .select("id, name, step, file_name, raw_headers, mappings, mapped_data, row_count, created_at, updated_at")
+        .select("id, name, step, file_name, raw_headers, mappings, mapped_data, raw_csv_rows, row_count, created_at, updated_at")
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as ImportDraft[];
