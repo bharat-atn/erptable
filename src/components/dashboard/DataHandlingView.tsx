@@ -354,10 +354,53 @@ export function DataHandlingView() {
     URL.revokeObjectURL(url);
   }, []);
 
-  /* ─── Step 1 → Step 2: Map & Validate ─── */
+  /* ─── Step 1: Computed mapping info ─── */
 
   const hasNameColumn = useMemo(() => {
     return Object.values(columnMapping).includes("name");
+  }, [columnMapping]);
+
+  // Improvement #1: mapping progress per section
+  const sectionProgress = useMemo(() => {
+    const mappedFields = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    const result: Record<string, { mapped: number; total: number }> = {};
+    for (const sKey of SECTION_ORDER) {
+      if (sKey === "skip") continue;
+      const fields = SYSTEM_FIELDS.filter((f) => f.group === sKey);
+      result[sKey] = {
+        total: fields.length,
+        mapped: fields.filter((f) => mappedFields.has(f.key)).length,
+      };
+    }
+    return result;
+  }, [columnMapping]);
+
+  // Improvement #3: duplicate field assignment detection
+  const duplicateMappings = useMemo(() => {
+    const fieldToCols: Record<string, string[]> = {};
+    for (const [csvCol, sysField] of Object.entries(columnMapping)) {
+      if (sysField === "_skip") continue;
+      if (!fieldToCols[sysField]) fieldToCols[sysField] = [];
+      fieldToCols[sysField].push(csvCol);
+    }
+    const dupes: Record<string, string[]> = {};
+    for (const [field, cols] of Object.entries(fieldToCols)) {
+      if (cols.length > 1) dupes[field] = cols;
+    }
+    return dupes;
+  }, [columnMapping]);
+
+  // Improvement #4: unmapped required fields
+  const unmappedRequired = useMemo(() => {
+    const mappedFields = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    return SYSTEM_FIELDS.filter((f) => f.required && !mappedFields.has(f.key));
+  }, [columnMapping]);
+
+  // Improvement #6: personalInfo keys that are actually mapped
+  const mappedPersonalInfoKeys = useMemo(() => {
+    const piKeys = ["address1", "address2", "postcode", "stateProvince", "preferredName", "dateOfBirth", "countryOfBirth", "citizenship", "nationality", "swedishPersonalNumber", "swedishCoordinationNumber", "bankName", "bankAccount", "bicCode", "bankCountry", "emergencyFirstName", "emergencyLastName", "emergencyPhone", "mobilePhone"];
+    const mapped = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    return piKeys.filter((k) => mapped.has(k));
   }, [columnMapping]);
 
   const proceedToWashing = useCallback(() => {
