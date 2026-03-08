@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/contexts/OrgContext";
 import { useQuery } from "@tanstack/react-query";
@@ -15,9 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2, Eye, EyeOff } from "lucide-react";
+import { Upload, FileSpreadsheet, ArrowRight, ArrowLeft, Check, X, AlertTriangle, Download, Pencil, RefreshCw, Users, Hash, Save, FolderOpen, Trash2, Clock, Building2, Eye, EyeOff, Undo2, Redo2, FlaskConical, ChevronDown, ChevronRight } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useImportPresets, useImportDrafts } from "@/hooks/useImportPresetsAndDrafts";
 
@@ -214,6 +215,8 @@ export function DataHandlingView() {
   const [importing, setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+  const [dryRunResults, setDryRunResults] = useState<{ valid: number; duplicates: string[]; errors: string[] } | null>(null);
+  const [isDryRunning, setIsDryRunning] = useState(false);
 
   // Preset & Draft state
   const { presets, savePreset, deletePreset } = useImportPresets(orgId);
@@ -225,6 +228,13 @@ export function DataHandlingView() {
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [showLoadDraftDialog, setShowLoadDraftDialog] = useState(false);
   const [hideColors, setHideColors] = useState(false);
+
+  // Undo/Redo state (improvement #8)
+  const [editHistory, setEditHistory] = useState<MappedEmployee[][]>([]);
+  const [editHistoryIndex, setEditHistoryIndex] = useState(-1);
+
+  // Step 2 expanded personalInfo columns (improvement #6)
+  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
 
   // Fetch existing employees for duplicate detection
   const { data: existingEmployees } = useQuery({
@@ -318,8 +328,24 @@ export function DataHandlingView() {
   }, []);
 
   const downloadTemplate = useCallback(() => {
-    const template = "name,email,phone,city,country,address,postcode,dateOfBirth,citizenship,bankName,bankAccount,bicCode\nLazea Dorin Felician,dorin@example.com,+46701234567,Stockholm,Sweden,Street 1,12345,1990-01-15,Romania,Nordea,1234567890,NDEASESS";
-    const blob = new Blob([template], { type: "text/csv" });
+    // Improvement #10: Enhanced template with all sections and Swedish-format samples
+    const headers = [
+      "# Section 2.1 — Name & Address",
+      "name,first_name,middle_name,last_name,preferredName,address1,address2,city,postcode,stateProvince,country",
+      "# Section 2.2 — Birth & Contact",
+      "email,phone,mobilePhone,dateOfBirth,countryOfBirth,citizenship,nationality,swedishPersonalNumber,swedishCoordinationNumber",
+      "# Section 2.3 — Emergency Contact",
+      "emergencyFirstName,emergencyLastName,emergencyPhone",
+      "# Section 3 — Bank Information",
+      "bankName,bankAccount,bicCode,bankCountry",
+      "# Section 4 — ID / Employment",
+      "employee_code",
+    ];
+    const allFields = "name,first_name,middle_name,last_name,preferredName,address1,address2,city,postcode,stateProvince,country,email,phone,mobilePhone,dateOfBirth,countryOfBirth,citizenship,nationality,swedishPersonalNumber,swedishCoordinationNumber,emergencyFirstName,emergencyLastName,emergencyPhone,bankName,bankAccount,bicCode,bankCountry,employee_code";
+    const sampleRow1 = "Lazea Dorin Felician,,,,,Storgatan 1,,Stockholm,111 22,,Sweden,dorin@example.com,+46701234567,,1990-05-15,Romania,Romanian,,19900515-1234,,Maria,Lazea,+40721234567,Nordea,1234-5678901,NDEASESS,Sweden,";
+    const sampleRow2 = "Pettersson Anna,,,,Anna P,Björkvägen 12,Lgh 302,Göteborg,412 56,,Sweden,anna.p@example.com,,+46731234567,1985-11-22,Sweden,Swedish,Swedish,19851122-5678,,Erik,Pettersson,+46709876543,Swedbank,9876-5432109,SWEDSESS,Sweden,";
+    const csv = headers.join("\n") + "\n\n" + allFields + "\n" + sampleRow1 + "\n" + sampleRow2 + "\n";
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -328,10 +354,53 @@ export function DataHandlingView() {
     URL.revokeObjectURL(url);
   }, []);
 
-  /* ─── Step 1 → Step 2: Map & Validate ─── */
+  /* ─── Step 1: Computed mapping info ─── */
 
   const hasNameColumn = useMemo(() => {
     return Object.values(columnMapping).includes("name");
+  }, [columnMapping]);
+
+  // Improvement #1: mapping progress per section
+  const sectionProgress = useMemo(() => {
+    const mappedFields = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    const result: Record<string, { mapped: number; total: number }> = {};
+    for (const sKey of SECTION_ORDER) {
+      if (sKey === "skip") continue;
+      const fields = SYSTEM_FIELDS.filter((f) => f.group === sKey);
+      result[sKey] = {
+        total: fields.length,
+        mapped: fields.filter((f) => mappedFields.has(f.key)).length,
+      };
+    }
+    return result;
+  }, [columnMapping]);
+
+  // Improvement #3: duplicate field assignment detection
+  const duplicateMappings = useMemo(() => {
+    const fieldToCols: Record<string, string[]> = {};
+    for (const [csvCol, sysField] of Object.entries(columnMapping)) {
+      if (sysField === "_skip") continue;
+      if (!fieldToCols[sysField]) fieldToCols[sysField] = [];
+      fieldToCols[sysField].push(csvCol);
+    }
+    const dupes: Record<string, string[]> = {};
+    for (const [field, cols] of Object.entries(fieldToCols)) {
+      if (cols.length > 1) dupes[field] = cols;
+    }
+    return dupes;
+  }, [columnMapping]);
+
+  // Improvement #4: unmapped required fields
+  const unmappedRequired = useMemo(() => {
+    const mappedFields = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    return SYSTEM_FIELDS.filter((f) => f.required && !mappedFields.has(f.key));
+  }, [columnMapping]);
+
+  // Improvement #6: personalInfo keys that are actually mapped
+  const mappedPersonalInfoKeys = useMemo(() => {
+    const piKeys = ["address1", "address2", "postcode", "stateProvince", "preferredName", "dateOfBirth", "countryOfBirth", "citizenship", "nationality", "swedishPersonalNumber", "swedishCoordinationNumber", "bankName", "bankAccount", "bicCode", "bankCountry", "emergencyFirstName", "emergencyLastName", "emergencyPhone", "mobilePhone"];
+    const mapped = new Set(Object.values(columnMapping).filter((v) => v !== "_skip"));
+    return piKeys.filter((k) => mapped.has(k));
   }, [columnMapping]);
 
   const proceedToWashing = useCallback(() => {
@@ -428,17 +497,57 @@ export function DataHandlingView() {
       }
     });
 
+    // Initialize edit history
+    setEditHistory([mapped]);
+    setEditHistoryIndex(0);
     setMappedData(mapped);
     setStep(2);
   }, [csvRows, columnMapping, existingEmployees]);
 
   /* ─── Step 2: Data washing helpers ─── */
 
+  // Improvement #8: push to history on meaningful changes
+  const pushHistory = useCallback((newData: MappedEmployee[]) => {
+    setEditHistory((prev) => {
+      const trimmed = prev.slice(0, editHistoryIndex + 1);
+      return [...trimmed, newData].slice(-30); // Keep last 30 states
+    });
+    setEditHistoryIndex((prev) => Math.min(prev + 1, 29));
+  }, [editHistoryIndex]);
+
+  const undo = useCallback(() => {
+    if (editHistoryIndex <= 0) return;
+    const newIdx = editHistoryIndex - 1;
+    setEditHistoryIndex(newIdx);
+    setMappedData(editHistory[newIdx]);
+  }, [editHistoryIndex, editHistory]);
+
+  const redo = useCallback(() => {
+    if (editHistoryIndex >= editHistory.length - 1) return;
+    const newIdx = editHistoryIndex + 1;
+    setEditHistoryIndex(newIdx);
+    setMappedData(editHistory[newIdx]);
+  }, [editHistoryIndex, editHistory]);
+
+  // Keyboard undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        if (e.shiftKey) { redo(); } else { undo(); }
+        e.preventDefault();
+      }
+    };
+    if (step === 2) window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [step, undo, redo]);
+
   const updateRow = useCallback((rowId: string, updates: Partial<MappedEmployee>) => {
-    setMappedData((prev) =>
-      prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
-    );
-  }, []);
+    setMappedData((prev) => {
+      const newData = prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r));
+      pushHistory(newData);
+      return newData;
+    });
+  }, [pushHistory]);
 
   const toggleRow = useCallback((rowId: string) => {
     setMappedData((prev) =>
@@ -458,6 +567,16 @@ export function DataHandlingView() {
     );
   }, []);
 
+  // Improvement #5: batch delete selected rows
+  const deleteSelectedRows = useCallback(() => {
+    setMappedData((prev) => {
+      const newData = prev.filter((r) => !r.selected);
+      pushHistory(newData);
+      toast.success(`Deleted ${prev.length - newData.length} rows`);
+      return newData;
+    });
+  }, [pushHistory]);
+
   const startEdit = useCallback((rowId: string, field: string, currentValue: string) => {
     setEditingCell({ rowId, field });
     setEditValue(currentValue);
@@ -468,6 +587,30 @@ export function DataHandlingView() {
     updateRow(editingCell.rowId, { [editingCell.field]: editValue } as any);
     setEditingCell(null);
   }, [editingCell, editValue, updateRow]);
+
+  // Improvement #7: export cleaned CSV
+  const exportCleanedCsv = useCallback(() => {
+    const selected = mappedData.filter((r) => r.selected);
+    if (selected.length === 0) { toast.error("No rows selected"); return; }
+    const piKeys = mappedPersonalInfoKeys;
+    const headers = ["first_name", "middle_name", "last_name", "email", "phone", "city", "country", "employee_code", ...piKeys];
+    const csvLines = [headers.join(",")];
+    for (const row of selected) {
+      const vals = [
+        row.first_name, row.middle_name, row.last_name, row.email, row.phone, row.city, row.country, row.employee_code,
+        ...piKeys.map((k) => row.personalInfo[k] || ""),
+      ].map((v) => `"${(v || "").replace(/"/g, '""')}"`);
+      csvLines.push(vals.join(","));
+    }
+    const blob = new Blob([csvLines.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cleaned-employees-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${selected.length} rows`);
+  }, [mappedData, mappedPersonalInfoKeys]);
 
   const filteredData = useMemo(() => {
     if (filterTab === "all") return mappedData;
@@ -593,6 +736,40 @@ export function DataHandlingView() {
     }
   }, [toImport, orgId]);
 
+  // Improvement #9: dry-run import
+  const handleDryRun = useCallback(async () => {
+    if (!orgId) return;
+    setIsDryRunning(true);
+    setDryRunResults(null);
+    const results = { valid: 0, duplicates: [] as string[], errors: [] as string[] };
+
+    // Check for duplicate emails against existing DB
+    const emails = toImport.map((r) => r.email.toLowerCase());
+    const { data: existingDups } = await supabase
+      .from("employees")
+      .select("email")
+      .eq("org_id", orgId)
+      .in("email", emails);
+
+    const dupSet = new Set((existingDups || []).map((e) => e.email.toLowerCase()));
+
+    for (const row of toImport) {
+      if (dupSet.has(row.email.toLowerCase())) {
+        results.duplicates.push(row.email);
+      } else if (!row.email || !EMAIL_REGEX.test(row.email)) {
+        results.errors.push(`${row.email || "(blank)"}: Invalid email`);
+      } else if (!row.first_name && !row.last_name) {
+        results.errors.push(`${row.email}: Missing name`);
+      } else {
+        results.valid++;
+      }
+    }
+
+    setDryRunResults(results);
+    setIsDryRunning(false);
+    toast.info("Dry run complete — no data was imported");
+  }, [toImport, orgId]);
+
   const resetAll = useCallback(() => {
     setStep(1);
     setCsvHeaders([]);
@@ -603,6 +780,10 @@ export function DataHandlingView() {
     setImportResults(null);
     setImportProgress(0);
     setActiveDraftId(null);
+    setDryRunResults(null);
+    setEditHistory([]);
+    setEditHistoryIndex(-1);
+    setShowPersonalInfo(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, []);
 
@@ -927,17 +1108,64 @@ export function DataHandlingView() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {/* Improvement #1: Section mapping progress bar */}
+                  <div className="flex flex-wrap gap-3 mb-4 p-3 bg-muted/30 rounded-lg text-xs">
+                    {SECTION_ORDER.filter((s) => s !== "skip").map((sKey) => {
+                      const p = sectionProgress[sKey];
+                      if (!p) return null;
+                      const pct = p.total > 0 ? Math.round((p.mapped / p.total) * 100) : 0;
+                      return (
+                        <div key={sKey} className="flex items-center gap-1.5">
+                          <span className="font-medium text-muted-foreground">{sKey}:</span>
+                          <span className={cn("font-bold", p.mapped > 0 ? "text-primary" : "text-muted-foreground")}>{p.mapped}/{p.total}</span>
+                          <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Improvement #4: Unmapped required fields alert */}
+                  {unmappedRequired.length > 0 && csvHeaders.length > 0 && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Required fields not mapped:</strong>{" "}
+                        {unmappedRequired.map((f) => f.label).join(", ")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Improvement #3: Duplicate mapping warnings */}
+                  {Object.keys(duplicateMappings).length > 0 && (
+                    <Alert className="mb-4 border-yellow-500/50 bg-yellow-500/5">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+                        <strong>Duplicate mappings detected:</strong>{" "}
+                        {Object.entries(duplicateMappings).map(([field, cols]) => {
+                          const label = SYSTEM_FIELDS.find((f) => f.key === field)?.label || field;
+                          return `"${label}" mapped from: ${cols.join(", ")}`;
+                        }).join(" · ")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {csvHeaders.map((header) => {
                       const mappedValue = columnMapping[header] || "_skip";
                       const isMapped = mappedValue !== "_skip";
                       const showColor = isMapped && !hideColors;
+                      // Improvement #3: check if this column's mapped field is a duplicate
+                      const isDupe = isMapped && duplicateMappings[mappedValue];
                       return (
                         <div
                           key={header}
                           className={cn(
                             "flex items-center gap-3 p-3 rounded-lg border transition-colors",
-                            showColor
+                            isDupe
+                              ? "bg-yellow-50 border-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-700"
+                              : showColor
                               ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800"
                               : "bg-muted/30 border-border"
                           )}
@@ -945,9 +1173,19 @@ export function DataHandlingView() {
                           <div className="flex-1 min-w-0">
                             <Label className="text-xs text-muted-foreground">CSV Column</Label>
                             <p className="text-sm font-medium truncate">{header}</p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              e.g. "{csvRows[0]?.[header] || ""}"
-                            </p>
+                            {/* Improvement #2: Show 2-3 sample values */}
+                            <div className="space-y-0.5">
+                              {csvRows.slice(0, 3).map((row, i) => (
+                                <p key={i} className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                  {i === 0 ? "e.g. " : ""}{`"${(row[header] || "").slice(0, 40)}${(row[header] || "").length > 40 ? "…" : ""}"`}
+                                </p>
+                              ))}
+                            </div>
+                            {isDupe && (
+                              <Badge variant="outline" className="mt-1 text-[10px] border-yellow-400 text-yellow-700 dark:text-yellow-300">
+                                ⚠ Also mapped from {duplicateMappings[mappedValue]?.filter((c) => c !== header).join(", ")}
+                              </Badge>
+                            )}
                           </div>
                           <ArrowRight className={cn("h-4 w-4 shrink-0", showColor ? "text-green-600 dark:text-green-400" : "text-muted-foreground")} />
                           <div className="flex-1">
@@ -979,7 +1217,7 @@ export function DataHandlingView() {
                               </SelectContent>
                             </Select>
                           </div>
-                          {showColor && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
+                          {showColor && !isDupe && <Check className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />}
                         </div>
                       );
                     })}
@@ -1036,8 +1274,26 @@ export function DataHandlingView() {
                   {counts.duplicate > 0 && <Badge variant="secondary">{counts.duplicate} duplicate</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
+                  {/* Improvement #8: Undo/Redo */}
+                  <Button variant="ghost" size="sm" onClick={undo} disabled={editHistoryIndex <= 0} title="Undo (Ctrl+Z)">
+                    <Undo2 className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={redo} disabled={editHistoryIndex >= editHistory.length - 1} title="Redo (Ctrl+Shift+Z)">
+                    <Redo2 className="h-4 w-4" />
+                  </Button>
+                  <div className="w-px h-5 bg-border" />
                   <Button variant="outline" size="sm" onClick={selectAllValid}>Select All Valid</Button>
                   <Button variant="outline" size="sm" onClick={deselectDuplicates}>Deselect Duplicates</Button>
+                  {/* Improvement #5: Batch delete */}
+                  {counts.selected > 0 && (
+                    <Button variant="destructive" size="sm" onClick={deleteSelectedRows}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete Selected ({counts.selected})
+                    </Button>
+                  )}
+                  {/* Improvement #7: Export cleaned CSV */}
+                  <Button variant="outline" size="sm" onClick={exportCleanedCsv}>
+                    <Download className="h-4 w-4 mr-1" /> Export CSV
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -1053,6 +1309,20 @@ export function DataHandlingView() {
           </Tabs>
 
           <Card>
+            {/* Improvement #6: Toggle personalInfo columns */}
+            {mappedPersonalInfoKeys.length > 0 && (
+              <div className="px-4 pt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPersonalInfo(!showPersonalInfo)}
+                  className="text-xs gap-1"
+                >
+                  {showPersonalInfo ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {showPersonalInfo ? "Hide" : "Show"} extended fields ({mappedPersonalInfoKeys.length})
+                </Button>
+              </div>
+            )}
             <ScrollArea className="max-h-[500px]">
               <Table>
                 <TableHeader>
@@ -1075,6 +1345,9 @@ export function DataHandlingView() {
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>City</TableHead>
+                    {showPersonalInfo && mappedPersonalInfoKeys.map((k) => (
+                      <TableHead key={k} className="text-xs">{SYSTEM_FIELDS.find((f) => f.key === k)?.label || k}</TableHead>
+                    ))}
                     <TableHead>Errors</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1105,6 +1378,12 @@ export function DataHandlingView() {
                       <TableCell>{renderEditableCell(row, "email", row.email)}</TableCell>
                       <TableCell>{renderEditableCell(row, "phone", row.phone)}</TableCell>
                       <TableCell>{renderEditableCell(row, "city", row.city)}</TableCell>
+                      {/* Improvement #6: personalInfo columns */}
+                      {showPersonalInfo && mappedPersonalInfoKeys.map((k) => (
+                        <TableCell key={k} className="text-xs text-muted-foreground truncate max-w-[120px]">
+                          {row.personalInfo[k] || "—"}
+                        </TableCell>
+                      ))}
                       <TableCell>
                         {row.errors.length > 0 && (
                           <span className="text-xs text-destructive">{row.errors.join("; ")}</span>
@@ -1114,7 +1393,7 @@ export function DataHandlingView() {
                   ))}
                   {filteredData.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9 + (showPersonalInfo ? mappedPersonalInfoKeys.length : 0)} className="text-center py-8 text-muted-foreground">
                         No rows match this filter
                       </TableCell>
                     </TableRow>
@@ -1231,6 +1510,41 @@ export function DataHandlingView() {
                       <p className="text-xs text-muted-foreground text-center">{importProgress}% complete</p>
                     </div>
                   )}
+
+                  {/* Improvement #9: Dry-run results */}
+                  {dryRunResults && (
+                    <div className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium">
+                        <FlaskConical className="h-4 w-4 text-primary" />
+                        Dry Run Results
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-primary">{dryRunResults.valid}</p>
+                          <p className="text-xs text-muted-foreground">Would succeed</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-yellow-600">{dryRunResults.duplicates.length}</p>
+                          <p className="text-xs text-muted-foreground">Duplicates found</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-lg font-bold text-destructive">{dryRunResults.errors.length}</p>
+                          <p className="text-xs text-muted-foreground">Errors</p>
+                        </div>
+                      </div>
+                      {dryRunResults.duplicates.length > 0 && (
+                        <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                          <strong>Duplicates:</strong> {dryRunResults.duplicates.join(", ")}
+                        </div>
+                      )}
+                      {dryRunResults.errors.length > 0 && (
+                        <div className="text-xs text-destructive">
+                          {dryRunResults.errors.slice(0, 5).map((e, i) => <p key={i}>{e}</p>)}
+                          {dryRunResults.errors.length > 5 && <p>...and {dryRunResults.errors.length - 5} more</p>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -1238,9 +1552,16 @@ export function DataHandlingView() {
                 <Button variant="outline" onClick={() => setStep(3)} disabled={importing}>
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back
                 </Button>
-                <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
-                  {importing ? "Importing..." : `Import ${toImport.length} Employees`}
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Improvement #9: Dry-run button */}
+                  <Button variant="outline" onClick={handleDryRun} disabled={importing || isDryRunning || toImport.length === 0}>
+                    <FlaskConical className="h-4 w-4 mr-1" />
+                    {isDryRunning ? "Testing..." : "Test Import"}
+                  </Button>
+                  <Button onClick={() => setShowImportConfirm(true)} disabled={importing || toImport.length === 0}>
+                    {importing ? "Importing..." : `Import ${toImport.length} Employees`}
+                  </Button>
+                </div>
               </div>
             </>
           ) : (
