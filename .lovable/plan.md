@@ -1,36 +1,38 @@
 
 
-## Plan: Store Raw CSV Data in Drafts
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-### Problem
-Currently, drafts save headers, mappings, and mapped data — but **not the original CSV rows**. When loading a draft, users must re-upload the CSV file from disk. The user wants the CSV content stored in the system so drafts are fully self-contained.
+### Root Cause
 
-### Current State
-- `handleSaveDraft` explicitly strips `raw` from mapped data (line 607: "too large")
-- `handleLoadDraft` restores rows with `raw: {}` and caps at step 2
-- The `import_drafts` table has `mapped_data jsonb` but no column for raw CSV content
-- The `raw_headers` column exists but raw row data is not persisted
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-### Approach
-Store the original CSV rows (`csvRows`) in the draft alongside everything else. This makes drafts fully resumable without re-uploading.
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-### Changes
+**1. Replace generic message with specific missing-condition checklist**
 
-**1. Database migration — add `raw_csv_rows` column to `import_drafts`**
-```sql
-ALTER TABLE public.import_drafts
-  ADD COLUMN raw_csv_rows jsonb DEFAULT '[]'::jsonb;
-```
-This stores the parsed CSV row objects (array of `{header: value}` objects). For typical imports (a few hundred rows, ~25 columns) this is well within Postgres JSONB limits.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-**2. `src/hooks/useImportPresetsAndDrafts.ts`**
-- Add `raw_csv_rows` to the `ImportDraft` interface
-- Include `raw_csv_rows` in the `select` query
-- Add `raw_csv_rows` to the `saveDraft` mutation (both insert and update)
-- Add it to the mutation input type
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-**3. `src/components/dashboard/DataHandlingView.tsx`**
-- **`handleSaveDraft`**: Include `csvRows` as `raw_csv_rows` in the save payload. Also keep the `raw` field in mapped data since we now have the source data.
-- **`handleLoadDraft`**: Restore `csvRows` from `draft.raw_csv_rows`. Reconstruct `raw` references on mapped data. Allow resuming from the actual saved step (not capped at 2).
-- **Upload step UI**: When drafts are listed, show a "Resume" button. When a draft with stored CSV data is loaded, skip the file upload and go straight to the mapping/washing step.
+This tells the user exactly what's blocking them.
+
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
+
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+
+**3. Add scroll-to-schedule link in the checklist**
+
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 

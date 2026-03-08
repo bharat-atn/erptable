@@ -17,6 +17,7 @@ interface ImportDraft {
   raw_headers: string[];
   mappings: Record<string, string>;
   mapped_data: any[];
+  raw_csv_rows: any[];
   row_count: number;
   created_at: string;
   updated_at: string;
@@ -85,7 +86,7 @@ export function useImportDrafts(orgId: string | null) {
       if (!orgId) return [];
       const { data, error } = await supabase
         .from("import_drafts" as any)
-        .select("id, name, step, file_name, raw_headers, mappings, mapped_data, row_count, created_at, updated_at")
+        .select("id, name, step, file_name, raw_headers, mappings, mapped_data, raw_csv_rows, row_count, created_at, updated_at")
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as ImportDraft[];
@@ -102,6 +103,7 @@ export function useImportDrafts(orgId: string | null) {
       raw_headers: string[];
       mappings: Record<string, string>;
       mapped_data: any[];
+      raw_csv_rows: any[];
       row_count: number;
     }) => {
       const { data: userData } = await supabase.auth.getUser();
@@ -115,6 +117,7 @@ export function useImportDrafts(orgId: string | null) {
             raw_headers: draft.raw_headers,
             mappings: draft.mappings,
             mapped_data: draft.mapped_data,
+            raw_csv_rows: draft.raw_csv_rows,
             row_count: draft.row_count,
             updated_at: new Date().toISOString(),
           } as any)
@@ -128,6 +131,7 @@ export function useImportDrafts(orgId: string | null) {
           raw_headers: draft.raw_headers,
           mappings: draft.mappings,
           mapped_data: draft.mapped_data,
+          raw_csv_rows: draft.raw_csv_rows,
           row_count: draft.row_count,
           created_by: userData.user?.id || null,
         } as any);
