@@ -456,6 +456,7 @@ export function CompGroupView() {
         client: seed.client,
         star_1: c.s1, star_2: c.s2, star_3: c.s3, star_4: c.s4, star_5: c.s5,
         hourly_gross: c.gross,
+        net_value: c.net,
         sort_order: idx,
       }))
     );
