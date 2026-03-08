@@ -157,7 +157,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /* ─── Component ─────────────────────────────────────── */
 
 export function DataHandlingView() {
-  const { orgId } = useOrg();
+  const { orgId, orgName, orgType } = useOrg();
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [step, setStep] = useState(1);
 
   // Step 1 state
