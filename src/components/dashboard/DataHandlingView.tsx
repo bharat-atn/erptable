@@ -882,6 +882,19 @@ export function DataHandlingView() {
                         </Select>
                       )}
                       <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const cleared: Record<string, string> = {};
+                          csvHeaders.forEach((h) => { cleared[h] = "_skip"; });
+                          setColumnMapping(cleared);
+                          toast.info("All mappings cleared");
+                        }}
+                        className="h-8 text-xs"
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" /> Clear All
+                      </Button>
+                      <Button
                         variant="outline"
                         size="sm"
                         onClick={() => { setPresetName(""); setShowSavePresetDialog(true); }}
