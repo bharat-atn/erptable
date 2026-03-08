@@ -466,7 +466,20 @@ export function CompGroupView() {
 
   /* ---- Derived state ---- */
   const activeGroup = groups.find(g => g.id === activeGroupId);
-  const methodLabel = activeGroup?.method === "piecework" ? "Piece work" : "Hourly salary";
+  const isPiecework = activeGroup?.method === "piecework";
+  const isClearing = activeGroup?.category === "clearing";
+
+  // Method-specific column labels
+  const starGroupLabel = isPiecework
+    ? (isClearing ? "Clearing units/day" : "Planting units/hr")
+    : "Hourly salary";
+  const grossLabel = isPiecework
+    ? (isClearing ? "Clear Gross" : "Plant Gross")
+    : "Hourly Gross";
+  const netLabel = isPiecework
+    ? (isClearing ? "Clear Net" : "Plant Net")
+    : null;
+
   const filteredClasses = search
     ? classes.filter(c => c.sla_class_id.includes(search) || c.type_label.toLowerCase().includes(search.toLowerCase()) || c.client.toLowerCase().includes(search.toLowerCase()))
     : classes;
