@@ -133,7 +133,7 @@ const defaultApps: AppDefinition[] = [
     iconName: "DollarSign",
     colorIndex: 3,
     enabled: true,
-    available: false,
+    available: true,
     allowedRoles: ["admin", "org_admin", "payroll_manager"],
   },
   {
