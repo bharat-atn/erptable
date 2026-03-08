@@ -22,12 +22,29 @@ interface CsvImportDialogProps {
 
 interface ParsedRow {
   first_name: string;
-  last_name: string;
   middle_name: string;
+  last_name: string;
+  preferred_name: string;
   email: string;
-  phone: string;
+  address1: string;
+  address2: string;
+  zip_code: string;
   city: string;
+  state_province: string;
   country: string;
+  birthday: string;
+  country_of_birth: string;
+  citizenship: string;
+  mobile_phone: string;
+  bank_name: string;
+  bic_code: string;
+  bank_account_number: string;
+  bank_country: string;
+  emergency_first_name: string;
+  emergency_last_name: string;
+  emergency_phone: string;
+  swedish_coordination_number: string;
+  swedish_personal_number: string;
   status: string;
   errors: string[];
 }
@@ -38,10 +55,9 @@ const VALID_STATUSES = ["INVITED", "ONBOARDING", "ACTIVE", "INACTIVE"];
 function parseCsv(text: string): { headers: string[]; rows: string[][] } {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length === 0) return { headers: [], rows: [] };
-  
+
   const headers = lines[0].split(",").map((h) => h.trim().toLowerCase().replace(/['"]/g, ""));
   const rows = lines.slice(1).map((line) => {
-    // Handle quoted values with commas
     const values: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -61,30 +77,78 @@ function parseCsv(text: string): { headers: string[]; rows: string[][] } {
   return { headers, rows };
 }
 
-function validateRow(headers: string[], values: string[]): ParsedRow {
-  const get = (key: string) => {
+/** Flexible header lookup — tries multiple variants */
+function flexGet(headers: string[], values: string[], ...keys: string[]): string {
+  for (const key of keys) {
     const idx = headers.indexOf(key);
-    return idx >= 0 && idx < values.length ? values[idx].trim() : "";
-  };
+    if (idx >= 0 && idx < values.length) {
+      const v = values[idx].trim();
+      if (v) return v;
+    }
+  }
+  return "";
+}
+
+function validateRow(headers: string[], values: string[]): ParsedRow {
+  const g = (...keys: string[]) => flexGet(headers, values, ...keys);
 
   const errors: string[] = [];
-  const email = get("email");
-  const firstName = get("first_name") || get("first name") || get("firstname");
-  const lastName = get("last_name") || get("last name") || get("lastname");
-  const status = (get("status") || "INVITED").toUpperCase();
+  const email = g("email");
+  const firstName = g("first_name", "first name", "firstname");
+  const lastName = g("last_name", "last name", "lastname");
+  const middleName = g("middle_name", "middle name", "middlename");
+  const preferredName = g("preferred_name", "preferred name", "preferredname");
+  const address1 = g("address1", "address_1", "address 1", "address");
+  const address2 = g("address2", "address_2", "address 2");
+  const zipCode = g("zip_code", "zip code", "zipcode", "postcode", "postal_code");
+  const city = g("city");
+  const stateProvince = g("state_province", "state", "province");
+  const country = g("country");
+  const birthday = g("birthday", "date_of_birth", "date of birth", "dob");
+  const countryOfBirth = g("country_of_birth", "country of birth");
+  const citizenship = g("citizenship");
+  const mobilePhone = g("mobile_phone", "mobile", "phone", "phone_number");
+  const bankName = g("bank_name", "bank name", "bankname", "bank");
+  const bicCode = g("bic_code", "bic", "swift", "swift_code");
+  const bankAccountNumber = g("bank_account_number", "bank account", "account_number", "iban");
+  const bankCountry = g("bank_country", "bank country");
+  const emergencyFirstName = g("emergency_first_name", "emergency first name", "ice_first_name");
+  const emergencyLastName = g("emergency_last_name", "emergency last name", "ice_last_name");
+  const emergencyPhone = g("emergency_phone", "emergency phone", "ice_phone");
+  const swedishCoordinationNumber = g("swedish_coordination_number", "coordination_number", "samordningsnummer");
+  const swedishPersonalNumber = g("swedish_personal_number", "personal_number", "personnummer");
+  const status = (g("status") || "INVITED").toUpperCase();
 
   if (!email) errors.push("Email is required");
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Invalid email format");
   if (!VALID_STATUSES.includes(status)) errors.push(`Invalid status: ${status}`);
+  if (birthday && !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) errors.push("Birthday must be YYYY-MM-DD");
 
   return {
     first_name: firstName,
+    middle_name: middleName,
     last_name: lastName,
-    middle_name: get("middle_name") || get("middle name") || get("middlename"),
+    preferred_name: preferredName,
     email,
-    phone: get("phone") || get("phone_number"),
-    city: get("city"),
-    country: get("country"),
+    address1,
+    address2,
+    zip_code: zipCode,
+    city,
+    state_province: stateProvince,
+    country,
+    birthday,
+    country_of_birth: countryOfBirth,
+    citizenship,
+    mobile_phone: mobilePhone,
+    bank_name: bankName,
+    bic_code: bicCode,
+    bank_account_number: bankAccountNumber,
+    bank_country: bankCountry,
+    emergency_first_name: emergencyFirstName,
+    emergency_last_name: emergencyLastName,
+    emergency_phone: emergencyPhone,
+    swedish_coordination_number: swedishCoordinationNumber,
+    swedish_personal_number: swedishPersonalNumber,
     status,
     errors,
   };
@@ -111,7 +175,7 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const { headers, rows } = parseCsv(text);
-      
+
       if (!headers.some((h) => REQUIRED_HEADERS.includes(h))) {
         toast.error("CSV must have at least an 'email' column");
         return;
@@ -141,19 +205,46 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
     let success = 0;
     let failed = 0;
 
-    // Batch insert valid rows
-    const insertData = validRows.map((r) => ({
-      first_name: r.first_name || null,
-      last_name: r.last_name || null,
-      middle_name: r.middle_name || null,
-      email: r.email,
-      phone: r.phone || null,
-      city: r.city || null,
-      country: r.country || null,
-      status: r.status as "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE",
-    }));
+    const insertData = validRows.map((r) => {
+      const personalInfo: Record<string, any> = {};
+      if (r.preferred_name) personalInfo.preferredName = r.preferred_name;
+      if (r.address1) personalInfo.address1 = r.address1;
+      if (r.address2) personalInfo.address2 = r.address2;
+      if (r.zip_code) personalInfo.zipCode = r.zip_code;
+      if (r.city) personalInfo.city = r.city;
+      if (r.state_province) personalInfo.stateProvince = r.state_province;
+      if (r.country) personalInfo.country = r.country;
+      if (r.birthday) personalInfo.birthday = r.birthday;
+      if (r.country_of_birth) personalInfo.countryOfBirth = r.country_of_birth;
+      if (r.citizenship) personalInfo.citizenship = r.citizenship;
+      if (r.mobile_phone) personalInfo.mobilePhone = r.mobile_phone;
+      if (r.bank_name) personalInfo.bankName = r.bank_name;
+      if (r.bic_code) personalInfo.bicCode = r.bic_code;
+      if (r.bank_account_number) personalInfo.bankAccountNumber = r.bank_account_number;
+      if (r.bank_country) personalInfo.bankCountry = r.bank_country;
+      if (r.swedish_coordination_number) personalInfo.swedishCoordinationNumber = r.swedish_coordination_number;
+      if (r.swedish_personal_number) personalInfo.swedishPersonalNumber = r.swedish_personal_number;
+      if (r.emergency_first_name || r.emergency_last_name || r.emergency_phone) {
+        personalInfo.emergencyContact = {
+          firstName: r.emergency_first_name || "",
+          lastName: r.emergency_last_name || "",
+          phone: r.emergency_phone || "",
+        };
+      }
 
-    // Insert in batches of 50
+      return {
+        first_name: r.first_name || null,
+        last_name: r.last_name || null,
+        middle_name: r.middle_name || null,
+        email: r.email,
+        phone: r.mobile_phone || null,
+        city: r.city || null,
+        country: r.country || null,
+        status: r.status as "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE",
+        personal_info: Object.keys(personalInfo).length > 0 ? personalInfo : {},
+      };
+    });
+
     for (let i = 0; i < insertData.length; i += 50) {
       const batch = insertData.slice(i, i + 50);
       const { error } = await supabase.from("employees").insert(batch as any);
@@ -171,7 +262,23 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
   };
 
   const downloadTemplate = () => {
-    const csv = "first_name,last_name,middle_name,email,phone,city,country,status\nJohn,Doe,,john.doe@example.com,+46 70 123 4567,Stockholm,Sweden,INVITED\n";
+    const headers = [
+      "first_name", "middle_name", "last_name", "preferred_name", "email",
+      "address1", "address2", "zip_code", "city", "state_province", "country",
+      "birthday", "country_of_birth", "citizenship", "mobile_phone",
+      "bank_name", "bic_code", "bank_account_number", "bank_country",
+      "emergency_first_name", "emergency_last_name", "emergency_phone",
+      "swedish_coordination_number", "swedish_personal_number", "status",
+    ];
+    const sample = [
+      "John", "", "Doe", "Johnny", "john.doe@example.com",
+      "Storgatan 1", "", "111 22", "Stockholm", "", "Sweden",
+      "1990-05-15", "Sweden", "Swedish", "+46 70 123 4567",
+      "Swedbank", "SWEDSESS", "1234-5678901", "Sweden",
+      "Jane", "Doe", "+46 70 765 4321",
+      "", "", "INVITED",
+    ];
+    const csv = headers.join(",") + "\n" + sample.join(",") + "\n";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -202,7 +309,7 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
               <FileText className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <p className="text-sm font-medium">Drop your CSV file here or click to browse</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Required column: email. Optional: first_name, last_name, middle_name, phone, city, country, status
+                Required: email. Optional: name, address, bank details, emergency contact, and more.
               </p>
             </div>
             <input
@@ -248,6 +355,8 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Country</TableHead>
+                    <TableHead>Birthday</TableHead>
+                    <TableHead>Bank</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Validation</TableHead>
                   </TableRow>
@@ -263,6 +372,8 @@ export function CsvImportDialog({ open, onOpenChange, onSuccess }: CsvImportDial
                       </TableCell>
                       <TableCell className="text-sm">{row.email || "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{row.country || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{row.birthday || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{row.bank_name || "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-[10px]">{row.status}</Badge>
                       </TableCell>
