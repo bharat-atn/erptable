@@ -841,7 +841,7 @@ export function CompGroupView() {
                                 {types.map(t => (
                                   <SelectItem key={t.id} value={t.label.split(" (")[0]}>{t.label}</SelectItem>
                                 ))}
-                                {types.length === 0 && <SelectItem value="">No types defined</SelectItem>}
+                                {types.length === 0 && <SelectItem value="__none" disabled>No types defined</SelectItem>}
                               </SelectContent>
                             </Select>
                           )}
