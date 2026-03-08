@@ -720,6 +720,39 @@ export function DataHandlingView() {
                     <Download className="h-4 w-4 mr-1" /> Download Template
                   </Button>
                 </div>
+
+                {/* Saved Drafts */}
+                {drafts.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      Saved Drafts
+                    </h3>
+                    <div className="grid gap-2">
+                      {drafts.map((draft) => (
+                        <div
+                          key={draft.id}
+                          className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleLoadDraft(draft)}>
+                            <p className="text-sm font-medium truncate">{draft.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {draft.file_name} · {draft.row_count} rows · Step {draft.step} · {new Date(draft.updated_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => handleLoadDraft(draft)}>
+                              <FolderOpen className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => deleteDraft.mutate(draft.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
