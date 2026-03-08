@@ -1,38 +1,24 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Plan: Add Organization Context Banner to Data Handling
 
-### Root Cause
+### Problem
+The Data Handling import view does not clearly indicate which organization/company the employee data will be imported into. This creates a risk of importing data into the wrong tenant.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+### Changes (single file: `src/components/dashboard/DataHandlingView.tsx`)
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+**1. Add a prominent organization/company context banner below the header (~line 649)**
+- Fetch the current organization name and company name from the existing `useOrg()` context and a query to the `companies` table (filtered by `orgId`).
+- Display a clearly visible banner/badge showing: "Importing to: **[Company Name]** ([Organization Name])" with a Building icon.
+- Use an info-style alert or a colored banner (e.g., blue/amber background) so it stands out.
+- If the org type is "sandbox", show an additional amber "Sandbox" badge as a warning.
 
-**1. Replace generic message with specific missing-condition checklist**
+**2. Add an import confirmation step**
+- Before the final import executes (step 4), show a confirmation dialog that explicitly states: "You are about to import X employees into [Company Name]." with the org environment badge.
+- Require the user to confirm before proceeding.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+**3. Import required icon**
+- Add `Building2` from lucide-react to the existing icon imports.
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
-
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+This is a focused UI clarity change — no database or RLS changes needed. The `orgId` and org details are already available via `useOrg()`, and company data can be fetched with a simple query.
 
