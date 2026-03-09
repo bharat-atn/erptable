@@ -387,7 +387,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
                             <Input
                               value={progress.notes}
                               onChange={(e) => updateNotes(obj.id, e.target.value)}
-                              placeholder="Notes..."
+                              placeholder={t("tr.notesPlaceholder")}
                               className="h-7 text-xs"
                             />
                           </TableCell>
