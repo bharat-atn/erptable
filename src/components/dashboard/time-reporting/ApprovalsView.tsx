@@ -200,8 +200,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                           onClick={() => approveMutation.mutate({ reportId: report.id, approve: false })}
                           disabled={approveMutation.isPending}
                         >
-                          <XCircle className="w-4 h-4 mr-1" /> Return
-                        </Button>
+                           <XCircle className="w-4 h-4 mr-1" /> {t("tr.return")}
+                         </Button>
                         <Button
                           size="sm"
                           className="h-9 sm:h-8"
