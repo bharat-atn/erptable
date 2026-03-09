@@ -158,6 +158,13 @@ export function EmployeeHubDashboardView() {
 
   const startCamera = useCallback(async (mode: "selfie" | "environment") => {
     try {
+      // Check if mediaDevices is available (requires HTTPS)
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Camera is not available. Make sure you're using HTTPS.", { duration: 5000 });
+        return;
+      }
+
+      // CRITICAL: getUserMedia must be called directly in click handler
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode === "selfie" ? "user" : "environment", width: 640, height: 480 },
       });
@@ -169,8 +176,20 @@ export function EmployeeHubDashboardView() {
           videoRef.current.play();
         }
       }, 100);
-    } catch {
-      toast.error("Could not access camera. Please allow camera permissions.");
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Unknown error");
+      if (error.name === "NotAllowedError") {
+        toast.error(
+          "Camera permission denied. Go to your browser settings → Site Settings → Camera, and allow access for this site.",
+          { duration: 8000 }
+        );
+      } else if (error.name === "NotFoundError") {
+        toast.error("No camera found on this device.", { duration: 5000 });
+      } else if (error.name === "NotReadableError" || error.name === "AbortError") {
+        toast.error("Camera is in use by another app. Close other apps using the camera and try again.", { duration: 6000 });
+      } else {
+        toast.error(`Camera error: ${error.message}`, { duration: 5000 });
+      }
     }
   }, []);
 
