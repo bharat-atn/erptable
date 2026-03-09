@@ -794,8 +794,7 @@ export function OnboardingWizard({
   }
 
   const s4Missing: string[] = [];
-  if (!selectedBankCountry) s4Missing.push("Country");
-  else if (selectedBankCountry === "__other__" && !formData.bankCountryName) s4Missing.push("Country Name");
+  if (!isOtherBank && !selectedBankCountry) s4Missing.push("Country");
   if (!selectedBankValue && (!isOtherBank || !formData.otherBankName?.trim())) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
@@ -1246,151 +1245,139 @@ export function OnboardingWizard({
               showValidation={validationAttempted}
             />
             <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
-              {/* Country selector */}
-              <div className="space-y-1.5">
-                <FieldLabel en="Select Country" sv="Välj land" />
-                <SearchableCountrySelect
-                  value={selectedBankCountry}
-                  onValueChange={(val) => {
-                    setSelectedBankCountry(val);
-                    setSelectedBankValue("");
-                    setBicValue("");
-                    setBankAccountValue("");
-                    onBankSelect(val === "__other__" ? "other" : "");
-                    updateField("bankName", "");
-                    updateField("otherBankName", "");
-                    updateField("bicCode", "");
-                    updateField("bankAccountNumber", "");
-                    if (val !== "__other__") {
-                      updateField("bankCountryName", "");
-                    }
-                  }}
-                  placeholder="Choose country / Välj land"
-                  hasError={validationAttempted && !selectedBankCountry}
-                  tabIndex={23}
-                  extraItems={[{ label: "Other country / Annat land", value: "__other__" }]}
-                />
-              </div>
-
-              {/* Free-text country name when "Other country" is selected */}
-              {selectedBankCountry === "__other__" && (
-                <div className="space-y-1.5">
-                  <FieldLabel en="Country Name" sv="Landsnamn" />
-                  <Input
-                    tabIndex={23}
-                    value={formData.bankCountryName || ""}
-                    onChange={(e) => updateField("bankCountryName", e.target.value)}
-                    placeholder="Enter country name / Ange landsnamn"
-                    className={cn("h-11 text-sm font-medium", fieldError(selectedBankCountry === "__other__" && !formData.bankCountryName))}
-                  />
-                </div>
-              )}
-
-              {/* Bank name — Select dropdown (hidden when "Other bank" is toggled) */}
+              {/* Listed bank flow */}
               {!isOtherBank && (
-                <div className="space-y-1.5">
-                  <FieldLabel en="Bank Name" sv="Banknamn" />
-                  <Select
-                    value={selectedBankValue || undefined}
-                    onValueChange={(bankName) => {
-                      setSelectedBankValue(bankName);
-                      onBankSelect(bankName);
-                      updateField("bankName", bankName);
-                      updateField("otherBankName", "");
-                      const match = banksForSelectedCountry.find(
-                        (b) => b.name === bankName
-                      );
-                      if (match?.bic_code) {
-                        setBicValue(match.bic_code);
-                        updateField("bicCode", match.bic_code);
-                      } else {
+                <>
+                  <div className="space-y-1.5">
+                    <FieldLabel en="Select Country" sv="Välj land" />
+                    <SearchableCountrySelect
+                      value={selectedBankCountry}
+                      onValueChange={(val) => {
+                        setSelectedBankCountry(val);
+                        setSelectedBankValue("");
                         setBicValue("");
+                        setBankAccountValue("");
+                        if (isOtherBank) onBankSelect("");
+                        updateField("bankName", "");
+                        updateField("otherBankName", "");
                         updateField("bicCode", "");
-                      }
-
-                      if (showAiFill && selectedBankCountry) {
-                        const ACCOUNT_LENGTHS: Record<string, number> = {
-                          Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
-                        };
-                        const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
-                        const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
-                        setBankAccountValue(randomAcct);
-                        updateField("bankAccountNumber", randomAcct);
-                      }
-                    }}
-                    disabled={!selectedBankCountry}
-                  >
-                    <SelectTrigger
+                        updateField("bankAccountNumber", "");
+                      }}
+                      placeholder="Choose country / Välj land"
+                      hasError={validationAttempted && !selectedBankCountry}
                       tabIndex={23}
-                      className={cn(
-                        "h-11 text-sm font-medium",
-                        fieldError(!!selectedBankCountry && !selectedBankValue && !isOtherBank)
-                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <FieldLabel en="Bank Name" sv="Banknamn" />
+                    <Select
+                      value={selectedBankValue || undefined}
+                      onValueChange={(bankName) => {
+                        setSelectedBankValue(bankName);
+                        onBankSelect(bankName);
+                        updateField("bankName", bankName);
+                        updateField("otherBankName", "");
+                        const match = banksForSelectedCountry.find(
+                          (b) => b.name === bankName
+                        );
+                        if (match?.bic_code) {
+                          setBicValue(match.bic_code);
+                          updateField("bicCode", match.bic_code);
+                        } else {
+                          setBicValue("");
+                          updateField("bicCode", "");
+                        }
+
+                        if (showAiFill && selectedBankCountry) {
+                          const ACCOUNT_LENGTHS: Record<string, number> = {
+                            Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
+                          };
+                          const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
+                          const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
+                          setBankAccountValue(randomAcct);
+                          updateField("bankAccountNumber", randomAcct);
+                        }
+                      }}
+                      disabled={!selectedBankCountry || bankList.length === 0}
                     >
-                      <SelectValue placeholder={
-                        selectedBankCountry
-                          ? "Select bank / Välj bank"
-                          : "Select country first / Välj land först"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankList.map((bank) => (
-                        <SelectItem key={bank} value={bank}>
-                          {bank}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      <SelectTrigger
+                        tabIndex={23}
+                        className={cn(
+                          "h-11 text-sm font-medium",
+                          fieldError(!!selectedBankCountry && !selectedBankValue)
+                        )}
+                      >
+                        <SelectValue placeholder={
+                          selectedBankCountry
+                            ? "Select bank / Välj bank"
+                            : "Select country first / Välj land först"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankList.map((bank) => (
+                          <SelectItem key={bank} value={bank}>
+                            {bank}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedBankCountry && bankList.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No banks found for this country. Use "My bank is not in the list" instead.
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
 
               {/* "Other bank" checkbox toggle */}
-              {selectedBankCountry && selectedBankCountry !== "__other__" && (
-                <div
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg border-2 px-4 py-3 cursor-pointer transition-all select-none",
-                    isOtherBank
-                      ? "border-primary bg-primary/5"
-                      : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5",
-                    isPreview && "opacity-60 cursor-not-allowed"
-                  )}
-                  onClick={() => {
-                    if (isPreview) return;
-                    const willCheck = !isOtherBank;
-                    // Clear local state first to prevent stale renders
-                    setSelectedBankValue("");
-                    setBicValue("");
-                    setBankAccountValue("");
-                    // Then notify parent
-                    if (willCheck) {
-                      onBankSelect("other");
-                    } else {
-                      onBankSelect("");
-                    }
-                    // Clear form fields
-                    updateField("bankName", "");
-                    updateField("otherBankName", "");
-                    updateField("bicCode", "");
-                    updateField("bankAccountNumber", "");
-                  }}
-                >
-                  <Checkbox
-                    id="other-bank-toggle"
-                    checked={isOtherBank}
-                    disabled={isPreview}
-                    className="pointer-events-none"
-                    tabIndex={-1}
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-foreground">
-                      My bank is not in the list
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">
-                      / Min bank finns inte i listan
-                    </span>
-                  </div>
+              <div
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border-2 px-4 py-3 cursor-pointer transition-all select-none",
+                  isOtherBank
+                    ? "border-primary bg-primary/5"
+                    : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5",
+                  isPreview && "opacity-60 cursor-not-allowed"
+                )}
+                onClick={() => {
+                  if (isPreview) return;
+                  const willCheck = !isOtherBank;
+
+                  setSelectedBankValue("");
+                  setBicValue("");
+                  setBankAccountValue("");
+
+                  if (willCheck) {
+                    setSelectedBankCountry("");
+                    onBankSelect("other");
+                  } else {
+                    onBankSelect("");
+                  }
+
+                  updateField("bankName", "");
+                  updateField("otherBankName", "");
+                  updateField("bankCountryName", "");
+                  updateField("bicCode", "");
+                  updateField("bankAccountNumber", "");
+                }}
+              >
+                <Checkbox
+                  id="other-bank-toggle"
+                  checked={isOtherBank}
+                  disabled={isPreview}
+                  className="pointer-events-none"
+                  tabIndex={-1}
+                />
+                <div>
+                  <span className="text-sm font-medium text-foreground">
+                    My bank is not in the list
+                  </span>
+                  <span className="text-sm text-muted-foreground ml-1">
+                    / Min bank finns inte i listan
+                  </span>
                 </div>
-              )}
+              </div>
 
               {/* Other bank name — free text input (shown when toggle is ON) */}
               {isOtherBank && (
