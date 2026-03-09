@@ -661,9 +661,18 @@ export function OnboardingWizard({
   // Sync local bank fields when parent clears them (e.g. toggling "Other bank")
   useEffect(() => {
     if (!formData.bicCode && bicValue) setBicValue("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bicCode]);
+
+  useEffect(() => {
     if (!formData.bankAccountNumber && bankAccountValue) setBankAccountValue("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bankAccountNumber]);
+
+  useEffect(() => {
     if (!formData.bankName && selectedBankValue) setSelectedBankValue("");
-  }, [formData.bicCode, formData.bankAccountNumber, formData.bankName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bankName]);
 
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
@@ -1241,15 +1250,19 @@ export function OnboardingWizard({
                 <SearchableCountrySelect
                   value={selectedBankCountry}
                   onValueChange={(val) => {
+                    // Clear local state first to prevent stale renders
                     setSelectedBankCountry(val);
-
-                    onBankSelect(val === "__other__" ? "other" : "");
                     setSelectedBankValue("");
+                    setBicValue("");
+                    setBankAccountValue("");
+
+                    // Then notify parent
+                    onBankSelect(val === "__other__" ? "other" : "");
+
+                    // Clear form fields
                     updateField("bankName", "");
                     updateField("otherBankName", "");
-                    setBicValue("");
                     updateField("bicCode", "");
-                    setBankAccountValue("");
                     updateField("bankAccountNumber", "");
 
                     if (val !== "__other__") {
@@ -1282,7 +1295,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
                   <Select
-                    value={selectedBankValue}
+                    value={selectedBankValue || undefined}
                     onValueChange={(bankName) => {
                       setSelectedBankValue(bankName);
                       onBankSelect(bankName);
@@ -1348,17 +1361,20 @@ export function OnboardingWizard({
                   onClick={() => {
                     if (isPreview) return;
                     const willCheck = !isOtherBank;
+                    // Clear local state first to prevent stale renders
+                    setSelectedBankValue("");
+                    setBicValue("");
+                    setBankAccountValue("");
+                    // Then notify parent
                     if (willCheck) {
                       onBankSelect("other");
                     } else {
                       onBankSelect("");
                     }
-                    setSelectedBankValue("");
+                    // Clear form fields
                     updateField("bankName", "");
                     updateField("otherBankName", "");
-                    setBicValue("");
                     updateField("bicCode", "");
-                    setBankAccountValue("");
                     updateField("bankAccountNumber", "");
                   }}
                 >

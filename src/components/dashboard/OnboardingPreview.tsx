@@ -31,7 +31,6 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
     if (bank === "other") {
       setIsOtherBank(true);
       setSelectedBank("");
-      setFormData((prev) => ({ ...prev, bankName: "", bicCode: "", bankAccountNumber: "", otherBankName: "" }));
     } else {
       setIsOtherBank(false);
       setSelectedBank(bank);
