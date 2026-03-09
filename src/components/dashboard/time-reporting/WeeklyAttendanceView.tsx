@@ -628,7 +628,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
         {grandTotalHours > teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours && (
           <div className="flex items-center gap-1.5 text-xs text-amber-600">
             <AlertTriangle className="w-3.5 h-3.5" />
-            Overtime detected ({grandTotalHours}h / expected {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
+            {t("tr.overtimeDetected")} ({grandTotalHours}h / {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
           </div>
         )}
       </div>
