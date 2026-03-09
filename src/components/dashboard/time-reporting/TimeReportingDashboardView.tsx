@@ -314,8 +314,8 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <FolderKanban className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Active Projects</h3>
-                </div>
+                   <h3 className="font-semibold text-sm">{t("tr.activeProjects")}</h3>
+                 </div>
                 <div className="space-y-2">
                   {stats.projects.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between p-2.5 md:p-2 rounded-lg bg-accent/30 border border-border/40">
