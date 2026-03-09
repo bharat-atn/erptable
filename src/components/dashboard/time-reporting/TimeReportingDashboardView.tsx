@@ -256,8 +256,8 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
                 <CardContent className="p-4 md:pt-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-sm">Top Hours This Year</h3>
-                  </div>
+                     <h3 className="font-semibold text-sm">{t("tr.topHoursThisYear")}</h3>
+                   </div>
                   <div className="space-y-2">
                     {stats.topPerformers.map((emp, i) => (
                       <div key={emp.id} className="flex items-center justify-between p-2 rounded-lg bg-accent/30 border border-border/40">
