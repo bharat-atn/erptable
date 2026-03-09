@@ -142,6 +142,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         .from("invitations")
         .select(`*, employees (email, first_name, last_name)`)
         .eq("org_id", orgId!)
+        .neq("status", "ACCEPTED")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as InvitationRow[];
