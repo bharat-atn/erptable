@@ -406,7 +406,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
         ) : (
           <div className="space-y-2">
             {todayEntries.map((entry) => (
-              <TimeEntryRow key={entry.id} entry={entry} />
+              <TimeEntryRow key={entry.id} entry={entry} t={t} />
             ))}
           </div>
         )}
