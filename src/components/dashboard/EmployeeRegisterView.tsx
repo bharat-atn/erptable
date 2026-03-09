@@ -24,7 +24,7 @@ import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
-type Employee = Tables<"employees">;
+type Employee = Tables<"employees"> & { sink_tax?: boolean };
 
 const statusConfig: Record<string, { label: string; dot: string }> = {
   ACTIVE: { label: "Active", dot: "bg-emerald-500" },
