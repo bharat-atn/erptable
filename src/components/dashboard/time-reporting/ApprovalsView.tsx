@@ -60,7 +60,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
         .eq("id", reportId);
     },
     onSuccess: (_, { approve }) => {
-      toast.success(approve ? "Report approved" : "Report returned to draft");
+      toast.success(approve ? t("tr.reportApproved") : t("tr.reportReturned"));
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["recent-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["time-reporting-stats"] });
