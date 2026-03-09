@@ -520,7 +520,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
               disabled={!photos.selfie || !photos.environment}
               className={`h-12 sm:h-10 rounded-xl ${dialogMode === "in" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
             >
-              {dialogMode === "in" ? "Confirm Clock In" : "Confirm Clock Out"}
+              {dialogMode === "in" ? t("hub.confirmClockIn") : t("hub.confirmClockOut")}
             </Button>
           </DialogFooter>
         </DialogContent>
