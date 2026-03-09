@@ -20,7 +20,7 @@ export function ApprovalsView() {
     queryFn: async () => {
       const { data } = await supabase
         .from("weekly_reports")
-        .select("*, forestry_projects!inner(name, project_id_display), attendance_entries(*), progress_entries(*)")
+        .select("*, forestry_projects!inner(name, project_id_display), attendance_entries(*, employees!inner(first_name, last_name, employee_code)), progress_entries(*, forestry_objects!inner(name, object_id_display))")
         .eq("org_id", orgId!)
         .eq("status", "submitted")
         .order("week_start", { ascending: false });
