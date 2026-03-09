@@ -595,7 +595,7 @@ export function WeeklyAttendanceView() {
           </SelectContent>
         </Select>
 
-        <div className="flex items-center justify-between sm:justify-start gap-3 sm:ml-auto">
+        <div className="flex items-center justify-between sm:justify-start gap-3 sm:ml-auto flex-wrap">
           {existingReport && (
             <Badge
               variant={existingReport.status === "approved" ? "default" : "outline"}
@@ -609,6 +609,27 @@ export function WeeklyAttendanceView() {
             <span>Standard: <span className="font-semibold text-foreground">{projectDailyHours}h/day</span></span>
           </div>
         </div>
+      </div>
+
+      {/* Toolbar: Saturday toggle, copy from previous */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-xs">
+          <Switch checked={includeSaturday} onCheckedChange={setIncludeSaturday} id="sat-toggle" />
+          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">Include Saturday</label>
+        </div>
+        {!isSubmitted && teamMembers.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={copyFromPreviousWeek}>
+            <Copy className="w-3.5 h-3.5 mr-1.5" />
+            Copy from Previous Week
+          </Button>
+        )}
+        {/* Overtime warning */}
+        {grandTotalHours > teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-600">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Overtime detected ({grandTotalHours}h / expected {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
+          </div>
+        )}
       </div>
 
       {/* Attendance content */}
