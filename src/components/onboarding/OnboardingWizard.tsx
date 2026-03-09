@@ -1182,7 +1182,7 @@ export function OnboardingWizard({
               missingFields={s3Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact First Name" sv="Förnamn" />
