@@ -276,6 +276,18 @@ export function useCompGroupData(orgId: string | null) {
     await Promise.all([fetchTypes(), fetchAllTypes()]);
   };
 
+  const importClass = async (cls: {
+    sla_class_id: string; type_label: string; client: string;
+    star_1: number; star_2: number; star_3: number; star_4: number; star_5: number;
+    hourly_gross: number; net_value: number;
+  }) => {
+    if (!activeGroupId || !orgId) return;
+    await supabase.from("comp_group_classes").insert({
+      org_id: orgId, group_id: activeGroupId, ...cls, sort_order: classes.length,
+    });
+    await fetchClasses();
+  };
+
   return {
     groups, activeGroupId, setActiveGroupId, classes, types, allTypes, forestryClients,
     loading, fetchAllTypes,
@@ -283,6 +295,6 @@ export function useCompGroupData(orgId: string | null) {
     applyTypeToAll, applyClientToAll,
     createGroup, renameGroup, deleteGroup, duplicateGroup,
     addClass, deleteClass, deleteSelected, resetDefaults,
-    addType, deleteType, updateType,
+    addType, deleteType, updateType, importClass,
   };
 }
