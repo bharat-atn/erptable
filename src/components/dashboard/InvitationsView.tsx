@@ -48,7 +48,6 @@ const statusLabels: Record<InvitationStatus, string> = {
 const statusFilterOptions = [
   { value: "PENDING", label: "Pending", dot: "bg-amber-500" },
   { value: "SENT", label: "Sent", dot: "bg-blue-500" },
-  { value: "ACCEPTED", label: "Completed", dot: "bg-emerald-500" },
   { value: "EXPIRED", label: "Expired", dot: "bg-red-500" },
 ];
 
@@ -142,6 +141,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
         .from("invitations")
         .select(`*, employees (email, first_name, last_name)`)
         .eq("org_id", orgId!)
+        .neq("status", "ACCEPTED")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as InvitationRow[];
