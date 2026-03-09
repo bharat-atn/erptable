@@ -189,6 +189,42 @@ export function WeeklyAttendanceView() {
     });
   };
 
+  // Copy from previous week
+  const copyFromPreviousWeek = async () => {
+    const prevWeekStart = subDays(currentWeekStart, 7);
+    const { data: prevReport } = await supabase
+      .from("weekly_reports")
+      .select("*, attendance_entries(*)")
+      .eq("org_id", orgId!)
+      .eq("project_id", selectedProjectId)
+      .eq("week_start", format(prevWeekStart, "yyyy-MM-dd"))
+      .maybeSingle();
+
+    if (!prevReport?.attendance_entries || (prevReport.attendance_entries as any[]).length === 0) {
+      toast.error("No attendance data found for previous week");
+      return;
+    }
+
+    const newAttendance: Record<string, Record<string, AttendanceEntry>> = {};
+    (prevReport.attendance_entries as any[]).forEach((e: any) => {
+      if (!newAttendance[e.employee_id]) newAttendance[e.employee_id] = {};
+      // Map previous week dates to current week
+      const prevDate = new Date(e.work_date);
+      const dayOfWeek = prevDate.getDay(); // 0=Sun, 1=Mon, etc.
+      if (dayOfWeek === 0) return; // Skip Sunday
+      const currentDate = addDays(currentWeekStart, dayOfWeek - 1);
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+      newAttendance[e.employee_id][dateStr] = {
+        worked: e.worked,
+        hours: Number(e.hours) || 0,
+        note: "", // Don't copy notes
+      };
+    });
+
+    setLocalAttendance(newAttendance);
+    toast.success("Copied attendance from previous week");
+  };
+
   // Save/update report
   const saveMutation = useMutation({
     mutationFn: async (submit: boolean) => {
