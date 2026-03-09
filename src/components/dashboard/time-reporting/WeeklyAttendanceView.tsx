@@ -621,7 +621,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
         {!isSubmitted && teamMembers.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={copyFromPreviousWeek}>
             <Copy className="w-3.5 h-3.5 mr-1.5" />
-            Copy from Previous Week
+            {t("tr.copyFromPrevWeek")}
           </Button>
         )}
         {/* Overtime warning */}
