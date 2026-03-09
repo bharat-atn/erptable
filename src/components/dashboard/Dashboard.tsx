@@ -205,6 +205,11 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     return <OnboardingPreview onClose={() => setShowPreview(false)} />;
   }
 
+  // Employee Hub renders as a standalone mobile app UI
+  if (appId === "employee-hub") {
+    return <EmployeeHubApp onBackToLauncher={onBackToLauncher} />;
+  }
+
   const isConstrained = screenSize.width !== null;
 
   return (
