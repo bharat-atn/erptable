@@ -1273,9 +1273,14 @@ export function OnboardingWizard({
 
                   <div className="space-y-1.5">
                     <FieldLabel en="Bank Name" sv="Banknamn" />
-                    <Select
-                      value={selectedBankValue || undefined}
-                      onValueChange={(bankName) => {
+                    {/* Plain HTML select — no Radix Portal, no removeChild crashes */}
+                    <select
+                      tabIndex={23}
+                      value={selectedBankValue || ""}
+                      disabled={!selectedBankCountry || bankList.length === 0}
+                      onChange={(e) => {
+                        const bankName = e.target.value;
+                        if (!bankName) return;
                         setSelectedBankValue(bankName);
                         onBankSelect(bankName);
                         updateField("bankName", bankName);
@@ -1301,29 +1306,22 @@ export function OnboardingWizard({
                           updateField("bankAccountNumber", randomAcct);
                         }
                       }}
-                      disabled={!selectedBankCountry || bankList.length === 0}
+                      className={cn(
+                        "flex h-11 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                        fieldError(!!selectedBankCountry && !selectedBankValue)
+                      )}
                     >
-                      <SelectTrigger
-                        tabIndex={23}
-                        className={cn(
-                          "h-11 text-sm font-medium",
-                          fieldError(!!selectedBankCountry && !selectedBankValue)
-                        )}
-                      >
-                        <SelectValue placeholder={
-                          selectedBankCountry
-                            ? "Select bank / Välj bank"
-                            : "Select country first / Välj land först"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bankList.map((bank) => (
-                          <SelectItem key={bank} value={bank}>
-                            {bank}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">
+                        {selectedBankCountry
+                          ? "Select bank / Välj bank"
+                          : "Select country first / Välj land först"}
+                      </option>
+                      {bankList.map((bank) => (
+                        <option key={bank} value={bank}>
+                          {bank}
+                        </option>
+                      ))}
+                    </select>
                     {selectedBankCountry && bankList.length === 0 && (
                       <p className="text-xs text-muted-foreground">
                         No banks found for this country. Use "My bank is not in the list" instead.
