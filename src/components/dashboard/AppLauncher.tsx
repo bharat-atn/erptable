@@ -432,6 +432,7 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
   const [teaserApp, setTeaserApp] = useState<AppDefinition | null>(null);
 
   const isProduction = isPublishedEnvironment();
+  const { orgId } = useOrg();
   // Fetch role-based app access from database
   const [roleAccess, setRoleAccess] = useState<Set<string>>(new Set());
   const [accessLoaded, setAccessLoaded] = useState(false);
@@ -462,20 +463,20 @@ export function AppLauncher({ onLaunchApp, userRole }: AppLauncherProps) {
     return true;
   });
 
-  // Load from database on mount
+  // Load from database on mount and when org changes
   useEffect(() => {
-    loadAppsFromDb().then((dbApps) => {
+    loadAppsFromDb(orgId).then((dbApps) => {
       if (dbApps) {
         setApps(dbApps);
         saveApps(dbApps); // sync localStorage cache
       }
     });
-  }, []);
+  }, [orgId]);
 
   const updateApps = (updated: AppDefinition[]) => {
     setApps(updated);
     saveApps(updated);
-    saveAppsToDb(updated); // persist to database
+    saveAppsToDb(updated, orgId); // persist to database
   };
 
   const toggleApp = (id: string) => {
