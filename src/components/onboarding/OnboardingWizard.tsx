@@ -1291,7 +1291,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Name" sv="Banknamn" />
                   <Select
-                    value={selectedBankValue}
+                    value={selectedBankValue || undefined}
                     onValueChange={(bankName) => {
                       setSelectedBankValue(bankName);
                       onBankSelect(bankName);
