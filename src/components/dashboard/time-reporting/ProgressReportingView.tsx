@@ -199,8 +199,8 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4 pb-24 md:pb-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Progress Reporting</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Framstegsrapportering • Report completion % per object</p>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.progressTitle")}</h1>
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{t("tr.progressSub")}</p>
       </div>
 
       {/* Week + Project selector */}
