@@ -22,6 +22,8 @@ import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone }
 import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
 import { useWorksiteGeofence } from "./useWorksiteGeofence";
 import { CameraPermissionHelp } from "./CameraPermissionHelp";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 
 const DEFAULT_WORKSITE_RADIUS_METERS = 250;
 
