@@ -595,15 +595,6 @@ export function OnboardingWizard({
     formData.bicCode, formData.bankAccountNumber, formData.birthday,
     formData.bankName,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
-  }, [formData.bicCode]);
-
-  useEffect(() => {
-    setBankAccountValue(formData.bankAccountNumber || "");
-  }, [formData.bankAccountNumber]);
-
-  useEffect(() => {
-    setSelectedBankValue(selectedBank || "");
-  }, [selectedBank]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
