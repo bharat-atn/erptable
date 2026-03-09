@@ -214,9 +214,9 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                     </div>
 
                     {/* Summary line */}
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground ml-9">
-                      <span>Attendance: {attendanceCount} checked ({totalHours}h)</span>
-                      <span>Progress: {progressEntries.length} objects</span>
+                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground ml-9">
+                       <span>{t("tr.attendance")}: {attendanceCount} ({totalHours}h)</span>
+                       <span>{t("tr.progressReporting")}: {progressEntries.length} {t("tr.object").toLowerCase()}s</span>
                     </div>
 
                     {/* Expanded details */}
