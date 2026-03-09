@@ -513,7 +513,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                 setDialogOpen(false);
               }}
             >
-              Cancel
+              {t("hub.cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
