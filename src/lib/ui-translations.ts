@@ -297,6 +297,39 @@ const translations: Record<string, Record<UiLang, string>> = {
   // ── Version Management ──────────────────────────────────────────
   "version.releaseHistory": { en: "Release History", sv: "Versionshistorik", ro: "Istoric lansări" },
   "version.noVersions": { en: "No versions published yet. Click \"New Release\" to create one.", sv: "Inga versioner publicerade ännu. Klicka på \"Ny version\" för att skapa en.", ro: "Nicio versiune publicată încă. Faceți clic pe \"Versiune nouă\" pentru a crea una." },
+
+  // ── Employee Hub ────────────────────────────────────────────────
+  "hub.myProfile": { en: "My Profile", sv: "Min profil", ro: "Profilul meu", uk: "Мій профіль", th: "โปรไฟล์ของฉัน" },
+  "hub.myProfileSub": { en: "My profile", sv: "Min profil", ro: "Profilul meu", uk: "Мій профіль", th: "โปรไฟล์ของฉัน" },
+  "hub.language": { en: "Language / Språk", sv: "Språk / Language", ro: "Limbă / Language", uk: "Мова / Language", th: "ภาษา / Language" },
+  "hub.personalInfo": { en: "Personal Information", sv: "Personuppgifter", ro: "Informații personale", uk: "Особисті дані", th: "ข้อมูลส่วนตัว" },
+  "hub.dateOfBirth": { en: "Date of Birth", sv: "Födelsedatum", ro: "Data nașterii", uk: "Дата народження", th: "วันเกิด" },
+  "hub.nationality": { en: "Nationality", sv: "Nationalitet", ro: "Naționalitate", uk: "Національність", th: "สัญชาติ" },
+  "hub.phone": { en: "Phone", sv: "Telefon", ro: "Telefon", uk: "Телефон", th: "โทรศัพท์" },
+  "hub.email": { en: "Email", sv: "E-post", ro: "Email", uk: "Електронна пошта", th: "อีเมล" },
+  "hub.address": { en: "Address", sv: "Adress", ro: "Adresă", uk: "Адреса", th: "ที่อยู่" },
+  "hub.street": { en: "Street", sv: "Gata", ro: "Stradă", uk: "Вулиця", th: "ถนน" },
+  "hub.city": { en: "City", sv: "Stad", ro: "Oraș", uk: "Місто", th: "เมือง" },
+  "hub.postcode": { en: "Postcode", sv: "Postnummer", ro: "Cod poștal", uk: "Поштовий індекс", th: "รหัสไปรษณีย์" },
+  "hub.country": { en: "Country", sv: "Land", ro: "Țară", uk: "Країна", th: "ประเทศ" },
+  "hub.bankDetails": { en: "Bank Details", sv: "Bankuppgifter", ro: "Date bancare", uk: "Банківські реквізити", th: "ข้อมูลธนาคาร" },
+  "hub.bank": { en: "Bank", sv: "Bank", ro: "Bancă", uk: "Банк", th: "ธนาคาร" },
+  "hub.iban": { en: "IBAN", sv: "IBAN", ro: "IBAN", uk: "IBAN", th: "IBAN" },
+  "hub.accountNumber": { en: "Account Number", sv: "Kontonummer", ro: "Număr cont", uk: "Номер рахунку", th: "หมายเลขบัญชี" },
+  "hub.bicSwift": { en: "BIC/SWIFT", sv: "BIC/SWIFT", ro: "BIC/SWIFT", uk: "BIC/SWIFT", th: "BIC/SWIFT" },
+  "hub.identityDocs": { en: "Identity Documents", sv: "Identitetshandlingar", ro: "Documente de identitate", uk: "Документи посвідчення", th: "เอกสารระบุตัวตน" },
+  "hub.passportNumber": { en: "Passport Number", sv: "Passnummer", ro: "Număr pașaport", uk: "Номер паспорта", th: "หมายเลขหนังสือเดินทาง" },
+  "hub.personalId": { en: "Personal ID (Sweden)", sv: "Personnummer", ro: "ID personal (Suedia)", uk: "Особистий ID (Швеція)", th: "เลขประจำตัว (สวีเดน)" },
+  "hub.taxId": { en: "Tax ID", sv: "Skatte-ID", ro: "Cod fiscal", uk: "Податковий номер", th: "เลขประจำตัวผู้เสียภาษี" },
+  "hub.languageUpdated": { en: "Language updated", sv: "Språk uppdaterat", ro: "Limba actualizată", uk: "Мову оновлено", th: "อัปเดตภาษาแล้ว" },
+  "hub.languageFailed": { en: "Failed to update language", sv: "Kunde inte uppdatera språk", ro: "Nu s-a putut actualiza limba", uk: "Не вдалося оновити мову", th: "ไม่สามารถอัปเดตภาษาได้" },
+
+  // Employee Hub bottom nav
+  "hub.nav.home": { en: "Home", sv: "Hem", ro: "Acasă", uk: "Головна", th: "หน้าแรก" },
+  "hub.nav.schedule": { en: "Schedule", sv: "Schema", ro: "Program", uk: "Графік", th: "ตารางงาน" },
+  "hub.nav.guide": { en: "Guide", sv: "Guide", ro: "Ghid", uk: "Посібник", th: "คู่มือ" },
+  "hub.nav.contract": { en: "Contract", sv: "Kontrakt", ro: "Contract", uk: "Контракт", th: "สัญญา" },
+  "hub.nav.profile": { en: "Profile", sv: "Profil", ro: "Profil", uk: "Профіль", th: "โปรไฟล์" },
 };
 
 export function t(key: string, lang: UiLang = "en"): string {
@@ -307,4 +340,6 @@ export const LANGUAGE_OPTIONS: { value: UiLang; label: string; flag: string }[] 
   { value: "en", label: "English", flag: "🇬🇧" },
   { value: "sv", label: "Svenska", flag: "🇸🇪" },
   { value: "ro", label: "Română", flag: "🇷🇴" },
+  { value: "uk", label: "Українська", flag: "🇺🇦" },
+  { value: "th", label: "ไทย", flag: "🇹🇭" },
 ];
