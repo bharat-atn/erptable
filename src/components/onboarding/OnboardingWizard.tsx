@@ -15,9 +15,12 @@ import {
 
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
-// Plain collapse wrapper — avoids Radix Presence/Portal DOM conflicts
-function SimpleCollapsible({ open, children }: { open: boolean; children: React.ReactNode }) {
-  return <div>{children}</div>;
+// Plain collapse wrappers — avoids Radix Presence/Portal DOM conflicts that cause removeChild crashes
+function Collapsible({ open, onOpenChange, children }: { open: boolean; onOpenChange: (v: boolean) => void; children: React.ReactNode }) {
+  return <div data-state={open ? "open" : "closed"}>{children}</div>;
+}
+function CollapsibleContent({ children, className, forceMount }: { children: React.ReactNode; className?: string; forceMount?: true }) {
+  return <div className={className}>{children}</div>;
 }
 import { z } from "zod";
 import { cn } from "@/lib/utils";
