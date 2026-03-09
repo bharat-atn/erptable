@@ -1,4 +1,4 @@
-import { LayoutDashboard, CheckSquare, TrendingUp, ClipboardCheck, FileText } from "lucide-react";
+import { LayoutDashboard, CheckSquare, TrendingUp, ClipboardCheck, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TimeReportingBottomNavProps {
@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { id: "weekly-attendance", icon: CheckSquare, label: "Attendance" },
   { id: "progress-reporting", icon: TrendingUp, label: "Progress" },
   { id: "approvals", icon: ClipboardCheck, label: "Approvals" },
-  { id: "reports", icon: FileText, label: "Reports" },
+  { id: "guide", icon: BookOpen, label: "Guide" },
 ];
 
 export function TimeReportingBottomNav({ activeTab, onTabChange }: TimeReportingBottomNavProps) {
