@@ -111,8 +111,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Report Approvals</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Godkännande • Review and approve submitted reports</p>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.reportApprovals")}</h1>
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{t("tr.approvalsSub")}</p>
       </div>
 
       {isLoading ? (
