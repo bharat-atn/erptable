@@ -1,12 +1,47 @@
-import { useState } from "react";
+import { useState, Component, ErrorInfo, ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { OnboardingWizard, personalInfoSchema, PersonalInfo } from "@/components/onboarding/OnboardingWizard";
+import { Button } from "@/components/ui/button";
 import { z } from "zod";
+
+// Error boundary to catch Radix/React DOM reconciliation crashes
+class OnboardingErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("OnboardingErrorBoundary caught:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+          <AlertCircle className="w-12 h-12 text-destructive" />
+          <h2 className="text-lg font-semibold">Something went wrong</h2>
+          <p className="text-sm text-muted-foreground text-center max-w-sm">
+            An unexpected error occurred. Please reload the page to continue.
+          </p>
+          <Button onClick={() => window.location.reload()} className="gap-2">
+            <RefreshCw className="w-4 h-4" /> Reload Page
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function OnboardingPortal() {
   const { token } = useParams<{ token: string }>();
