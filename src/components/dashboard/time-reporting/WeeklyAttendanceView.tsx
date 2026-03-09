@@ -438,7 +438,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
                 return (
                   <TableHead key={i} className="text-center min-w-[90px]">
                     <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-[10px] text-muted-foreground">{DAY_LABELS[i]}</span>
+                      <span className="text-[10px] text-muted-foreground">{t(DAY_KEYS[i])}</span>
                       <span className="text-xs font-semibold">{format(day, "d/M")}</span>
                       {!isSubmitted && (
                         <Button
