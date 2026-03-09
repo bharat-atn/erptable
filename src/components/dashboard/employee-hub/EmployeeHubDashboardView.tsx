@@ -97,7 +97,7 @@ function LocationBadge({ location, zones }: { location: GeoLocation | null; zone
   );
 }
 
-function TimeEntryRow({ entry }: { entry: TimeEntry }) {
+function TimeEntryRow({ entry, t }: { entry: TimeEntry; t: (key: string) => string }) {
   const isIn = entry.type === "clock_in";
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
@@ -113,11 +113,11 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold">{isIn ? "Clock In" : "Clock Out"}</p>
+        <p className="text-sm font-semibold">{isIn ? t("hub.clockIn") : t("hub.clockOut")}</p>
         <p className="text-[10px] text-muted-foreground">
           {entry.timestamp.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           {entry.location && (
-            <span className="ml-1">• {entry.insideGeofence ? "✅ In area" : "⚠️ Outside area"}</span>
+            <span className="ml-1">• {entry.insideGeofence ? `✅ ${t("hub.inArea")}` : `⚠️ ${t("hub.outsideArea")}`}</span>
           )}
         </p>
       </div>
@@ -126,6 +126,10 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
       )}
     </div>
   );
+}
+
+interface EmployeeHubDashboardViewProps {
+  t: (key: string) => string;
 }
 
 export function EmployeeHubDashboardView() {
