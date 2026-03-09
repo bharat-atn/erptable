@@ -457,7 +457,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                   </button>
                 </div>
                 <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                  {activeCamera === "selfie" ? "📸 Selfie" : "🏞️ Environment"}
+                  {activeCamera === "selfie" ? `📸 ${t("hub.selfie")}` : `🏞️ ${t("hub.environment")}`}
                 </div>
               </div>
             )}
