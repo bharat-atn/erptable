@@ -48,7 +48,6 @@ const statusLabels: Record<InvitationStatus, string> = {
 const statusFilterOptions = [
   { value: "PENDING", label: "Pending", dot: "bg-amber-500" },
   { value: "SENT", label: "Sent", dot: "bg-blue-500" },
-  { value: "ACCEPTED", label: "Completed", dot: "bg-emerald-500" },
   { value: "EXPIRED", label: "Expired", dot: "bg-red-500" },
 ];
 
