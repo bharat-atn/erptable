@@ -1140,22 +1140,80 @@ export function OnboardingWizard({
               showValidation={validationAttempted}
             />
             <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
+              {/* Bank country */}
+              <div className="space-y-1.5">
+                <FieldLabel en="Bank Country" sv="Bankens land" />
+                <div className="flex items-center gap-2">
+                  <select
+                    tabIndex={23}
+                    value={bankCountryKey}
+                    onChange={(e) => handleBankCountryChange(e.target.value)}
+                    className={cn(
+                      "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    )}
+                  >
+                    <option value="">— Select country / Välj land —</option>
+                    {BANK_COUNTRIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    <option value="__other__">Other country / Annat land</option>
+                  </select>
+                  {(bankCountryKey || formData.bankName) && (
+                    <button
+                      type="button"
+                      onClick={handleBankReset}
+                      className="text-xs text-muted-foreground hover:text-foreground underline whitespace-nowrap"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bank name — native select from list OR manual input */}
               <div className="space-y-1.5">
                 <FieldLabel en="Bank Name" sv="Banknamn" />
-                <Input
-                  tabIndex={23}
-                  value={formData.bankName || ""}
-                  onChange={(e) => updateField("bankName", e.target.value)}
-                  placeholder="Enter bank name / Ange banknamn"
-                  className={cn("h-11 text-sm font-medium", fieldError(!formData.bankName?.trim()))}
-                />
+                {bankCountryKey && bankCountryKey !== "__other__" && availableBanks.length > 0 && !isManualBank ? (
+                  <select
+                    tabIndex={24}
+                    value={formData.bankName || ""}
+                    onChange={(e) => handleBankSelect(e.target.value)}
+                    className={cn(
+                      "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldError(!formData.bankName?.trim())
+                    )}
+                  >
+                    <option value="">— Select bank / Välj bank —</option>
+                    {availableBanks.map((b) => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
+                    <option value="__other__">Other / Not in list — Annan bank</option>
+                  </select>
+                ) : (
+                  <Input
+                    tabIndex={24}
+                    value={formData.bankName || ""}
+                    onChange={(e) => updateField("bankName", e.target.value)}
+                    placeholder="Enter bank name / Ange banknamn"
+                    className={cn("h-11 text-sm font-medium", fieldError(!formData.bankName?.trim()))}
+                  />
+                )}
+                {isManualBank && (
+                  <button
+                    type="button"
+                    onClick={() => { setIsManualBank(false); updateField("bankName", ""); updateField("bicCode", ""); }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ← Back to bank list / Tillbaka till listan
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel en="BIC Code" sv="BIC-kod" />
+                  <FieldLabel en="BIC / SWIFT Code" sv="BIC / SWIFT-kod" />
                   <Input
-                    tabIndex={24}
+                    tabIndex={25}
                     value={formData.bicCode || ""}
                     autoComplete="off"
                     onChange={(e) => {
@@ -1170,7 +1228,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
-                    tabIndex={25}
+                    tabIndex={26}
                     value={formData.bankAccountNumber || ""}
                     autoComplete="off"
                     onChange={(e) => {
