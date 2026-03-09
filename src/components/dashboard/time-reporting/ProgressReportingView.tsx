@@ -256,7 +256,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
                   style={{ width: `${Math.min(weightedProgress, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">Area-weighted across all objects</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t("tr.areaWeighted")}</p>
             </CardContent>
           </Card>
 
