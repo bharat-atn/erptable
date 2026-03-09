@@ -1,17 +1,12 @@
-import { useState, useEffect, useMemo, createContext, useContext } from "react";
+import { useState, useEffect, useMemo, createContext, useContext, useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Select import removed — bank name uses plain HTML <select> to avoid Portal crashes
 
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
@@ -503,54 +498,55 @@ export function OnboardingWizard({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
-      // Fill fields from AI response
-      if (data.firstName) updateField("firstName", data.firstName);
-      if (data.middleName) updateField("middleName", data.middleName);
-      if (data.lastName) updateField("lastName", data.lastName);
-      if (data.preferredName) updateField("preferredName", data.preferredName);
-      if (data.address1) updateField("address1", data.address1);
-      if (data.address2) updateField("address2", data.address2 || "");
-      if (data.zipCode) updateField("zipCode", data.zipCode);
-      if (data.city) updateField("city", data.city);
-      if (data.stateProvince) updateField("stateProvince", data.stateProvince);
-      if (data.country) updateField("country", data.country);
-      if (data.birthday) updateField("birthday", data.birthday);
-      if (data.countryOfBirth) updateField("countryOfBirth", data.countryOfBirth);
-      if (data.citizenship) updateField("citizenship", data.citizenship);
-      if (data.mobilePhonePrefix && data.mobilePhoneNumber) {
-        updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
-      }
-      if (data.email) updateField("email", data.email);
-      if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
-      if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
-      if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
-        updateField("emergencyPhone", `${data.emergencyPhonePrefix} ${data.emergencyPhoneNumber}`);
-      }
-      
-      // Handle bank selection via callback
+      // Batch ALL state updates in a single flushSync to avoid
+      // React DOM reconciliation crashes with Radix portals
+      flushSync(() => {
+        if (data.firstName) updateField("firstName", data.firstName);
+        if (data.middleName) updateField("middleName", data.middleName);
+        if (data.lastName) updateField("lastName", data.lastName);
+        if (data.preferredName) updateField("preferredName", data.preferredName);
+        if (data.address1) updateField("address1", data.address1);
+        if (data.address2) updateField("address2", data.address2 || "");
+        if (data.zipCode) updateField("zipCode", data.zipCode);
+        if (data.city) updateField("city", data.city);
+        if (data.stateProvince) updateField("stateProvince", data.stateProvince);
+        if (data.country) updateField("country", data.country);
+        if (data.birthday) updateField("birthday", data.birthday);
+        if (data.countryOfBirth) updateField("countryOfBirth", data.countryOfBirth);
+        if (data.citizenship) updateField("citizenship", data.citizenship);
+        if (data.mobilePhonePrefix && data.mobilePhoneNumber) {
+          updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
+        }
+        if (data.email) updateField("email", data.email);
+        if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
+        if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
+        if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
+          updateField("emergencyPhone", `${data.emergencyPhonePrefix} ${data.emergencyPhoneNumber}`);
+        }
+        if (!data.emergencyPhonePrefix && !data.emergencyPhoneNumber && data.emergencyPhone) {
+          updateField("emergencyPhone", data.emergencyPhone);
+        }
+        
+        // Bank: always require manual selection after AI fill
+        const bankCountry = data.country
+          ? Object.keys(effectiveBanksByCountry).find(
+              c => c.toLowerCase() === data.country.toLowerCase()
+            ) || ""
+          : "";
+        setSelectedBankCountry(bankCountry);
+        onBankSelect("");
+        updateField("otherBankName", "");
+        updateField("bicCode", "");
+        updateField("bankAccountNumber", "");
+        setSelectedBankValue("");
+        setBicValue("");
+        setBankAccountValue("");
+        setS4Open(true);
+        setS3Open(true);
+      });
+
+      // Handle bank selection via callback (outside flushSync — non-critical)
       if (onAiFill) onAiFill(data);
-      
-      // Fallback: if AI returns emergencyPhone as combined string
-      if (!data.emergencyPhonePrefix && !data.emergencyPhoneNumber && data.emergencyPhone) {
-        updateField("emergencyPhone", data.emergencyPhone);
-      }
-
-      // Always require manual bank selection after AI fill
-      const bankCountry = data.country
-        ? Object.keys(effectiveBanksByCountry).find(
-            c => c.toLowerCase() === data.country.toLowerCase()
-          ) || ""
-        : "";
-      setSelectedBankCountry(bankCountry);
-      onBankSelect("");
-      updateField("otherBankName", "");
-      updateField("bicCode", "");
-      updateField("bankAccountNumber", "");
-      setSelectedBankValue("");
-      setS4Open(true);
-
-      // Ensure emergency contact section is visible
-      setS3Open(true);
       
       toast.success("AI test data generated successfully!", {
         description: "Review the auto-filled data and adjust as needed before submitting.",
@@ -1271,9 +1267,14 @@ export function OnboardingWizard({
 
                   <div className="space-y-1.5">
                     <FieldLabel en="Bank Name" sv="Banknamn" />
-                    <Select
-                      value={selectedBankValue || undefined}
-                      onValueChange={(bankName) => {
+                    {/* Plain HTML select — no Radix Portal, no removeChild crashes */}
+                    <select
+                      tabIndex={23}
+                      value={selectedBankValue || ""}
+                      disabled={!selectedBankCountry || bankList.length === 0}
+                      onChange={(e) => {
+                        const bankName = e.target.value;
+                        if (!bankName) return;
                         setSelectedBankValue(bankName);
                         onBankSelect(bankName);
                         updateField("bankName", bankName);
@@ -1299,29 +1300,22 @@ export function OnboardingWizard({
                           updateField("bankAccountNumber", randomAcct);
                         }
                       }}
-                      disabled={!selectedBankCountry || bankList.length === 0}
+                      className={cn(
+                        "flex h-11 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                        fieldError(!!selectedBankCountry && !selectedBankValue)
+                      )}
                     >
-                      <SelectTrigger
-                        tabIndex={23}
-                        className={cn(
-                          "h-11 text-sm font-medium",
-                          fieldError(!!selectedBankCountry && !selectedBankValue)
-                        )}
-                      >
-                        <SelectValue placeholder={
-                          selectedBankCountry
-                            ? "Select bank / Välj bank"
-                            : "Select country first / Välj land först"
-                        } />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bankList.map((bank) => (
-                          <SelectItem key={bank} value={bank}>
-                            {bank}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">
+                        {selectedBankCountry
+                          ? "Select bank / Välj bank"
+                          : "Select country first / Välj land först"}
+                      </option>
+                      {bankList.map((bank) => (
+                        <option key={bank} value={bank}>
+                          {bank}
+                        </option>
+                      ))}
+                    </select>
                     {selectedBankCountry && bankList.length === 0 && (
                       <p className="text-xs text-muted-foreground">
                         No banks found for this country. Use "My bank is not in the list" instead.
