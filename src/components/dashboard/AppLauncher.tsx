@@ -153,7 +153,7 @@ const defaultApps: AppDefinition[] = [
     iconName: "Clock",
     colorIndex: 6,
     enabled: true,
-    available: false,
+    available: true,
     allowedRoles: ["admin", "org_admin", "project_manager", "team_leader"],
   },
 ];

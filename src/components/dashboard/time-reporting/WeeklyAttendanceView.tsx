@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useOrg } from "@/contexts/OrgContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight
+  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight, Clock, MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
@@ -23,14 +26,22 @@ function getWeekDays(weekStart: Date): Date[] {
 }
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const DAY_LABELS_SV = ["Mån", "Tis", "Ons", "Tor", "Fre"];
+
+interface AttendanceEntry {
+  worked: boolean;
+  hours: number;
+  note: string;
+}
+
+const DEFAULT_HOURS = 8;
 
 export function WeeklyAttendanceView() {
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(new Date()));
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [localAttendance, setLocalAttendance] = useState<Record<string, Record<string, boolean>>>({});
+  const [localAttendance, setLocalAttendance] = useState<Record<string, Record<string, AttendanceEntry>>>({});
+  const [reportNotes, setReportNotes] = useState("");
 
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
@@ -42,7 +53,7 @@ export function WeeklyAttendanceView() {
     queryFn: async () => {
       const { data } = await supabase
         .from("forestry_projects")
-        .select("id, name, project_id_display, status")
+        .select("id, name, project_id_display, status, daily_hours")
         .eq("org_id", orgId!)
         .in("status", ["in_progress", "planning"])
         .order("name");
@@ -50,6 +61,9 @@ export function WeeklyAttendanceView() {
     },
     enabled: !!orgId,
   });
+
+  const selectedProject = projects.find((p: any) => p.id === selectedProjectId);
+  const projectDailyHours = Number(selectedProject?.daily_hours) || DEFAULT_HOURS;
 
   // Auto-select first project
   useEffect(() => {
@@ -96,22 +110,66 @@ export function WeeklyAttendanceView() {
   // Initialize local attendance from existing data
   useEffect(() => {
     if (existingReport?.attendance_entries) {
-      const map: Record<string, Record<string, boolean>> = {};
+      const map: Record<string, Record<string, AttendanceEntry>> = {};
       (existingReport.attendance_entries as any[]).forEach((e: any) => {
         if (!map[e.employee_id]) map[e.employee_id] = {};
-        map[e.employee_id][e.work_date] = e.worked;
+        map[e.employee_id][e.work_date] = {
+          worked: e.worked,
+          hours: Number(e.hours) || 0,
+          note: e.note || "",
+        };
       });
       setLocalAttendance(map);
+      setReportNotes(existingReport.notes || "");
     } else {
       setLocalAttendance({});
+      setReportNotes("");
     }
   }, [existingReport]);
 
   const toggleAttendance = (employeeId: string, dateStr: string) => {
     setLocalAttendance(prev => {
       const emp = { ...(prev[employeeId] || {}) };
-      emp[dateStr] = !emp[dateStr];
+      const current = emp[dateStr];
+      if (current?.worked) {
+        // Uncheck - set to not worked
+        emp[dateStr] = { worked: false, hours: 0, note: current.note || "" };
+      } else {
+        // Check - set to worked with default hours
+        emp[dateStr] = { worked: true, hours: projectDailyHours, note: current?.note || "" };
+      }
       return { ...prev, [employeeId]: emp };
+    });
+  };
+
+  const updateHours = (employeeId: string, dateStr: string, hours: number) => {
+    setLocalAttendance(prev => {
+      const emp = { ...(prev[employeeId] || {}) };
+      const current = emp[dateStr] || { worked: false, hours: 0, note: "" };
+      emp[dateStr] = { ...current, hours: Math.max(0, Math.min(24, hours)), worked: hours > 0 };
+      return { ...prev, [employeeId]: emp };
+    });
+  };
+
+  const updateNote = (employeeId: string, dateStr: string, note: string) => {
+    setLocalAttendance(prev => {
+      const emp = { ...(prev[employeeId] || {}) };
+      const current = emp[dateStr] || { worked: false, hours: 0, note: "" };
+      emp[dateStr] = { ...current, note };
+      return { ...prev, [employeeId]: emp };
+    });
+  };
+
+  // Mark all employees as worked for a given day
+  const checkAllForDay = (dateStr: string) => {
+    setLocalAttendance(prev => {
+      const updated = { ...prev };
+      for (const member of teamMembers) {
+        const emp = { ...(updated[member.employeeId] || {}) };
+        emp[dateStr] = { worked: true, hours: projectDailyHours, note: emp[dateStr]?.note || "" };
+        updated[member.employeeId] = emp;
+      }
+      return updated;
     });
   };
 
@@ -135,6 +193,7 @@ export function WeeklyAttendanceView() {
             year,
             status: submit ? "submitted" : "draft",
             submitted_at: submit ? new Date().toISOString() : null,
+            notes: reportNotes || null,
           })
           .select("id")
           .single();
@@ -146,6 +205,7 @@ export function WeeklyAttendanceView() {
           .update({
             status: submit ? "submitted" : "draft",
             submitted_at: submit ? new Date().toISOString() : null,
+            notes: reportNotes || null,
           })
           .eq("id", reportId);
 
@@ -158,13 +218,16 @@ export function WeeklyAttendanceView() {
       for (const member of teamMembers) {
         for (const day of weekDays) {
           const dateStr = format(day, "yyyy-MM-dd");
-          const worked = localAttendance[member.employeeId]?.[dateStr] || false;
+          const entry = localAttendance[member.employeeId]?.[dateStr];
+          const worked = entry?.worked || false;
+          const hours = entry?.hours || 0;
           entries.push({
             report_id: reportId,
             employee_id: member.employeeId,
             work_date: dateStr,
             worked,
-            hours: worked ? 8 : 0,
+            hours: worked ? hours : 0,
+            note: entry?.note || null,
           });
         }
       }
@@ -186,11 +249,24 @@ export function WeeklyAttendanceView() {
 
   const isSubmitted = existingReport?.status === "submitted" || existingReport?.status === "approved";
 
+  // Calculate totals
+  const getTotalHours = (employeeId: string) => {
+    return weekDays.reduce((sum, day) => {
+      const dateStr = format(day, "yyyy-MM-dd");
+      const entry = localAttendance[employeeId]?.[dateStr];
+      return sum + (entry?.worked ? (entry.hours || 0) : 0);
+    }, 0);
+  };
+
+  const grandTotalHours = teamMembers.reduce((sum: number, m: any) => sum + getTotalHours(m.employeeId), 0);
+
   return (
     <div className="space-y-6 pt-4">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Weekly Attendance</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Veckovis närvaro • Check attendance per employee per day</p>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Veckovis närvaro • Check attendance and report hours per employee per day
+        </p>
       </div>
 
       {/* Week + Project selector */}
@@ -229,6 +305,11 @@ export function WeeklyAttendanceView() {
             {existingReport.status}
           </Badge>
         )}
+
+        <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="w-4 h-4" />
+          <span>Standard: <span className="font-semibold text-foreground">{projectDailyHours}h/day</span></span>
+        </div>
       </div>
 
       {/* Attendance grid */}
@@ -246,54 +327,147 @@ export function WeeklyAttendanceView() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="min-w-[160px]">Employee</TableHead>
-                  {weekDays.map((day, i) => (
-                    <TableHead key={i} className="text-center min-w-[70px]">
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-muted-foreground">{DAY_LABELS[i]}</span>
-                        <span className="text-xs font-semibold">{format(day, "d/M")}</span>
-                      </div>
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-center">Days</TableHead>
+                  {weekDays.map((day, i) => {
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const allChecked = teamMembers.every((m: any) =>
+                      localAttendance[m.employeeId]?.[dateStr]?.worked
+                    );
+                    return (
+                      <TableHead key={i} className="text-center min-w-[90px]">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] text-muted-foreground">{DAY_LABELS[i]}</span>
+                          <span className="text-xs font-semibold">{format(day, "d/M")}</span>
+                          {!isSubmitted && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 px-1.5 text-[9px] text-muted-foreground hover:text-primary"
+                              onClick={() => checkAllForDay(dateStr)}
+                              disabled={allChecked}
+                            >
+                              {allChecked ? <CheckCircle2 className="w-3 h-3 text-emerald-500" /> : "All ✓"}
+                            </Button>
+                          )}
+                        </div>
+                      </TableHead>
+                    );
+                  })}
+                  <TableHead className="text-center min-w-[70px]">Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {teamMembers.map((member: any) => {
-                  const workedDays = weekDays.filter(d =>
-                    localAttendance[member.employeeId]?.[format(d, "yyyy-MM-dd")]
-                  ).length;
+                  const totalHours = getTotalHours(member.employeeId);
+                  const expectedHours = 5 * projectDailyHours;
                   return (
                     <TableRow key={member.employeeId}>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">{member.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{member.code || member.role}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {member.code || member.role}
+                            {member.starRating > 0 && ` • ${"★".repeat(member.starRating)}`}
+                          </span>
                         </div>
                       </TableCell>
                       {weekDays.map((day, i) => {
                         const dateStr = format(day, "yyyy-MM-dd");
-                        const checked = localAttendance[member.employeeId]?.[dateStr] || false;
+                        const entry = localAttendance[member.employeeId]?.[dateStr];
+                        const checked = entry?.worked || false;
+                        const hours = entry?.hours || 0;
+                        const hasNote = !!entry?.note;
+                        const isNonStandard = checked && hours !== projectDailyHours;
                         return (
-                          <TableCell key={i} className="text-center">
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => toggleAttendance(member.employeeId, dateStr)}
-                              disabled={isSubmitted}
-                              className="mx-auto"
-                            />
+                          <TableCell key={i} className="text-center p-1">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => toggleAttendance(member.employeeId, dateStr)}
+                                disabled={isSubmitted}
+                                className="mx-auto"
+                              />
+                              {checked && (
+                                <Input
+                                  type="number"
+                                  value={hours}
+                                  onChange={(e) => updateHours(member.employeeId, dateStr, parseFloat(e.target.value) || 0)}
+                                  disabled={isSubmitted}
+                                  className={`h-6 w-14 text-center text-xs px-1 ${isNonStandard ? "border-amber-400 bg-amber-50 dark:bg-amber-950/30" : ""}`}
+                                  min={0}
+                                  max={24}
+                                  step={0.5}
+                                />
+                              )}
+                              {!isSubmitted && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="ghost" size="sm" className={`h-4 w-4 p-0 ${hasNote ? "text-primary" : "text-muted-foreground/30 hover:text-muted-foreground"}`}>
+                                      <MessageSquare className="w-3 h-3" />
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-56 p-2" side="bottom">
+                                    <Input
+                                      value={entry?.note || ""}
+                                      onChange={(e) => updateNote(member.employeeId, dateStr, e.target.value)}
+                                      placeholder="Note (e.g. sick, half day)..."
+                                      className="h-7 text-xs"
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </div>
                           </TableCell>
                         );
                       })}
                       <TableCell className="text-center">
-                        <Badge variant={workedDays === 5 ? "default" : "outline"} className="text-xs">
-                          {workedDays}/5
-                        </Badge>
+                        <div className="flex flex-col items-center">
+                          <span className={`text-sm font-bold ${totalHours === expectedHours ? "text-emerald-600" : totalHours > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                            {totalHours}h
+                          </span>
+                          <span className="text-[9px] text-muted-foreground">/{expectedHours}h</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
                 })}
+                {/* Grand total row */}
+                <TableRow className="border-t-2 border-border">
+                  <TableCell className="font-semibold text-sm">Total</TableCell>
+                  {weekDays.map((day, i) => {
+                    const dateStr = format(day, "yyyy-MM-dd");
+                    const dayTotal = teamMembers.reduce((sum: number, m: any) => {
+                      const entry = localAttendance[m.employeeId]?.[dateStr];
+                      return sum + (entry?.worked ? (entry.hours || 0) : 0);
+                    }, 0);
+                    return (
+                      <TableCell key={i} className="text-center text-sm font-semibold">
+                        {dayTotal > 0 ? `${dayTotal}h` : "—"}
+                      </TableCell>
+                    );
+                  })}
+                  <TableCell className="text-center text-sm font-bold text-primary">
+                    {grandTotalHours}h
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Report notes */}
+      {teamMembers.length > 0 && (
+        <Card className="border-border/60">
+          <CardContent className="pt-4">
+            <label className="text-sm font-medium mb-1.5 block">Report Notes (optional)</label>
+            <Textarea
+              value={reportNotes}
+              onChange={(e) => setReportNotes(e.target.value)}
+              placeholder="Any general notes for this week's report..."
+              className="text-sm resize-none"
+              rows={2}
+              disabled={isSubmitted}
+            />
           </CardContent>
         </Card>
       )}

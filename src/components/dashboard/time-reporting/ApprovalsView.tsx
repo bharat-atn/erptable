@@ -20,7 +20,7 @@ export function ApprovalsView() {
     queryFn: async () => {
       const { data } = await supabase
         .from("weekly_reports")
-        .select("*, forestry_projects!inner(name, project_id_display), attendance_entries(*), progress_entries(*)")
+        .select("*, forestry_projects!inner(name, project_id_display), attendance_entries(*, employees!inner(first_name, last_name, employee_code)), progress_entries(*, forestry_objects!inner(name, object_id_display))")
         .eq("org_id", orgId!)
         .eq("status", "submitted")
         .order("week_start", { ascending: false });
@@ -72,6 +72,7 @@ export function ApprovalsView() {
             const project = report.forestry_projects;
             const attendanceCount = (report.attendance_entries || []).filter((e: any) => e.worked).length;
             const totalEntries = (report.attendance_entries || []).length;
+            const totalHours = (report.attendance_entries || []).reduce((s: number, e: any) => s + (e.worked ? (Number(e.hours) || 0) : 0), 0);
             const progressEntries = report.progress_entries || [];
             const isExpanded = expandedId === report.id;
 
@@ -112,31 +113,94 @@ export function ApprovalsView() {
                   </div>
 
                   <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Attendance: {attendanceCount}/{totalEntries} checked</span>
+                    <span>Attendance: {attendanceCount}/{totalEntries} checked ({totalHours}h)</span>
                     <span>Progress entries: {progressEntries.length}</span>
                   </div>
 
-                  {isExpanded && progressEntries.length > 0 && (
-                    <div className="mt-4 border-t border-border pt-3">
-                      <p className="text-xs font-semibold mb-2">Object Progress</p>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Object</TableHead>
-                            <TableHead className="text-right">Completion</TableHead>
-                            <TableHead>Notes</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {progressEntries.map((pe: any) => (
-                            <TableRow key={pe.id}>
-                              <TableCell className="text-sm">{pe.object_id?.substring(0, 8)}...</TableCell>
-                              <TableCell className="text-right font-bold text-sm">{pe.completion_pct}%</TableCell>
-                              <TableCell className="text-xs text-muted-foreground">{pe.notes || "—"}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                  {isExpanded && (
+                    <div className="mt-4 border-t border-border pt-3 space-y-4">
+                      {/* Attendance details */}
+                      {(report.attendance_entries || []).length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold mb-2">Attendance Details</p>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Employee</TableHead>
+                                <TableHead className="text-center">Days Worked</TableHead>
+                                <TableHead className="text-right">Total Hours</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(() => {
+                                // Group attendance by employee
+                                const byEmployee: Record<string, { name: string; code: string; days: number; hours: number }> = {};
+                                (report.attendance_entries || []).forEach((e: any) => {
+                                  const empName = e.employees ? `${e.employees.first_name || ""} ${e.employees.last_name || ""}`.trim() : "Unknown";
+                                  const empCode = e.employees?.employee_code || "";
+                                  if (!byEmployee[e.employee_id]) {
+                                    byEmployee[e.employee_id] = { name: empName, code: empCode, days: 0, hours: 0 };
+                                  }
+                                  if (e.worked) {
+                                    byEmployee[e.employee_id].days += 1;
+                                    byEmployee[e.employee_id].hours += Number(e.hours) || 0;
+                                  }
+                                });
+                                return Object.entries(byEmployee).map(([id, emp]) => (
+                                  <TableRow key={id}>
+                                    <TableCell>
+                                      <div className="flex flex-col">
+                                        <span className="text-sm font-medium">{emp.name}</span>
+                                        <span className="text-[10px] text-muted-foreground">{emp.code}</span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-center text-sm">{emp.days}/5</TableCell>
+                                    <TableCell className="text-right font-bold text-sm">{emp.hours}h</TableCell>
+                                  </TableRow>
+                                ));
+                              })()}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+
+                      {/* Progress details */}
+                      {progressEntries.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold mb-2">Object Progress</p>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Object</TableHead>
+                                <TableHead className="text-right">Completion</TableHead>
+                                <TableHead>Notes</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {progressEntries.map((pe: any) => (
+                                <TableRow key={pe.id}>
+                                  <TableCell>
+                                    <div className="flex flex-col">
+                                      <span className="text-sm font-medium">{pe.forestry_objects?.name || "Unknown"}</span>
+                                      <span className="text-[10px] text-muted-foreground">{pe.forestry_objects?.object_id_display || ""}</span>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-right font-bold text-sm">{pe.completion_pct}%</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{pe.notes || "—"}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+
+                      {/* Report notes */}
+                      {report.notes && (
+                        <div>
+                          <p className="text-xs font-semibold mb-1">Notes</p>
+                          <p className="text-xs text-muted-foreground">{report.notes}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
