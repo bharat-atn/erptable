@@ -252,7 +252,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
 
                         {progressEntries.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold mb-2">Object Progress</p>
+                             <p className="text-xs font-semibold mb-2">{t("tr.objectProgress")}</p>
                             <div className="space-y-1.5">
                               {progressEntries.map((pe: any) => (
                                 <div key={pe.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
