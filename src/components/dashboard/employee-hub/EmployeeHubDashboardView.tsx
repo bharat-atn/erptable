@@ -43,7 +43,7 @@ function LocationBadge({ location, zones, t }: { location: GeoLocation | null; z
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3">
         <Wifi className="w-4 h-4 shrink-0 opacity-40" />
-        <span>Location not captured yet</span>
+        <span>{t ? t("hub.locationNotCaptured") : "Location not captured yet"}</span>
       </div>
     );
   }
