@@ -242,11 +242,16 @@ export function ProgressReportingView() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold">Project Completion</span>
-                <span className="text-lg font-bold text-primary">{Math.round(weightedProgress)}%</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className={`text-[10px] ${getProgressBadge(Math.round(weightedProgress)).className}`}>
+                    {getProgressBadge(Math.round(weightedProgress)).label}
+                  </Badge>
+                  <span className={`text-lg font-bold ${getProgressColor(Math.round(weightedProgress))}`}>{Math.round(weightedProgress)}%</span>
+                </div>
               </div>
               <div className="w-full bg-muted rounded-full h-3">
                 <div
-                  className="bg-primary h-3 rounded-full transition-all duration-300"
+                  className={`${getProgressBg(Math.round(weightedProgress))} h-3 rounded-full transition-all duration-300`}
                   style={{ width: `${Math.min(weightedProgress, 100)}%` }}
                 />
               </div>
