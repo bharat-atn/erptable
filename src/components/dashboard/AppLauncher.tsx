@@ -190,7 +190,7 @@ function syncWithDefaults(parsed: AppDefinition[]): AppDefinition[] {
   const synced = parsed.map((app) => {
     const def = defaultMap.get(app.id);
     if (def) {
-      return { ...app, allowedRoles: def.allowedRoles, adminOnly: def.adminOnly };
+      return { ...app, allowedRoles: def.allowedRoles, adminOnly: def.adminOnly, available: def.available };
     }
     return app;
   });
