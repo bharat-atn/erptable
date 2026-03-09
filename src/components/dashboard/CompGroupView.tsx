@@ -256,7 +256,8 @@ export function CompGroupView() {
                 <Button size="sm" variant="outline" onClick={exportCsv}>
                   <Download className="w-4 h-4 mr-1" /> Export CSV
                 </Button>
-                <Button size="sm" variant="outline" disabled>
+                <input type="file" accept=".csv" ref={csvInputRef} className="hidden" onChange={handleImportCsv} />
+                <Button size="sm" variant="outline" onClick={() => csvInputRef.current?.click()}>
                   <Upload className="w-4 h-4 mr-1" /> Import CSV
                 </Button>
                 <Button size="sm" onClick={() => setAddClassOpen(true)}>
