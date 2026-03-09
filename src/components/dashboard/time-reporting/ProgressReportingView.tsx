@@ -374,17 +374,17 @@ export function ProgressReportingView() {
 
           {/* Save button — always visible when there are objects */}
           {objects.length > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 md:static md:bottom-auto bg-background/95 backdrop-blur-sm border-t md:border-t-0 border-border p-4 md:p-0 flex items-center gap-3 z-30">
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/40 p-3 -mx-4 flex items-center gap-3 z-20">
               <Button
                 variant="outline"
-                className="flex-1 md:flex-none h-12 md:h-9"
+                className="flex-1 h-11"
                 onClick={() => saveMutation.mutate(false)}
                 disabled={saveMutation.isPending || !hasUnsavedChanges}
               >
                 <Save className="w-4 h-4 mr-1.5" /> Save Progress
               </Button>
               {hasUnsavedChanges && (
-                <span className="text-xs text-amber-600 hidden md:inline">Unsaved changes</span>
+                <span className="text-xs text-amber-600">Unsaved</span>
               )}
             </div>
           )}
