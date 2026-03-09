@@ -122,8 +122,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
       ) : pendingReports.length === 0 ? (
         <Card className="border-border/60">
           <CardContent className="py-12 text-center">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No reports pending approval</p>
+             <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
+             <p className="text-sm font-medium text-muted-foreground">{t("tr.noReportsPending")}</p>
           </CardContent>
         </Card>
       ) : (
