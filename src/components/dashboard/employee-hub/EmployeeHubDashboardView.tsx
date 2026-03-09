@@ -132,7 +132,7 @@ interface EmployeeHubDashboardViewProps {
   t: (key: string) => string;
 }
 
-export function EmployeeHubDashboardView() {
+export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
   const { requestLocation } = useGeolocation();
   const { orgId } = useOrg();
 
