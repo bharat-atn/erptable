@@ -1,21 +1,28 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Camera, LogIn, LogOut, Clock, MapPin, CheckCircle2, Image,
-  Calendar, FileText, Navigation, Shield, ShieldAlert, Wifi,
-  ChevronRight, Activity,
+  Camera,
+  LogIn,
+  LogOut,
+  Clock,
+  MapPin,
+  CheckCircle2,
+  Image,
+  Calendar,
+  FileText,
+  Navigation,
+  Shield,
+  ShieldAlert,
+  Wifi,
+  Activity,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone } from "./useGeolocation";
 import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
+import { useWorksiteGeofence } from "./useWorksiteGeofence";
 
-// Demo geofence zones (would come from project/org settings in production)
-const DEMO_GEOFENCE_ZONES: GeofenceZone[] = [
-  { name: "HQ Office", latitude: 62.39, longitude: 17.31, radiusMeters: 500 },
-  { name: "Forest Site Alpha", latitude: 62.45, longitude: 17.25, radiusMeters: 2000 },
-];
+const DEFAULT_WORKSITE_RADIUS_METERS = 250;
 
 interface PhotoCapture {
   selfie: string | null;
@@ -38,19 +45,35 @@ function LocationBadge({ location, zones }: { location: GeoLocation | null; zone
     );
   }
 
+  if (zones.length === 0) {
+    return (
+      <div className="flex items-center gap-2 text-xs rounded-xl p-3 border bg-muted/30 border-border/40 text-muted-foreground">
+        <ShieldAlert className="w-4 h-4 shrink-0" />
+        <div>
+          <span className="font-semibold">Work area not configured yet</span>
+          <p className="text-[10px] opacity-70 mt-0.5">
+            {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const matchedZone = zones.find((z) => isInsideGeofence(location, z));
 
   return (
-    <div className={`flex items-center gap-2 text-xs rounded-xl p-3 border ${
-      matchedZone
-        ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-600/20 text-emerald-700 dark:text-emerald-400"
-        : "bg-amber-50 dark:bg-amber-950/20 border-amber-500/20 text-amber-700 dark:text-amber-400"
-    }`}>
+    <div
+      className={`flex items-center gap-2 text-xs rounded-xl p-3 border ${
+        matchedZone
+          ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-600/20 text-emerald-700 dark:text-emerald-400"
+          : "bg-amber-50 dark:bg-amber-950/20 border-amber-500/20 text-amber-700 dark:text-amber-400"
+      }`}
+    >
       {matchedZone ? (
         <>
           <Shield className="w-4 h-4 shrink-0" />
           <div>
-            <span className="font-semibold">Inside geofence:</span> {matchedZone.name}
+            <span className="font-semibold">Inside work area:</span> {matchedZone.name}
             <p className="text-[10px] opacity-70 mt-0.5">
               {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
             </p>
@@ -60,7 +83,7 @@ function LocationBadge({ location, zones }: { location: GeoLocation | null; zone
         <>
           <ShieldAlert className="w-4 h-4 shrink-0" />
           <div>
-            <span className="font-semibold">Outside known geofence</span>
+            <span className="font-semibold">Outside configured work area</span>
             <p className="text-[10px] opacity-70 mt-0.5">
               {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
             </p>
@@ -71,23 +94,27 @@ function LocationBadge({ location, zones }: { location: GeoLocation | null; zone
   );
 }
 
-function TimeEntryRow({ entry, zones }: { entry: TimeEntry; zones: GeofenceZone[] }) {
+function TimeEntryRow({ entry }: { entry: TimeEntry }) {
   const isIn = entry.type === "clock_in";
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-        isIn ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-rose-100 dark:bg-rose-900/30"
-      }`}>
-        {isIn ? <LogIn className="w-4 h-4 text-emerald-600" /> : <LogOut className="w-4 h-4 text-rose-600" />}
+      <div
+        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+          isIn ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-rose-100 dark:bg-rose-900/30"
+        }`}
+      >
+        {isIn ? (
+          <LogIn className="w-4 h-4 text-emerald-600" />
+        ) : (
+          <LogOut className="w-4 h-4 text-rose-600" />
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">{isIn ? "Clock In" : "Clock Out"}</p>
         <p className="text-[10px] text-muted-foreground">
           {entry.timestamp.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           {entry.location && (
-            <span className="ml-1">
-              • {entry.insideGeofence ? "✅ In zone" : "⚠️ Outside zone"}
-            </span>
+            <span className="ml-1">• {entry.insideGeofence ? "✅ In area" : "⚠️ Outside area"}</span>
           )}
         </p>
       </div>
@@ -99,8 +126,11 @@ function TimeEntryRow({ entry, zones }: { entry: TimeEntry; zones: GeofenceZone[
 }
 
 export function EmployeeHubDashboardView() {
-  const { requestLocation, location: geoLocation, loading: geoLoading } = useGeolocation();
-  const { entries, todayEntries, addEntry, isClockedIn, clockInTime, todayWorkedMs } = useTimeEntries();
+  const { requestLocation } = useGeolocation();
+  const { todayEntries, addEntry, isClockedIn, todayWorkedMs } = useTimeEntries();
+  const { zone: worksiteZone, zones: worksiteZones, calibrateFromLocation } = useWorksiteGeofence(
+    DEFAULT_WORKSITE_RADIUS_METERS
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"in" | "out">("in");
@@ -119,7 +149,12 @@ export function EmployeeHubDashboardView() {
   }, []);
 
   const timeStr = now.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const dateStr = now.toLocaleDateString("sv-SE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const dateStr = now.toLocaleDateString("sv-SE", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const startCamera = useCallback(async (mode: "selfie" | "environment") => {
     try {
@@ -167,6 +202,11 @@ export function EmployeeHubDashboardView() {
     try {
       const loc = await requestLocation();
       setCapturedLocation(loc);
+
+      // Auto-calibrate the worksite zone on first use (single-site setup)
+      if (!worksiteZone) {
+        calibrateFromLocation(loc, "Work site");
+      }
     } catch {
       // Error handled by hook
     } finally {
@@ -180,9 +220,8 @@ export function EmployeeHubDashboardView() {
       return;
     }
 
-    const insideGeofence = capturedLocation
-      ? DEMO_GEOFENCE_ZONES.some((z) => isInsideGeofence(capturedLocation, z))
-      : null;
+    const insideGeofence =
+      capturedLocation && worksiteZone ? isInsideGeofence(capturedLocation, worksiteZone) : null;
 
     addEntry({
       type: dialogMode === "in" ? "clock_in" : "clock_out",
@@ -195,9 +234,7 @@ export function EmployeeHubDashboardView() {
 
     if (dialogMode === "in") {
       toast.success(
-        insideGeofence === false
-          ? "Clocked in (outside geofence — flagged for review)"
-          : "Clocked in successfully!",
+        insideGeofence === false ? "Clocked in (outside work area — flagged for review)" : "Clocked in successfully!",
         { duration: 3000 }
       );
     } else {
@@ -253,7 +290,6 @@ export function EmployeeHubDashboardView() {
           </button>
         )}
       </div>
-
 
       {/* Today's schedule */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
@@ -319,14 +355,22 @@ export function EmployeeHubDashboardView() {
         ) : (
           <div className="space-y-2">
             {todayEntries.map((entry) => (
-              <TimeEntryRow key={entry.id} entry={entry} zones={DEMO_GEOFENCE_ZONES} />
+              <TimeEntryRow key={entry.id} entry={entry} />
             ))}
           </div>
         )}
       </div>
 
       {/* Photo Capture Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) { stopCamera(); setDialogOpen(false); } }}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            stopCamera();
+            setDialogOpen(false);
+          }
+        }}
+      >
         <DialogContent className="max-w-md w-[calc(100vw-2rem)] rounded-3xl border-2 border-emerald-600/20">
           <DialogHeader>
             <DialogTitle className="text-base text-emerald-700 dark:text-emerald-500">
@@ -346,7 +390,7 @@ export function EmployeeHubDashboardView() {
                 <span>Acquiring GPS location…</span>
               </div>
             ) : (
-              <LocationBadge location={capturedLocation} zones={DEMO_GEOFENCE_ZONES} />
+              <LocationBadge location={capturedLocation} zones={worksiteZones} />
             )}
 
             {/* Camera preview */}
@@ -354,7 +398,10 @@ export function EmployeeHubDashboardView() {
               <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] shadow-lg">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <button onClick={capturePhoto} className="rounded-full w-14 h-14 bg-white hover:bg-white/90 shadow-2xl active:scale-95 transition-transform flex items-center justify-center">
+                  <button
+                    onClick={capturePhoto}
+                    className="rounded-full w-14 h-14 bg-white hover:bg-white/90 shadow-2xl active:scale-95 transition-transform flex items-center justify-center"
+                  >
                     <Camera className="w-6 h-6 text-emerald-600" />
                   </button>
                 </div>
@@ -407,7 +454,16 @@ export function EmployeeHubDashboardView() {
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" className="h-12 sm:h-10 rounded-xl" onClick={() => { stopCamera(); setDialogOpen(false); }}>Cancel</Button>
+            <Button
+              variant="outline"
+              className="h-12 sm:h-10 rounded-xl"
+              onClick={() => {
+                stopCamera();
+                setDialogOpen(false);
+              }}
+            >
+              Cancel
+            </Button>
             <Button
               onClick={handleSubmit}
               disabled={!photos.selfie || !photos.environment}
