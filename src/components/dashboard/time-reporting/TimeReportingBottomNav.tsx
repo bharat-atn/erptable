@@ -4,17 +4,18 @@ import { cn } from "@/lib/utils";
 interface TimeReportingBottomNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  t: (key: string) => string;
 }
 
 const NAV_ITEMS = [
-  { id: "dashboard", icon: LayoutDashboard, label: "Home" },
-  { id: "weekly-attendance", icon: CheckSquare, label: "Attendance" },
-  { id: "progress-reporting", icon: TrendingUp, label: "Progress" },
-  { id: "approvals", icon: ClipboardCheck, label: "Approvals" },
-  { id: "guide", icon: BookOpen, label: "Guide" },
+  { id: "dashboard", icon: LayoutDashboard, labelKey: "tr.nav.home" },
+  { id: "weekly-attendance", icon: CheckSquare, labelKey: "tr.nav.attendance" },
+  { id: "progress-reporting", icon: TrendingUp, labelKey: "tr.nav.progress" },
+  { id: "approvals", icon: ClipboardCheck, labelKey: "tr.nav.approvals" },
+  { id: "guide", icon: BookOpen, labelKey: "tr.nav.guide" },
 ];
 
-export function TimeReportingBottomNav({ activeTab, onTabChange }: TimeReportingBottomNavProps) {
+export function TimeReportingBottomNav({ activeTab, onTabChange, t }: TimeReportingBottomNavProps) {
   return (
     <div className="bg-background border-t border-border/40 shrink-0 z-10">
       <div className="flex items-center justify-around h-16 px-1">
@@ -33,7 +34,7 @@ export function TimeReportingBottomNav({ activeTab, onTabChange }: TimeReporting
               )}
             >
               <Icon className={cn("w-5 h-5 mb-0.5", isActive && "stroke-[2.5]")} />
-              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+              <span className="text-[10px] font-medium leading-tight">{t(item.labelKey)}</span>
               {isActive && <div className="w-1 h-1 rounded-full bg-primary mt-0.5" />}
             </button>
           );
