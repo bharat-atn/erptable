@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone } from "./useGeolocation";
 import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
 import { useWorksiteGeofence } from "./useWorksiteGeofence";
+import { CameraPermissionHelp } from "./CameraPermissionHelp";
 
 const DEFAULT_WORKSITE_RADIUS_METERS = 250;
 
@@ -139,6 +140,8 @@ export function EmployeeHubDashboardView() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedLocation, setCapturedLocation] = useState<GeoLocation | null>(null);
   const [locationFetching, setLocationFetching] = useState(false);
+  const [cameraHelpOpen, setCameraHelpOpen] = useState(false);
+  const [lastCameraMode, setLastCameraMode] = useState<"selfie" | "environment">("selfie");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Live clock
@@ -157,14 +160,13 @@ export function EmployeeHubDashboardView() {
   });
 
   const startCamera = useCallback(async (mode: "selfie" | "environment") => {
+    setLastCameraMode(mode);
     try {
-      // Check if mediaDevices is available (requires HTTPS)
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast.error("Camera is not available. Make sure you're using HTTPS.", { duration: 5000 });
         return;
       }
 
-      // CRITICAL: getUserMedia must be called directly in click handler
       const s = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode === "selfie" ? "user" : "environment", width: 640, height: 480 },
       });
@@ -179,10 +181,7 @@ export function EmployeeHubDashboardView() {
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
       if (error.name === "NotAllowedError") {
-        toast.error(
-          "Camera permission denied. Go to your browser settings → Site Settings → Camera, and allow access for this site.",
-          { duration: 8000 }
-        );
+        setCameraHelpOpen(true);
       } else if (error.name === "NotFoundError") {
         toast.error("No camera found on this device.", { duration: 5000 });
       } else if (error.name === "NotReadableError" || error.name === "AbortError") {
@@ -493,6 +492,12 @@ export function EmployeeHubDashboardView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CameraPermissionHelp
+        open={cameraHelpOpen}
+        onOpenChange={setCameraHelpOpen}
+        onRetry={() => startCamera(lastCameraMode)}
+      />
     </div>
   );
 }
