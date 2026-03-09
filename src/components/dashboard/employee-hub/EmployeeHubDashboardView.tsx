@@ -167,25 +167,34 @@ export function EmployeeHubDashboardView() {
         return;
       }
 
+      // CRITICAL: getUserMedia must be the FIRST await in the click handler chain.
+      // No awaits before this call — Safari requires direct user-gesture context.
       const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode === "selfie" ? "user" : "environment", width: 640, height: 480 },
+        video: { facingMode: mode === "selfie" ? "user" : "environment", width: { ideal: 640 }, height: { ideal: 480 } },
       });
       setStream(s);
       setActiveCamera(mode);
-      setTimeout(() => {
+      // Assign srcObject immediately — no setTimeout.
+      // The video element may not be rendered yet (state just changed), so
+      // we use a rAF + microtask to catch the very first paint.
+      const attachStream = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = s;
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {});
+        } else {
+          // Element not mounted yet — retry on next frame
+          requestAnimationFrame(attachStream);
         }
-      }, 100);
+      };
+      requestAnimationFrame(attachStream);
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
-      if (error.name === "NotAllowedError") {
+      if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
         setCameraHelpOpen(true);
       } else if (error.name === "NotFoundError") {
         toast.error("No camera found on this device.", { duration: 5000 });
-      } else if (error.name === "NotReadableError" || error.name === "AbortError") {
-        toast.error("Camera is in use by another app. Close other apps using the camera and try again.", { duration: 6000 });
+      } else if (error.name === "NotReadableError" || error.name === "AbortError" || error.name === "OverconstrainedError") {
+        toast.error("Camera is in use by another app or constraints not supported. Try again.", { duration: 6000 });
       } else {
         toast.error(`Camera error: ${error.message}`, { duration: 5000 });
       }
