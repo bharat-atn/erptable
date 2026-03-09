@@ -24,7 +24,7 @@ import { EnhancedTable, type ColumnDef } from "@/components/ui/enhanced-table";
 import { ContractPreviewDialog } from "./ContractPreviewDialog";
 
 type EmployeeStatus = "INVITED" | "ONBOARDING" | "ACTIVE" | "INACTIVE";
-type Employee = Tables<"employees">;
+type Employee = Tables<"employees"> & { sink_tax?: boolean };
 
 const statusConfig: Record<string, { label: string; dot: string }> = {
   ACTIVE: { label: "Active", dot: "bg-emerald-500" },
@@ -81,6 +81,16 @@ const employeeColumns: ColumnDef<Employee>[] = [
     header: "Country",
     accessor: (e) => e.country,
     render: (e, hl) => <span className="text-sm text-muted-foreground">{hl?.(e.country || "—") ?? e.country ?? "—"}</span>,
+  },
+  {
+    key: "tax_type",
+    header: "Tax",
+    accessor: (e) => e.sink_tax ? "SINK" : "Table",
+    render: (e) => (
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${e.sink_tax ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
+        {e.sink_tax ? "SINK" : "Tax Table"}
+      </span>
+    ),
   },
   {
     key: "status",
@@ -173,7 +183,28 @@ export function EmployeeRegisterView() {
     queryFn: async () => {
       const { data, error } = await supabase.from("employees").select("*").eq("org_id", orgId!).in("status", ["ACTIVE", "INACTIVE"]).order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) return [] as Employee[];
+
+      // Fetch latest contract form_data for each employee to determine SINK status
+      const employeeIds = data.map((e) => e.id);
+      const { data: contracts } = await supabase
+        .from("contracts")
+        .select("employee_id, form_data")
+        .in("employee_id", employeeIds)
+        .order("updated_at", { ascending: false });
+
+      // Build a map: employee_id -> sinkEnabled (from the latest contract)
+      const sinkMap = new Map<string, boolean>();
+      if (contracts) {
+        for (const c of contracts) {
+          if (!sinkMap.has(c.employee_id)) {
+            const fd = c.form_data as Record<string, any> | null;
+            sinkMap.set(c.employee_id, !!fd?.sinkEnabled);
+          }
+        }
+      }
+
+      return data.map((e) => ({ ...e, sink_tax: sinkMap.get(e.id) ?? false })) as Employee[];
     },
   });
 
