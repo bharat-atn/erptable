@@ -224,7 +224,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                       <div className="mt-4 border-t border-border pt-3 space-y-4 ml-9">
                         {attendanceEntries.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold mb-2">Attendance</p>
+                           <p className="text-xs font-semibold mb-2">{t("tr.attendance")}</p>
                             <div className="space-y-1.5 sm:space-y-0">
                               {(() => {
                                 const byEmp: Record<string, { name: string; code: string; days: number; hours: number }> = {};
