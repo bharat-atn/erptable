@@ -32,7 +32,6 @@ export function SearchableCountrySelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-
   const selectedCountry = countries.find((c) => c.name === value);
   const query = search.toLowerCase();
 
@@ -51,7 +50,7 @@ export function SearchableCountrySelect({
     setOpen(false);
     setSearch("");
   }, [onValueChange]);
-        <div className="flex items-center border-b px-3">
+
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
@@ -74,12 +73,11 @@ export function SearchableCountrySelect({
         </button>
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Content
-        className={cn(
-          "z-50 w-[--radix-popover-trigger-width] rounded-md border bg-popover p-0 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
-        )}
+        className="z-50 w-[--radix-popover-trigger-width] rounded-md border bg-popover p-0 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
         align="start"
         sideOffset={4}
       >
+        <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <input
             className="flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
@@ -154,4 +152,3 @@ export function SearchableCountrySelect({
     </PopoverPrimitive.Root>
   );
 }
-
