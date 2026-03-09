@@ -492,6 +492,12 @@ export function EmployeeHubDashboardView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CameraPermissionHelp
+        open={cameraHelpOpen}
+        onOpenChange={setCameraHelpOpen}
+        onRetry={() => startCamera(lastCameraMode)}
+      />
     </div>
   );
 }
