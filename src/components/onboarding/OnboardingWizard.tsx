@@ -542,119 +542,12 @@ export function OnboardingWizard({
     }
   };
   const templateLogo = loadTemplateLogo();
-  const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
-  const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
-
-  const effectiveBanksByCountry = useMemo(() => {
-    // Always merge fallback + DB banks (both token and demo/preview modes)
-    const merged: Record<string, { name: string; bic_code: string | null }[]> = {};
-
-    const mergeBanks = (source: Record<string, { name: string; bic_code: string | null }[]>) => {
-      for (const [country, banks] of Object.entries(source)) {
-        if (!merged[country]) merged[country] = [];
-
-        for (const bank of banks) {
-          const exists = merged[country].some((b) => b.name.toLowerCase() === bank.name.toLowerCase());
-          if (!exists) merged[country].push(bank);
-        }
-      }
-    };
-
-    mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
-    mergeBanks(banksByCountry); // DB banks added on top of fallback
-
-    return merged;
-  }, [banksByCountry]);
-
-  // Only show countries that have banks registered — never all world countries
-  const availableBankCountries = useMemo(() => {
-    const bankCountries = Object.keys(effectiveBanksByCountry).sort((a, b) => a.localeCompare(b));
-    if (selectedBankCountry && !bankCountries.some(c => c.trim().toLowerCase() === selectedBankCountry.trim().toLowerCase())) {
-      bankCountries.push(selectedBankCountry);
-    }
-    return bankCountries;
-  }, [effectiveBanksByCountry, selectedBankCountry]);
-
-  const banksForSelectedCountry = useMemo(() => {
-    if (!selectedBankCountry) return [];
-
-    const normalized = selectedBankCountry.trim().toLowerCase();
-    const matchedCountry = Object.keys(effectiveBanksByCountry).find(
-      (country) => country.trim().toLowerCase() === normalized
-    );
-
-    return matchedCountry ? effectiveBanksByCountry[matchedCountry] : [];
-  }, [effectiveBanksByCountry, selectedBankCountry]);
-
-  const bankList = banksForSelectedCountry.map((b) => b.name);
-
-
-  useEffect(() => {
-    // Token mode: fetch banks via secure RPC that bypasses RLS
-    if (invitationToken) {
-      supabase
-        .rpc("get_onboarding_banks_by_token", { _token: invitationToken })
-        .then(({ data, error }) => {
-          if (error || !data || data.length === 0) {
-            setBanksByCountry({});
-            return;
-          }
-          const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
-          for (const b of data as { name: string; bic_code: string | null; country: string | null }[]) {
-            const c = b.country || "Other";
-            if (!grouped[c]) grouped[c] = [];
-            grouped[c].push({ name: b.name, bic_code: b.bic_code });
-          }
-          setBanksByCountry(grouped);
-        });
-      return;
-    }
-
-    // Authenticated / demo mode: direct table query
-    supabase
-      .from("banks")
-      .select("name, country, bic_code")
-      .eq("is_active", true)
-      .order("name")
-      .then(({ data, error }) => {
-        if (error || !data || data.length === 0) {
-          setBanksByCountry({});
-          return;
-        }
-        const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
-        for (const b of data) {
-          const c = b.country || "Other";
-          if (!grouped[c]) grouped[c] = [];
-          grouped[c].push({ name: b.name, bic_code: b.bic_code });
-        }
-        setBanksByCountry(grouped);
-      });
-  }, [invitationToken]);
   const [s1Open, setS1Open] = useState(true);
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
-  const [selectedBankValue, setSelectedBankValue] = useState(selectedBank || "");
-  const [bicValue, setBicValue] = useState(formData.bicCode || "");
-  const [bankAccountValue, setBankAccountValue] = useState(formData.bankAccountNumber || "");
   const [validationAttempted, setValidationAttempted] = useState(false);
-
-  // Sync local bank fields when parent clears them (e.g. toggling "Other bank")
-  useEffect(() => {
-    if (!formData.bicCode && bicValue) setBicValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bicCode]);
-
-  useEffect(() => {
-    if (!formData.bankAccountNumber && bankAccountValue) setBankAccountValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bankAccountNumber]);
-
-  useEffect(() => {
-    if (!formData.bankName && selectedBankValue) setSelectedBankValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bankName]);
 
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
