@@ -357,7 +357,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">17:00</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
-            <p className="text-[10px] text-muted-foreground mb-1">Worked</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("hub.worked")}</p>
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">
               {isClockedIn ? formatElapsed(todayWorkedMs) : "0h"}
             </p>
