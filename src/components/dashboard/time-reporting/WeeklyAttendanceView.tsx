@@ -616,7 +616,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-xs">
           <Switch checked={includeSaturday} onCheckedChange={setIncludeSaturday} id="sat-toggle" />
-          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">Include Saturday</label>
+          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">{t("tr.includeSaturday")}</label>
         </div>
         {!isSubmitted && teamMembers.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={copyFromPreviousWeek}>
