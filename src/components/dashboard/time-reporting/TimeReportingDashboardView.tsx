@@ -13,9 +13,11 @@ import { format, startOfWeek, subWeeks, getISOWeek } from "date-fns";
 
 interface TimeReportingDashboardViewProps {
   onNavigate: (view: string) => void;
+  t?: (key: string) => string;
 }
 
-export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboardViewProps) {
+export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingDashboardViewProps) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
 
   const { data: stats, isLoading } = useQuery({
