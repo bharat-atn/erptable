@@ -310,7 +310,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
           {isClockedIn ? (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
               <Activity className="w-4 h-4 animate-pulse" />
-              <span className="text-sm font-medium">On duty • {elapsed}</span>
+              <span className="text-sm font-medium">{t("hub.onDuty")} • {elapsed}</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
