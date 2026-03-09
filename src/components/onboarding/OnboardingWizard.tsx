@@ -1254,18 +1254,14 @@ export function OnboardingWizard({
                     setSelectedBankValue("");
                     setBicValue("");
                     setBankAccountValue("");
-
-                    requestAnimationFrame(() => {
-                      onBankSelect(val === "__other__" ? "other" : "");
-                      updateField("bankName", "");
-                      updateField("otherBankName", "");
-                      updateField("bicCode", "");
-                      updateField("bankAccountNumber", "");
-
-                      if (val !== "__other__") {
-                        updateField("bankCountryName", "");
-                      }
-                    });
+                    onBankSelect(val === "__other__" ? "other" : "");
+                    updateField("bankName", "");
+                    updateField("otherBankName", "");
+                    updateField("bicCode", "");
+                    updateField("bankAccountNumber", "");
+                    if (val !== "__other__") {
+                      updateField("bankCountryName", "");
+                    }
                   }}
                   placeholder="Choose country / Välj land"
                   hasError={validationAttempted && !selectedBankCountry}
