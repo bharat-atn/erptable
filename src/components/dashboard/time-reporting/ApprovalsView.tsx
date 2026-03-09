@@ -190,8 +190,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                           className="h-9 sm:h-8"
                           onClick={() => setExpandedId(isExpanded ? null : report.id)}
                         >
-                          {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
-                          {isExpanded ? "Hide" : "Details"}
+                           {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+                           {isExpanded ? t("tr.hide") : t("tr.details")}
                         </Button>
                         <Button
                           variant="outline"
