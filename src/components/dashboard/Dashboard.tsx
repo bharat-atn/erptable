@@ -63,6 +63,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 import { type AppDefinition } from "./AppLauncher";
 
