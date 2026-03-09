@@ -21,7 +21,7 @@ export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
 
   const renderView = () => {
     switch (activeTab) {
-      case "dashboard": return <EmployeeHubDashboardView />;
+      case "dashboard": return <EmployeeHubDashboardView t={t} />;
       case "contract": return <EmployeeHubContractView />;
       case "schedule": return <EmployeeHubScheduleView />;
       case "payslips": return <EmployeeHubPayslipsView />;
