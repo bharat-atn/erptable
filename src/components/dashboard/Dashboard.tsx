@@ -120,15 +120,15 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     // Time & Status Reporting views
     if (appId === "time-reporting") {
       switch (activeView) {
-        case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveView} />;
-        case "weekly-attendance": return <WeeklyAttendanceView />;
-        case "progress-reporting": return <ProgressReportingView />;
-        case "approvals": return <ApprovalsView />;
+        case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveView} t={t} />;
+        case "weekly-attendance": return <WeeklyAttendanceView t={t} />;
+        case "progress-reporting": return <ProgressReportingView t={t} />;
+        case "approvals": return <ApprovalsView t={t} />;
         case "reports": return <TimeReportsView />;
-        case "process-guide": return <TimeReportingProcessGuideView />;
+        case "process-guide": return <TimeReportingProcessGuideView t={t} />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
-        default: return <TimeReportingDashboardView onNavigate={setActiveView} />;
+        default: return <TimeReportingDashboardView onNavigate={setActiveView} t={t} />;
       }
     }
 
