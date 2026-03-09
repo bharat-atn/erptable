@@ -691,7 +691,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
             disabled={saveMutation.isPending}
           >
             <Save className="w-4 h-4 mr-1.5" />
-            Save Draft
+            {t("tr.saveDraft")}
           </Button>
           <Button
             className="flex-1 md:flex-none h-12 md:h-9"
