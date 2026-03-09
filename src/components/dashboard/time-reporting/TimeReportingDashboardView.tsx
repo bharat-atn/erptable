@@ -125,9 +125,9 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Time & Status Reporting</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.title")}</h1>
         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Tid- & statusrapportering • Weekly attendance and project progress
+          {t("tr.subtitle")}
         </p>
       </div>
 
