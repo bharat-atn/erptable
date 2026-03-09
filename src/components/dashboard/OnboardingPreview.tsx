@@ -15,8 +15,6 @@ interface OnboardingPreviewProps {
 
 export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
   const [formData, setFormData] = useState<Partial<PersonalInfo>>({});
-  const [selectedBank, setSelectedBank] = useState<string>("");
-  const [isOtherBank, setIsOtherBank] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [workPermitFile, setWorkPermitFile] = useState<File | null>(null);
   const [previewLanguage, setPreviewLanguage] = useState<OnboardingLanguage>("en_sv");
@@ -25,16 +23,6 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
 
   const updateField = (field: keyof PersonalInfo, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleBankSelect = (bank: string) => {
-    if (bank === "other") {
-      setIsOtherBank(true);
-      setSelectedBank("");
-    } else {
-      setIsOtherBank(false);
-      setSelectedBank(bank);
-    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,11 +35,6 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
     if (e.target.files && e.target.files[0]) {
       setWorkPermitFile(e.target.files[0]);
     }
-  };
-
-  const handleAiFill = (_data: Record<string, any>) => {
-    setSelectedBank("");
-    setIsOtherBank(false);
   };
 
   const submitReal = useMutation({
@@ -70,7 +53,7 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
         countryOfBirth: data.countryOfBirth,
         citizenship: data.citizenship,
         mobilePhone: data.mobilePhone,
-        bankName: isOtherBank ? data.otherBankName : selectedBank,
+        bankName: data.bankName,
         bicCode: data.bicCode,
         bankAccountNumber: data.bankAccountNumber,
         swedishCoordinationNumber: data.swedishCoordinationNumber,
@@ -152,12 +135,8 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToValidate = {
-      ...formData,
-      bankName: isOtherBank ? "Other" : selectedBank,
-    };
     try {
-      const validated = personalInfoSchema.parse(dataToValidate);
+      const validated = personalInfoSchema.parse(formData);
       submitReal.mutate(validated);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -200,16 +179,13 @@ export function OnboardingPreview({ onClose }: OnboardingPreviewProps) {
         onSubmit={handleSubmit}
         isSubmitting={submitReal.isPending}
         isPreview={false}
-        selectedBank={selectedBank}
-        isOtherBank={isOtherBank}
-        onBankSelect={handleBankSelect}
         uploadedFile={uploadedFile}
         onFileChange={handleFileChange}
         workPermitFile={workPermitFile}
         onWorkPermitFileChange={handleWorkPermitFileChange}
         language={previewLanguage}
         showAiFill={true}
-        onAiFill={handleAiFill}
+        onAiFill={() => {}}
       />
     </div>
   );
