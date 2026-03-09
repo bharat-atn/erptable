@@ -1243,7 +1243,7 @@ export function OnboardingWizard({
               missingFields={s4Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               {/* Country selector */}
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
