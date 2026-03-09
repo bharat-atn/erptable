@@ -140,10 +140,10 @@ export const DEFAULT_SIDEBAR_ACCESS: Record<string, Record<string, string[]>> = 
   "time-reporting": {
     admin: SIDEBAR_ITEMS_BY_APP["time-reporting"].map((i) => i.id),
     org_admin: SIDEBAR_ITEMS_BY_APP["time-reporting"].map((i) => i.id),
-    project_manager: ["dashboard", "weekly-attendance", "progress-reporting", "approvals", "reports"],
-    team_leader: ["dashboard", "weekly-attendance", "progress-reporting"],
-    hr_manager: ["dashboard", "reports"],
-    payroll_manager: ["dashboard", "reports"],
-    user: ["dashboard"],
+    project_manager: ["dashboard", "weekly-attendance", "progress-reporting", "approvals", "reports", "process-guide"],
+    team_leader: ["dashboard", "weekly-attendance", "progress-reporting", "process-guide"],
+    hr_manager: ["dashboard", "reports", "process-guide"],
+    payroll_manager: ["dashboard", "reports", "process-guide"],
+    user: ["dashboard", "process-guide"],
   },
 };
