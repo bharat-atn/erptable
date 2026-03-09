@@ -217,7 +217,7 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Weekly Report Status (Last 8 Weeks)</h3>
+                  <h3 className="font-semibold text-sm">{t("tr.weeklyReportStatus")}</h3>
                 </div>
                 <div className="h-[140px] md:h-[160px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -233,15 +233,15 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
                 <div className="flex justify-center gap-4 mt-2">
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-2))" }} />
-                    Approved
+                    {t("tr.approved")}
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-4))" }} />
-                    Pending
+                    {t("tr.pending")}
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-3))" }} />
-                    Draft
+                    {t("tr.draft")}
                   </div>
                 </div>
               </CardContent>
