@@ -223,7 +223,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
     });
 
     setLocalAttendance(newAttendance);
-    toast.success("Copied attendance from previous week");
+    toast.success(t("tr.copiedFromPrev"));
   };
 
   // Save/update report
