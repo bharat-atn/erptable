@@ -5,6 +5,7 @@ import { WeeklyAttendanceView } from "./WeeklyAttendanceView";
 import { ProgressReportingView } from "./ProgressReportingView";
 import { ApprovalsView } from "./ApprovalsView";
 import { TimeReportingProcessGuideView } from "./TimeReportingProcessGuideView";
+import { TimeReportingProfileView } from "./TimeReportingProfileView";
 import { TimeReportingBottomNav } from "./TimeReportingBottomNav";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 
@@ -23,6 +24,7 @@ export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobile
       case "progress-reporting": return <ProgressReportingView t={t} />;
       case "approvals": return <ApprovalsView t={t} />;
       case "guide": return <TimeReportingProcessGuideView t={t} />;
+      case "profile": return <TimeReportingProfileView t={t} lang={lang} onLanguageChange={setLang} />;
       default: return <TimeReportingDashboardView onNavigate={setActiveTab} t={t} />;
     }
   };
