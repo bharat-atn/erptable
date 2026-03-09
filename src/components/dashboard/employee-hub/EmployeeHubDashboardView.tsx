@@ -285,11 +285,11 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
 
     if (dialogMode === "in") {
       toast.success(
-        insideGeofence === false ? "Clocked in (outside work area — flagged for review)" : "Clocked in successfully!",
+        insideGeofence === false ? t("hub.clockedInOutside") : t("hub.clockedInSuccess"),
         { duration: 3000 }
       );
     } else {
-      toast.success("Clocked out successfully!");
+      toast.success(t("hub.clockedOutSuccess"));
     }
 
     setDialogOpen(false);
