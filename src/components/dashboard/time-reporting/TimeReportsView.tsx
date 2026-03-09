@@ -6,10 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, BarChart3, FileText } from "lucide-react";
+import { Loader2, BarChart3 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function TimeReportsView() {
   const { orgId } = useOrg();
+  const isMobile = useIsMobile();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(String(currentYear));
 
@@ -36,14 +38,14 @@ export function TimeReportsView() {
   };
 
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-4 md:space-y-6 pt-2 md:pt-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Rapporter • All weekly reports history</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Reports</h1>
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Rapporter • All weekly reports</p>
         </div>
         <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-[100px] h-8 text-sm">
+          <SelectTrigger className="w-[90px] h-10 sm:h-8 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -65,7 +67,31 @@ export function TimeReportsView() {
             <p className="text-sm text-muted-foreground">No reports found for {selectedYear}</p>
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        /* Mobile: card list */
+        <div className="space-y-2">
+          {reports.map((r: any) => (
+            <Card key={r.id} className="border-border/60">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-bold font-mono">W{r.week_number}</span>
+                  <Badge variant="secondary" className={`text-[10px] capitalize ${statusColor(r.status)}`}>
+                    {r.status}
+                  </Badge>
+                </div>
+                <p className="text-sm font-medium truncate">{r.forestry_projects?.name}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[11px] text-muted-foreground">{r.forestry_projects?.project_id_display}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {r.submitted_at ? new Date(r.submitted_at).toLocaleDateString() : "—"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
+        /* Desktop: table */
         <Card className="border-border/60">
           <CardContent className="pt-6">
             <Table>
