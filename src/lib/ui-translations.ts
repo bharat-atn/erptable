@@ -330,6 +330,40 @@ const translations: Record<string, Partial<Record<UiLang, string>>> = {
   "hub.nav.guide": { en: "Guide", sv: "Guide", ro: "Ghid", uk: "Посібник", th: "คู่มือ" },
   "hub.nav.contract": { en: "Contract", sv: "Kontrakt", ro: "Contract", uk: "Контракт", th: "สัญญา" },
   "hub.nav.profile": { en: "Profile", sv: "Profil", ro: "Profil", uk: "Профіль", th: "โปรไฟล์" },
+  "hub.nav.time": { en: "My Time", sv: "Min tid", ro: "Timpul meu", uk: "Мій час", th: "เวลาของฉัน" },
+
+  // Employee Hub dashboard
+  "hub.onDuty": { en: "On duty", sv: "I tjänst", ro: "În serviciu", uk: "На зміні", th: "ปฏิบัติหน้าที่" },
+  "hub.offDuty": { en: "Off duty", sv: "Ledig", ro: "Liber", uk: "Вільний", th: "นอกเวลา" },
+  "hub.clockIn": { en: "Clock In", sv: "Stämpla in", ro: "Pontare intrare", uk: "Прихід", th: "ลงเวลาเข้า" },
+  "hub.clockOut": { en: "Clock Out", sv: "Stämpla ut", ro: "Pontare ieșire", uk: "Вихід", th: "ลงเวลาออก" },
+  "hub.todaySchedule": { en: "Today's Schedule", sv: "Dagens schema", ro: "Programul de azi", uk: "Розклад на сьогодні", th: "ตารางวันนี้" },
+  "hub.start": { en: "Start", sv: "Start", ro: "Start", uk: "Початок", th: "เริ่ม" },
+  "hub.end": { en: "End", sv: "Slut", ro: "Sfârșit", uk: "Кінець", th: "สิ้นสุด" },
+  "hub.worked": { en: "Worked", sv: "Arbetat", ro: "Lucrat", uk: "Відпрацьовано", th: "ทำงานแล้ว" },
+  "hub.quickActions": { en: "Quick Actions", sv: "Snabbåtgärder", ro: "Acțiuni rapide", uk: "Швидкі дії", th: "การดำเนินการด่วน" },
+  "hub.myLocation": { en: "My Location", sv: "Min plats", ro: "Locația mea", uk: "Моя локація", th: "ตำแหน่งของฉัน" },
+  "hub.todayActivity": { en: "Today's Activity", sv: "Dagens aktivitet", ro: "Activitatea de azi", uk: "Активність сьогодні", th: "กิจกรรมวันนี้" },
+  "hub.noEntries": { en: "No time entries recorded today", sv: "Inga tidsposter registrerade idag", ro: "Nicio înregistrare de timp astăzi", uk: "Сьогодні немає записів часу", th: "ไม่มีรายการเวลาที่บันทึกวันนี้" },
+  "hub.clockInToStart": { en: "Clock in to start recording", sv: "Stämpla in för att börja registrera", ro: "Pontați pentru a începe înregistrarea", uk: "Зареєструйте прихід для початку запису", th: "ลงเวลาเข้าเพื่อเริ่มบันทึก" },
+  "hub.inArea": { en: "In area", sv: "Inom området", ro: "În zonă", uk: "В зоні", th: "ในพื้นที่" },
+  "hub.outsideArea": { en: "Outside area", sv: "Utanför området", ro: "În afara zonei", uk: "Поза зоною", th: "นอกพื้นที่" },
+
+  // Clock dialog
+  "hub.clockInTitle": { en: "Clock In", sv: "Stämpla in", ro: "Pontare intrare", uk: "Прихід", th: "ลงเวลาเข้า" },
+  "hub.clockOutTitle": { en: "Clock Out", sv: "Stämpla ut", ro: "Pontare ieșire", uk: "Вихід", th: "ลงเวลาออก" },
+  "hub.photoInstructions": { en: "Take a selfie and a photo of your work environment. Your GPS location is captured automatically.", sv: "Ta en selfie och ett foto av din arbetsmiljö. Din GPS-position registreras automatiskt.", ro: "Faceți un selfie și o fotografie a mediului de lucru. Locația GPS este înregistrată automat.", uk: "Зробіть селфі та фото робочого середовища. Ваше GPS-розташування записується автоматично.", th: "ถ่ายเซลฟี่และภาพสภาพแวดล้อมการทำงาน ตำแหน่ง GPS จะถูกบันทึกโดยอัตโนมัติ" },
+  "hub.acquiringGps": { en: "Acquiring GPS location…", sv: "Hämtar GPS-position…", ro: "Se obține locația GPS…", uk: "Отримання GPS-позиції…", th: "กำลังรับตำแหน่ง GPS…" },
+  "hub.selfie": { en: "Selfie", sv: "Selfie", ro: "Selfie", uk: "Селфі", th: "เซลฟี่" },
+  "hub.environment": { en: "Environment", sv: "Arbetsmiljö", ro: "Mediu", uk: "Середовище", th: "สภาพแวดล้อม" },
+  "hub.cancel": { en: "Cancel", sv: "Avbryt", ro: "Anulare", uk: "Скасувати", th: "ยกเลิก" },
+  "hub.confirmClockIn": { en: "Confirm Clock In", sv: "Bekräfta instämpling", ro: "Confirmă pontare intrare", uk: "Підтвердити прихід", th: "ยืนยันลงเวลาเข้า" },
+  "hub.confirmClockOut": { en: "Confirm Clock Out", sv: "Bekräfta utstämpling", ro: "Confirmă pontare ieșire", uk: "Підтвердити вихід", th: "ยืนยันลงเวลาออก" },
+  "hub.clockedInSuccess": { en: "Clocked in successfully!", sv: "Instämplad!", ro: "Pontare intrare reușită!", uk: "Прихід зареєстровано!", th: "ลงเวลาเข้าสำเร็จ!" },
+  "hub.clockedInOutside": { en: "Clocked in (outside work area — flagged for review)", sv: "Instämplad (utanför arbetsområdet — markerad för granskning)", ro: "Pontat (în afara zonei de lucru — marcat pentru verificare)", uk: "Прихід зареєстровано (поза робочою зоною — позначено для перевірки)", th: "ลงเวลาเข้า (นอกพื้นที่ทำงาน — ตั้งค่าสถานะเพื่อตรวจสอบ)" },
+  "hub.clockedOutSuccess": { en: "Clocked out successfully!", sv: "Utstämplad!", ro: "Pontare ieșire reușită!", uk: "Вихід зареєстровано!", th: "ลงเวลาออกสำเร็จ!" },
+  "hub.capturePhotos": { en: "Please capture both photos before submitting.", sv: "Ta båda foton innan du skickar.", ro: "Vă rugăm să faceți ambele fotografii înainte de trimitere.", uk: "Будь ласка, зробіть обидва фото перед відправкою.", th: "กรุณาถ่ายรูปทั้งสองก่อนส่ง" },
+  "hub.locationNotCaptured": { en: "Location not captured yet", sv: "Plats ej registrerad ännu", ro: "Locația nu a fost înregistrată încă", uk: "Місцезнаходження ще не зафіксовано", th: "ยังไม่ได้บันทึกตำแหน่ง" },
 };
 
 export function t(key: string, lang: UiLang = "en"): string {
