@@ -668,11 +668,11 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
       {teamMembers.length > 0 && (
         <Card className="border-border/60">
           <CardContent className="p-4 md:pt-4">
-            <label className="text-sm font-medium mb-1.5 block">Report Notes (optional)</label>
+            <label className="text-sm font-medium mb-1.5 block">{t("tr.reportNotes")}</label>
             <Textarea
               value={reportNotes}
               onChange={(e) => setReportNotes(e.target.value)}
-              placeholder="Any general notes for this week's report..."
+              placeholder={t("tr.reportNotesPlaceholder")}
               className="text-sm resize-none"
               rows={2}
               disabled={isSubmitted}
