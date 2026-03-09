@@ -135,9 +135,9 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                 checked={selectedIds.size === pendingReports.length && pendingReports.length > 0}
                 onCheckedChange={toggleSelectAll}
               />
-              <span className="text-xs text-muted-foreground">
-                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
-              </span>
+               <span className="text-xs text-muted-foreground">
+                 {selectedIds.size > 0 ? `${selectedIds.size} ${t("tr.selected")}` : t("tr.selectAll")}
+               </span>
             </div>
             {selectedIds.size > 0 && (
               <Button
