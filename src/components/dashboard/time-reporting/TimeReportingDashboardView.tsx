@@ -144,28 +144,28 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
-                      Week {stats.currentWeek} reports pending
-                    </p>
-                    <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-0.5">
-                      {stats.projectsWithoutReport.length} project{stats.projectsWithoutReport.length !== 1 ? "s" : ""} missing submitted report this week:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {stats.projectsWithoutReport.slice(0, 3).map((p: any) => (
-                        <Badge key={p.id} variant="outline" className="text-[10px] border-amber-500/40 bg-amber-100/50 dark:bg-amber-900/30">
-                          {p.project_id_display}
-                        </Badge>
-                      ))}
-                      {stats.projectsWithoutReport.length > 3 && (
-                        <Badge variant="outline" className="text-[10px] border-amber-500/40">
-                          +{stats.projectsWithoutReport.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" className="shrink-0 h-8 border-amber-500/40 text-amber-700 hover:bg-amber-100" onClick={() => onNavigate("weekly-attendance")}>
-                    Submit →
-                  </Button>
+                     <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
+                       Week {stats.currentWeek} — {t("tr.weekReportsPending")}
+                     </p>
+                     <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-0.5">
+                       {stats.projectsWithoutReport.length} {t("tr.projectsMissingReport")}
+                     </p>
+                     <div className="flex flex-wrap gap-1.5 mt-2">
+                       {stats.projectsWithoutReport.slice(0, 3).map((p: any) => (
+                         <Badge key={p.id} variant="outline" className="text-[10px] border-amber-500/40 bg-amber-100/50 dark:bg-amber-900/30">
+                           {p.project_id_display}
+                         </Badge>
+                       ))}
+                       {stats.projectsWithoutReport.length > 3 && (
+                         <Badge variant="outline" className="text-[10px] border-amber-500/40">
+                           +{stats.projectsWithoutReport.length - 3} {t("tr.more")}
+                         </Badge>
+                       )}
+                     </div>
+                   </div>
+                   <Button size="sm" variant="outline" className="shrink-0 h-8 border-amber-500/40 text-amber-700 hover:bg-amber-100" onClick={() => onNavigate("weekly-attendance")}>
+                     {t("tr.submit")} →
+                   </Button>
                 </div>
               </CardContent>
             </Card>
