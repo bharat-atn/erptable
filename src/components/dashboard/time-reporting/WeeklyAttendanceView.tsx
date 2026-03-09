@@ -289,7 +289,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
       }
     },
     onSuccess: (_, submit) => {
-      toast.success(submit ? "Report submitted for approval" : "Draft saved");
+      toast.success(submit ? t("tr.reportSubmitted") : t("tr.draftSaved"));
       queryClient.invalidateQueries({ queryKey: ["weekly-report"] });
       queryClient.invalidateQueries({ queryKey: ["time-reporting-stats"] });
     },
