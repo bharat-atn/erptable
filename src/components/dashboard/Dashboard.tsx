@@ -214,7 +214,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   }
 
   // Time & Status Reporting — standalone mobile app on small screens
-  if (appId === "time-reporting" && window.innerWidth < 768) {
+  if (appId === "time-reporting" && isMobile) {
     return <TimeReportingMobileApp onBackToLauncher={onBackToLauncher} />;
   }
 
