@@ -199,6 +199,7 @@ const timeReportingSettingsItems: MenuItem[] = [
 { id: "settings", label: "Settings", icon: Settings }];
 
 const timeReportingAuditItems: MenuItem[] = [
+{ id: "process-guide", label: "Process Guide", icon: BookOpen },
 { id: "audit-log", label: "Audit Log", icon: Shield }];
 
 
