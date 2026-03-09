@@ -261,7 +261,7 @@ export function EmployeeHubDashboardView() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!photos.selfie || !photos.environment) {
       toast.error("Please capture both photos before submitting.");
       return;
@@ -270,7 +270,7 @@ export function EmployeeHubDashboardView() {
     const insideGeofence =
       capturedLocation && worksiteZone ? isInsideGeofence(capturedLocation, worksiteZone) : null;
 
-    addEntry({
+    await addEntry({
       type: dialogMode === "in" ? "clock_in" : "clock_out",
       timestamp: new Date(),
       location: capturedLocation,
