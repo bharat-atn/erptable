@@ -607,7 +607,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
           )}
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
             <Clock className="w-3.5 h-3.5" />
-            <span>{t("tr.standard")}: <span className="font-semibold text-foreground">{projectDailyHours}h/{t("tr.mon").charAt(0) === "M" ? "day" : t("tr.mon")}</span></span>
+            <span>{t("tr.standard")}: <span className="font-semibold text-foreground">{projectDailyHours}h</span></span>
           </div>
         </div>
       </div>
