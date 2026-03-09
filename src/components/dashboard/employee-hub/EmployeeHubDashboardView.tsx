@@ -130,7 +130,25 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
 
 export function EmployeeHubDashboardView() {
   const { requestLocation } = useGeolocation();
-  const { todayEntries, addEntry, isClockedIn, todayWorkedMs } = useTimeEntries();
+  const { orgId } = useOrg();
+
+  // Resolve employee_id for the current user (simple lookup)
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !orgId) return;
+      const { data } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("email", user.email)
+        .maybeSingle();
+      if (data) setEmployeeId(data.id);
+    })();
+  }, [orgId]);
+
+  const { todayEntries, addEntry, isClockedIn, todayWorkedMs } = useTimeEntries(employeeId, orgId);
   const { zone: worksiteZone, zones: worksiteZones, calibrateFromLocation } = useWorksiteGeofence(
     DEFAULT_WORKSITE_RADIUS_METERS
   );
