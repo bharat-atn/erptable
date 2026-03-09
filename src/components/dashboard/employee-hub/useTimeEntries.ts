@@ -69,7 +69,7 @@ export function useTimeEntries(employeeId?: string | null, orgId?: string | null
               id: row.id,
               type: row.entry_type as "clock_in" | "clock_out",
               timestamp: new Date(row.recorded_at),
-              location: row.latitude != null ? { latitude: Number(row.latitude), longitude: Number(row.longitude), accuracy: 0 } : null,
+              location: row.latitude != null ? { latitude: Number(row.latitude), longitude: Number(row.longitude), accuracy: 0, timestamp: new Date(row.recorded_at).getTime() } : null,
               selfieUrl: row.selfie_url,
               environmentUrl: row.environment_photo_url,
               insideGeofence: row.inside_geofence,
