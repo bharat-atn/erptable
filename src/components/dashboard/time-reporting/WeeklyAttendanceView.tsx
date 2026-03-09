@@ -11,22 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import {
-  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight, Clock, MessageSquare, Users
+  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight, Clock, MessageSquare, Users, Copy, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
+import { format, startOfWeek, addDays, getISOWeek, subDays } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function getWeekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
 
-function getWeekDays(weekStart: Date): Date[] {
-  return Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+function getWeekDays(weekStart: Date, includeSaturday: boolean): Date[] {
+  return Array.from({ length: includeSaturday ? 6 : 5 }, (_, i) => addDays(weekStart, i));
 }
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const DAY_LABELS_5 = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const DAY_LABELS_6 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface AttendanceEntry {
   worked: boolean;
@@ -44,10 +46,12 @@ export function WeeklyAttendanceView() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [localAttendance, setLocalAttendance] = useState<Record<string, Record<string, AttendanceEntry>>>({});
   const [reportNotes, setReportNotes] = useState("");
+  const [includeSaturday, setIncludeSaturday] = useState(false);
 
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
-  const weekDays = getWeekDays(currentWeekStart);
+  const weekDays = getWeekDays(currentWeekStart, includeSaturday);
+  const DAY_LABELS = includeSaturday ? DAY_LABELS_6 : DAY_LABELS_5;
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
@@ -183,6 +187,42 @@ export function WeeklyAttendanceView() {
       });
       return { ...prev, [employeeId]: emp };
     });
+  };
+
+  // Copy from previous week
+  const copyFromPreviousWeek = async () => {
+    const prevWeekStart = subDays(currentWeekStart, 7);
+    const { data: prevReport } = await supabase
+      .from("weekly_reports")
+      .select("*, attendance_entries(*)")
+      .eq("org_id", orgId!)
+      .eq("project_id", selectedProjectId)
+      .eq("week_start", format(prevWeekStart, "yyyy-MM-dd"))
+      .maybeSingle();
+
+    if (!prevReport?.attendance_entries || (prevReport.attendance_entries as any[]).length === 0) {
+      toast.error("No attendance data found for previous week");
+      return;
+    }
+
+    const newAttendance: Record<string, Record<string, AttendanceEntry>> = {};
+    (prevReport.attendance_entries as any[]).forEach((e: any) => {
+      if (!newAttendance[e.employee_id]) newAttendance[e.employee_id] = {};
+      // Map previous week dates to current week
+      const prevDate = new Date(e.work_date);
+      const dayOfWeek = prevDate.getDay(); // 0=Sun, 1=Mon, etc.
+      if (dayOfWeek === 0) return; // Skip Sunday
+      const currentDate = addDays(currentWeekStart, dayOfWeek - 1);
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+      newAttendance[e.employee_id][dateStr] = {
+        worked: e.worked,
+        hours: Number(e.hours) || 0,
+        note: "", // Don't copy notes
+      };
+    });
+
+    setLocalAttendance(newAttendance);
+    toast.success("Copied attendance from previous week");
   };
 
   // Save/update report
@@ -555,7 +595,7 @@ export function WeeklyAttendanceView() {
           </SelectContent>
         </Select>
 
-        <div className="flex items-center justify-between sm:justify-start gap-3 sm:ml-auto">
+        <div className="flex items-center justify-between sm:justify-start gap-3 sm:ml-auto flex-wrap">
           {existingReport && (
             <Badge
               variant={existingReport.status === "approved" ? "default" : "outline"}
@@ -569,6 +609,27 @@ export function WeeklyAttendanceView() {
             <span>Standard: <span className="font-semibold text-foreground">{projectDailyHours}h/day</span></span>
           </div>
         </div>
+      </div>
+
+      {/* Toolbar: Saturday toggle, copy from previous */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-xs">
+          <Switch checked={includeSaturday} onCheckedChange={setIncludeSaturday} id="sat-toggle" />
+          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">Include Saturday</label>
+        </div>
+        {!isSubmitted && teamMembers.length > 0 && (
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={copyFromPreviousWeek}>
+            <Copy className="w-3.5 h-3.5 mr-1.5" />
+            Copy from Previous Week
+          </Button>
+        )}
+        {/* Overtime warning */}
+        {grandTotalHours > teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-600">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Overtime detected ({grandTotalHours}h / expected {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
+          </div>
+        )}
       </div>
 
       {/* Attendance content */}

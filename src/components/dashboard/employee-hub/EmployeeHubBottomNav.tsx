@@ -1,4 +1,4 @@
-import { Home, FileText, Calendar, User, BookOpen } from "lucide-react";
+import { Home, FileText, Calendar, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EmployeeHubBottomNavProps {
@@ -10,7 +10,7 @@ interface EmployeeHubBottomNavProps {
 const NAV_ITEMS = [
   { id: "dashboard", icon: Home, labelKey: "hub.nav.home", fallback: "Home" },
   { id: "schedule", icon: Calendar, labelKey: "hub.nav.schedule", fallback: "Schedule" },
-  { id: "guide", icon: BookOpen, labelKey: "hub.nav.guide", fallback: "Guide" },
+  { id: "my-time", icon: Clock, labelKey: "hub.nav.time", fallback: "My Time" },
   { id: "contract", icon: FileText, labelKey: "hub.nav.contract", fallback: "Contract" },
   { id: "profile", icon: User, labelKey: "hub.nav.profile", fallback: "Profile" },
 ];
