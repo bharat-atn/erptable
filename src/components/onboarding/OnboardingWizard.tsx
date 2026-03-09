@@ -573,8 +573,8 @@ export function OnboardingWizard({
             emergencyPhone: formData.emergencyPhone,
             bicCode: formData.bicCode,
             bankAccountNumber: formData.bankAccountNumber,
-            bankName: selectedBankValue || formData.otherBankName,
-            bankCountry: selectedBankCountry,
+            bankName: formData.bankName,
+            bankCountry: "",
             birthday: formData.birthday,
           },
         });
@@ -593,11 +593,8 @@ export function OnboardingWizard({
     formData.country, formData.zipCode, formData.city, formData.address1,
     formData.stateProvince, formData.mobilePhone, formData.emergencyPhone,
     formData.bicCode, formData.bankAccountNumber, formData.birthday,
-    selectedBankValue, selectedBankCountry,
+    formData.bankName,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    setBicValue(formData.bicCode || "");
   }, [formData.bicCode]);
 
   useEffect(() => {
