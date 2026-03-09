@@ -638,8 +638,8 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
         <Card className="border-border/60">
           <CardContent className="py-12 text-center">
             <Users className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No team members assigned to this project.</p>
-            <p className="text-xs text-muted-foreground mt-1">Assign employees in the Forestry Project Manager first.</p>
+            <p className="text-sm text-muted-foreground">{t("tr.noTeamMembers")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("tr.assignFirst")}</p>
           </CardContent>
         </Card>
       ) : (
