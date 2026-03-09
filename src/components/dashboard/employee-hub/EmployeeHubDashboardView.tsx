@@ -425,7 +425,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
         <DialogContent className="max-w-md w-[calc(100vw-2rem)] rounded-3xl border-2 border-emerald-600/20">
           <DialogHeader>
             <DialogTitle className="text-base text-emerald-700 dark:text-emerald-500">
-              {dialogMode === "in" ? "Clock In — Stämpla in" : "Clock Out — Stämpla ut"}
+              {dialogMode === "in" ? t("hub.clockInTitle") : t("hub.clockOutTitle")}
             </DialogTitle>
           </DialogHeader>
 
