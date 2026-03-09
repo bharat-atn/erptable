@@ -1250,15 +1250,19 @@ export function OnboardingWizard({
                 <SearchableCountrySelect
                   value={selectedBankCountry}
                   onValueChange={(val) => {
+                    // Clear local state first to prevent stale renders
                     setSelectedBankCountry(val);
-
-                    onBankSelect(val === "__other__" ? "other" : "");
                     setSelectedBankValue("");
+                    setBicValue("");
+                    setBankAccountValue("");
+
+                    // Then notify parent
+                    onBankSelect(val === "__other__" ? "other" : "");
+
+                    // Clear form fields
                     updateField("bankName", "");
                     updateField("otherBankName", "");
-                    setBicValue("");
                     updateField("bicCode", "");
-                    setBankAccountValue("");
                     updateField("bankAccountNumber", "");
 
                     if (val !== "__other__") {
