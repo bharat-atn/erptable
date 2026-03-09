@@ -56,6 +56,7 @@ import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
 import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
 import { ApprovalsView } from "./time-reporting/ApprovalsView";
 import { TimeReportsView } from "./time-reporting/TimeReportsView";
+import { TimeReportingProcessGuideView } from "./time-reporting/TimeReportingProcessGuideView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "progress-reporting": return <ProgressReportingView />;
         case "approvals": return <ApprovalsView />;
         case "reports": return <TimeReportsView />;
+        case "process-guide": return <TimeReportingProcessGuideView />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
         default: return <TimeReportingDashboardView onNavigate={setActiveView} />;
