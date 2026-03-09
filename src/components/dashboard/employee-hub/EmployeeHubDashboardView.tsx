@@ -367,7 +367,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
 
       {/* Quick Actions */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-        <h3 className="font-bold text-sm mb-3 text-emerald-700 dark:text-emerald-500">Quick Actions</h3>
+        <h3 className="font-bold text-sm mb-3 text-emerald-700 dark:text-emerald-500">{t("hub.quickActions")}</h3>
         <div className="grid grid-cols-3 gap-3">
           <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
             <Calendar className="w-5 h-5 text-emerald-600" />
