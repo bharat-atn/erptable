@@ -208,8 +208,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                           onClick={() => approveMutation.mutate({ reportId: report.id, approve: true })}
                           disabled={approveMutation.isPending}
                         >
-                          <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
-                        </Button>
+                           <CheckCircle2 className="w-4 h-4 mr-1" /> {t("tr.approve")}
+                         </Button>
                       </div>
                     </div>
 
