@@ -1,6 +1,6 @@
 export type UiLang = "en" | "sv" | "ro" | "uk" | "th";
 
-const translations: Record<string, Record<UiLang, string>> = {
+const translations: Record<string, Partial<Record<UiLang, string>>> = {
   // Sidebar group labels
   "group.main": { en: "Main", sv: "Huvudmeny", ro: "Principal" },
   "group.settings": { en: "Settings", sv: "Inställningar", ro: "Setări" },
