@@ -273,8 +273,8 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
             <Card className="border-border/60">
               <CardContent className="py-12 text-center">
                 <MapPin className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No objects registered for this project.</p>
-                <p className="text-xs text-muted-foreground mt-1">Add objects in the Forestry Project Manager.</p>
+                <p className="text-sm text-muted-foreground">{t("tr.noObjects")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("tr.addObjectsHint")}</p>
               </CardContent>
             </Card>
           ) : isMobile ? (
