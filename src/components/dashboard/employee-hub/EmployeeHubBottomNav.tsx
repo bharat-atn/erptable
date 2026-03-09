@@ -4,23 +4,25 @@ import { cn } from "@/lib/utils";
 interface EmployeeHubBottomNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  t?: (key: string) => string;
 }
 
 const NAV_ITEMS = [
-  { id: "dashboard", icon: Home, label: "Home" },
-  { id: "schedule", icon: Calendar, label: "Schedule" },
-  { id: "guide", icon: BookOpen, label: "Guide" },
-  { id: "contract", icon: FileText, label: "Contract" },
-  { id: "profile", icon: User, label: "Profile" },
+  { id: "dashboard", icon: Home, labelKey: "hub.nav.home", fallback: "Home" },
+  { id: "schedule", icon: Calendar, labelKey: "hub.nav.schedule", fallback: "Schedule" },
+  { id: "guide", icon: BookOpen, labelKey: "hub.nav.guide", fallback: "Guide" },
+  { id: "contract", icon: FileText, labelKey: "hub.nav.contract", fallback: "Contract" },
+  { id: "profile", icon: User, labelKey: "hub.nav.profile", fallback: "Profile" },
 ];
 
-export function EmployeeHubBottomNav({ activeTab, onTabChange }: EmployeeHubBottomNavProps) {
+export function EmployeeHubBottomNav({ activeTab, onTabChange, t }: EmployeeHubBottomNavProps) {
   return (
     <div className="bg-background border-t border-border/40 shrink-0 z-10">
       <div className="flex items-center justify-around h-16 px-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
+          const label = t ? t(item.labelKey) : item.fallback;
           return (
             <button
               key={item.id}
@@ -33,7 +35,7 @@ export function EmployeeHubBottomNav({ activeTab, onTabChange }: EmployeeHubBott
               )}
             >
               <Icon className={cn("w-5 h-5 mb-0.5", isActive && "stroke-[2.5]")} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium">{label}</span>
               {isActive && <div className="w-1 h-1 rounded-full bg-emerald-600 mt-0.5" />}
             </button>
           );
