@@ -140,6 +140,8 @@ export function EmployeeHubDashboardView() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedLocation, setCapturedLocation] = useState<GeoLocation | null>(null);
   const [locationFetching, setLocationFetching] = useState(false);
+  const [cameraHelpOpen, setCameraHelpOpen] = useState(false);
+  const [lastCameraMode, setLastCameraMode] = useState<"selfie" | "environment">("selfie");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Live clock
