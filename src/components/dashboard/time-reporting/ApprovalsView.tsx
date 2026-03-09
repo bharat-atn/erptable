@@ -83,7 +83,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
       }
     },
     onSuccess: () => {
-      toast.success(`${selectedIds.size} report(s) approved`);
+      toast.success(`${selectedIds.size} ${t("tr.reportsApproved")}`);
       setSelectedIds(new Set());
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["recent-approvals"] });
