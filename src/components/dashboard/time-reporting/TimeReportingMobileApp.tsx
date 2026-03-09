@@ -4,7 +4,7 @@ import { TimeReportingDashboardView } from "./TimeReportingDashboardView";
 import { WeeklyAttendanceView } from "./WeeklyAttendanceView";
 import { ProgressReportingView } from "./ProgressReportingView";
 import { ApprovalsView } from "./ApprovalsView";
-import { TimeReportsView } from "./TimeReportsView";
+import { TimeReportingProcessGuideView } from "./TimeReportingProcessGuideView";
 import { TimeReportingBottomNav } from "./TimeReportingBottomNav";
 
 interface TimeReportingMobileAppProps {
@@ -20,7 +20,7 @@ export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobile
       case "weekly-attendance": return <WeeklyAttendanceView />;
       case "progress-reporting": return <ProgressReportingView />;
       case "approvals": return <ApprovalsView />;
-      case "reports": return <TimeReportsView />;
+      case "guide": return <TimeReportingProcessGuideView />;
       default: return <TimeReportingDashboardView onNavigate={setActiveTab} />;
     }
   };
