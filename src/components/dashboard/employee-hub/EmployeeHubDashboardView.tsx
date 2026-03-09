@@ -254,20 +254,6 @@ export function EmployeeHubDashboardView() {
         )}
       </div>
 
-      {/* Geofence Status Card */}
-      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm space-y-3">
-        <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Navigation className="w-4 h-4" /> Geofence Status
-        </h3>
-        <LocationBadge location={geoLocation} zones={DEMO_GEOFENCE_ZONES} />
-        <div className="flex flex-wrap gap-1.5">
-          {DEMO_GEOFENCE_ZONES.map((z) => (
-            <Badge key={z.name} variant="outline" className="text-[10px] gap-1">
-              <MapPin className="w-3 h-3" /> {z.name} ({z.radiusMeters}m)
-            </Badge>
-          ))}
-        </div>
-      </div>
 
       {/* Today's schedule */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
