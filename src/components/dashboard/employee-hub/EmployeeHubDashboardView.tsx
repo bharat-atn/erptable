@@ -395,7 +395,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
       {/* Recent Activity */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Activity className="w-4 h-4" /> Today's Activity
+          <Activity className="w-4 h-4" /> {t("hub.todayActivity")}
         </h3>
         {todayEntries.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
