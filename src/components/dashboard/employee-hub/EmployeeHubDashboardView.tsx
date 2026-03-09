@@ -337,7 +337,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
             className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1.5 ring-4 ring-rose-600/20"
           >
             <LogOut className="w-7 h-7" />
-            <span className="text-xs font-bold">Clock Out</span>
+            <span className="text-xs font-bold">{t("hub.clockOut")}</span>
           </button>
         )}
       </div>
