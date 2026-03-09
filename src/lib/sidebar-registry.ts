@@ -89,6 +89,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "approvals", label: "Approvals", group: "main" },
     { id: "reports", label: "Reports", group: "main" },
     { id: "settings", label: "Settings", group: "settings" },
+    { id: "process-guide", label: "Process Guide", group: "others" },
     { id: "audit-log", label: "Audit Log", group: "others" },
   ],
 };

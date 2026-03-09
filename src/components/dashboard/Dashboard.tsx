@@ -122,6 +122,7 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
         case "progress-reporting": return <ProgressReportingView />;
         case "approvals": return <ApprovalsView />;
         case "reports": return <TimeReportsView />;
+        case "process-guide": return <TimeReportingProcessGuideView />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
         default: return <TimeReportingDashboardView onNavigate={setActiveView} />;
