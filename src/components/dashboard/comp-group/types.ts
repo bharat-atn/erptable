@@ -78,8 +78,8 @@ export const SEED_PER_GROUP = [
     typeFull: "Planting Type 1 (Hourly Salary)",
     client: "Standard Inc.",
     classes: [
-      { sla: "101", s1: 154, s2: 164, s3: 174, s4: 184, s5: 194, gross: 400, net: 0 },
-      { sla: "102", s1: 155, s2: 165, s3: 175, s4: 185, s5: 195, gross: 405, net: 0 },
+      { sla: "101", s1: 154, s2: 164, s3: 174, s4: 184, s5: 194, gross: 390, net: 0 },
+      { sla: "102", s1: 155, s2: 165, s3: 175, s4: 185, s5: 195, gross: 400, net: 0 },
       { sla: "103", s1: 156, s2: 166, s3: 176, s4: 186, s5: 196, gross: 410, net: 0 },
       { sla: "104", s1: 157, s2: 167, s3: 177, s4: 187, s5: 197, gross: 420, net: 0 },
       { sla: "105", s1: 158, s2: 168, s3: 178, s4: 188, s5: 198, gross: 430, net: 0 },
