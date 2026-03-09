@@ -8,6 +8,7 @@ import { EmployeeHubPayslipsView } from "./EmployeeHubPayslipsView";
 import { EmployeeHubLeaveView } from "./EmployeeHubLeaveView";
 import { EmployeeHubProcessGuideView } from "./EmployeeHubProcessGuideView";
 import { EmployeeHubBottomNav } from "./EmployeeHubBottomNav";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface EmployeeHubAppProps {
   onBackToLauncher?: () => void;
@@ -15,6 +16,7 @@ interface EmployeeHubAppProps {
 
 export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { lang, setLang, t } = useUiLanguage();
 
   const renderView = () => {
     switch (activeTab) {
@@ -23,7 +25,7 @@ export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
       case "schedule": return <EmployeeHubScheduleView />;
       case "payslips": return <EmployeeHubPayslipsView />;
       case "leave": return <EmployeeHubLeaveView />;
-      case "profile": return <EmployeeHubProfileView />;
+      case "profile": return <EmployeeHubProfileView t={t} lang={lang} onLanguageChange={setLang} />;
       case "guide": return <EmployeeHubProcessGuideView />;
       default: return <EmployeeHubDashboardView />;
     }
@@ -54,7 +56,7 @@ export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
         </div>
 
         {/* Bottom navigation */}
-        <EmployeeHubBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <EmployeeHubBottomNav activeTab={activeTab} onTabChange={setActiveTab} t={t} />
       </div>
     </div>
   );

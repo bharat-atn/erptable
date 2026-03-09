@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User, Mail, Phone, MapPin, Calendar, Globe, CreditCard, Building2, Loader2, Shield, Languages } from "lucide-react";
 import { toast } from "sonner";
+import { LANGUAGE_OPTIONS, type UiLang } from "@/lib/ui-translations";
 
-const LANGUAGES = [
-  { value: "en", label: "English", flag: "🇬🇧" },
-  { value: "sv", label: "Svenska", flag: "🇸🇪" },
-  { value: "ro", label: "Română", flag: "🇷🇴" },
-  { value: "uk", label: "Українська", flag: "🇺🇦" },
-  { value: "th", label: "ไทย", flag: "🇹🇭" },
-];
+interface EmployeeHubProfileViewProps {
+  t: (key: string) => string;
+  lang: UiLang;
+  onLanguageChange: (lang: UiLang) => void;
+}
 
-export function EmployeeHubProfileView() {
+export function EmployeeHubProfileView({ t, lang, onLanguageChange }: EmployeeHubProfileViewProps) {
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
 
@@ -49,20 +47,12 @@ export function EmployeeHubProfileView() {
     enabled: !!profile?.email,
   });
 
-  const handleLanguageChange = async (lang: string) => {
-    if (!profile) return;
+  const handleLanguageChange = async (newLang: string) => {
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ preferred_language: lang })
-      .eq("id", profile.id);
+    onLanguageChange(newLang as UiLang);
+    queryClient.invalidateQueries({ queryKey: ["employee-hub-profile"] });
     setSaving(false);
-    if (error) {
-      toast.error("Failed to update language");
-    } else {
-      toast.success("Language updated");
-      queryClient.invalidateQueries({ queryKey: ["employee-hub-profile"] });
-    }
+    toast.success(t("hub.languageUpdated"));
   };
 
   if (isLoading) {
@@ -71,13 +61,12 @@ export function EmployeeHubProfileView() {
 
   const personalInfo = employee?.personal_info as Record<string, any> | null;
   const initials = profile?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
-  const currentLang = profile?.preferred_language || "en";
 
   return (
     <div className="space-y-4 px-2 pt-2 pb-24 max-w-lg mx-auto">
       <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-xl mb-6">
-        <h1 className="text-2xl font-bold">My Profile</h1>
-        <p className="text-sm text-white/80">Min profil</p>
+        <h1 className="text-2xl font-bold">{t("hub.myProfile")}</h1>
+        <p className="text-sm text-white/80">{t("hub.myProfileSub")}</p>
       </div>
 
       {/* Identity Card */}
@@ -100,14 +89,14 @@ export function EmployeeHubProfileView() {
       {/* Language Selector */}
       <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-3">
         <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Languages className="w-4 h-4" /> Language / Språk
+          <Languages className="w-4 h-4" /> {t("hub.language")}
         </h3>
-        <Select value={currentLang} onValueChange={handleLanguageChange} disabled={saving}>
+        <Select value={lang} onValueChange={handleLanguageChange} disabled={saving}>
           <SelectTrigger className="w-full min-h-[48px] rounded-xl bg-emerald-50 dark:bg-emerald-950/10 border-emerald-600/20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {LANGUAGES.map((l) => (
+            {LANGUAGE_OPTIONS.map((l) => (
               <SelectItem key={l.value} value={l.value} className="min-h-[44px]">
                 <span className="flex items-center gap-2 text-sm">
                   <span className="text-base">{l.flag}</span>
@@ -122,13 +111,13 @@ export function EmployeeHubProfileView() {
       {/* Personal Information */}
       <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
         <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <User className="w-4 h-4" /> Personal Information
+          <User className="w-4 h-4" /> {t("hub.personalInfo")}
         </h3>
         <div className="space-y-2">
-          <InfoRow icon={Calendar} label="Date of Birth" value={profile?.date_of_birth || "—"} />
-          <InfoRow icon={Globe} label="Nationality" value={profile?.nationality || "—"} />
-          <InfoRow icon={Phone} label="Phone" value={profile?.phone_number || employee?.phone || "—"} />
-          <InfoRow icon={Mail} label="Email" value={profile?.email || "—"} />
+          <InfoRow icon={Calendar} label={t("hub.dateOfBirth")} value={profile?.date_of_birth || "—"} />
+          <InfoRow icon={Globe} label={t("hub.nationality")} value={profile?.nationality || "—"} />
+          <InfoRow icon={Phone} label={t("hub.phone")} value={profile?.phone_number || employee?.phone || "—"} />
+          <InfoRow icon={Mail} label={t("hub.email")} value={profile?.email || "—"} />
         </div>
       </div>
 
@@ -137,36 +126,36 @@ export function EmployeeHubProfileView() {
         <>
           <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-              <MapPin className="w-4 h-4" /> Address
+              <MapPin className="w-4 h-4" /> {t("hub.address")}
             </h3>
             <div className="space-y-2">
-              <InfoRow icon={MapPin} label="Street" value={personalInfo.streetAddress || personalInfo.address || "—"} />
-              <InfoRow icon={MapPin} label="City" value={personalInfo.city || employee?.city || "—"} />
-              <InfoRow icon={MapPin} label="Postcode" value={personalInfo.postcode || "—"} />
-              <InfoRow icon={Globe} label="Country" value={personalInfo.country || employee?.country || "—"} />
+              <InfoRow icon={MapPin} label={t("hub.street")} value={personalInfo.streetAddress || personalInfo.address || "—"} />
+              <InfoRow icon={MapPin} label={t("hub.city")} value={personalInfo.city || employee?.city || "—"} />
+              <InfoRow icon={MapPin} label={t("hub.postcode")} value={personalInfo.postcode || "—"} />
+              <InfoRow icon={Globe} label={t("hub.country")} value={personalInfo.country || employee?.country || "—"} />
             </div>
           </div>
 
           <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-              <CreditCard className="w-4 h-4" /> Bank Details
+              <CreditCard className="w-4 h-4" /> {t("hub.bankDetails")}
             </h3>
             <div className="space-y-2">
-              <InfoRow icon={Building2} label="Bank" value={personalInfo.bankName || "—"} />
-              <InfoRow icon={CreditCard} label="IBAN" value={personalInfo.iban || "—"} />
-              <InfoRow icon={CreditCard} label="Account Number" value={personalInfo.accountNumber || "—"} />
-              <InfoRow icon={Shield} label="BIC/SWIFT" value={personalInfo.bicSwift || personalInfo.bic || "—"} />
+              <InfoRow icon={Building2} label={t("hub.bank")} value={personalInfo.bankName || "—"} />
+              <InfoRow icon={CreditCard} label={t("hub.iban")} value={personalInfo.iban || "—"} />
+              <InfoRow icon={CreditCard} label={t("hub.accountNumber")} value={personalInfo.accountNumber || "—"} />
+              <InfoRow icon={Shield} label={t("hub.bicSwift")} value={personalInfo.bicSwift || personalInfo.bic || "—"} />
             </div>
           </div>
 
           <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-              <Shield className="w-4 h-4" /> Identity Documents
+              <Shield className="w-4 h-4" /> {t("hub.identityDocs")}
             </h3>
             <div className="space-y-2">
-              <InfoRow icon={Shield} label="Passport Number" value={personalInfo.passportNumber || "—"} />
-              <InfoRow icon={Shield} label="Personal ID (Sweden)" value={personalInfo.personnummer || personalInfo.personalIdNumber || "—"} />
-              <InfoRow icon={Shield} label="Tax ID" value={personalInfo.taxId || "—"} />
+              <InfoRow icon={Shield} label={t("hub.passportNumber")} value={personalInfo.passportNumber || "—"} />
+              <InfoRow icon={Shield} label={t("hub.personalId")} value={personalInfo.personnummer || personalInfo.personalIdNumber || "—"} />
+              <InfoRow icon={Shield} label={t("hub.taxId")} value={personalInfo.taxId || "—"} />
             </div>
           </div>
         </>
