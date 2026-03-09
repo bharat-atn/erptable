@@ -31,15 +31,7 @@ export function SearchableCountrySelect({
 }: SearchableCountrySelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const rafRef = React.useRef<number | null>(null);
 
-  React.useEffect(() => {
-    return () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, []);
 
   const selectedCountry = countries.find((c) => c.name === value);
   const query = search.toLowerCase();
