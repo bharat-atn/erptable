@@ -221,9 +221,9 @@ export function CompGroupView() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {SHOW_CLASS_OPTIONS.map(opt => (
-                      <SelectItem key={opt.label} value={String(opt.value)}>{opt.label}</SelectItem>
-                    ))}
+                {dynamicShowOptions.map(opt => (
+                  <SelectItem key={opt.label} value={String(opt.value)}>{opt.label}</SelectItem>
+                ))}
                   </SelectContent>
                 </Select>
               </div>
