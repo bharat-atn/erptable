@@ -265,9 +265,6 @@ interface OnboardingWizardProps {
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting?: boolean;
   isPreview?: boolean;
-  selectedBank: string;
-  isOtherBank: boolean;
-  onBankSelect: (bank: string) => void;
   uploadedFile: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   workPermitFile?: File | null;
@@ -475,9 +472,6 @@ export function OnboardingWizard({
   onSubmit,
   isSubmitting = false,
   isPreview = false,
-  selectedBank,
-  isOtherBank,
-  onBankSelect,
   uploadedFile,
   onFileChange,
   workPermitFile,
@@ -527,20 +521,10 @@ export function OnboardingWizard({
           updateField("emergencyPhone", data.emergencyPhone);
         }
         
-        // Bank: always require manual selection after AI fill
-        const bankCountry = data.country
-          ? Object.keys(effectiveBanksByCountry).find(
-              c => c.toLowerCase() === data.country.toLowerCase()
-            ) || ""
-          : "";
-        setSelectedBankCountry(bankCountry);
-        onBankSelect("");
-        updateField("otherBankName", "");
-        updateField("bicCode", "");
-        updateField("bankAccountNumber", "");
-        setSelectedBankValue("");
-        setBicValue("");
-        setBankAccountValue("");
+        // Bank: clear for manual entry after AI fill
+        updateField("bankName", data.bankName || "");
+        updateField("bicCode", data.bicCode || "");
+        updateField("bankAccountNumber", data.bankAccountNumber || "");
         setS4Open(true);
         setS3Open(true);
       });
@@ -558,119 +542,12 @@ export function OnboardingWizard({
     }
   };
   const templateLogo = loadTemplateLogo();
-  const [banksByCountry, setBanksByCountry] = useState<Record<string, { name: string; bic_code: string | null }[]>>({});
-  const [selectedBankCountry, setSelectedBankCountry] = useState<string>("");
-
-  const effectiveBanksByCountry = useMemo(() => {
-    // Always merge fallback + DB banks (both token and demo/preview modes)
-    const merged: Record<string, { name: string; bic_code: string | null }[]> = {};
-
-    const mergeBanks = (source: Record<string, { name: string; bic_code: string | null }[]>) => {
-      for (const [country, banks] of Object.entries(source)) {
-        if (!merged[country]) merged[country] = [];
-
-        for (const bank of banks) {
-          const exists = merged[country].some((b) => b.name.toLowerCase() === bank.name.toLowerCase());
-          if (!exists) merged[country].push(bank);
-        }
-      }
-    };
-
-    mergeBanks(FALLBACK_BANKS_BY_COUNTRY);
-    mergeBanks(banksByCountry); // DB banks added on top of fallback
-
-    return merged;
-  }, [banksByCountry]);
-
-  // Only show countries that have banks registered — never all world countries
-  const availableBankCountries = useMemo(() => {
-    const bankCountries = Object.keys(effectiveBanksByCountry).sort((a, b) => a.localeCompare(b));
-    if (selectedBankCountry && !bankCountries.some(c => c.trim().toLowerCase() === selectedBankCountry.trim().toLowerCase())) {
-      bankCountries.push(selectedBankCountry);
-    }
-    return bankCountries;
-  }, [effectiveBanksByCountry, selectedBankCountry]);
-
-  const banksForSelectedCountry = useMemo(() => {
-    if (!selectedBankCountry) return [];
-
-    const normalized = selectedBankCountry.trim().toLowerCase();
-    const matchedCountry = Object.keys(effectiveBanksByCountry).find(
-      (country) => country.trim().toLowerCase() === normalized
-    );
-
-    return matchedCountry ? effectiveBanksByCountry[matchedCountry] : [];
-  }, [effectiveBanksByCountry, selectedBankCountry]);
-
-  const bankList = banksForSelectedCountry.map((b) => b.name);
-
-
-  useEffect(() => {
-    // Token mode: fetch banks via secure RPC that bypasses RLS
-    if (invitationToken) {
-      supabase
-        .rpc("get_onboarding_banks_by_token", { _token: invitationToken })
-        .then(({ data, error }) => {
-          if (error || !data || data.length === 0) {
-            setBanksByCountry({});
-            return;
-          }
-          const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
-          for (const b of data as { name: string; bic_code: string | null; country: string | null }[]) {
-            const c = b.country || "Other";
-            if (!grouped[c]) grouped[c] = [];
-            grouped[c].push({ name: b.name, bic_code: b.bic_code });
-          }
-          setBanksByCountry(grouped);
-        });
-      return;
-    }
-
-    // Authenticated / demo mode: direct table query
-    supabase
-      .from("banks")
-      .select("name, country, bic_code")
-      .eq("is_active", true)
-      .order("name")
-      .then(({ data, error }) => {
-        if (error || !data || data.length === 0) {
-          setBanksByCountry({});
-          return;
-        }
-        const grouped: Record<string, { name: string; bic_code: string | null }[]> = {};
-        for (const b of data) {
-          const c = b.country || "Other";
-          if (!grouped[c]) grouped[c] = [];
-          grouped[c].push({ name: b.name, bic_code: b.bic_code });
-        }
-        setBanksByCountry(grouped);
-      });
-  }, [invitationToken]);
   const [s1Open, setS1Open] = useState(true);
   const [s2Open, setS2Open] = useState(true);
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
-  const [selectedBankValue, setSelectedBankValue] = useState(selectedBank || "");
-  const [bicValue, setBicValue] = useState(formData.bicCode || "");
-  const [bankAccountValue, setBankAccountValue] = useState(formData.bankAccountNumber || "");
   const [validationAttempted, setValidationAttempted] = useState(false);
-
-  // Sync local bank fields when parent clears them (e.g. toggling "Other bank")
-  useEffect(() => {
-    if (!formData.bicCode && bicValue) setBicValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bicCode]);
-
-  useEffect(() => {
-    if (!formData.bankAccountNumber && bankAccountValue) setBankAccountValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bankAccountNumber]);
-
-  useEffect(() => {
-    if (!formData.bankName && selectedBankValue) setSelectedBankValue("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.bankName]);
 
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
@@ -696,8 +573,8 @@ export function OnboardingWizard({
             emergencyPhone: formData.emergencyPhone,
             bicCode: formData.bicCode,
             bankAccountNumber: formData.bankAccountNumber,
-            bankName: selectedBankValue || formData.otherBankName,
-            bankCountry: selectedBankCountry,
+            bankName: formData.bankName,
+            bankCountry: "",
             birthday: formData.birthday,
           },
         });
@@ -716,20 +593,8 @@ export function OnboardingWizard({
     formData.country, formData.zipCode, formData.city, formData.address1,
     formData.stateProvince, formData.mobilePhone, formData.emergencyPhone,
     formData.bicCode, formData.bankAccountNumber, formData.birthday,
-    selectedBankValue, selectedBankCountry,
+    formData.bankName,
   ]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    setBicValue(formData.bicCode || "");
-  }, [formData.bicCode]);
-
-  useEffect(() => {
-    setBankAccountValue(formData.bankAccountNumber || "");
-  }, [formData.bankAccountNumber]);
-
-  useEffect(() => {
-    setSelectedBankValue(selectedBank || "");
-  }, [selectedBank]);
 
   /* ─── Auto-set phone prefixes when address country changes ─── */
   useEffect(() => {
@@ -790,8 +655,7 @@ export function OnboardingWizard({
   }
 
   const s4Missing: string[] = [];
-  if (!isOtherBank && !selectedBankCountry) s4Missing.push("Country");
-  if (!selectedBankValue && (!isOtherBank || !formData.otherBankName?.trim())) s4Missing.push("Bank Name");
+  if (!formData.bankName?.trim()) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
   else if (!isBankAccountValid(formData.bankAccountNumber)) s4Missing.push("Account Number (invalid characters)");
@@ -1241,164 +1105,29 @@ export function OnboardingWizard({
               showValidation={validationAttempted}
             />
             <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
-              {/* Listed bank flow */}
-              {!isOtherBank && (
-                <>
-                  <div className="space-y-1.5">
-                    <FieldLabel en="Select Country" sv="Välj land" />
-                    <SearchableCountrySelect
-                      value={selectedBankCountry}
-                      onValueChange={(val) => {
-                        setSelectedBankCountry(val);
-                        setSelectedBankValue("");
-                        setBicValue("");
-                        setBankAccountValue("");
-                        if (isOtherBank) onBankSelect("");
-                        updateField("bankName", "");
-                        updateField("otherBankName", "");
-                        updateField("bicCode", "");
-                        updateField("bankAccountNumber", "");
-                      }}
-                      placeholder="Choose country / Välj land"
-                      hasError={validationAttempted && !selectedBankCountry}
-                      tabIndex={23}
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <FieldLabel en="Bank Name" sv="Banknamn" />
-                    {/* Plain HTML select — no Radix Portal, no removeChild crashes */}
-                    <select
-                      tabIndex={23}
-                      value={selectedBankValue || ""}
-                      disabled={!selectedBankCountry || bankList.length === 0}
-                      onChange={(e) => {
-                        const bankName = e.target.value;
-                        if (!bankName) return;
-                        setSelectedBankValue(bankName);
-                        onBankSelect(bankName);
-                        updateField("bankName", bankName);
-                        updateField("otherBankName", "");
-                        const match = banksForSelectedCountry.find(
-                          (b) => b.name === bankName
-                        );
-                        if (match?.bic_code) {
-                          setBicValue(match.bic_code);
-                          updateField("bicCode", match.bic_code);
-                        } else {
-                          setBicValue("");
-                          updateField("bicCode", "");
-                        }
-
-                        if (showAiFill && selectedBankCountry) {
-                          const ACCOUNT_LENGTHS: Record<string, number> = {
-                            Sweden: 11, Romania: 16, Thailand: 10, Moldova: 16, Ukraine: 14,
-                          };
-                          const len = ACCOUNT_LENGTHS[selectedBankCountry] || 12;
-                          const randomAcct = Array.from({ length: len }, () => Math.floor(Math.random() * 10)).join("");
-                          setBankAccountValue(randomAcct);
-                          updateField("bankAccountNumber", randomAcct);
-                        }
-                      }}
-                      className={cn(
-                        "flex h-11 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                        fieldError(!!selectedBankCountry && !selectedBankValue)
-                      )}
-                    >
-                      <option value="">
-                        {selectedBankCountry
-                          ? "Select bank / Välj bank"
-                          : "Select country first / Välj land först"}
-                      </option>
-                      {bankList.map((bank) => (
-                        <option key={bank} value={bank}>
-                          {bank}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedBankCountry && bankList.length === 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        No banks found for this country. Use "My bank is not in the list" instead.
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* "Other bank" checkbox toggle */}
-              <div
-                className={cn(
-                  "flex items-center gap-3 rounded-lg border-2 px-4 py-3 cursor-pointer transition-all select-none",
-                  isOtherBank
-                    ? "border-primary bg-primary/5"
-                    : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5",
-                  isPreview && "opacity-60 cursor-not-allowed"
-                )}
-                onClick={() => {
-                  if (isPreview) return;
-                  const willCheck = !isOtherBank;
-
-                  setSelectedBankValue("");
-                  setBicValue("");
-                  setBankAccountValue("");
-
-                  if (willCheck) {
-                    setSelectedBankCountry("");
-                    onBankSelect("other");
-                  } else {
-                    onBankSelect("");
-                  }
-
-                  updateField("bankName", "");
-                  updateField("otherBankName", "");
-                  updateField("bankCountryName", "");
-                  updateField("bicCode", "");
-                  updateField("bankAccountNumber", "");
-                }}
-              >
-                <Checkbox
-                  id="other-bank-toggle"
-                  checked={isOtherBank}
-                  disabled={isPreview}
-                  className="pointer-events-none"
-                  tabIndex={-1}
+              <div className="space-y-1.5">
+                <FieldLabel en="Bank Name" sv="Banknamn" />
+                <Input
+                  tabIndex={23}
+                  value={formData.bankName || ""}
+                  onChange={(e) => updateField("bankName", e.target.value)}
+                  placeholder="Enter bank name / Ange banknamn"
+                  className={cn("h-11 text-sm font-medium", fieldError(!formData.bankName?.trim()))}
                 />
-                <div>
-                  <span className="text-sm font-medium text-foreground">
-                    My bank is not in the list
-                  </span>
-                  <span className="text-sm text-muted-foreground ml-1">
-                    / Min bank finns inte i listan
-                  </span>
-                </div>
               </div>
-
-              {/* Other bank name — free text input (shown when toggle is ON) */}
-              {isOtherBank && (
-                <div className="space-y-1.5">
-                  <FieldLabel en="Other Bank Name" sv="Annat banknamn" />
-                  <Input
-                    tabIndex={23}
-                    value={formData.otherBankName || ""}
-                    onChange={(e) => updateField("otherBankName", e.target.value)}
-                    placeholder="Enter bank name / Ange banknamn"
-                    className={cn("h-11 text-sm font-medium", fieldError(isOtherBank && !formData.otherBankName?.trim()))}
-                  />
-                </div>
-              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="BIC Code" sv="BIC-kod" />
                   <Input
                     tabIndex={24}
-                    value={bicValue}
+                    value={formData.bicCode || ""}
                     autoComplete="off"
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 20);
-                      setBicValue(cleaned);
                       updateField("bicCode", cleaned);
                     }}
+                    placeholder="e.g. HANDSESS"
                     className={cn("h-11 text-sm font-medium", fieldError(!formData.bicCode))}
                   />
                   <AiFieldHint validation={aiValidation.bicCode} isValidating={aiValidating} />
@@ -1407,11 +1136,10 @@ export function OnboardingWizard({
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
                     tabIndex={25}
-                    value={bankAccountValue}
+                    value={formData.bankAccountNumber || ""}
                     autoComplete="off"
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(/[^A-Za-z0-9]/g, "");
-                      setBankAccountValue(cleaned);
                       updateField("bankAccountNumber", cleaned);
                     }}
                     placeholder="Letters and digits (e.g. SE35500000000549)"

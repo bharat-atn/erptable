@@ -1,89 +1,38 @@
 
-Goal: stop the white-screen crash in production by removing the risky “listed bank vs other bank” toggle flow and replacing it with one simple, stable bank-name input.
 
-Issue diagnosis (rephrased):
-- The crash happens in the onboarding invitation bank section when toggling “My bank is not in the list”.
-- Current implementation mixes:
-  1) conditional mount/unmount of bank country + bank list UI,
-  2) many synchronized local + parent state resets,
-  3) popover/select-style interactive components.
-- That creates high-risk render timing and DOM reconciliation conflicts in this section.
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-Do I know what the issue is?
-- Yes: the bank section architecture is over-complex and fragile (toggle-driven dual flow + cascading resets). Even after patch attempts, this design is still causing white-screen runtime failures.
+### Root Cause
 
-Implementation plan
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-1) Rebuild Bank Information section into a single-path flow (no toggle)
-- File: `src/components/onboarding/OnboardingWizard.tsx`
-- Remove from Section 3 UI:
-  - “Select Country” for bank
-  - Bank dropdown list flow
-  - “My bank is not in the list” checkbox card
-  - `otherBankName` conditional input
-- Replace with:
-  - Always-visible plain `<Input>` for `bankName` (manual typing)
-  - Keep existing BIC and Bank Account fields (required, editable)
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-2) Remove fragile bank state machinery from the wizard
-- File: `src/components/onboarding/OnboardingWizard.tsx`
-- Remove bank-specific dual-flow states and sync effects:
-  - `selectedBankCountry`, `selectedBankValue`, country->bank memo lists, toggle reset logic
-  - bank list fetch effect for onboarding (`get_onboarding_banks_by_token` / `banks` table) if no longer used
-- Keep only `formData.bankName`, `formData.bicCode`, `formData.bankAccountNumber` as source of truth.
+**1. Replace generic message with specific missing-condition checklist**
 
-3) Simplify validation rules to match new UX
-- File: `src/components/onboarding/OnboardingWizard.tsx`
-- Update `s4Missing` logic:
-  - Required: `bankName`, `bicCode`, `bankAccountNumber`
-  - Remove requirements tied to selected bank country or toggle mode
-- Keep schema requirement for `bankName` as required string.
-- Optionally keep `otherBankName`/`bankCountryName` schema keys temporarily for backward compatibility, but they should no longer drive UI.
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-4) Update submit pipelines to use one bank field everywhere
-- Files:
-  - `src/pages/OnboardingPortal.tsx`
-  - `src/components/dashboard/OnboardingPreview.tsx`
-- Remove `selectedBank` + `isOtherBank` state and `handleBankSelect`.
-- In submit payloads, set:
-  - `bankName: validated.bankName` (or `data.bankName`) directly
-- Remove bankName override in `handleSubmit` pre-validation object.
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-5) Align wizard call-sites with new props
-- Files:
-  - `src/pages/OnboardingPortal.tsx`
-  - `src/components/dashboard/OnboardingPreview.tsx`
-  - `src/components/dashboard/SubmissionViewDialog.tsx`
-- Remove obsolete props passed to `OnboardingWizard`:
-  - `selectedBank`, `isOtherBank`, `onBankSelect`
-- Update `OnboardingWizardProps` accordingly.
+This tells the user exactly what's blocking them.
 
-6) Production hardening
-- File: `src/pages/OnboardingPortal.tsx`
-- Actually wrap the rendered wizard with existing `OnboardingErrorBoundary` so runtime issues fail gracefully instead of blank white screen.
-- Optional extra hardening in onboarding root: add `translate="no"` on critical interactive container to reduce browser-translation DOM mutation risks observed with Radix/popover-heavy UIs.
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-Technical details (for implementation)
-```text
-Before:
-Bank country select -> bank dropdown OR toggle "other bank" -> many reset calls
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-After:
-Bank name text input (single path)
-+BIC text input
-+Account text input
-No conditional bank mode switching
-No bank-country dependent rendering
-```
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
 
-Regression test checklist (must run end-to-end)
-1. On `/onboard/:token`, type in Bank Name, BIC, Account → no blank screen.
-2. Rapid typing/clicking in Section 3 → no crash.
-3. Submit succeeds with manual bank name.
-4. AI-fill still works and does not overwrite/crash bank section unexpectedly.
-5. Admin preview (`OnboardingPreview`) and submission read-only view still render correctly.
+**3. Add scroll-to-schedule link in the checklist**
 
-Expected outcome:
-- The crashing interaction is eliminated entirely (because the toggle flow is removed).
-- UX is simpler: users just type their bank name.
-- Lower maintenance risk and higher production stability in onboarding.
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
+
+### Estimated changes
+
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+

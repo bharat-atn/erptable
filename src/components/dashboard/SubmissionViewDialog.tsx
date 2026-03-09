@@ -102,9 +102,6 @@ export function SubmissionView({ employeeId, onClose }: SubmissionViewProps) {
           onSubmit={(e) => e.preventDefault()}
           isSubmitting={false}
           isPreview={true}
-          selectedBank={formData.bankName || ""}
-          isOtherBank={false}
-          onBankSelect={() => {}}
           uploadedFile={null}
           onFileChange={() => {}}
           workPermitFile={null}

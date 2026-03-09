@@ -47,8 +47,6 @@ export default function OnboardingPortal() {
   const { token } = useParams<{ token: string }>();
   const [formData, setFormData] = useState<Partial<PersonalInfo>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [selectedBank, setSelectedBank] = useState<string>("");
-  const [isOtherBank, setIsOtherBank] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [workPermitFile, setWorkPermitFile] = useState<File | null>(null);
 
@@ -62,7 +60,6 @@ export default function OnboardingPortal() {
       if (error) throw error;
       if (!data) throw new Error("Invitation not found");
       
-      // Pre-fill form with existing employee data
       setFormData((prev) => ({
         ...prev,
         firstName: data.employee_first_name || "",
@@ -92,7 +89,7 @@ export default function OnboardingPortal() {
         countryOfBirth: validated.countryOfBirth,
         citizenship: validated.citizenship,
         mobilePhone: validated.mobilePhone,
-        bankName: isOtherBank ? validated.otherBankName : validated.bankName,
+        bankName: validated.bankName,
         bicCode: validated.bicCode,
         bankAccountNumber: validated.bankAccountNumber,
         swedishCoordinationNumber: validated.swedishCoordinationNumber,
@@ -125,12 +122,8 @@ export default function OnboardingPortal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToValidate = {
-      ...formData,
-      bankName: isOtherBank ? "Other" : selectedBank,
-    };
     try {
-      const validated = personalInfoSchema.parse(dataToValidate);
+      const validated = personalInfoSchema.parse(formData);
       submitOnboarding.mutate(validated);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -141,16 +134,6 @@ export default function OnboardingPortal() {
 
   const updateField = (field: keyof PersonalInfo, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleBankSelect = (bank: string) => {
-    if (bank === "other") {
-      setIsOtherBank(true);
-      setSelectedBank("");
-    } else {
-      setIsOtherBank(false);
-      setSelectedBank(bank);
-    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,25 +151,22 @@ export default function OnboardingPortal() {
   // Demo mode
   if (token === "demo") {
     return (
-      <OnboardingWizard
-        formData={formData}
-        updateField={updateField}
-        onSubmit={handleSubmit}
-        isSubmitting={submitOnboarding.isPending}
-        isPreview={false}
-        selectedBank={selectedBank}
-        isOtherBank={isOtherBank}
-        onBankSelect={handleBankSelect}
-        uploadedFile={uploadedFile}
-        onFileChange={handleFileChange}
-        workPermitFile={workPermitFile}
-        onWorkPermitFileChange={handleWorkPermitFileChange}
-        language="en_sv"
-        showAiFill={true}
-        onAiFill={() => {
-          handleBankSelect("");
-        }}
-      />
+      <OnboardingErrorBoundary>
+        <OnboardingWizard
+          formData={formData}
+          updateField={updateField}
+          onSubmit={handleSubmit}
+          isSubmitting={submitOnboarding.isPending}
+          isPreview={false}
+          uploadedFile={uploadedFile}
+          onFileChange={handleFileChange}
+          workPermitFile={workPermitFile}
+          onWorkPermitFileChange={handleWorkPermitFileChange}
+          language="en_sv"
+          showAiFill={true}
+          onAiFill={() => {}}
+        />
+      </OnboardingErrorBoundary>
     );
   }
 
@@ -256,21 +236,20 @@ export default function OnboardingPortal() {
   }
 
   return (
-    <OnboardingWizard
-      formData={formData}
-      updateField={updateField}
-      onSubmit={handleSubmit}
-      isSubmitting={submitOnboarding.isPending}
-      isPreview={false}
-      selectedBank={selectedBank}
-      isOtherBank={isOtherBank}
-      onBankSelect={handleBankSelect}
-      uploadedFile={uploadedFile}
-      onFileChange={handleFileChange}
-      workPermitFile={workPermitFile}
-      onWorkPermitFileChange={handleWorkPermitFileChange}
-      language={(invitation as any)?.language || "en_sv"}
-      invitationToken={token}
-    />
+    <OnboardingErrorBoundary>
+      <OnboardingWizard
+        formData={formData}
+        updateField={updateField}
+        onSubmit={handleSubmit}
+        isSubmitting={submitOnboarding.isPending}
+        isPreview={false}
+        uploadedFile={uploadedFile}
+        onFileChange={handleFileChange}
+        workPermitFile={workPermitFile}
+        onWorkPermitFileChange={handleWorkPermitFileChange}
+        language={(invitation as any)?.language || "en_sv"}
+        invitationToken={token}
+      />
+    </OnboardingErrorBoundary>
   );
 }
