@@ -6,6 +6,7 @@ import { EmployeeHubContractView } from "./EmployeeHubContractView";
 import { EmployeeHubScheduleView } from "./EmployeeHubScheduleView";
 import { EmployeeHubPayslipsView } from "./EmployeeHubPayslipsView";
 import { EmployeeHubLeaveView } from "./EmployeeHubLeaveView";
+import { EmployeeHubProcessGuideView } from "./EmployeeHubProcessGuideView";
 import { EmployeeHubBottomNav } from "./EmployeeHubBottomNav";
 
 interface EmployeeHubAppProps {
@@ -18,11 +19,12 @@ export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
   const renderView = () => {
     switch (activeTab) {
       case "dashboard": return <EmployeeHubDashboardView />;
-      case "my-contracts": return <EmployeeHubContractView />;
-      case "my-schedule": return <EmployeeHubScheduleView />;
-      case "my-payslips": return <EmployeeHubPayslipsView />;
-      case "leave-requests": return <EmployeeHubLeaveView />;
-      case "my-profile": return <EmployeeHubProfileView />;
+      case "contract": return <EmployeeHubContractView />;
+      case "schedule": return <EmployeeHubScheduleView />;
+      case "payslips": return <EmployeeHubPayslipsView />;
+      case "leave": return <EmployeeHubLeaveView />;
+      case "profile": return <EmployeeHubProfileView />;
+      case "guide": return <EmployeeHubProcessGuideView />;
       default: return <EmployeeHubDashboardView />;
     }
   };

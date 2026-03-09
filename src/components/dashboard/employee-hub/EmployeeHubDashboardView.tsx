@@ -1,29 +1,124 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, LogIn, LogOut, Clock, MapPin, CheckCircle2, Image, Calendar, FileText } from "lucide-react";
+import {
+  Camera, LogIn, LogOut, Clock, MapPin, CheckCircle2, Image,
+  Calendar, FileText, Navigation, Shield, ShieldAlert, Wifi,
+  ChevronRight, Activity,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone } from "./useGeolocation";
+import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
 
-type ClockStatus = "clocked_out" | "clocked_in";
+// Demo geofence zones (would come from project/org settings in production)
+const DEMO_GEOFENCE_ZONES: GeofenceZone[] = [
+  { name: "HQ Office", latitude: 62.39, longitude: 17.31, radiusMeters: 500 },
+  { name: "Forest Site Alpha", latitude: 62.45, longitude: 17.25, radiusMeters: 2000 },
+];
 
 interface PhotoCapture {
   selfie: string | null;
   environment: string | null;
 }
 
+function formatElapsed(ms: number): string {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
+
+function LocationBadge({ location, zones }: { location: GeoLocation | null; zones: GeofenceZone[] }) {
+  if (!location) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3">
+        <Wifi className="w-4 h-4 shrink-0 opacity-40" />
+        <span>Location not captured yet</span>
+      </div>
+    );
+  }
+
+  const matchedZone = zones.find((z) => isInsideGeofence(location, z));
+
+  return (
+    <div className={`flex items-center gap-2 text-xs rounded-xl p-3 border ${
+      matchedZone
+        ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-600/20 text-emerald-700 dark:text-emerald-400"
+        : "bg-amber-50 dark:bg-amber-950/20 border-amber-500/20 text-amber-700 dark:text-amber-400"
+    }`}>
+      {matchedZone ? (
+        <>
+          <Shield className="w-4 h-4 shrink-0" />
+          <div>
+            <span className="font-semibold">Inside geofence:</span> {matchedZone.name}
+            <p className="text-[10px] opacity-70 mt-0.5">
+              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          <div>
+            <span className="font-semibold">Outside known geofence</span>
+            <p className="text-[10px] opacity-70 mt-0.5">
+              {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)} (±{Math.round(location.accuracy)}m)
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function TimeEntryRow({ entry, zones }: { entry: TimeEntry; zones: GeofenceZone[] }) {
+  const isIn = entry.type === "clock_in";
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+        isIn ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-rose-100 dark:bg-rose-900/30"
+      }`}>
+        {isIn ? <LogIn className="w-4 h-4 text-emerald-600" /> : <LogOut className="w-4 h-4 text-rose-600" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold">{isIn ? "Clock In" : "Clock Out"}</p>
+        <p className="text-[10px] text-muted-foreground">
+          {entry.timestamp.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          {entry.location && (
+            <span className="ml-1">
+              • {entry.insideGeofence ? "✅ In zone" : "⚠️ Outside zone"}
+            </span>
+          )}
+        </p>
+      </div>
+      {entry.selfieUrl && (
+        <img src={entry.selfieUrl} alt="" className="w-8 h-8 rounded-lg object-cover border border-border/30" />
+      )}
+    </div>
+  );
+}
+
 export function EmployeeHubDashboardView() {
-  const [status, setStatus] = useState<ClockStatus>("clocked_out");
-  const [clockInTime, setClockInTime] = useState<Date | null>(null);
+  const { requestLocation, location: geoLocation, loading: geoLoading } = useGeolocation();
+  const { entries, todayEntries, addEntry, isClockedIn, clockInTime, todayWorkedMs } = useTimeEntries();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"in" | "out">("in");
   const [photos, setPhotos] = useState<PhotoCapture>({ selfie: null, environment: null });
   const [activeCamera, setActiveCamera] = useState<"selfie" | "environment" | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [capturedLocation, setCapturedLocation] = useState<GeoLocation | null>(null);
+  const [locationFetching, setLocationFetching] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  // Live clock
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeStr = now.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   const dateStr = now.toLocaleDateString("sv-SE", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
   const startCamera = useCallback(async (mode: "selfie" | "environment") => {
@@ -61,10 +156,22 @@ export function EmployeeHubDashboardView() {
     stopCamera();
   }, [activeCamera, stopCamera]);
 
-  const handleOpenDialog = (mode: "in" | "out") => {
+  const handleOpenDialog = async (mode: "in" | "out") => {
     setDialogMode(mode);
     setPhotos({ selfie: null, environment: null });
+    setCapturedLocation(null);
     setDialogOpen(true);
+
+    // Auto-fetch location when dialog opens
+    setLocationFetching(true);
+    try {
+      const loc = await requestLocation();
+      setCapturedLocation(loc);
+    } catch {
+      // Error handled by hook
+    } finally {
+      setLocationFetching(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -72,35 +179,49 @@ export function EmployeeHubDashboardView() {
       toast.error("Please capture both photos before submitting.");
       return;
     }
+
+    const insideGeofence = capturedLocation
+      ? DEMO_GEOFENCE_ZONES.some((z) => isInsideGeofence(capturedLocation, z))
+      : null;
+
+    addEntry({
+      type: dialogMode === "in" ? "clock_in" : "clock_out",
+      timestamp: new Date(),
+      location: capturedLocation,
+      selfieUrl: photos.selfie,
+      environmentUrl: photos.environment,
+      insideGeofence,
+    });
+
     if (dialogMode === "in") {
-      setStatus("clocked_in");
-      setClockInTime(new Date());
-      toast.success("Clocked in successfully!");
+      toast.success(
+        insideGeofence === false
+          ? "Clocked in (outside geofence — flagged for review)"
+          : "Clocked in successfully!",
+        { duration: 3000 }
+      );
     } else {
-      setStatus("clocked_out");
-      setClockInTime(null);
       toast.success("Clocked out successfully!");
     }
+
     setDialogOpen(false);
     stopCamera();
   };
 
-  const elapsed = clockInTime
-    ? `${Math.floor((now.getTime() - clockInTime.getTime()) / 3600000)}h ${Math.floor(((now.getTime() - clockInTime.getTime()) % 3600000) / 60000)}m`
-    : null;
+  const elapsed = isClockedIn ? formatElapsed(todayWorkedMs) : null;
 
   return (
-    <div className="space-y-5 px-2 pt-2 pb-24 max-w-lg mx-auto">
-      {/* Hero section with clock */}
+    <div className="space-y-5 px-4 pt-2 pb-24">
+      {/* Hero section with live clock */}
       <div className="relative rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white shadow-xl overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-8 -mt-8" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-6 -mb-6" />
         <div className="relative">
           <p className="text-xs text-white/80 capitalize mb-1">{dateStr}</p>
-          <h1 className="text-5xl font-bold tracking-tight mb-4">{timeStr}</h1>
-          {status === "clocked_in" ? (
+          <h1 className="text-4xl font-bold tracking-tight font-mono mb-4">{timeStr}</h1>
+          {isClockedIn ? (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-              <CheckCircle2 className="w-4 h-4" />
+              <Activity className="w-4 h-4 animate-pulse" />
               <span className="text-sm font-medium">On duty • {elapsed}</span>
             </div>
           ) : (
@@ -113,74 +234,109 @@ export function EmployeeHubDashboardView() {
       </div>
 
       {/* Clock In / Out Button */}
-      <div className="flex justify-center -mt-8 mb-4">
-        {status === "clocked_out" ? (
+      <div className="flex justify-center -mt-8 mb-2">
+        {!isClockedIn ? (
           <button
             onClick={() => handleOpenDialog("in")}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-2"
+            className="w-28 h-28 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1.5 ring-4 ring-emerald-600/20"
           >
-            <LogIn className="w-8 h-8" />
-            <span className="text-sm font-bold">Clock In</span>
+            <LogIn className="w-7 h-7" />
+            <span className="text-xs font-bold">Clock In</span>
           </button>
         ) : (
           <button
             onClick={() => handleOpenDialog("out")}
-            className="w-32 h-32 rounded-full bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-2"
+            className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1.5 ring-4 ring-rose-600/20"
           >
-            <LogOut className="w-8 h-8" />
-            <span className="text-sm font-bold">Clock Out</span>
+            <LogOut className="w-7 h-7" />
+            <span className="text-xs font-bold">Clock Out</span>
           </button>
         )}
       </div>
 
+      {/* Geofence Status Card */}
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm space-y-3">
+        <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Navigation className="w-4 h-4" /> Geofence Status
+        </h3>
+        <LocationBadge location={geoLocation} zones={DEMO_GEOFENCE_ZONES} />
+        <div className="flex flex-wrap gap-1.5">
+          {DEMO_GEOFENCE_ZONES.map((z) => (
+            <Badge key={z.name} variant="outline" className="text-[10px] gap-1">
+              <MapPin className="w-3 h-3" /> {z.name} ({z.radiusMeters}m)
+            </Badge>
+          ))}
+        </div>
+      </div>
+
       {/* Today's schedule */}
-      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
-        <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
           <Clock className="w-4 h-4" /> Today's Schedule
         </h3>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
             <p className="text-[10px] text-muted-foreground mb-1">Start</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">06:30</p>
+            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">06:30</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
             <p className="text-[10px] text-muted-foreground mb-1">End</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">17:00</p>
+            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">17:00</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
-            <p className="text-[10px] text-muted-foreground mb-1">Hours</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">8.0</p>
+            <p className="text-[10px] text-muted-foreground mb-1">Worked</p>
+            <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">
+              {isClockedIn ? formatElapsed(todayWorkedMs) : "0h"}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
-        <h3 className="font-bold text-sm mb-4 text-emerald-700 dark:text-emerald-500">Quick Actions</h3>
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 text-emerald-700 dark:text-emerald-500">Quick Actions</h3>
         <div className="grid grid-cols-3 gap-3">
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
-            <Calendar className="w-6 h-6 text-emerald-600" />
-            <span className="text-xs font-medium text-center">Schedule</span>
+          <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
+            <Calendar className="w-5 h-5 text-emerald-600" />
+            <span className="text-[10px] font-medium text-center">Schedule</span>
           </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
-            <FileText className="w-6 h-6 text-emerald-600" />
-            <span className="text-xs font-medium text-center">Contracts</span>
+          <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
+            <FileText className="w-5 h-5 text-emerald-600" />
+            <span className="text-[10px] font-medium text-center">Contracts</span>
           </button>
-          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
-            <MapPin className="w-6 h-6 text-emerald-600" />
-            <span className="text-xs font-medium text-center">Location</span>
+          <button
+            onClick={async () => {
+              try {
+                const loc = await requestLocation();
+                toast.success(`Location: ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`);
+              } catch {}
+            }}
+            className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95"
+          >
+            <MapPin className="w-5 h-5 text-emerald-600" />
+            <span className="text-[10px] font-medium text-center">My Location</span>
           </button>
         </div>
       </div>
 
-      {/* Recent activity */}
-      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
-        <h3 className="font-bold text-sm mb-4 text-emerald-700 dark:text-emerald-500">Recent Activity</h3>
-        <div className="text-center py-8 text-muted-foreground">
-          <Clock className="w-10 h-10 mx-auto mb-3 opacity-20" />
-          <p className="text-sm">No time entries recorded yet</p>
-          <p className="text-xs mt-1">Clock in to start recording your work time</p>
-        </div>
+      {/* Recent Activity */}
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Activity className="w-4 h-4" /> Today's Activity
+        </h3>
+        {todayEntries.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <Clock className="w-8 h-8 mx-auto mb-2 opacity-20" />
+            <p className="text-xs">No time entries recorded today</p>
+            <p className="text-[10px] mt-0.5 opacity-60">Clock in to start recording</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {todayEntries.map((entry) => (
+              <TimeEntryRow key={entry.id} entry={entry} zones={DEMO_GEOFENCE_ZONES} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Photo Capture Dialog */}
@@ -193,17 +349,27 @@ export function EmployeeHubDashboardView() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Take a selfie and a photo of your work environment to confirm attendance.
+            <p className="text-xs text-muted-foreground">
+              Take a selfie and a photo of your work environment. Your GPS location is captured automatically.
             </p>
+
+            {/* Location status in dialog */}
+            {locationFetching ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3 animate-pulse">
+                <Navigation className="w-4 h-4 animate-spin" />
+                <span>Acquiring GPS location…</span>
+              </div>
+            ) : (
+              <LocationBadge location={capturedLocation} zones={DEMO_GEOFENCE_ZONES} />
+            )}
 
             {/* Camera preview */}
             {activeCamera && (
               <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] shadow-lg">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <button onClick={capturePhoto} className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-2xl active:scale-95 transition-transform flex items-center justify-center">
-                    <Camera className="w-7 h-7 text-emerald-600" />
+                  <button onClick={capturePhoto} className="rounded-full w-14 h-14 bg-white hover:bg-white/90 shadow-2xl active:scale-95 transition-transform flex items-center justify-center">
+                    <Camera className="w-6 h-6 text-emerald-600" />
                   </button>
                 </div>
                 <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-medium">
@@ -216,49 +382,41 @@ export function EmployeeHubDashboardView() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => !photos.selfie && startCamera("selfie")}
-                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[120px]"
+                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[100px]"
               >
                 {photos.selfie ? (
                   <>
                     <img src={photos.selfie} alt="Selfie" className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                   </>
                 ) : (
-                  <div className="text-center p-3">
-                    <Camera className="w-10 h-10 mx-auto text-emerald-600/40 mb-2" />
-                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-500">Selfie</p>
-                    <p className="text-[10px] text-muted-foreground">Tap to capture</p>
+                  <div className="text-center p-2">
+                    <Camera className="w-8 h-8 mx-auto text-emerald-600/40 mb-1" />
+                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">Selfie</p>
                   </div>
                 )}
               </button>
 
               <button
                 onClick={() => !photos.environment && startCamera("environment")}
-                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[120px]"
+                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[100px]"
               >
                 {photos.environment ? (
                   <>
                     <img src={photos.environment} alt="Environment" className="w-full h-full object-cover" />
-                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4" />
+                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                   </>
                 ) : (
-                  <div className="text-center p-3">
-                    <Image className="w-10 h-10 mx-auto text-emerald-600/40 mb-2" />
-                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-500">Environment</p>
-                    <p className="text-[10px] text-muted-foreground">Tap to capture</p>
+                  <div className="text-center p-2">
+                    <Image className="w-8 h-8 mx-auto text-emerald-600/40 mb-1" />
+                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">Environment</p>
                   </div>
                 )}
               </button>
-            </div>
-
-            {/* Location info */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 border border-emerald-600/20">
-              <MapPin className="w-4 h-4 shrink-0 text-emerald-600" />
-              <span>Location will be recorded automatically</span>
             </div>
           </div>
 
