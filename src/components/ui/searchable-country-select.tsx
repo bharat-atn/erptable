@@ -150,8 +150,8 @@ export function SearchableCountrySelect({
             <p className="py-6 text-center text-sm text-muted-foreground">No country found.</p>
           )}
         </div>
-      </PopoverContent>
-    </Popover>
+      </PopoverPrimitive.Content>
+    </PopoverPrimitive.Root>
   );
 }
 
