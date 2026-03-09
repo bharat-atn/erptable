@@ -1,99 +1,100 @@
 import {
-  Mail, ClipboardList, FileText, Archive, RefreshCw, XCircle,
-  Send, UserPlus, CheckCircle, Zap, Users, FileSignature,
-  ShieldCheck, ArrowRight, BookOpen,
+  LogIn, LogOut, Camera, MapPin, Clock, Calendar, FileText,
+  User, Shield, CheckCircle, AlertCircle, Smartphone, BookOpen,
+  HelpCircle, ChevronRight, Zap, Bell, Navigation,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const terminology = [
-  { icon: Mail, title: "Invitation", desc: "Email link sent to a candidate to start onboarding." },
-  { icon: ClipboardList, title: "Onboarding Wizard", desc: "Digital form for personal, bank, and ID info." },
-  { icon: FileText, title: "Contract", desc: "Auto-generated employment agreement for signing." },
-  { icon: Archive, title: "Seasonal Pool", desc: "Archive of past employees for quick renewal." },
-  { icon: RefreshCw, title: "Renewal", desc: "Re-engagement to rehire a previous employee." },
-  { icon: XCircle, title: "Termination", desc: "Exit process, final paperwork, and archival." },
-];
-
-interface WStep {
-  role: "HR" | "YOU" | "SYSTEM";
-  title: string;
-  desc: string;
-  status: string;
+interface GuideSection {
   icon: React.ElementType;
+  title: string;
+  items: string[];
 }
 
-const roleBg: Record<string, string> = {
-  HR: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
-  YOU: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
-  SYSTEM: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
+const purposePoints = [
+  { icon: Clock, text: "Record your work hours with GPS-verified clock in/out" },
+  { icon: MapPin, text: "Prove your location with geofence validation" },
+  { icon: Camera, text: "Photo verification for attendance compliance" },
+  { icon: Calendar, text: "View your daily and weekly schedule" },
+  { icon: FileText, text: "Access your employment contracts anytime" },
+  { icon: User, text: "Manage your personal profile and information" },
+];
+
+const howToClockIn: GuideSection = {
+  icon: LogIn,
+  title: "How to Clock In",
+  items: [
+    "Tap the large green 'Clock In' button on the Home screen",
+    "Allow location access when prompted (required for geofence)",
+    "Take a selfie photo when the camera opens",
+    "Take a photo of your work environment",
+    "Review the location status badge (green = inside work zone)",
+    "Tap 'Confirm Clock In' to complete",
+  ],
 };
 
-function StepCard({ step, index }: { step: WStep; index: number }) {
-  const Icon = step.icon;
-  return (
-    <div className="flex gap-3">
-      <div className="flex flex-col items-center">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${roleBg[step.role]}`}>
-          {index + 1}
-        </div>
-        <div className="w-0.5 flex-1 bg-border/60 mt-1" />
-      </div>
-      <div className="pb-5 flex-1">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="outline" className="text-[9px] px-1.5 py-0">{step.role}</Badge>
-          <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{step.status}</Badge>
-        </div>
-        <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-          <h4 className="text-sm font-semibold">{step.title}</h4>
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-      </div>
-    </div>
-  );
-}
+const howToClockOut: GuideSection = {
+  icon: LogOut,
+  title: "How to Clock Out",
+  items: [
+    "Tap the red 'Clock Out' button (appears when clocked in)",
+    "Follow the same photo capture process",
+    "Your GPS location will be recorded automatically",
+    "Confirm to end your work session",
+  ],
+};
 
-function FlowSection({ title, steps, emoji }: { title: string; steps: WStep[]; emoji: string }) {
+const geofenceGuide: GuideSection = {
+  icon: Shield,
+  title: "Understanding Geofence",
+  items: [
+    "Geofence zones are pre-set work areas defined by your employer",
+    "Green badge = You're inside an approved work zone",
+    "Yellow badge = You're outside known zones (flagged for review)",
+    "Location accuracy is shown in meters (lower = better)",
+    "Ensure GPS is enabled for accurate tracking",
+  ],
+};
+
+const photoRequirements: GuideSection = {
+  icon: Camera,
+  title: "Photo Requirements",
+  items: [
+    "Selfie: Clear face photo to verify your identity",
+    "Environment: Photo of your surroundings/worksite",
+    "Both photos are required for each clock in/out",
+    "Good lighting improves photo quality",
+    "Photos are stored securely for compliance",
+  ],
+};
+
+const troubleshooting = [
+  { q: "Location not working?", a: "Enable GPS in your phone settings and allow location permission for this app." },
+  { q: "Camera not opening?", a: "Allow camera permission when prompted. Check phone settings if blocked." },
+  { q: "Clock button not appearing?", a: "Refresh the app. If already clocked in, you'll see 'Clock Out' instead." },
+  { q: "Outside geofence warning?", a: "This is normal if you're away from designated work zones. HR will review." },
+];
+
+function SectionCard({ section }: { section: GuideSection }) {
+  const Icon = section.icon;
   return (
     <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-      <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
-        <span>{emoji}</span> {title}
+      <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+        <Icon className="w-4 h-4" /> {section.title}
       </h3>
-      <div>
-        {steps.map((step, i) => (
-          <StepCard key={i} step={step} index={i} />
+      <ol className="space-y-2">
+        {section.items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-xs text-muted-foreground">
+            <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 text-[10px] font-bold">
+              {i + 1}
+            </span>
+            <span className="pt-0.5 leading-relaxed">{item}</span>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   );
 }
-
-const newHireSteps: WStep[] = [
-  { role: "HR", title: "Send Invitation", desc: "HR creates a link and emails it to the new candidate.", status: "INVITED", icon: Send },
-  { role: "YOU", title: "Submit Your Data", desc: "You fill out personal info, bank details, and upload your ID.", status: "ONBOARDING", icon: UserPlus },
-  { role: "HR", title: "Contract Review", desc: "HR reviews your information and prepares the contract.", status: "REVIEW", icon: FileSignature },
-  { role: "SYSTEM", title: "Activation", desc: "Once signed, you become an active employee automatically.", status: "ACTIVE", icon: Zap },
-];
-
-const renewalSteps: WStep[] = [
-  { role: "HR", title: "Select from Pool", desc: "HR picks you from the seasonal pool for a new season.", status: "POOL", icon: Users },
-  { role: "HR", title: "Send Renewal Invite", desc: "A new invitation is sent to verify your info is still correct.", status: "RENEWAL", icon: Send },
-  { role: "YOU", title: "Verify Data", desc: "Review and update any changed personal information.", status: "VERIFY", icon: CheckCircle },
-  { role: "YOU", title: "Sign Contract", desc: "Sign your new season contract digitally.", status: "SIGNING", icon: FileSignature },
-  { role: "SYSTEM", title: "Reactivation", desc: "Your status is set back to active for the new season.", status: "ACTIVE", icon: Zap },
-];
-
-const terminationSteps: WStep[] = [
-  { role: "HR", title: "Termination Notice", desc: "HR initiates the exit process for the employee.", status: "ACTIVE", icon: XCircle },
-  { role: "SYSTEM", title: "Exit Processing", desc: "Final pay, paperwork, and compliance checks are completed.", status: "EXITING", icon: ShieldCheck },
-  { role: "SYSTEM", title: "Archive", desc: "Employee moves to inactive or the seasonal pool.", status: "ARCHIVED", icon: Archive },
-];
-
-const summaryFlows = [
-  { num: 1, label: "New Hire", steps: ["Invited", "Onboarding", "Active"] },
-  { num: 2, label: "Renewal", steps: ["Pool", "Verify", "Active"] },
-  { num: 3, label: "Exit", steps: ["Active", "Exiting", "Archived"] },
-];
 
 export function EmployeeHubProcessGuideView() {
   return (
@@ -105,56 +106,127 @@ export function EmployeeHubProcessGuideView() {
           <BookOpen className="w-6 h-6 mb-2 opacity-80" />
           <h1 className="text-lg font-bold">Process Guide</h1>
           <p className="text-xs text-white/80 mt-1">
-            Understand the employee lifecycle — from invitation to exit.
+            Learn how to use the Employee Hub app effectively.
           </p>
         </div>
       </div>
 
-      {/* Terminology */}
+      {/* What is this app? */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-        <h3 className="font-bold text-sm mb-3">📖 Key Terms</h3>
-        <div className="space-y-2.5">
-          {terminology.map((item) => {
-            const Icon = item.icon;
+        <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
+          <Smartphone className="w-4 h-4 text-emerald-600" /> What is Employee Hub?
+        </h3>
+        <p className="text-xs text-muted-foreground leading-relaxed mb-3">
+          Employee Hub is your mobile time tracking and attendance app. It allows you to clock in and out of work with GPS verification and photo proof, ensuring accurate and compliant time records.
+        </p>
+        <div className="space-y-2">
+          {purposePoints.map((point, i) => {
+            const Icon = point.icon;
             return (
-              <div key={item.title} className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center shrink-0">
+              <div key={i} className="flex items-center gap-2.5 text-xs">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center shrink-0">
                   <Icon className="w-3.5 h-3.5 text-emerald-600" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold">{item.title}</p>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">{item.desc}</p>
-                </div>
+                <span>{point.text}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Workflows */}
-      <FlowSection title="Flow 1 — New Hire" steps={newHireSteps} emoji="🆕" />
-      <FlowSection title="Flow 2 — Seasonal Renewal" steps={renewalSteps} emoji="🔄" />
-      <FlowSection title="Flow 3 — Termination" steps={terminationSteps} emoji="🚪" />
-
-      {/* Summary */}
+      {/* Why use it? */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-        <h3 className="font-bold text-sm mb-3">📋 Flow Summary</h3>
+        <h3 className="font-bold text-sm mb-2 flex items-center gap-2">
+          <Zap className="w-4 h-4 text-emerald-600" /> Why Use Employee Hub?
+        </h3>
         <div className="space-y-2.5">
-          {summaryFlows.map((f) => (
-            <div key={f.num} className="flex items-center gap-2 flex-wrap">
-              <Badge className="text-[9px] bg-emerald-600 hover:bg-emerald-700 shrink-0">
-                Flow {f.num}
-              </Badge>
-              <span className="text-xs font-medium">{f.label}:</span>
-              {f.steps.map((s, i) => (
-                <span key={i} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  {i > 0 && <ArrowRight className="w-3 h-3" />}
-                  {s}
-                </span>
-              ))}
+          <div className="flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium">Accurate Time Records</p>
+              <p className="text-[10px] text-muted-foreground">GPS-verified clock times ensure precise payroll calculation.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium">Compliance & Verification</p>
+              <p className="text-[10px] text-muted-foreground">Photo proof meets employer and regulatory requirements.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium">No Paperwork</p>
+              <p className="text-[10px] text-muted-foreground">Digital records replace manual timesheets.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-medium">Access Anywhere</p>
+              <p className="text-[10px] text-muted-foreground">View schedules, contracts, and payslips on your phone.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Step-by-step guides */}
+      <SectionCard section={howToClockIn} />
+      <SectionCard section={howToClockOut} />
+      <SectionCard section={geofenceGuide} />
+      <SectionCard section={photoRequirements} />
+
+      {/* Navigation guide */}
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Navigation className="w-4 h-4" /> App Navigation
+        </h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Use the bottom navigation bar to switch between sections:
+        </p>
+        <div className="grid grid-cols-5 gap-1 text-center">
+          {[
+            { icon: "🏠", label: "Home", desc: "Clock in/out" },
+            { icon: "📅", label: "Schedule", desc: "View shifts" },
+            { icon: "📖", label: "Guide", desc: "This manual" },
+            { icon: "📄", label: "Contract", desc: "Agreements" },
+            { icon: "👤", label: "Profile", desc: "Your info" },
+          ].map((item) => (
+            <div key={item.label} className="p-2 rounded-xl bg-muted/30">
+              <div className="text-lg mb-0.5">{item.icon}</div>
+              <p className="text-[9px] font-semibold">{item.label}</p>
+              <p className="text-[8px] text-muted-foreground">{item.desc}</p>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* FAQ / Troubleshooting */}
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <HelpCircle className="w-4 h-4" /> Troubleshooting
+        </h3>
+        <div className="space-y-3">
+          {troubleshooting.map((item, i) => (
+            <div key={i} className="border-b border-border/30 pb-2.5 last:border-0 last:pb-0">
+              <p className="text-xs font-semibold flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                {item.q}
+              </p>
+              <p className="text-[10px] text-muted-foreground mt-0.5 ml-5">{item.a}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Need help? */}
+      <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-600/20 p-4 text-center">
+        <Bell className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+        <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Need More Help?</p>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Contact your HR manager or supervisor for assistance with the app or your schedule.
+        </p>
       </div>
     </div>
   );
