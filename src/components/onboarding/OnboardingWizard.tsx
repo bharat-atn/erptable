@@ -794,8 +794,7 @@ export function OnboardingWizard({
   }
 
   const s4Missing: string[] = [];
-  if (!selectedBankCountry) s4Missing.push("Country");
-  else if (selectedBankCountry === "__other__" && !formData.bankCountryName) s4Missing.push("Country Name");
+  if (!isOtherBank && !selectedBankCountry) s4Missing.push("Country");
   if (!selectedBankValue && (!isOtherBank || !formData.otherBankName?.trim())) s4Missing.push("Bank Name");
   if (!formData.bicCode) s4Missing.push("BIC Code");
   if (!formData.bankAccountNumber) s4Missing.push("Account Number");
