@@ -521,10 +521,21 @@ export function OnboardingWizard({
           updateField("emergencyPhone", data.emergencyPhone);
         }
         
-        // Bank: clear for manual entry after AI fill
+        // Bank: set country + manual mode based on AI data
         updateField("bankName", data.bankName || "");
         updateField("bicCode", data.bicCode || "");
         updateField("bankAccountNumber", data.bankAccountNumber || "");
+        // Try to match bank to a known country list
+        const matchedCountry = Object.entries(FALLBACK_BANKS_BY_COUNTRY).find(
+          ([, banks]) => banks.some(b => b.name === data.bankName)
+        );
+        if (matchedCountry) {
+          setBankCountryKey(matchedCountry[0]);
+          setIsManualBank(false);
+        } else if (data.bankName) {
+          setBankCountryKey("__other__");
+          setIsManualBank(true);
+        }
         setS4Open(true);
         setS3Open(true);
       });
