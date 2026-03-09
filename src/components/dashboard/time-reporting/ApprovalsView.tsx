@@ -72,6 +72,7 @@ export function ApprovalsView() {
             const project = report.forestry_projects;
             const attendanceCount = (report.attendance_entries || []).filter((e: any) => e.worked).length;
             const totalEntries = (report.attendance_entries || []).length;
+            const totalHours = (report.attendance_entries || []).reduce((s: number, e: any) => s + (e.worked ? (Number(e.hours) || 0) : 0), 0);
             const progressEntries = report.progress_entries || [];
             const isExpanded = expandedId === report.id;
 
