@@ -521,20 +521,10 @@ export function OnboardingWizard({
           updateField("emergencyPhone", data.emergencyPhone);
         }
         
-        // Bank: always require manual selection after AI fill
-        const bankCountry = data.country
-          ? Object.keys(effectiveBanksByCountry).find(
-              c => c.toLowerCase() === data.country.toLowerCase()
-            ) || ""
-          : "";
-        setSelectedBankCountry(bankCountry);
-        onBankSelect("");
-        updateField("otherBankName", "");
-        updateField("bicCode", "");
-        updateField("bankAccountNumber", "");
-        setSelectedBankValue("");
-        setBicValue("");
-        setBankAccountValue("");
+        // Bank: clear for manual entry after AI fill
+        updateField("bankName", data.bankName || "");
+        updateField("bicCode", data.bicCode || "");
+        updateField("bankAccountNumber", data.bankAccountNumber || "");
         setS4Open(true);
         setS3Open(true);
       });
