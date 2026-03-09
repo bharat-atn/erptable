@@ -78,6 +78,7 @@ export const SIDEBAR_ITEMS_BY_APP: Record<string, SidebarItemDef[]> = {
     { id: "my-profile", label: "My Profile", group: "main" },
     { id: "my-contracts", label: "My Contracts", group: "main" },
     { id: "my-schedule", label: "My Schedule", group: "main" },
+    { id: "my-time", label: "My Time Reports", group: "main" },
     { id: "my-payslips", label: "My Payslips", group: "main" },
     { id: "leave-requests", label: "Leave Requests", group: "main" },
     { id: "settings", label: "Settings", group: "settings" },
