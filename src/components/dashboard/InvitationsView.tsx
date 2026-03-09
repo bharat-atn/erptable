@@ -58,6 +58,7 @@ type InvitationRow = {
   status: string;
   created_at: string;
   expires_at: string;
+  resent_at: string | null;
   employee_id: string | null;
   employees: { email: string; first_name: string | null; last_name: string | null } | null;
 };
