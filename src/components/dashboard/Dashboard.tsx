@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Sidebar, screenSizes, type ScreenSizeOption } from "./Sidebar";
 import { DashboardView } from "./DashboardView";
@@ -49,6 +50,7 @@ import { AttestationView } from "./payroll/AttestationView";
 import { PayrollReportsView } from "./payroll/PayrollReportsView";
 import { SalaryEventsView } from "./payroll/SalaryEventsView";
 import { EmployeeHubApp } from "./employee-hub/EmployeeHubApp";
+import { TimeReportingMobileApp } from "./time-reporting/TimeReportingMobileApp";
 import { TimeReportingDashboardView } from "./time-reporting/TimeReportingDashboardView";
 import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
 import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
@@ -76,6 +78,7 @@ interface DashboardProps {
 const TABLET_THRESHOLD = 1100;
 
 export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
+  const isMobile = useIsMobile();
   const getDefaultView = (id?: string | null) => id === "user-management" ? "user-management" : "dashboard";
   const [activeView, setActiveView] = useState(getDefaultView(appId));
 
@@ -208,6 +211,11 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   // Employee Hub renders as a standalone mobile app UI
   if (appId === "employee-hub") {
     return <EmployeeHubApp onBackToLauncher={onBackToLauncher} />;
+  }
+
+  // Time & Status Reporting — standalone mobile app on small screens
+  if (appId === "time-reporting" && isMobile) {
+    return <TimeReportingMobileApp onBackToLauncher={onBackToLauncher} />;
   }
 
   const isConstrained = screenSize.width !== null;
