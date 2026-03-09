@@ -280,17 +280,17 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <LayoutDashboard className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Weekly Attendance</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Report daily attendance and hours for each team member per project.
-                </p>
-                <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
-                  Open Attendance →
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                   <h3 className="font-semibold text-sm">{t("tr.weeklyAttendance")}</h3>
+                 </div>
+                 <p className="text-xs text-muted-foreground mb-3">
+                   {t("tr.weeklyAttendanceDesc")}
+                 </p>
+                 <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
+                   {t("tr.openAttendance")} →
+                 </Button>
+               </CardContent>
+             </Card>
+           </div>
 
           {/* Progress reporting card */}
           <Card className="border-border/60 cursor-pointer hover:border-primary/40 active:scale-[0.99] transition-all" onClick={() => onNavigate("progress-reporting")}>
