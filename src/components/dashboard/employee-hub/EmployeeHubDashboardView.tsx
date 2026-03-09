@@ -387,7 +387,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
             className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95"
           >
             <MapPin className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-medium text-center">My Location</span>
+            <span className="text-[10px] font-medium text-center">{t("hub.myLocation")}</span>
           </button>
         </div>
       </div>
