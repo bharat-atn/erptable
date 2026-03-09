@@ -82,46 +82,40 @@ export function EmployeeHubProfileView() {
       {/* Address & Banking */}
       {personalInfo && (
         <>
-          <Card className="border-border/60 mx-2">
-            <CardContent className="pt-5 pb-4 space-y-3">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" /> Address
-              </h3>
-              <div className="space-y-3">
-                <InfoRow icon={MapPin} label="Street" value={personalInfo.streetAddress || personalInfo.address || "—"} />
-                <InfoRow icon={MapPin} label="City" value={personalInfo.city || employee?.city || "—"} />
-                <InfoRow icon={MapPin} label="Postcode" value={personalInfo.postcode || "—"} />
-                <InfoRow icon={Globe} label="Country" value={personalInfo.country || employee?.country || "—"} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+              <MapPin className="w-4 h-4" /> Address
+            </h3>
+            <div className="space-y-2">
+              <InfoRow icon={MapPin} label="Street" value={personalInfo.streetAddress || personalInfo.address || "—"} />
+              <InfoRow icon={MapPin} label="City" value={personalInfo.city || employee?.city || "—"} />
+              <InfoRow icon={MapPin} label="Postcode" value={personalInfo.postcode || "—"} />
+              <InfoRow icon={Globe} label="Country" value={personalInfo.country || employee?.country || "—"} />
+            </div>
+          </div>
 
-          <Card className="border-border/60 mx-2">
-            <CardContent className="pt-5 pb-4 space-y-3">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-primary" /> Bank Details
-              </h3>
-              <div className="space-y-3">
-                <InfoRow icon={Building2} label="Bank" value={personalInfo.bankName || "—"} />
-                <InfoRow icon={CreditCard} label="IBAN" value={personalInfo.iban || "—"} />
-                <InfoRow icon={CreditCard} label="Account Number" value={personalInfo.accountNumber || "—"} />
-                <InfoRow icon={Shield} label="BIC/SWIFT" value={personalInfo.bicSwift || personalInfo.bic || "—"} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+              <CreditCard className="w-4 h-4" /> Bank Details
+            </h3>
+            <div className="space-y-2">
+              <InfoRow icon={Building2} label="Bank" value={personalInfo.bankName || "—"} />
+              <InfoRow icon={CreditCard} label="IBAN" value={personalInfo.iban || "—"} />
+              <InfoRow icon={CreditCard} label="Account Number" value={personalInfo.accountNumber || "—"} />
+              <InfoRow icon={Shield} label="BIC/SWIFT" value={personalInfo.bicSwift || personalInfo.bic || "—"} />
+            </div>
+          </div>
 
-          <Card className="border-border/60 mx-2">
-            <CardContent className="pt-5 pb-4 space-y-3">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" /> Identity Documents
-              </h3>
-              <div className="space-y-3">
-                <InfoRow icon={Shield} label="Passport Number" value={personalInfo.passportNumber || "—"} />
-                <InfoRow icon={Shield} label="Personal ID (Sweden)" value={personalInfo.personnummer || personalInfo.personalIdNumber || "—"} />
-                <InfoRow icon={Shield} label="Tax ID" value={personalInfo.taxId || "—"} />
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
+            <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+              <Shield className="w-4 h-4" /> Identity Documents
+            </h3>
+            <div className="space-y-2">
+              <InfoRow icon={Shield} label="Passport Number" value={personalInfo.passportNumber || "—"} />
+              <InfoRow icon={Shield} label="Personal ID (Sweden)" value={personalInfo.personnummer || personalInfo.personalIdNumber || "—"} />
+              <InfoRow icon={Shield} label="Tax ID" value={personalInfo.taxId || "—"} />
+            </div>
+          </div>
         </>
       )}
     </div>
