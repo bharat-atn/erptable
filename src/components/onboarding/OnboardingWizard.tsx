@@ -504,54 +504,55 @@ export function OnboardingWizard({
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       
-      // Fill fields from AI response
-      if (data.firstName) updateField("firstName", data.firstName);
-      if (data.middleName) updateField("middleName", data.middleName);
-      if (data.lastName) updateField("lastName", data.lastName);
-      if (data.preferredName) updateField("preferredName", data.preferredName);
-      if (data.address1) updateField("address1", data.address1);
-      if (data.address2) updateField("address2", data.address2 || "");
-      if (data.zipCode) updateField("zipCode", data.zipCode);
-      if (data.city) updateField("city", data.city);
-      if (data.stateProvince) updateField("stateProvince", data.stateProvince);
-      if (data.country) updateField("country", data.country);
-      if (data.birthday) updateField("birthday", data.birthday);
-      if (data.countryOfBirth) updateField("countryOfBirth", data.countryOfBirth);
-      if (data.citizenship) updateField("citizenship", data.citizenship);
-      if (data.mobilePhonePrefix && data.mobilePhoneNumber) {
-        updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
-      }
-      if (data.email) updateField("email", data.email);
-      if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
-      if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
-      if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
-        updateField("emergencyPhone", `${data.emergencyPhonePrefix} ${data.emergencyPhoneNumber}`);
-      }
-      
-      // Handle bank selection via callback
+      // Batch ALL state updates in a single flushSync to avoid
+      // React DOM reconciliation crashes with Radix portals
+      flushSync(() => {
+        if (data.firstName) updateField("firstName", data.firstName);
+        if (data.middleName) updateField("middleName", data.middleName);
+        if (data.lastName) updateField("lastName", data.lastName);
+        if (data.preferredName) updateField("preferredName", data.preferredName);
+        if (data.address1) updateField("address1", data.address1);
+        if (data.address2) updateField("address2", data.address2 || "");
+        if (data.zipCode) updateField("zipCode", data.zipCode);
+        if (data.city) updateField("city", data.city);
+        if (data.stateProvince) updateField("stateProvince", data.stateProvince);
+        if (data.country) updateField("country", data.country);
+        if (data.birthday) updateField("birthday", data.birthday);
+        if (data.countryOfBirth) updateField("countryOfBirth", data.countryOfBirth);
+        if (data.citizenship) updateField("citizenship", data.citizenship);
+        if (data.mobilePhonePrefix && data.mobilePhoneNumber) {
+          updateField("mobilePhone", `${data.mobilePhonePrefix} ${data.mobilePhoneNumber}`);
+        }
+        if (data.email) updateField("email", data.email);
+        if (data.emergencyFirstName) updateField("emergencyFirstName", data.emergencyFirstName);
+        if (data.emergencyLastName) updateField("emergencyLastName", data.emergencyLastName);
+        if (data.emergencyPhonePrefix && data.emergencyPhoneNumber) {
+          updateField("emergencyPhone", `${data.emergencyPhonePrefix} ${data.emergencyPhoneNumber}`);
+        }
+        if (!data.emergencyPhonePrefix && !data.emergencyPhoneNumber && data.emergencyPhone) {
+          updateField("emergencyPhone", data.emergencyPhone);
+        }
+        
+        // Bank: always require manual selection after AI fill
+        const bankCountry = data.country
+          ? Object.keys(effectiveBanksByCountry).find(
+              c => c.toLowerCase() === data.country.toLowerCase()
+            ) || ""
+          : "";
+        setSelectedBankCountry(bankCountry);
+        onBankSelect("");
+        updateField("otherBankName", "");
+        updateField("bicCode", "");
+        updateField("bankAccountNumber", "");
+        setSelectedBankValue("");
+        setBicValue("");
+        setBankAccountValue("");
+        setS4Open(true);
+        setS3Open(true);
+      });
+
+      // Handle bank selection via callback (outside flushSync — non-critical)
       if (onAiFill) onAiFill(data);
-      
-      // Fallback: if AI returns emergencyPhone as combined string
-      if (!data.emergencyPhonePrefix && !data.emergencyPhoneNumber && data.emergencyPhone) {
-        updateField("emergencyPhone", data.emergencyPhone);
-      }
-
-      // Always require manual bank selection after AI fill
-      const bankCountry = data.country
-        ? Object.keys(effectiveBanksByCountry).find(
-            c => c.toLowerCase() === data.country.toLowerCase()
-          ) || ""
-        : "";
-      setSelectedBankCountry(bankCountry);
-      onBankSelect("");
-      updateField("otherBankName", "");
-      updateField("bicCode", "");
-      updateField("bankAccountNumber", "");
-      setSelectedBankValue("");
-      setS4Open(true);
-
-      // Ensure emergency contact section is visible
-      setS3Open(true);
       
       toast.success("AI test data generated successfully!", {
         description: "Review the auto-filled data and adjust as needed before submitting.",
