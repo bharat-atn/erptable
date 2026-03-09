@@ -10,7 +10,8 @@ import { CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, CheckSquare } f
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export function ApprovalsView() {
+export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);

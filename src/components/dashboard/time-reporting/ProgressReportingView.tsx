@@ -42,7 +42,8 @@ function getWeekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
 
-export function ProgressReportingView() {
+export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();

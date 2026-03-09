@@ -18,7 +18,8 @@ import {
   Star,
 } from "lucide-react";
 
-export function TimeReportingProcessGuideView() {
+export function TimeReportingProcessGuideView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   return (
     <div className="space-y-4 pt-2 pb-6">
       <div>

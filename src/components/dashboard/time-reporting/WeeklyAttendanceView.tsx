@@ -52,7 +52,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
   const weekDays = getWeekDays(currentWeekStart, includeSaturday);
-  const DAY_LABELS = includeSaturday ? DAY_LABELS_6 : DAY_LABELS_5;
+  const DAY_KEYS = includeSaturday ? DAY_KEYS_6 : DAY_KEYS_5;
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
