@@ -242,10 +242,10 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
           <Card className="border-border/60">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold">Project Completion</span>
+                <span className="text-sm font-semibold">{t("tr.projectCompletion")}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className={`text-[10px] ${getProgressBadge(Math.round(weightedProgress)).className}`}>
-                    {getProgressBadge(Math.round(weightedProgress)).label}
+                    {t(`tr.${getProgressBadge(Math.round(weightedProgress)).label}`)}
                   </Badge>
                   <span className={`text-lg font-bold ${getProgressColor(Math.round(weightedProgress))}`}>{Math.round(weightedProgress)}%</span>
                 </div>
