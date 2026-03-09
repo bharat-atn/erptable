@@ -1,11 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Mail, Phone, MapPin, Calendar, Globe, CreditCard, Building2, Loader2, Shield } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { User, Mail, Phone, MapPin, Calendar, Globe, CreditCard, Building2, Loader2, Shield, Languages } from "lucide-react";
+import { toast } from "sonner";
+
+const LANGUAGES = [
+  { value: "en", label: "English", flag: "🇬🇧" },
+  { value: "sv", label: "Svenska", flag: "🇸🇪" },
+  { value: "ro", label: "Română", flag: "🇷🇴" },
+  { value: "uk", label: "Українська", flag: "🇺🇦" },
+  { value: "th", label: "ไทย", flag: "🇹🇭" },
+];
 
 export function EmployeeHubProfileView() {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+
   const { data: profile, isLoading } = useQuery({
     queryKey: ["employee-hub-profile"],
     queryFn: async () => {
@@ -35,12 +49,29 @@ export function EmployeeHubProfileView() {
     enabled: !!profile?.email,
   });
 
+  const handleLanguageChange = async (lang: string) => {
+    if (!profile) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ preferred_language: lang })
+      .eq("id", profile.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Failed to update language");
+    } else {
+      toast.success("Language updated");
+      queryClient.invalidateQueries({ queryKey: ["employee-hub-profile"] });
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
   const personalInfo = employee?.personal_info as Record<string, any> | null;
   const initials = profile?.full_name?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
+  const currentLang = profile?.preferred_language || "en";
 
   return (
     <div className="space-y-4 px-2 pt-2 pb-24 max-w-lg mx-auto">
@@ -64,6 +95,28 @@ export function EmployeeHubProfileView() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Language Selector */}
+      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-3">
+        <h3 className="font-bold text-sm flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Languages className="w-4 h-4" /> Language / Språk
+        </h3>
+        <Select value={currentLang} onValueChange={handleLanguageChange} disabled={saving}>
+          <SelectTrigger className="w-full min-h-[48px] rounded-xl bg-emerald-50 dark:bg-emerald-950/10 border-emerald-600/20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LANGUAGES.map((l) => (
+              <SelectItem key={l.value} value={l.value} className="min-h-[44px]">
+                <span className="flex items-center gap-2 text-sm">
+                  <span className="text-base">{l.flag}</span>
+                  {l.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Personal Information */}
