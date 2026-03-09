@@ -27,8 +27,8 @@ function getWeekDays(weekStart: Date, includeSaturday: boolean): Date[] {
   return Array.from({ length: includeSaturday ? 6 : 5 }, (_, i) => addDays(weekStart, i));
 }
 
-const DAY_LABELS_5 = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const DAY_LABELS_6 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS_5 = ["tr.mon", "tr.tue", "tr.wed", "tr.thu", "tr.fri"];
+const DAY_KEYS_6 = ["tr.mon", "tr.tue", "tr.wed", "tr.thu", "tr.fri", "tr.sat"];
 
 interface AttendanceEntry {
   worked: boolean;
