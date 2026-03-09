@@ -48,11 +48,12 @@ const geofenceGuide: GuideSection = {
   icon: Shield,
   title: "Understanding Geofence",
   items: [
-    "Geofence zones are pre-set work areas defined by your employer",
-    "Green badge = You're inside an approved work zone",
-    "Yellow badge = You're outside known zones (flagged for review)",
-    "Location accuracy is shown in meters (lower = better)",
-    "Ensure GPS is enabled for accurate tracking",
+    "The geofence ensures you are physically present at your assigned work location before clocking in or out",
+    "Your employer defines approved work zones (e.g. forest sites, offices) — you must be within one to pass validation",
+    "Green badge = You are inside an approved work area and can proceed normally",
+    "Yellow badge = You are outside all known work zones — this will be flagged for review by your supervisor",
+    "The system protects both you and the employer by proving you were on-site during work hours",
+    "Ensure GPS is enabled and allow location permission for accurate zone detection",
   ],
 };
 
