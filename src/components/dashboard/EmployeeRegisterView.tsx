@@ -83,6 +83,16 @@ const employeeColumns: ColumnDef<Employee>[] = [
     render: (e, hl) => <span className="text-sm text-muted-foreground">{hl?.(e.country || "—") ?? e.country ?? "—"}</span>,
   },
   {
+    key: "tax_type",
+    header: "Tax",
+    accessor: (e) => e.sink_tax ? "SINK" : "Table",
+    render: (e) => (
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${e.sink_tax ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
+        {e.sink_tax ? "SINK" : "Tax Table"}
+      </span>
+    ),
+  },
+  {
     key: "status",
     header: "Status",
     accessor: (e) => e.status,
