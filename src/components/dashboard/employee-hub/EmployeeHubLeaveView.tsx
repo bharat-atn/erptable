@@ -27,56 +27,50 @@ export function EmployeeHubLeaveView() {
   };
 
   return (
-    <div className="space-y-4 px-1 pt-3 pb-8 max-w-lg mx-auto">
-      <div className="flex items-center justify-between px-2 gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl font-bold">Leave Requests</h1>
-          <p className="text-xs text-muted-foreground">Ledighetsansökningar</p>
+    <div className="space-y-4 px-2 pt-2 pb-24 max-w-lg mx-auto">
+      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-xl mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Leave Requests</h1>
+            <p className="text-sm text-white/80">Ledighetsansökningar</p>
+          </div>
+          <button onClick={() => setDialogOpen(true)} className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors">
+            <Plus className="w-6 h-6" />
+          </button>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="h-10 shrink-0">
-          <Plus className="w-4 h-4 mr-1" /> New
-        </Button>
       </div>
 
       {/* Leave balance cards */}
-      <div className="grid grid-cols-3 gap-2 px-2">
-        <Card className="border-border/60">
-          <CardContent className="pt-3 pb-3 text-center px-2">
-            <Umbrella className="w-5 h-5 mx-auto text-blue-600 mb-1" />
-            <p className="text-xl font-bold">25</p>
-            <p className="text-[9px] text-muted-foreground leading-tight">Vacation Days</p>
-            <p className="text-[9px] text-emerald-600 font-medium">25 left</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-3 pb-3 text-center px-2">
-            <Clock className="w-5 h-5 mx-auto text-emerald-600 mb-1" />
-            <p className="text-xl font-bold">0</p>
-            <p className="text-[9px] text-muted-foreground leading-tight">Comp Hours</p>
-            <p className="text-[9px] text-muted-foreground">0 accrued</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-3 pb-3 text-center px-2">
-            <Thermometer className="w-5 h-5 mx-auto text-rose-600 mb-1" />
-            <p className="text-xl font-bold">0</p>
-            <p className="text-[9px] text-muted-foreground leading-tight">Sick Days</p>
-            <p className="text-[9px] text-muted-foreground">This year</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-blue-600/20 p-4 text-center shadow-sm">
+          <Umbrella className="w-6 h-6 mx-auto text-blue-600 mb-2" />
+          <p className="text-2xl font-bold text-blue-600">25</p>
+          <p className="text-[9px] text-muted-foreground leading-tight mt-1">Vacation Days</p>
+          <p className="text-[9px] text-blue-600 font-semibold">25 left</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-4 text-center shadow-sm">
+          <Clock className="w-6 h-6 mx-auto text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-emerald-600">0</p>
+          <p className="text-[9px] text-muted-foreground leading-tight mt-1">Comp Hours</p>
+          <p className="text-[9px] text-muted-foreground">0 accrued</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-rose-600/20 p-4 text-center shadow-sm">
+          <Thermometer className="w-6 h-6 mx-auto text-rose-600 mb-2" />
+          <p className="text-2xl font-bold text-rose-600">0</p>
+          <p className="text-[9px] text-muted-foreground leading-tight mt-1">Sick Days</p>
+          <p className="text-[9px] text-muted-foreground">This year</p>
+        </div>
       </div>
 
       {/* Requests list */}
-      <Card className="border-border/60 mx-2">
-        <CardContent className="pt-5 pb-5">
-          <h3 className="font-semibold text-sm mb-4">My Requests</h3>
-          <div className="text-center py-8">
-            <Calendar className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No leave requests</p>
-            <p className="text-xs text-muted-foreground mt-1">Submit a request to get started</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
+        <h3 className="font-bold text-sm mb-4 text-emerald-700 dark:text-emerald-500">My Requests</h3>
+        <div className="text-center py-10">
+          <Calendar className="w-12 h-12 text-emerald-600/20 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No leave requests</p>
+          <p className="text-xs text-muted-foreground mt-1">Submit a request to get started</p>
+        </div>
+      </div>
 
       {/* New Leave Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

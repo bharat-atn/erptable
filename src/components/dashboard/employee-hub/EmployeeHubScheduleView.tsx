@@ -50,52 +50,45 @@ export function EmployeeHubScheduleView() {
   const holidays = schedules.filter((s: any) => s.day_type === "Holiday").length;
 
   return (
-    <div className="space-y-5 px-1 pt-3 pb-8 max-w-lg mx-auto">
-      <h1 className="text-xl font-bold px-2">My Schedule — Mitt schema</h1>
+    <div className="space-y-5 px-2 pt-2 pb-24 max-w-lg mx-auto">
+      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-xl mb-6">
+        <h1 className="text-2xl font-bold">My Schedule</h1>
+        <p className="text-sm text-white/80">Mitt schema</p>
+      </div>
 
       {/* Summary cards — 2x2 grid for mobile */}
-      <div className="grid grid-cols-2 gap-3 px-2">
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Calendar className="w-5 h-5 mx-auto text-primary mb-1" />
-            <p className="text-2xl font-bold">{schedules.length}</p>
-            <p className="text-[10px] text-muted-foreground">Total Days</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Clock className="w-5 h-5 mx-auto text-emerald-600 mb-1" />
-            <p className="text-2xl font-bold">{workdays}</p>
-            <p className="text-[10px] text-muted-foreground">Workdays</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Sun className="w-5 h-5 mx-auto text-amber-600 mb-1" />
-            <p className="text-2xl font-bold">{holidays}</p>
-            <p className="text-[10px] text-muted-foreground">Holidays</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Clock className="w-5 h-5 mx-auto text-blue-600 mb-1" />
-            <p className="text-2xl font-bold">{totalHours.toFixed(0)}</p>
-            <p className="text-[10px] text-muted-foreground">Total Hours</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-4 text-center shadow-sm">
+          <Calendar className="w-6 h-6 mx-auto text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-emerald-600">{schedules.length}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Total Days</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-4 text-center shadow-sm">
+          <Clock className="w-6 h-6 mx-auto text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-emerald-600">{workdays}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Workdays</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-amber-600/20 p-4 text-center shadow-sm">
+          <Sun className="w-6 h-6 mx-auto text-amber-600 mb-2" />
+          <p className="text-2xl font-bold text-amber-600">{holidays}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Holidays</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-blue-600/20 p-4 text-center shadow-sm">
+          <Clock className="w-6 h-6 mx-auto text-blue-600 mb-2" />
+          <p className="text-2xl font-bold text-blue-600">{totalHours.toFixed(0)}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Total Hours</p>
+        </div>
       </div>
 
       {/* Schedule — card list instead of table for mobile */}
       {schedules.length === 0 ? (
-        <Card className="border-border/60 mx-2">
-          <CardContent className="pt-6 pb-6 text-center">
-            <Calendar className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No schedule available yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Your work schedule will appear here once your contract is set up</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-8 text-center shadow-sm">
+          <Calendar className="w-12 h-12 text-emerald-600/20 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-medium">No schedule available yet</p>
+          <p className="text-xs text-muted-foreground mt-2">Your work schedule will appear here once your contract is set up</p>
+        </div>
       ) : (
-        <div className="space-y-1.5 px-2">
+        <div className="space-y-2">
           {schedules.map((s: any) => {
             const d = new Date(s.schedule_date + "T00:00:00");
             const dayName = d.toLocaleDateString("sv-SE", { weekday: "short" });
@@ -105,27 +98,27 @@ export function EmployeeHubScheduleView() {
               <div
                 key={s.id}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg bg-card border border-border/40 border-l-[3px]",
+                  "flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border-2 border-l-[6px] shadow-sm",
                   colorClass
                 )}
               >
-                <div className="min-w-[52px] text-center">
-                  <p className="text-xs font-bold uppercase">{dayName}</p>
-                  <p className="text-[10px] text-muted-foreground">{dateLabel}</p>
+                <div className="min-w-[60px] text-center">
+                  <p className="text-sm font-bold uppercase text-emerald-700 dark:text-emerald-500">{dayName}</p>
+                  <p className="text-xs text-muted-foreground">{dateLabel}</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{s.day_type}</Badge>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-600/30">{s.day_type}</Badge>
                     {(s.holiday_name_sv || s.holiday_name_en) && (
-                      <span className="text-[10px] text-amber-600 truncate">{s.holiday_name_sv || s.holiday_name_en}</span>
+                      <span className="text-[10px] text-amber-600 font-medium truncate">{s.holiday_name_sv || s.holiday_name_en}</span>
                     )}
                   </div>
                   {s.start_time && s.end_time && (
-                    <p className="text-xs text-muted-foreground mt-0.5 font-mono">{s.start_time} – {s.end_time}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{s.start_time} – {s.end_time}</p>
                   )}
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold">{Number(s.scheduled_hours) || "—"}</p>
+                <div className="text-right shrink-0 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl px-3 py-2">
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-500">{Number(s.scheduled_hours) || "—"}</p>
                   <p className="text-[9px] text-muted-foreground">hrs</p>
                 </div>
               </div>

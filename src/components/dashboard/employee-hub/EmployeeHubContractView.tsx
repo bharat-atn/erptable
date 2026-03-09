@@ -37,53 +37,51 @@ export function EmployeeHubContractView() {
   const formData = (c: any) => (c.form_data || {}) as Record<string, any>;
 
   return (
-    <div className="space-y-4 px-1 pt-3 pb-8 max-w-lg mx-auto">
-      <h1 className="text-xl font-bold px-2">My Contracts — Mina kontrakt</h1>
+    <div className="space-y-4 px-2 pt-2 pb-24 max-w-lg mx-auto">
+      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-xl mb-6">
+        <h1 className="text-2xl font-bold">My Contracts</h1>
+        <p className="text-sm text-white/80">Mina kontrakt</p>
+      </div>
 
       {contracts.length === 0 ? (
-        <Card className="border-border/60 mx-2">
-          <CardContent className="pt-6 text-center py-12">
-            <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No contracts found</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-8 text-center shadow-sm">
+          <FileText className="w-12 h-12 text-emerald-600/30 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No contracts found</p>
+        </div>
       ) : (
         contracts.map((c: any) => {
           const fd = formData(c);
           return (
-            <Card key={c.id} className="border-border/60 mx-2">
-              <CardContent className="pt-5 pb-4 space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      {c.contract_code && (
-                        <Badge variant="outline" className="font-mono text-xs">{c.contract_code}</Badge>
-                      )}
-                      <Badge className={c.status === "signed"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 border-0"
-                        : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 border-0"
-                      }>
-                        {c.status === "signed" ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Signed</> : c.status}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Season {c.season_year || "—"}</p>
+            <div key={c.id} className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm space-y-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    {c.contract_code && (
+                      <Badge variant="outline" className="font-mono text-xs border-emerald-600/30">{c.contract_code}</Badge>
+                    )}
+                    <Badge className={c.status === "signed"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 border-0"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 border-0"
+                    }>
+                      {c.status === "signed" ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Signed</> : c.status}
+                    </Badge>
                   </div>
-                  <Button variant="outline" size="sm" className="h-10 min-w-[70px]" onClick={() => setPreviewContract(c)}>
-                    <Eye className="w-3.5 h-3.5 mr-1" /> View
-                  </Button>
+                  <p className="text-sm text-muted-foreground">Season {c.season_year || "—"}</p>
                 </div>
+                <Button variant="outline" size="sm" className="h-10 min-w-[70px] rounded-xl border-emerald-600/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/20" onClick={() => setPreviewContract(c)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> View
+                </Button>
+              </div>
 
-                <Separator />
+              <div className="h-px bg-emerald-600/20" />
 
-                {/* Stacked info for mobile instead of 4-col grid */}
-                <div className="space-y-2.5">
-                  <ContractInfoRow icon={Building2} label="Employer" value={(c as any).companies?.name || fd.companySnapshot?.name || "—"} />
-                  <ContractInfoRow icon={Calendar} label="Period" value={`${c.start_date || "—"} → ${c.end_date || "—"}`} />
-                  <ContractInfoRow icon={DollarSign} label="Salary" value={c.salary ? `${Number(c.salary).toLocaleString()} SEK` : "—"} />
-                  <ContractInfoRow icon={FileText} label="Signing" value={c.signing_status?.replace(/_/g, " ") || "—"} />
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-3">
+                <ContractInfoRow icon={Building2} label="Employer" value={(c as any).companies?.name || fd.companySnapshot?.name || "—"} />
+                <ContractInfoRow icon={Calendar} label="Period" value={`${c.start_date || "—"} → ${c.end_date || "—"}`} />
+                <ContractInfoRow icon={DollarSign} label="Salary" value={c.salary ? `${Number(c.salary).toLocaleString()} SEK` : "—"} />
+                <ContractInfoRow icon={FileText} label="Signing" value={c.signing_status?.replace(/_/g, " ") || "—"} />
+              </div>
+            </div>
           );
         })
       )}
@@ -143,11 +141,11 @@ export function EmployeeHubContractView() {
 
 function ContractInfoRow({ icon: Icon, label, value }: { icon: typeof FileText; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 min-h-[36px]">
-      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+    <div className="flex items-center gap-3 min-h-[36px] bg-emerald-50 dark:bg-emerald-950/10 rounded-xl p-3">
+      <Icon className="w-4 h-4 text-emerald-600 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-muted-foreground uppercase">{label}</p>
-        <p className="text-xs font-medium truncate">{value}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+        <p className="text-xs font-semibold truncate">{value}</p>
       </div>
     </div>
   );
