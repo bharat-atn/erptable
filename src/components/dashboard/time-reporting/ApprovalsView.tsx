@@ -274,7 +274,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
 
                         {report.notes && (
                           <div>
-                            <p className="text-xs font-semibold mb-1">Notes</p>
+                             <p className="text-xs font-semibold mb-1">{t("tr.notes")}</p>
                             <p className="text-xs text-muted-foreground">{report.notes}</p>
                           </div>
                         )}
