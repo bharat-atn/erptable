@@ -521,10 +521,21 @@ export function OnboardingWizard({
           updateField("emergencyPhone", data.emergencyPhone);
         }
         
-        // Bank: clear for manual entry after AI fill
+        // Bank: set country + manual mode based on AI data
         updateField("bankName", data.bankName || "");
         updateField("bicCode", data.bicCode || "");
         updateField("bankAccountNumber", data.bankAccountNumber || "");
+        // Try to match bank to a known country list
+        const matchedCountry = Object.entries(FALLBACK_BANKS_BY_COUNTRY).find(
+          ([, banks]) => banks.some(b => b.name === data.bankName)
+        );
+        if (matchedCountry) {
+          setBankCountryKey(matchedCountry[0]);
+          setIsManualBank(false);
+        } else if (data.bankName) {
+          setBankCountryKey("__other__");
+          setIsManualBank(true);
+        }
         setS4Open(true);
         setS3Open(true);
       });
@@ -547,6 +558,41 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+
+  /* ─── Hybrid bank selection state (native selects, no Radix) ─── */
+  const BANK_COUNTRIES = Object.keys(FALLBACK_BANKS_BY_COUNTRY); // Sweden, Romania, Thailand, Moldova, Ukraine
+  const [bankCountryKey, setBankCountryKey] = useState<string>("");
+  const [isManualBank, setIsManualBank] = useState(false);
+
+  // Derive available banks for selected country
+  const availableBanks = bankCountryKey ? (FALLBACK_BANKS_BY_COUNTRY[bankCountryKey] || []) : [];
+
+  const handleBankCountryChange = (country: string) => {
+    setBankCountryKey(country);
+    setIsManualBank(false);
+    updateField("bankName", "");
+    updateField("bicCode", "");
+  };
+
+  const handleBankSelect = (bankName: string) => {
+    if (bankName === "__other__") {
+      setIsManualBank(true);
+      updateField("bankName", "");
+      updateField("bicCode", "");
+      return;
+    }
+    updateField("bankName", bankName);
+    const bank = availableBanks.find(b => b.name === bankName);
+    if (bank?.bic_code) updateField("bicCode", bank.bic_code);
+  };
+
+  const handleBankReset = () => {
+    setBankCountryKey("");
+    setIsManualBank(false);
+    updateField("bankName", "");
+    updateField("bicCode", "");
+    updateField("bankAccountNumber", "");
+  };
   const [validationAttempted, setValidationAttempted] = useState(false);
 
   /* ─── AI inline validation state ─── */
@@ -1105,22 +1151,80 @@ export function OnboardingWizard({
               showValidation={validationAttempted}
             />
             <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
+              {/* Bank country */}
+              <div className="space-y-1.5">
+                <FieldLabel en="Bank Country" sv="Bankens land" />
+                <div className="flex items-center gap-2">
+                  <select
+                    tabIndex={23}
+                    value={bankCountryKey}
+                    onChange={(e) => handleBankCountryChange(e.target.value)}
+                    className={cn(
+                      "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    )}
+                  >
+                    <option value="">— Select country / Välj land —</option>
+                    {BANK_COUNTRIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                    <option value="__other__">Other country / Annat land</option>
+                  </select>
+                  {(bankCountryKey || formData.bankName) && (
+                    <button
+                      type="button"
+                      onClick={handleBankReset}
+                      className="text-xs text-muted-foreground hover:text-foreground underline whitespace-nowrap"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Bank name — native select from list OR manual input */}
               <div className="space-y-1.5">
                 <FieldLabel en="Bank Name" sv="Banknamn" />
-                <Input
-                  tabIndex={23}
-                  value={formData.bankName || ""}
-                  onChange={(e) => updateField("bankName", e.target.value)}
-                  placeholder="Enter bank name / Ange banknamn"
-                  className={cn("h-11 text-sm font-medium", fieldError(!formData.bankName?.trim()))}
-                />
+                {bankCountryKey && bankCountryKey !== "__other__" && availableBanks.length > 0 && !isManualBank ? (
+                  <select
+                    tabIndex={24}
+                    value={formData.bankName || ""}
+                    onChange={(e) => handleBankSelect(e.target.value)}
+                    className={cn(
+                      "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                      fieldError(!formData.bankName?.trim())
+                    )}
+                  >
+                    <option value="">— Select bank / Välj bank —</option>
+                    {availableBanks.map((b) => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
+                    <option value="__other__">Other / Not in list — Annan bank</option>
+                  </select>
+                ) : (
+                  <Input
+                    tabIndex={24}
+                    value={formData.bankName || ""}
+                    onChange={(e) => updateField("bankName", e.target.value)}
+                    placeholder="Enter bank name / Ange banknamn"
+                    className={cn("h-11 text-sm font-medium", fieldError(!formData.bankName?.trim()))}
+                  />
+                )}
+                {isManualBank && (
+                  <button
+                    type="button"
+                    onClick={() => { setIsManualBank(false); updateField("bankName", ""); updateField("bicCode", ""); }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    ← Back to bank list / Tillbaka till listan
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
-                  <FieldLabel en="BIC Code" sv="BIC-kod" />
+                  <FieldLabel en="BIC / SWIFT Code" sv="BIC / SWIFT-kod" />
                   <Input
-                    tabIndex={24}
+                    tabIndex={25}
                     value={formData.bicCode || ""}
                     autoComplete="off"
                     onChange={(e) => {
@@ -1135,7 +1239,7 @@ export function OnboardingWizard({
                 <div className="space-y-1.5">
                   <FieldLabel en="Bank Account Number" sv="Kontonummer" />
                   <Input
-                    tabIndex={25}
+                    tabIndex={26}
                     value={formData.bankAccountNumber || ""}
                     autoComplete="off"
                     onChange={(e) => {
