@@ -264,7 +264,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
           {existingReport && (existingReport.progress_entries as any[])?.length > 0 && (
             <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
               <Info className="w-3.5 h-3.5 shrink-0" />
-              <span>Progress data loaded from saved report. Adjust sliders and save to update.</span>
+              <span>{t("tr.progressLoaded")}</span>
             </div>
           )}
 
