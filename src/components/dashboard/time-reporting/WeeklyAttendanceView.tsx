@@ -652,7 +652,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">Total Hours</span>
+                   <span className="text-sm font-semibold text-foreground">{t("tr.totalHours")}</span>
                     <span className="text-lg font-bold text-primary">{grandTotalHours}h</span>
                   </div>
                 </CardContent>
