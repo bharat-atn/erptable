@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { countries } from "@/lib/countries";
 
 const PRIORITY_COUNTRY_NAMES = ["Romania", "Thailand", "Ukraine", "Sweden"];
