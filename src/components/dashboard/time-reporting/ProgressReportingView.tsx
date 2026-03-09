@@ -10,7 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Calendar, Loader2, Save, Send, ChevronLeft, ChevronRight, TrendingUp, MapPin
+  Calendar, Loader2, Save, Send, ChevronLeft, ChevronRight, MapPin, Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
@@ -27,6 +27,7 @@ export function ProgressReportingView() {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getWeekStart(new Date()));
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [localProgress, setLocalProgress] = useState<Record<string, { pct: number; notes: string }>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
@@ -51,7 +52,7 @@ export function ProgressReportingView() {
     }
   }, [projects, selectedProjectId]);
 
-  const { data: objects = [] } = useQuery({
+  const { data: objects = [], isLoading: objectsLoading } = useQuery({
     queryKey: ["project-objects", selectedProjectId],
     queryFn: async () => {
       const { data } = await supabase
@@ -64,8 +65,9 @@ export function ProgressReportingView() {
     enabled: !!selectedProjectId,
   });
 
-  const { data: existingReport } = useQuery({
-    queryKey: ["weekly-report", orgId, selectedProjectId, currentWeekStart.toISOString()],
+  // Fetch existing report — progress is always editable regardless of attendance status
+  const { data: existingReport, isLoading: reportLoading } = useQuery({
+    queryKey: ["progress-report", orgId, selectedProjectId, currentWeekStart.toISOString()],
     queryFn: async () => {
       const { data } = await supabase
         .from("weekly_reports")
@@ -79,6 +81,7 @@ export function ProgressReportingView() {
     enabled: !!orgId && !!selectedProjectId,
   });
 
+  // Initialize from existing data
   useEffect(() => {
     if (existingReport?.progress_entries) {
       const map: Record<string, { pct: number; notes: string }> = {};
@@ -89,6 +92,7 @@ export function ProgressReportingView() {
     } else {
       setLocalProgress({});
     }
+    setHasUnsavedChanges(false);
   }, [existingReport]);
 
   const totalArea = objects.reduce((sum: number, o: any) => sum + (Number(o.area_hectares) || 1), 0);
@@ -107,6 +111,7 @@ export function ProgressReportingView() {
 
       let reportId = existingReport?.id;
 
+      // If no report exists yet, create one
       if (!reportId) {
         const { data: newReport, error } = await supabase
           .from("weekly_reports")
@@ -117,24 +122,16 @@ export function ProgressReportingView() {
             week_start: format(currentWeekStart, "yyyy-MM-dd"),
             week_number: weekNumber,
             year,
-            status: submit ? "submitted" : "draft",
-            submitted_at: submit ? new Date().toISOString() : null,
+            status: "draft",
           })
           .select("id")
           .single();
         if (error) throw error;
         reportId = newReport.id;
-      } else {
-        await supabase
-          .from("weekly_reports")
-          .update({
-            status: submit ? "submitted" : existingReport?.status === "approved" ? "approved" : "draft",
-            submitted_at: submit ? new Date().toISOString() : null,
-          })
-          .eq("id", reportId);
-
-        await supabase.from("progress_entries").delete().eq("report_id", reportId);
       }
+
+      // Delete existing progress entries to re-insert
+      await supabase.from("progress_entries").delete().eq("report_id", reportId);
 
       const entries = objects.map((o: any) => ({
         report_id: reportId,
@@ -148,21 +145,22 @@ export function ProgressReportingView() {
         if (error) throw error;
       }
     },
-    onSuccess: (_, submit) => {
-      toast.success(submit ? "Progress submitted" : "Progress saved");
+    onSuccess: () => {
+      toast.success("Progress saved");
+      setHasUnsavedChanges(false);
+      queryClient.invalidateQueries({ queryKey: ["progress-report"] });
       queryClient.invalidateQueries({ queryKey: ["weekly-report"] });
       queryClient.invalidateQueries({ queryKey: ["time-reporting-stats"] });
     },
     onError: (err: any) => toast.error(err.message),
   });
 
-  const isSubmitted = existingReport?.status === "submitted" || existingReport?.status === "approved";
-
   const updatePct = (objectId: string, pct: number) => {
     setLocalProgress(prev => ({
       ...prev,
       [objectId]: { ...prev[objectId], pct, notes: prev[objectId]?.notes || "" },
     }));
+    setHasUnsavedChanges(true);
   };
 
   const updateNotes = (objectId: string, notes: string) => {
@@ -170,13 +168,16 @@ export function ProgressReportingView() {
       ...prev,
       [objectId]: { ...prev[objectId], pct: prev[objectId]?.pct || 0, notes },
     }));
+    setHasUnsavedChanges(true);
   };
+
+  const isLoading = objectsLoading || reportLoading;
 
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4 pb-24 md:pb-6">
       <div>
         <h1 className="text-xl md:text-2xl font-bold text-foreground">Progress Reporting</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Framstegsrapportering • Completion % per object</p>
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Framstegsrapportering • Report completion % per object</p>
       </div>
 
       {/* Week + Project selector */}
@@ -208,160 +209,186 @@ export function ProgressReportingView() {
         </Select>
       </div>
 
-      {/* Project-level progress */}
-      <Card className="border-border/60">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">Project Completion</span>
-            <span className="text-lg font-bold text-primary">{Math.round(weightedProgress)}%</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-3">
-            <div
-              className="bg-primary h-3 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(weightedProgress, 100)}%` }}
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-1">Area-weighted across all objects</p>
-        </CardContent>
-      </Card>
-
-      {/* Objects */}
-      {objects.length === 0 ? (
-        <Card className="border-border/60">
-          <CardContent className="py-12 text-center">
-            <MapPin className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No objects registered for this project.</p>
-          </CardContent>
-        </Card>
-      ) : isMobile ? (
-        /* Mobile: card per object */
-        <div className="space-y-3">
-          {objects.map((obj: any) => {
-            const progress = localProgress[obj.id] || { pct: 0, notes: "" };
-            return (
-              <Card key={obj.id} className="border-border/60">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-sm font-semibold flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" /> {obj.name}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">{obj.object_id_display}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{obj.sla_class}</Badge>
-                      {obj.area_hectares && (
-                        <span className="text-xs text-muted-foreground font-mono">{obj.area_hectares} ha</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <Slider
-                      value={[progress.pct]}
-                      onValueChange={([val]) => updatePct(obj.id, val)}
-                      max={100}
-                      step={5}
-                      disabled={isSubmitted}
-                      className="flex-1"
-                    />
-                    <span className="text-sm font-bold w-12 text-right">{progress.pct}%</span>
-                  </div>
-                  <Input
-                    value={progress.notes}
-                    onChange={(e) => updateNotes(obj.id, e.target.value)}
-                    placeholder="Notes..."
-                    className="h-9 text-sm"
-                    disabled={isSubmitted}
-                  />
-                </CardContent>
-              </Card>
-            );
-          })}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        /* Desktop: table */
-        <Card className="border-border/60">
-          <CardContent className="pt-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[120px]">Object</TableHead>
-                  <TableHead>SLA</TableHead>
-                  <TableHead className="text-right">Area (ha)</TableHead>
-                  <TableHead className="min-w-[200px]">Completion %</TableHead>
-                  <TableHead>Notes</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {objects.map((obj: any) => {
-                  const progress = localProgress[obj.id] || { pct: 0, notes: "" };
-                  return (
-                    <TableRow key={obj.id}>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium flex items-center gap-1">
-                            <MapPin className="w-3 h-3" /> {obj.name}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">{obj.object_id_display}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px]">{obj.sla_class}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-mono">
-                        {obj.area_hectares || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Slider
-                            value={[progress.pct]}
-                            onValueChange={([val]) => updatePct(obj.id, val)}
-                            max={100}
-                            step={5}
-                            disabled={isSubmitted}
-                            className="flex-1"
-                          />
-                          <span className="text-sm font-bold w-10 text-right">{progress.pct}%</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={progress.notes}
-                          onChange={(e) => updateNotes(obj.id, e.target.value)}
-                          placeholder="Notes..."
-                          className="h-7 text-xs"
-                          disabled={isSubmitted}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        <>
+          {/* Project-level progress */}
+          <Card className="border-border/60">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold">Project Completion</span>
+                <span className="text-lg font-bold text-primary">{Math.round(weightedProgress)}%</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-3">
+                <div
+                  className="bg-primary h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min(weightedProgress, 100)}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Area-weighted across all objects</p>
+            </CardContent>
+          </Card>
 
-      {/* Actions — sticky bottom on mobile */}
-      {objects.length > 0 && !isSubmitted && (
-        <div className="fixed bottom-0 left-0 right-0 md:static md:bottom-auto bg-background/95 backdrop-blur-sm border-t md:border-t-0 border-border p-4 md:p-0 flex items-center gap-3 z-30">
-          <Button
-            variant="outline"
-            className="flex-1 md:flex-none h-12 md:h-9"
-            onClick={() => saveMutation.mutate(false)}
-            disabled={saveMutation.isPending}
-          >
-            <Save className="w-4 h-4 mr-1.5" /> Save Draft
-          </Button>
-          <Button
-            className="flex-1 md:flex-none h-12 md:h-9"
-            onClick={() => saveMutation.mutate(true)}
-            disabled={saveMutation.isPending}
-          >
-            {saveMutation.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Send className="w-4 h-4 mr-1.5" />}
-            Submit Report
-          </Button>
-        </div>
+          {/* Existing progress info */}
+          {existingReport && (existingReport.progress_entries as any[])?.length > 0 && (
+            <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
+              <Info className="w-3.5 h-3.5 shrink-0" />
+              <span>Progress data loaded from saved report. Adjust sliders and save to update.</span>
+            </div>
+          )}
+
+          {/* Objects */}
+          {objects.length === 0 ? (
+            <Card className="border-border/60">
+              <CardContent className="py-12 text-center">
+                <MapPin className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No objects registered for this project.</p>
+                <p className="text-xs text-muted-foreground mt-1">Add objects in the Forestry Project Manager.</p>
+              </CardContent>
+            </Card>
+          ) : isMobile ? (
+            /* Mobile: card per object */
+            <div className="space-y-3">
+              {objects.map((obj: any) => {
+                const progress = localProgress[obj.id] || { pct: 0, notes: "" };
+                return (
+                  <Card key={obj.id} className="border-border/60">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-sm font-semibold flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" /> {obj.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground">{obj.object_id_display}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px]">{obj.sla_class}</Badge>
+                          {obj.area_hectares && (
+                            <span className="text-xs text-muted-foreground font-mono">{obj.area_hectares} ha</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Progress slider */}
+                      <div className="flex items-center gap-3 mb-2">
+                        <Slider
+                          value={[progress.pct]}
+                          onValueChange={([val]) => updatePct(obj.id, val)}
+                          max={100}
+                          step={5}
+                          className="flex-1"
+                        />
+                        <span className="text-sm font-bold w-12 text-right">{progress.pct}%</span>
+                      </div>
+
+                      {/* Quick % buttons */}
+                      <div className="flex items-center gap-1.5 mb-2">
+                        {[0, 25, 50, 75, 100].map(v => (
+                          <Button
+                            key={v}
+                            variant={progress.pct === v ? "default" : "outline"}
+                            size="sm"
+                            className="h-7 px-2 text-xs flex-1"
+                            onClick={() => updatePct(obj.id, v)}
+                          >
+                            {v}%
+                          </Button>
+                        ))}
+                      </div>
+
+                      <Input
+                        value={progress.notes}
+                        onChange={(e) => updateNotes(obj.id, e.target.value)}
+                        placeholder="Notes..."
+                        className="h-9 text-sm"
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            /* Desktop: table */
+            <Card className="border-border/60">
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[120px]">Object</TableHead>
+                      <TableHead>SLA</TableHead>
+                      <TableHead className="text-right">Area (ha)</TableHead>
+                      <TableHead className="min-w-[200px]">Completion %</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {objects.map((obj: any) => {
+                      const progress = localProgress[obj.id] || { pct: 0, notes: "" };
+                      return (
+                        <TableRow key={obj.id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {obj.name}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">{obj.object_id_display}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-[10px]">{obj.sla_class}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-sm font-mono">
+                            {obj.area_hectares || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Slider
+                                value={[progress.pct]}
+                                onValueChange={([val]) => updatePct(obj.id, val)}
+                                max={100}
+                                step={5}
+                                className="flex-1"
+                              />
+                              <span className="text-sm font-bold w-10 text-right">{progress.pct}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={progress.notes}
+                              onChange={(e) => updateNotes(obj.id, e.target.value)}
+                              placeholder="Notes..."
+                              className="h-7 text-xs"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Save button — always visible when there are objects */}
+          {objects.length > 0 && (
+            <div className="fixed bottom-0 left-0 right-0 md:static md:bottom-auto bg-background/95 backdrop-blur-sm border-t md:border-t-0 border-border p-4 md:p-0 flex items-center gap-3 z-30">
+              <Button
+                variant="outline"
+                className="flex-1 md:flex-none h-12 md:h-9"
+                onClick={() => saveMutation.mutate(false)}
+                disabled={saveMutation.isPending || !hasUnsavedChanges}
+              >
+                <Save className="w-4 h-4 mr-1.5" /> Save Progress
+              </Button>
+              {hasUnsavedChanges && (
+                <span className="text-xs text-amber-600 hidden md:inline">Unsaved changes</span>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
