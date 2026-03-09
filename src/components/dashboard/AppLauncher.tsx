@@ -203,10 +203,12 @@ function saveApps(apps: AppDefinition[]) {
   localStorage.setItem("app-launcher-apps", JSON.stringify(apps));
 }
 
-async function loadAppsFromDb(): Promise<AppDefinition[] | null> {
+async function loadAppsFromDb(orgId: string | null): Promise<AppDefinition[] | null> {
+  if (!orgId) return null;
   const { data, error } = await supabase
     .from("app_launcher_config")
     .select("id, apps")
+    .eq("org_id", orgId)
     .limit(1)
     .maybeSingle();
   if (error || !data) return null;
@@ -218,12 +220,14 @@ async function loadAppsFromDb(): Promise<AppDefinition[] | null> {
   }
 }
 
-async function saveAppsToDb(apps: AppDefinition[]) {
+async function saveAppsToDb(apps: AppDefinition[], orgId: string | null) {
+  if (!orgId) return;
   // Strip runtime-only fields before saving
   const toSave = apps.map(({ allowedRoles, adminOnly, ...rest }) => rest);
   const { data: existing } = await supabase
     .from("app_launcher_config")
     .select("id")
+    .eq("org_id", orgId)
     .limit(1)
     .maybeSingle();
   if (existing) {
@@ -234,7 +238,7 @@ async function saveAppsToDb(apps: AppDefinition[]) {
   } else {
     await supabase
       .from("app_launcher_config")
-      .insert({ apps: toSave } as any);
+      .insert({ apps: toSave, org_id: orgId } as any);
   }
 }
 
