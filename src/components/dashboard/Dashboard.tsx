@@ -49,6 +49,7 @@ import { AttestationView } from "./payroll/AttestationView";
 import { PayrollReportsView } from "./payroll/PayrollReportsView";
 import { SalaryEventsView } from "./payroll/SalaryEventsView";
 import { EmployeeHubApp } from "./employee-hub/EmployeeHubApp";
+import { TimeReportingMobileApp } from "./time-reporting/TimeReportingMobileApp";
 import { TimeReportingDashboardView } from "./time-reporting/TimeReportingDashboardView";
 import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
 import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
