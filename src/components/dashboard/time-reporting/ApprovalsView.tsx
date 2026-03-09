@@ -292,7 +292,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
       {recentApprovals.length > 0 && (
         <Card className="border-border/60">
           <CardContent className="p-4 md:pt-6">
-            <h3 className="text-sm font-semibold mb-3">Recently Approved</h3>
+            <h3 className="text-sm font-semibold mb-3">{t("tr.recentlyApproved")}</h3>
             <div className="space-y-2">
               {recentApprovals.map((r: any) => (
                 <div key={r.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/30">
