@@ -177,7 +177,7 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="w-4 h-4 text-primary" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Draft Reports</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.draftReports")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.draftCount || 0}</p>
               </CardContent>
@@ -186,7 +186,7 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertCircle className="w-4 h-4 text-amber-500" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Pending</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.pending")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.submittedCount || 0}</p>
               </CardContent>
@@ -195,7 +195,7 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Approved</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.approved")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.approvedCount || 0}</p>
               </CardContent>
@@ -204,7 +204,7 @@ export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingD
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Employees</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.employees")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.activeEmployees || 0}</p>
               </CardContent>
