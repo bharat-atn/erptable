@@ -302,7 +302,7 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                      Approved
+                       {t("tr.approved")}
                     </Badge>
                     {r.approved_at && (
                       <span className="text-[10px] text-muted-foreground">
