@@ -220,7 +220,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
 
         <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
           <SelectTrigger className="w-full sm:w-[250px] h-10 sm:h-8 text-sm">
-            <SelectValue placeholder="Select project..." />
+            <SelectValue placeholder={t("tr.selectProject")} />
           </SelectTrigger>
           <SelectContent>
             {projects.map((p: any) => (
