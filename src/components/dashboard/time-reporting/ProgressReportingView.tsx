@@ -345,11 +345,11 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[120px]">Object</TableHead>
+                      <TableHead className="min-w-[120px]">{t("tr.object")}</TableHead>
                       <TableHead>SLA</TableHead>
                       <TableHead className="text-right">Area (ha)</TableHead>
-                      <TableHead className="min-w-[200px]">Completion %</TableHead>
-                      <TableHead>Notes</TableHead>
+                      <TableHead className="min-w-[200px]">{t("tr.completionPct")}</TableHead>
+                      <TableHead>{t("tr.notes")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
