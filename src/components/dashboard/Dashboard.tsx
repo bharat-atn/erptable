@@ -78,6 +78,7 @@ interface DashboardProps {
 const TABLET_THRESHOLD = 1100;
 
 export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
+  const isMobile = useIsMobile();
   const getDefaultView = (id?: string | null) => id === "user-management" ? "user-management" : "dashboard";
   const [activeView, setActiveView] = useState(getDefaultView(appId));
 
