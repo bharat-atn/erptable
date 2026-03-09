@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, LogIn, LogOut, Clock, MapPin, CheckCircle2, Image } from "lucide-react";
+import { Camera, LogIn, LogOut, Clock, MapPin, CheckCircle2, Image, Calendar, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
