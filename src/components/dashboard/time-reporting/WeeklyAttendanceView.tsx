@@ -38,7 +38,8 @@ interface AttendanceEntry {
 
 const DEFAULT_HOURS = 8;
 
-export function WeeklyAttendanceView() {
+export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
