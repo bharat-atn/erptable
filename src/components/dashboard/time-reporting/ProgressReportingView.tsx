@@ -16,6 +16,28 @@ import { toast } from "sonner";
 import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+function getProgressColor(pct: number): string {
+  if (pct >= 75) return "text-emerald-600 dark:text-emerald-400";
+  if (pct >= 40) return "text-amber-600 dark:text-amber-400";
+  if (pct > 0) return "text-rose-600 dark:text-rose-400";
+  return "text-muted-foreground";
+}
+
+function getProgressBg(pct: number): string {
+  if (pct >= 75) return "bg-emerald-500";
+  if (pct >= 40) return "bg-amber-500";
+  if (pct > 0) return "bg-rose-500";
+  return "bg-muted";
+}
+
+function getProgressBadge(pct: number) {
+  if (pct === 100) return { label: "Complete", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+  if (pct >= 75) return { label: "On Track", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+  if (pct >= 40) return { label: "In Progress", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+  if (pct > 0) return { label: "Behind", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+  return { label: "Not Started", className: "" };
+}
+
 function getWeekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
