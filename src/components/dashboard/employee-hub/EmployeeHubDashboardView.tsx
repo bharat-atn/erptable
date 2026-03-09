@@ -91,82 +91,98 @@ export function EmployeeHubDashboardView() {
     : null;
 
   return (
-    <div className="space-y-5 px-1 pt-3 pb-8 max-w-lg mx-auto">
-      {/* Header — large clock for mobile */}
-      <div className="text-center py-4">
-        <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
-        <h1 className="text-5xl sm:text-6xl font-bold text-foreground tracking-tight mt-1">{timeStr}</h1>
-        <div className="mt-3">
+    <div className="space-y-5 px-2 pt-2 pb-24 max-w-lg mx-auto">
+      {/* Hero section with clock */}
+      <div className="relative rounded-3xl bg-gradient-to-br from-emerald-600 to-emerald-700 p-6 text-white shadow-xl overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-8 -mt-8" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-6 -mb-6" />
+        <div className="relative">
+          <p className="text-xs text-white/80 capitalize mb-1">{dateStr}</p>
+          <h1 className="text-5xl font-bold tracking-tight mb-4">{timeStr}</h1>
           {status === "clocked_in" ? (
-            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 text-sm px-4 py-1.5">
-              <CheckCircle2 className="w-4 h-4 mr-1.5" /> On duty • {elapsed}
-            </Badge>
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-sm font-medium">On duty • {elapsed}</span>
+            </div>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground text-sm px-4 py-1.5">
-              <Clock className="w-4 h-4 mr-1.5" /> Off duty
-            </Badge>
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+              <Clock className="w-4 h-4" />
+              <span className="text-sm font-medium">Off duty</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Clock In / Out — large touch target */}
-      <div className="flex justify-center px-4">
+      {/* Clock In / Out Button */}
+      <div className="flex justify-center -mt-8 mb-4">
         {status === "clocked_out" ? (
-          <Button
-            size="lg"
-            className="h-16 w-full max-w-xs rounded-2xl text-lg font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg active:scale-[0.98] transition-transform"
+          <button
             onClick={() => handleOpenDialog("in")}
+            className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-2"
           >
-            <LogIn className="w-6 h-6 mr-3" />
-            Clock In — Stämpla in
-          </Button>
+            <LogIn className="w-8 h-8" />
+            <span className="text-sm font-bold">Clock In</span>
+          </button>
         ) : (
-          <Button
-            size="lg"
-            variant="destructive"
-            className="h-16 w-full max-w-xs rounded-2xl text-lg font-semibold shadow-lg active:scale-[0.98] transition-transform"
+          <button
             onClick={() => handleOpenDialog("out")}
+            className="w-32 h-32 rounded-full bg-gradient-to-br from-rose-600 to-rose-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-2"
           >
-            <LogOut className="w-6 h-6 mr-3" />
-            Clock Out — Stämpla ut
-          </Button>
+            <LogOut className="w-8 h-8" />
+            <span className="text-sm font-bold">Clock Out</span>
+          </button>
         )}
       </div>
 
       {/* Today's schedule */}
-      <Card className="border-border/60 mx-2">
-        <CardContent className="pt-5 pb-4">
-          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-primary" /> Today's Schedule
-          </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-3 rounded-xl bg-muted/50">
-              <p className="text-[10px] text-muted-foreground">Start</p>
-              <p className="text-xl font-bold">06:30</p>
-            </div>
-            <div className="p-3 rounded-xl bg-muted/50">
-              <p className="text-[10px] text-muted-foreground">End</p>
-              <p className="text-xl font-bold">17:00</p>
-            </div>
-            <div className="p-3 rounded-xl bg-muted/50">
-              <p className="text-[10px] text-muted-foreground">Hours</p>
-              <p className="text-xl font-bold">8.0</p>
-            </div>
+      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
+        <h3 className="font-bold text-sm mb-4 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Clock className="w-4 h-4" /> Today's Schedule
+        </h3>
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
+            <p className="text-[10px] text-muted-foreground mb-1">Start</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">06:30</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
+            <p className="text-[10px] text-muted-foreground mb-1">End</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">17:00</p>
+          </div>
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
+            <p className="text-[10px] text-muted-foreground mb-1">Hours</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-500">8.0</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
+        <h3 className="font-bold text-sm mb-4 text-emerald-700 dark:text-emerald-500">Quick Actions</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
+            <Calendar className="w-6 h-6 text-emerald-600" />
+            <span className="text-xs font-medium text-center">Schedule</span>
+          </button>
+          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
+            <FileText className="w-6 h-6 text-emerald-600" />
+            <span className="text-xs font-medium text-center">Contracts</span>
+          </button>
+          <button className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors">
+            <MapPin className="w-6 h-6 text-emerald-600" />
+            <span className="text-xs font-medium text-center">Location</span>
+          </button>
+        </div>
+      </div>
 
       {/* Recent activity */}
-      <Card className="border-border/60 mx-2">
-        <CardContent className="pt-5 pb-4">
-          <h3 className="font-semibold text-sm mb-3">Recent Activity</h3>
-          <div className="text-center py-6 text-muted-foreground">
-            <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No time entries recorded yet</p>
-            <p className="text-xs mt-1">Clock in to start recording your work time</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-5 shadow-sm">
+        <h3 className="font-bold text-sm mb-4 text-emerald-700 dark:text-emerald-500">Recent Activity</h3>
+        <div className="text-center py-8 text-muted-foreground">
+          <Clock className="w-10 h-10 mx-auto mb-3 opacity-20" />
+          <p className="text-sm">No time entries recorded yet</p>
+          <p className="text-xs mt-1">Clock in to start recording your work time</p>
+        </div>
+      </div>
 
       {/* Photo Capture Dialog — full screen on mobile */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) { stopCamera(); setDialogOpen(false); } }}>
