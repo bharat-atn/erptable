@@ -42,8 +42,16 @@ export function CompGroupView() {
   const [addClassOpen, setAddClassOpen] = useState(false);
   const [manageTypesOpen, setManageTypesOpen] = useState(false);
   const [manageTypesGroupId, setManageTypesGroupId] = useState<string | null>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const activeGroup = data.groups.find(g => g.id === data.activeGroupId);
+
+  // Dynamic show class options based on actual data
+  const totalClasses = data.classes.length;
+  const dynamicShowOptions = SHOW_CLASS_OPTIONS.map(opt => ({
+    ...opt,
+    label: opt.value === 13 ? `All (${totalClasses})` : opt.label,
+  }));
 
   // Filter & limit classes
   let filteredClasses = search
@@ -57,6 +65,55 @@ export function CompGroupView() {
   if (showClassCount < 13 && !search) {
     filteredClasses = filteredClasses.slice(0, showClassCount);
   }
+
+  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activeGroup) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const text = ev.target?.result as string;
+        const lines = text.trim().split("\n");
+        if (lines.length < 2) { toast.error("CSV file is empty or has no data rows"); return; }
+        const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+        const slaIdx = headers.findIndex(h => h.includes("sla") || h.includes("class"));
+        const typeIdx = headers.findIndex(h => h.includes("type"));
+        const clientIdx = headers.findIndex(h => h.includes("client"));
+        const s1Idx = headers.findIndex(h => h.includes("star 1") || h === "s1");
+        const s2Idx = headers.findIndex(h => h.includes("star 2") || h === "s2");
+        const s3Idx = headers.findIndex(h => h.includes("star 3") || h === "s3");
+        const s4Idx = headers.findIndex(h => h.includes("star 4") || h === "s4");
+        const s5Idx = headers.findIndex(h => h.includes("star 5") || h === "s5");
+        const grossIdx = headers.findIndex(h => h.includes("gross"));
+        const netIdx = headers.findIndex(h => h.includes("net"));
+
+        let imported = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(",").map(c => c.trim());
+          if (cols.length < 2) continue;
+          const slaId = slaIdx >= 0 ? cols[slaIdx].replace(/[^0-9]/g, "") : String(100 + i);
+          await data.importClass({
+            sla_class_id: slaId,
+            type_label: typeIdx >= 0 ? cols[typeIdx] : "",
+            client: clientIdx >= 0 ? cols[clientIdx] : "",
+            star_1: s1Idx >= 0 ? Number(cols[s1Idx]) || 0 : 0,
+            star_2: s2Idx >= 0 ? Number(cols[s2Idx]) || 0 : 0,
+            star_3: s3Idx >= 0 ? Number(cols[s3Idx]) || 0 : 0,
+            star_4: s4Idx >= 0 ? Number(cols[s4Idx]) || 0 : 0,
+            star_5: s5Idx >= 0 ? Number(cols[s5Idx]) || 0 : 0,
+            hourly_gross: grossIdx >= 0 ? Number(cols[grossIdx]) || 0 : 0,
+            net_value: netIdx >= 0 ? Number(cols[netIdx]) || 0 : 0,
+          });
+          imported++;
+        }
+        toast.success(`Imported ${imported} classes`);
+      } catch {
+        toast.error("Failed to parse CSV file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
 
   const handleApplyType = (typeLabel: string) => {
     setTypeFilter(typeLabel);
