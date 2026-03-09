@@ -431,7 +431,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
 
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Take a selfie and a photo of your work environment. Your GPS location is captured automatically.
+              {t("hub.photoInstructions")}
             </p>
 
             {/* Location status in dialog */}
