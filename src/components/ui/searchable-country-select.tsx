@@ -46,9 +46,9 @@ export function SearchableCountrySelect({
   );
 
   const handleSelect = React.useCallback((nextValue: string) => {
-    onValueChange(nextValue);
     setOpen(false);
     setSearch("");
+    requestAnimationFrame(() => onValueChange(nextValue));
   }, [onValueChange]);
 
   return (
