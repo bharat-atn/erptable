@@ -562,9 +562,9 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4 pb-24 md:pb-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Weekly Attendance</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.weeklyAttendanceTitle")}</h1>
         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Veckovis närvaro • Report hours per employee per day
+          {t("tr.weeklyAttendanceSub")}
         </p>
       </div>
 
