@@ -56,6 +56,7 @@ import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
 import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
 import { ApprovalsView } from "./time-reporting/ApprovalsView";
 import { TimeReportsView } from "./time-reporting/TimeReportsView";
+import { TimeReportingProcessGuideView } from "./time-reporting/TimeReportingProcessGuideView";
 import { VersionUpdateBanner } from "./VersionUpdateBanner";
 import { IssueReportButton } from "./IssueReportButton";
 import { Button } from "@/components/ui/button";
