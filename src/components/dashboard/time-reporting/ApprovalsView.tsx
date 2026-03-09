@@ -10,7 +10,8 @@ import { CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, CheckSquare } f
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export function ApprovalsView() {
+export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export function ApprovalsView() {
         .eq("id", reportId);
     },
     onSuccess: (_, { approve }) => {
-      toast.success(approve ? "Report approved" : "Report returned to draft");
+      toast.success(approve ? t("tr.reportApproved") : t("tr.reportReturned"));
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["recent-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["time-reporting-stats"] });
@@ -82,7 +83,7 @@ export function ApprovalsView() {
       }
     },
     onSuccess: () => {
-      toast.success(`${selectedIds.size} report(s) approved`);
+      toast.success(`${selectedIds.size} ${t("tr.reportsApproved")}`);
       setSelectedIds(new Set());
       queryClient.invalidateQueries({ queryKey: ["pending-approvals"] });
       queryClient.invalidateQueries({ queryKey: ["recent-approvals"] });
@@ -110,8 +111,8 @@ export function ApprovalsView() {
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Report Approvals</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Godkännande • Review and approve submitted reports</p>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.reportApprovals")}</h1>
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{t("tr.approvalsSub")}</p>
       </div>
 
       {isLoading ? (
@@ -121,8 +122,8 @@ export function ApprovalsView() {
       ) : pendingReports.length === 0 ? (
         <Card className="border-border/60">
           <CardContent className="py-12 text-center">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
-            <p className="text-sm font-medium text-muted-foreground">No reports pending approval</p>
+             <CheckCircle2 className="w-10 h-10 text-emerald-500/40 mx-auto mb-3" />
+             <p className="text-sm font-medium text-muted-foreground">{t("tr.noReportsPending")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -134,9 +135,9 @@ export function ApprovalsView() {
                 checked={selectedIds.size === pendingReports.length && pendingReports.length > 0}
                 onCheckedChange={toggleSelectAll}
               />
-              <span className="text-xs text-muted-foreground">
-                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
-              </span>
+               <span className="text-xs text-muted-foreground">
+                 {selectedIds.size > 0 ? `${selectedIds.size} ${t("tr.selected")}` : t("tr.selectAll")}
+               </span>
             </div>
             {selectedIds.size > 0 && (
               <Button
@@ -145,8 +146,8 @@ export function ApprovalsView() {
                 onClick={() => batchApproveMutation.mutate(Array.from(selectedIds))}
                 disabled={batchApproveMutation.isPending}
               >
-                <CheckSquare className="w-4 h-4 mr-1.5" />
-                Approve {selectedIds.size} Report{selectedIds.size !== 1 ? "s" : ""}
+                 <CheckSquare className="w-4 h-4 mr-1.5" />
+                 {t("tr.approveN")} {selectedIds.size} {t("tr.report")}{selectedIds.size !== 1 ? "s" : ""}
               </Button>
             )}
           </div>
@@ -189,8 +190,8 @@ export function ApprovalsView() {
                           className="h-9 sm:h-8"
                           onClick={() => setExpandedId(isExpanded ? null : report.id)}
                         >
-                          {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
-                          {isExpanded ? "Hide" : "Details"}
+                           {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}
+                           {isExpanded ? t("tr.hide") : t("tr.details")}
                         </Button>
                         <Button
                           variant="outline"
@@ -199,23 +200,23 @@ export function ApprovalsView() {
                           onClick={() => approveMutation.mutate({ reportId: report.id, approve: false })}
                           disabled={approveMutation.isPending}
                         >
-                          <XCircle className="w-4 h-4 mr-1" /> Return
-                        </Button>
+                           <XCircle className="w-4 h-4 mr-1" /> {t("tr.return")}
+                         </Button>
                         <Button
                           size="sm"
                           className="h-9 sm:h-8"
                           onClick={() => approveMutation.mutate({ reportId: report.id, approve: true })}
                           disabled={approveMutation.isPending}
                         >
-                          <CheckCircle2 className="w-4 h-4 mr-1" /> Approve
-                        </Button>
+                           <CheckCircle2 className="w-4 h-4 mr-1" /> {t("tr.approve")}
+                         </Button>
                       </div>
                     </div>
 
                     {/* Summary line */}
-                    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground ml-9">
-                      <span>Attendance: {attendanceCount} checked ({totalHours}h)</span>
-                      <span>Progress: {progressEntries.length} objects</span>
+                     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground ml-9">
+                       <span>{t("tr.attendance")}: {attendanceCount} ({totalHours}h)</span>
+                       <span>{t("tr.progressReporting")}: {progressEntries.length} {t("tr.object").toLowerCase()}s</span>
                     </div>
 
                     {/* Expanded details */}
@@ -223,7 +224,7 @@ export function ApprovalsView() {
                       <div className="mt-4 border-t border-border pt-3 space-y-4 ml-9">
                         {attendanceEntries.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold mb-2">Attendance</p>
+                           <p className="text-xs font-semibold mb-2">{t("tr.attendance")}</p>
                             <div className="space-y-1.5 sm:space-y-0">
                               {(() => {
                                 const byEmp: Record<string, { name: string; code: string; days: number; hours: number }> = {};
@@ -251,7 +252,7 @@ export function ApprovalsView() {
 
                         {progressEntries.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold mb-2">Object Progress</p>
+                             <p className="text-xs font-semibold mb-2">{t("tr.objectProgress")}</p>
                             <div className="space-y-1.5">
                               {progressEntries.map((pe: any) => (
                                 <div key={pe.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
@@ -273,7 +274,7 @@ export function ApprovalsView() {
 
                         {report.notes && (
                           <div>
-                            <p className="text-xs font-semibold mb-1">Notes</p>
+                             <p className="text-xs font-semibold mb-1">{t("tr.notes")}</p>
                             <p className="text-xs text-muted-foreground">{report.notes}</p>
                           </div>
                         )}
@@ -291,7 +292,7 @@ export function ApprovalsView() {
       {recentApprovals.length > 0 && (
         <Card className="border-border/60">
           <CardContent className="p-4 md:pt-6">
-            <h3 className="text-sm font-semibold mb-3">Recently Approved</h3>
+            <h3 className="text-sm font-semibold mb-3">{t("tr.recentlyApproved")}</h3>
             <div className="space-y-2">
               {recentApprovals.map((r: any) => (
                 <div key={r.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border/30">
@@ -301,7 +302,7 @@ export function ApprovalsView() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                      Approved
+                       {t("tr.approved")}
                     </Badge>
                     {r.approved_at && (
                       <span className="text-[10px] text-muted-foreground">

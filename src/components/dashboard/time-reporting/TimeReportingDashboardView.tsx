@@ -13,9 +13,11 @@ import { format, startOfWeek, subWeeks, getISOWeek } from "date-fns";
 
 interface TimeReportingDashboardViewProps {
   onNavigate: (view: string) => void;
+  t?: (key: string) => string;
 }
 
-export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboardViewProps) {
+export function TimeReportingDashboardView({ onNavigate, t: _t }: TimeReportingDashboardViewProps) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
 
   const { data: stats, isLoading } = useQuery({
@@ -123,9 +125,9 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Time & Status Reporting</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.title")}</h1>
         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Tid- & statusrapportering • Weekly attendance and project progress
+          {t("tr.subtitle")}
         </p>
       </div>
 
@@ -142,28 +144,28 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
-                      Week {stats.currentWeek} reports pending
-                    </p>
-                    <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-0.5">
-                      {stats.projectsWithoutReport.length} project{stats.projectsWithoutReport.length !== 1 ? "s" : ""} missing submitted report this week:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {stats.projectsWithoutReport.slice(0, 3).map((p: any) => (
-                        <Badge key={p.id} variant="outline" className="text-[10px] border-amber-500/40 bg-amber-100/50 dark:bg-amber-900/30">
-                          {p.project_id_display}
-                        </Badge>
-                      ))}
-                      {stats.projectsWithoutReport.length > 3 && (
-                        <Badge variant="outline" className="text-[10px] border-amber-500/40">
-                          +{stats.projectsWithoutReport.length - 3} more
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <Button size="sm" variant="outline" className="shrink-0 h-8 border-amber-500/40 text-amber-700 hover:bg-amber-100" onClick={() => onNavigate("weekly-attendance")}>
-                    Submit →
-                  </Button>
+                     <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">
+                       Week {stats.currentWeek} — {t("tr.weekReportsPending")}
+                     </p>
+                     <p className="text-xs text-amber-700/80 dark:text-amber-400/70 mt-0.5">
+                       {stats.projectsWithoutReport.length} {t("tr.projectsMissingReport")}
+                     </p>
+                     <div className="flex flex-wrap gap-1.5 mt-2">
+                       {stats.projectsWithoutReport.slice(0, 3).map((p: any) => (
+                         <Badge key={p.id} variant="outline" className="text-[10px] border-amber-500/40 bg-amber-100/50 dark:bg-amber-900/30">
+                           {p.project_id_display}
+                         </Badge>
+                       ))}
+                       {stats.projectsWithoutReport.length > 3 && (
+                         <Badge variant="outline" className="text-[10px] border-amber-500/40">
+                           +{stats.projectsWithoutReport.length - 3} {t("tr.more")}
+                         </Badge>
+                       )}
+                     </div>
+                   </div>
+                   <Button size="sm" variant="outline" className="shrink-0 h-8 border-amber-500/40 text-amber-700 hover:bg-amber-100" onClick={() => onNavigate("weekly-attendance")}>
+                     {t("tr.submit")} →
+                   </Button>
                 </div>
               </CardContent>
             </Card>
@@ -175,7 +177,7 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="w-4 h-4 text-primary" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Draft Reports</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.draftReports")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.draftCount || 0}</p>
               </CardContent>
@@ -184,7 +186,7 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertCircle className="w-4 h-4 text-amber-500" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Pending</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.pending")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.submittedCount || 0}</p>
               </CardContent>
@@ -193,7 +195,7 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Approved</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.approved")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.approvedCount || 0}</p>
               </CardContent>
@@ -202,7 +204,7 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-3 md:pt-4 md:pb-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Users className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-[11px] md:text-xs text-muted-foreground">Employees</span>
+                  <span className="text-[11px] md:text-xs text-muted-foreground">{t("tr.employees")}</span>
                 </div>
                 <p className="text-xl md:text-2xl font-bold text-foreground">{stats?.activeEmployees || 0}</p>
               </CardContent>
@@ -215,7 +217,7 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <BarChart3 className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Weekly Report Status (Last 8 Weeks)</h3>
+                  <h3 className="font-semibold text-sm">{t("tr.weeklyReportStatus")}</h3>
                 </div>
                 <div className="h-[140px] md:h-[160px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -231,15 +233,15 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
                 <div className="flex justify-center gap-4 mt-2">
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-2))" }} />
-                    Approved
+                    {t("tr.approved")}
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-4))" }} />
-                    Pending
+                    {t("tr.pending")}
                   </div>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                     <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "hsl(var(--chart-3))" }} />
-                    Draft
+                    {t("tr.draft")}
                   </div>
                 </div>
               </CardContent>
@@ -254,8 +256,8 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
                 <CardContent className="p-4 md:pt-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Users className="w-5 h-5 text-primary" />
-                    <h3 className="font-semibold text-sm">Top Hours This Year</h3>
-                  </div>
+                     <h3 className="font-semibold text-sm">{t("tr.topHoursThisYear")}</h3>
+                   </div>
                   <div className="space-y-2">
                     {stats.topPerformers.map((emp, i) => (
                       <div key={emp.id} className="flex items-center justify-between p-2 rounded-lg bg-accent/30 border border-border/40">
@@ -278,33 +280,33 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <LayoutDashboard className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Weekly Attendance</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Report daily attendance and hours for each team member per project.
-                </p>
-                <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
-                  Open Attendance →
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                   <h3 className="font-semibold text-sm">{t("tr.weeklyAttendance")}</h3>
+                 </div>
+                 <p className="text-xs text-muted-foreground mb-3">
+                   {t("tr.weeklyAttendanceDesc")}
+                 </p>
+                 <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
+                   {t("tr.openAttendance")} →
+                 </Button>
+               </CardContent>
+             </Card>
+           </div>
 
           {/* Progress reporting card */}
           <Card className="border-border/60 cursor-pointer hover:border-primary/40 active:scale-[0.99] transition-all" onClick={() => onNavigate("progress-reporting")}>
             <CardContent className="p-4 md:pt-6">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-sm">Progress Reporting</h3>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                Report completion % per object. Project manager sees project-level progress.
-              </p>
-              <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
-                Open Progress →
-              </Button>
-            </CardContent>
-          </Card>
+                 <h3 className="font-semibold text-sm">{t("tr.progressReporting")}</h3>
+               </div>
+               <p className="text-xs text-muted-foreground mb-3">
+                 {t("tr.progressReportingDesc")}
+               </p>
+               <Button size="sm" className="h-9 md:h-8 w-full md:w-auto">
+                 {t("tr.openProgress")} →
+               </Button>
+             </CardContent>
+           </Card>
 
           {/* Active projects */}
           {stats?.projects && stats.projects.length > 0 && (
@@ -312,8 +314,8 @@ export function TimeReportingDashboardView({ onNavigate }: TimeReportingDashboar
               <CardContent className="p-4 md:pt-6">
                 <div className="flex items-center gap-2 mb-3">
                   <FolderKanban className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-sm">Active Projects</h3>
-                </div>
+                   <h3 className="font-semibold text-sm">{t("tr.activeProjects")}</h3>
+                 </div>
                 <div className="space-y-2">
                   {stats.projects.map((p: any) => (
                     <div key={p.id} className="flex items-center justify-between p-2.5 md:p-2 rounded-lg bg-accent/30 border border-border/40">

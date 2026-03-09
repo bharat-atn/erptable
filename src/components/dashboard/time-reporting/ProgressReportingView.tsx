@@ -31,18 +31,19 @@ function getProgressBg(pct: number): string {
 }
 
 function getProgressBadge(pct: number) {
-  if (pct === 100) return { label: "Complete", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
-  if (pct >= 75) return { label: "On Track", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
-  if (pct >= 40) return { label: "In Progress", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
-  if (pct > 0) return { label: "Behind", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
-  return { label: "Not Started", className: "" };
+  if (pct === 100) return { label: "complete", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+  if (pct >= 75) return { label: "onTrack", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" };
+  if (pct >= 40) return { label: "inProgress", className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" };
+  if (pct > 0) return { label: "behind", className: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" };
+  return { label: "notStarted", className: "" };
 }
 
 function getWeekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
 
-export function ProgressReportingView() {
+export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -168,7 +169,7 @@ export function ProgressReportingView() {
       }
     },
     onSuccess: () => {
-      toast.success("Progress saved");
+      toast.success(t("tr.progressSaved"));
       setHasUnsavedChanges(false);
       queryClient.invalidateQueries({ queryKey: ["progress-report"] });
       queryClient.invalidateQueries({ queryKey: ["weekly-report"] });
@@ -198,8 +199,8 @@ export function ProgressReportingView() {
   return (
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4 pb-24 md:pb-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Progress Reporting</h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Framstegsrapportering • Report completion % per object</p>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.progressTitle")}</h1>
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">{t("tr.progressSub")}</p>
       </div>
 
       {/* Week + Project selector */}
@@ -219,7 +220,7 @@ export function ProgressReportingView() {
 
         <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
           <SelectTrigger className="w-full sm:w-[250px] h-10 sm:h-8 text-sm">
-            <SelectValue placeholder="Select project..." />
+            <SelectValue placeholder={t("tr.selectProject")} />
           </SelectTrigger>
           <SelectContent>
             {projects.map((p: any) => (
@@ -241,10 +242,10 @@ export function ProgressReportingView() {
           <Card className="border-border/60">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold">Project Completion</span>
+                <span className="text-sm font-semibold">{t("tr.projectCompletion")}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className={`text-[10px] ${getProgressBadge(Math.round(weightedProgress)).className}`}>
-                    {getProgressBadge(Math.round(weightedProgress)).label}
+                    {t(`tr.${getProgressBadge(Math.round(weightedProgress)).label}`)}
                   </Badge>
                   <span className={`text-lg font-bold ${getProgressColor(Math.round(weightedProgress))}`}>{Math.round(weightedProgress)}%</span>
                 </div>
@@ -255,7 +256,7 @@ export function ProgressReportingView() {
                   style={{ width: `${Math.min(weightedProgress, 100)}%` }}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1">Area-weighted across all objects</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{t("tr.areaWeighted")}</p>
             </CardContent>
           </Card>
 
@@ -263,7 +264,7 @@ export function ProgressReportingView() {
           {existingReport && (existingReport.progress_entries as any[])?.length > 0 && (
             <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
               <Info className="w-3.5 h-3.5 shrink-0" />
-              <span>Progress data loaded from saved report. Adjust sliders and save to update.</span>
+              <span>{t("tr.progressLoaded")}</span>
             </div>
           )}
 
@@ -272,8 +273,8 @@ export function ProgressReportingView() {
             <Card className="border-border/60">
               <CardContent className="py-12 text-center">
                 <MapPin className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No objects registered for this project.</p>
-                <p className="text-xs text-muted-foreground mt-1">Add objects in the Forestry Project Manager.</p>
+                <p className="text-sm text-muted-foreground">{t("tr.noObjects")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("tr.addObjectsHint")}</p>
               </CardContent>
             </Card>
           ) : isMobile ? (
@@ -329,7 +330,7 @@ export function ProgressReportingView() {
                       <Input
                         value={progress.notes}
                         onChange={(e) => updateNotes(obj.id, e.target.value)}
-                        placeholder="Notes..."
+                        placeholder={t("tr.notesPlaceholder")}
                         className="h-9 text-sm"
                       />
                     </CardContent>
@@ -344,11 +345,11 @@ export function ProgressReportingView() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[120px]">Object</TableHead>
+                      <TableHead className="min-w-[120px]">{t("tr.object")}</TableHead>
                       <TableHead>SLA</TableHead>
                       <TableHead className="text-right">Area (ha)</TableHead>
-                      <TableHead className="min-w-[200px]">Completion %</TableHead>
-                      <TableHead>Notes</TableHead>
+                      <TableHead className="min-w-[200px]">{t("tr.completionPct")}</TableHead>
+                      <TableHead>{t("tr.notes")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -386,7 +387,7 @@ export function ProgressReportingView() {
                             <Input
                               value={progress.notes}
                               onChange={(e) => updateNotes(obj.id, e.target.value)}
-                              placeholder="Notes..."
+                              placeholder={t("tr.notesPlaceholder")}
                               className="h-7 text-xs"
                             />
                           </TableCell>
@@ -408,7 +409,7 @@ export function ProgressReportingView() {
                 onClick={() => saveMutation.mutate(false)}
                 disabled={saveMutation.isPending || !hasUnsavedChanges}
               >
-                <Save className="w-4 h-4 mr-1.5" /> Save Progress
+                <Save className="w-4 h-4 mr-1.5" /> {t("tr.saveProgress")}
               </Button>
               {hasUnsavedChanges && (
                 <span className="text-xs text-amber-600">Unsaved</span>

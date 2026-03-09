@@ -6,6 +6,7 @@ import { ProgressReportingView } from "./ProgressReportingView";
 import { ApprovalsView } from "./ApprovalsView";
 import { TimeReportingProcessGuideView } from "./TimeReportingProcessGuideView";
 import { TimeReportingBottomNav } from "./TimeReportingBottomNav";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 interface TimeReportingMobileAppProps {
   onBackToLauncher?: () => void;
@@ -13,15 +14,16 @@ interface TimeReportingMobileAppProps {
 
 export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobileAppProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { lang, setLang, t } = useUiLanguage();
 
   const renderView = () => {
     switch (activeTab) {
-      case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveTab} />;
-      case "weekly-attendance": return <WeeklyAttendanceView />;
-      case "progress-reporting": return <ProgressReportingView />;
-      case "approvals": return <ApprovalsView />;
-      case "guide": return <TimeReportingProcessGuideView />;
-      default: return <TimeReportingDashboardView onNavigate={setActiveTab} />;
+      case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveTab} t={t} />;
+      case "weekly-attendance": return <WeeklyAttendanceView t={t} />;
+      case "progress-reporting": return <ProgressReportingView t={t} />;
+      case "approvals": return <ApprovalsView t={t} />;
+      case "guide": return <TimeReportingProcessGuideView t={t} />;
+      default: return <TimeReportingDashboardView onNavigate={setActiveTab} t={t} />;
     }
   };
 
@@ -37,9 +39,9 @@ export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobile
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Apps</span>
+            <span>{t("tr.apps")}</span>
           </button>
-          <span className="text-sm font-semibold text-foreground">Time & Status</span>
+          <span className="text-sm font-semibold text-foreground">{t("tr.appTitle")}</span>
           <div className="w-14" />
         </div>
 
@@ -49,7 +51,7 @@ export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobile
         </div>
 
         {/* Bottom navigation */}
-        <TimeReportingBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+        <TimeReportingBottomNav activeTab={activeTab} onTabChange={setActiveTab} t={t} />
       </div>
     </div>
   );

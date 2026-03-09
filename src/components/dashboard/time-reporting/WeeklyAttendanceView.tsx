@@ -27,8 +27,8 @@ function getWeekDays(weekStart: Date, includeSaturday: boolean): Date[] {
   return Array.from({ length: includeSaturday ? 6 : 5 }, (_, i) => addDays(weekStart, i));
 }
 
-const DAY_LABELS_5 = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const DAY_LABELS_6 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS_5 = ["tr.mon", "tr.tue", "tr.wed", "tr.thu", "tr.fri"];
+const DAY_KEYS_6 = ["tr.mon", "tr.tue", "tr.wed", "tr.thu", "tr.fri", "tr.sat"];
 
 interface AttendanceEntry {
   worked: boolean;
@@ -38,7 +38,8 @@ interface AttendanceEntry {
 
 const DEFAULT_HOURS = 8;
 
-export function WeeklyAttendanceView() {
+export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string }) {
+  const t = _t || ((k: string) => k);
   const { orgId } = useOrg();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -51,7 +52,7 @@ export function WeeklyAttendanceView() {
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
   const weekDays = getWeekDays(currentWeekStart, includeSaturday);
-  const DAY_LABELS = includeSaturday ? DAY_LABELS_6 : DAY_LABELS_5;
+  const DAY_KEYS = includeSaturday ? DAY_KEYS_6 : DAY_KEYS_5;
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
@@ -201,7 +202,7 @@ export function WeeklyAttendanceView() {
       .maybeSingle();
 
     if (!prevReport?.attendance_entries || (prevReport.attendance_entries as any[]).length === 0) {
-      toast.error("No attendance data found for previous week");
+      toast.error(t("tr.noPrevWeekData"));
       return;
     }
 
@@ -222,7 +223,7 @@ export function WeeklyAttendanceView() {
     });
 
     setLocalAttendance(newAttendance);
-    toast.success("Copied attendance from previous week");
+    toast.success(t("tr.copiedFromPrev"));
   };
 
   // Save/update report
@@ -288,7 +289,7 @@ export function WeeklyAttendanceView() {
       }
     },
     onSuccess: (_, submit) => {
-      toast.success(submit ? "Report submitted for approval" : "Draft saved");
+      toast.success(submit ? t("tr.reportSubmitted") : t("tr.draftSaved"));
       queryClient.invalidateQueries({ queryKey: ["weekly-report"] });
       queryClient.invalidateQueries({ queryKey: ["time-reporting-stats"] });
     },
@@ -374,7 +375,7 @@ export function WeeklyAttendanceView() {
                     className="h-5 w-5"
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium">{DAY_LABELS[i]}</span>
+                    <span className="text-sm font-medium">{t(DAY_KEYS[i])}</span>
                     <span className="text-xs text-muted-foreground ml-1.5">{format(day, "d/M")}</span>
                   </div>
                   {checked && (
@@ -437,7 +438,7 @@ export function WeeklyAttendanceView() {
                 return (
                   <TableHead key={i} className="text-center min-w-[90px]">
                     <div className="flex flex-col items-center gap-0.5">
-                      <span className="text-[10px] text-muted-foreground">{DAY_LABELS[i]}</span>
+                      <span className="text-[10px] text-muted-foreground">{t(DAY_KEYS[i])}</span>
                       <span className="text-xs font-semibold">{format(day, "d/M")}</span>
                       {!isSubmitted && (
                         <Button
@@ -561,9 +562,9 @@ export function WeeklyAttendanceView() {
     <div className="space-y-4 md:space-y-6 pt-2 md:pt-4 pb-24 md:pb-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Weekly Attendance</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("tr.weeklyAttendanceTitle")}</h1>
         <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Veckovis närvaro • Report hours per employee per day
+          {t("tr.weeklyAttendanceSub")}
         </p>
       </div>
 
@@ -584,7 +585,7 @@ export function WeeklyAttendanceView() {
 
         <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
           <SelectTrigger className="w-full sm:w-[250px] h-10 sm:h-8 text-sm">
-            <SelectValue placeholder="Select project..." />
+            <SelectValue placeholder={t("tr.selectProject")} />
           </SelectTrigger>
           <SelectContent>
             {projects.map((p: any) => (
@@ -606,7 +607,7 @@ export function WeeklyAttendanceView() {
           )}
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
             <Clock className="w-3.5 h-3.5" />
-            <span>Standard: <span className="font-semibold text-foreground">{projectDailyHours}h/day</span></span>
+            <span>{t("tr.standard")}: <span className="font-semibold text-foreground">{projectDailyHours}h</span></span>
           </div>
         </div>
       </div>
@@ -615,19 +616,19 @@ export function WeeklyAttendanceView() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2 text-xs">
           <Switch checked={includeSaturday} onCheckedChange={setIncludeSaturday} id="sat-toggle" />
-          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">Include Saturday</label>
+          <label htmlFor="sat-toggle" className="cursor-pointer text-muted-foreground">{t("tr.includeSaturday")}</label>
         </div>
         {!isSubmitted && teamMembers.length > 0 && (
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={copyFromPreviousWeek}>
             <Copy className="w-3.5 h-3.5 mr-1.5" />
-            Copy from Previous Week
+            {t("tr.copyFromPrevWeek")}
           </Button>
         )}
         {/* Overtime warning */}
         {grandTotalHours > teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours && (
           <div className="flex items-center gap-1.5 text-xs text-amber-600">
             <AlertTriangle className="w-3.5 h-3.5" />
-            Overtime detected ({grandTotalHours}h / expected {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
+            {t("tr.overtimeDetected")} ({grandTotalHours}h / {teamMembers.length * (includeSaturday ? 6 : 5) * projectDailyHours}h)
           </div>
         )}
       </div>
@@ -637,8 +638,8 @@ export function WeeklyAttendanceView() {
         <Card className="border-border/60">
           <CardContent className="py-12 text-center">
             <Users className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">No team members assigned to this project.</p>
-            <p className="text-xs text-muted-foreground mt-1">Assign employees in the Forestry Project Manager first.</p>
+            <p className="text-sm text-muted-foreground">{t("tr.noTeamMembers")}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("tr.assignFirst")}</p>
           </CardContent>
         </Card>
       ) : (
@@ -651,7 +652,7 @@ export function WeeklyAttendanceView() {
               <Card className="border-primary/30 bg-primary/5">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">Total Hours</span>
+                   <span className="text-sm font-semibold text-foreground">{t("tr.totalHours")}</span>
                     <span className="text-lg font-bold text-primary">{grandTotalHours}h</span>
                   </div>
                 </CardContent>
@@ -667,11 +668,11 @@ export function WeeklyAttendanceView() {
       {teamMembers.length > 0 && (
         <Card className="border-border/60">
           <CardContent className="p-4 md:pt-4">
-            <label className="text-sm font-medium mb-1.5 block">Report Notes (optional)</label>
+            <label className="text-sm font-medium mb-1.5 block">{t("tr.reportNotes")}</label>
             <Textarea
               value={reportNotes}
               onChange={(e) => setReportNotes(e.target.value)}
-              placeholder="Any general notes for this week's report..."
+              placeholder={t("tr.reportNotesPlaceholder")}
               className="text-sm resize-none"
               rows={2}
               disabled={isSubmitted}
@@ -690,7 +691,7 @@ export function WeeklyAttendanceView() {
             disabled={saveMutation.isPending}
           >
             <Save className="w-4 h-4 mr-1.5" />
-            Save Draft
+            {t("tr.saveDraft")}
           </Button>
           <Button
             className="flex-1 md:flex-none h-12 md:h-9"
@@ -698,7 +699,7 @@ export function WeeklyAttendanceView() {
             disabled={saveMutation.isPending}
           >
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Send className="w-4 h-4 mr-1.5" />}
-            Submit Report
+            {t("tr.submitReport")}
           </Button>
         </div>
       )}
