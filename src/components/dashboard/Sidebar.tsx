@@ -199,6 +199,7 @@ const timeReportingSettingsItems: MenuItem[] = [
 { id: "settings", label: "Settings", icon: Settings }];
 
 const timeReportingAuditItems: MenuItem[] = [
+{ id: "process-guide", label: "Process Guide", icon: BookOpen },
 { id: "audit-log", label: "Audit Log", icon: Shield }];
 
 
@@ -1069,7 +1070,7 @@ export function Sidebar({ activeView, onViewChange, activeScreenSize, onScreenSi
         return items.filter((item) => defaultSet.has(item.id));
       }
     }
-    return items.filter((item) => allowedItems.has(item.id));
+    return items.filter((item) => item.id === "process-guide" || allowedItems.has(item.id));
   };
 
   const filteredMenuItems = filterByPermission(menuItems);
