@@ -106,17 +106,9 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
-    // Employee Hub views
+    // Employee Hub — standalone mobile app, rendered outside normal shell
     if (appId === "employee-hub") {
-      switch (activeView) {
-        case "dashboard": return <EmployeeHubDashboardView />;
-        case "my-profile": return <EmployeeHubProfileView />;
-        case "my-contracts": return <EmployeeHubContractView />;
-        case "my-schedule": return <EmployeeHubScheduleView />;
-        case "my-payslips": return <EmployeeHubPayslipsView />;
-        case "leave-requests": return <EmployeeHubLeaveView />;
-        default: return <EmployeeHubDashboardView />;
-      }
+      return null; // handled by top-level early return below
     }
 
     // Time & Status Reporting views
