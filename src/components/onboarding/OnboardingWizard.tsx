@@ -547,6 +547,41 @@ export function OnboardingWizard({
   const [s3Open, setS3Open] = useState(true);
   const [s4Open, setS4Open] = useState(true);
   const [s5Open, setS5Open] = useState(true);
+
+  /* ─── Hybrid bank selection state (native selects, no Radix) ─── */
+  const BANK_COUNTRIES = Object.keys(FALLBACK_BANKS_BY_COUNTRY); // Sweden, Romania, Thailand, Moldova, Ukraine
+  const [bankCountryKey, setBankCountryKey] = useState<string>("");
+  const [isManualBank, setIsManualBank] = useState(false);
+
+  // Derive available banks for selected country
+  const availableBanks = bankCountryKey ? (FALLBACK_BANKS_BY_COUNTRY[bankCountryKey] || []) : [];
+
+  const handleBankCountryChange = (country: string) => {
+    setBankCountryKey(country);
+    setIsManualBank(false);
+    updateField("bankName", "");
+    updateField("bicCode", "");
+  };
+
+  const handleBankSelect = (bankName: string) => {
+    if (bankName === "__other__") {
+      setIsManualBank(true);
+      updateField("bankName", "");
+      updateField("bicCode", "");
+      return;
+    }
+    updateField("bankName", bankName);
+    const bank = availableBanks.find(b => b.name === bankName);
+    if (bank?.bic_code) updateField("bicCode", bank.bic_code);
+  };
+
+  const handleBankReset = () => {
+    setBankCountryKey("");
+    setIsManualBank(false);
+    updateField("bankName", "");
+    updateField("bicCode", "");
+    updateField("bankAccountNumber", "");
+  };
   const [validationAttempted, setValidationAttempted] = useState(false);
 
   /* ─── AI inline validation state ─── */
