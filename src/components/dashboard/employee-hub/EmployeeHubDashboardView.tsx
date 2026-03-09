@@ -315,7 +315,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
           ) : (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
               <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">Off duty</span>
+              <span className="text-sm font-medium">{t("hub.offDuty")}</span>
             </div>
           )}
         </div>
