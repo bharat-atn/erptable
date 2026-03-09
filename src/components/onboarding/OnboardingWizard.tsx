@@ -661,9 +661,18 @@ export function OnboardingWizard({
   // Sync local bank fields when parent clears them (e.g. toggling "Other bank")
   useEffect(() => {
     if (!formData.bicCode && bicValue) setBicValue("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bicCode]);
+
+  useEffect(() => {
     if (!formData.bankAccountNumber && bankAccountValue) setBankAccountValue("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bankAccountNumber]);
+
+  useEffect(() => {
     if (!formData.bankName && selectedBankValue) setSelectedBankValue("");
-  }, [formData.bicCode, formData.bankAccountNumber, formData.bankName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.bankName]);
 
   /* ─── AI inline validation state ─── */
   type FieldValidation = { valid: boolean | null; message: string };
