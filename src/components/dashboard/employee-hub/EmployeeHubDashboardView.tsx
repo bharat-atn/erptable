@@ -38,12 +38,12 @@ function formatElapsed(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function LocationBadge({ location, zones }: { location: GeoLocation | null; zones: GeofenceZone[] }) {
+function LocationBadge({ location, zones, t }: { location: GeoLocation | null; zones: GeofenceZone[]; t?: (key: string) => string }) {
   if (!location) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3">
         <Wifi className="w-4 h-4 shrink-0 opacity-40" />
-        <span>Location not captured yet</span>
+        <span>{t ? t("hub.locationNotCaptured") : "Location not captured yet"}</span>
       </div>
     );
   }
@@ -97,7 +97,7 @@ function LocationBadge({ location, zones }: { location: GeoLocation | null; zone
   );
 }
 
-function TimeEntryRow({ entry }: { entry: TimeEntry }) {
+function TimeEntryRow({ entry, t }: { entry: TimeEntry; t: (key: string) => string }) {
   const isIn = entry.type === "clock_in";
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30">
@@ -113,11 +113,11 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold">{isIn ? "Clock In" : "Clock Out"}</p>
+        <p className="text-sm font-semibold">{isIn ? t("hub.clockIn") : t("hub.clockOut")}</p>
         <p className="text-[10px] text-muted-foreground">
           {entry.timestamp.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           {entry.location && (
-            <span className="ml-1">• {entry.insideGeofence ? "✅ In area" : "⚠️ Outside area"}</span>
+            <span className="ml-1">• {entry.insideGeofence ? `✅ ${t("hub.inArea")}` : `⚠️ ${t("hub.outsideArea")}`}</span>
           )}
         </p>
       </div>
@@ -128,7 +128,11 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
   );
 }
 
-export function EmployeeHubDashboardView() {
+interface EmployeeHubDashboardViewProps {
+  t: (key: string) => string;
+}
+
+export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
   const { requestLocation } = useGeolocation();
   const { orgId } = useOrg();
 
@@ -263,7 +267,7 @@ export function EmployeeHubDashboardView() {
 
   const handleSubmit = async () => {
     if (!photos.selfie || !photos.environment) {
-      toast.error("Please capture both photos before submitting.");
+      toast.error(t("hub.capturePhotos"));
       return;
     }
 
@@ -281,11 +285,11 @@ export function EmployeeHubDashboardView() {
 
     if (dialogMode === "in") {
       toast.success(
-        insideGeofence === false ? "Clocked in (outside work area — flagged for review)" : "Clocked in successfully!",
+        insideGeofence === false ? t("hub.clockedInOutside") : t("hub.clockedInSuccess"),
         { duration: 3000 }
       );
     } else {
-      toast.success("Clocked out successfully!");
+      toast.success(t("hub.clockedOutSuccess"));
     }
 
     setDialogOpen(false);
@@ -306,12 +310,12 @@ export function EmployeeHubDashboardView() {
           {isClockedIn ? (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
               <Activity className="w-4 h-4 animate-pulse" />
-              <span className="text-sm font-medium">On duty • {elapsed}</span>
+              <span className="text-sm font-medium">{t("hub.onDuty")} • {elapsed}</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
               <Clock className="w-4 h-4" />
-              <span className="text-sm font-medium">Off duty</span>
+              <span className="text-sm font-medium">{t("hub.offDuty")}</span>
             </div>
           )}
         </div>
@@ -325,7 +329,7 @@ export function EmployeeHubDashboardView() {
             className="w-28 h-28 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1.5 ring-4 ring-emerald-600/20"
           >
             <LogIn className="w-7 h-7" />
-            <span className="text-xs font-bold">Clock In</span>
+            <span className="text-xs font-bold">{t("hub.clockIn")}</span>
           </button>
         ) : (
           <button
@@ -333,7 +337,7 @@ export function EmployeeHubDashboardView() {
             className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-2xl active:scale-95 transition-transform flex flex-col items-center justify-center gap-1.5 ring-4 ring-rose-600/20"
           >
             <LogOut className="w-7 h-7" />
-            <span className="text-xs font-bold">Clock Out</span>
+            <span className="text-xs font-bold">{t("hub.clockOut")}</span>
           </button>
         )}
       </div>
@@ -341,19 +345,19 @@ export function EmployeeHubDashboardView() {
       {/* Today's schedule */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Clock className="w-4 h-4" /> Today's Schedule
+          <Clock className="w-4 h-4" /> {t("hub.todaySchedule")}
         </h3>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
-            <p className="text-[10px] text-muted-foreground mb-1">Start</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("hub.start")}</p>
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">06:30</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
-            <p className="text-[10px] text-muted-foreground mb-1">End</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("hub.end")}</p>
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">17:00</p>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
-            <p className="text-[10px] text-muted-foreground mb-1">Worked</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{t("hub.worked")}</p>
             <p className="text-xl font-bold text-emerald-700 dark:text-emerald-500">
               {isClockedIn ? formatElapsed(todayWorkedMs) : "0h"}
             </p>
@@ -363,15 +367,15 @@ export function EmployeeHubDashboardView() {
 
       {/* Quick Actions */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
-        <h3 className="font-bold text-sm mb-3 text-emerald-700 dark:text-emerald-500">Quick Actions</h3>
+        <h3 className="font-bold text-sm mb-3 text-emerald-700 dark:text-emerald-500">{t("hub.quickActions")}</h3>
         <div className="grid grid-cols-3 gap-3">
           <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
             <Calendar className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-medium text-center">Schedule</span>
+            <span className="text-[10px] font-medium text-center">{t("hub.nav.schedule")}</span>
           </button>
           <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
             <FileText className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-medium text-center">Contracts</span>
+            <span className="text-[10px] font-medium text-center">{t("hub.nav.contract")}</span>
           </button>
           <button
             onClick={async () => {
@@ -383,7 +387,7 @@ export function EmployeeHubDashboardView() {
             className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95"
           >
             <MapPin className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-medium text-center">My Location</span>
+            <span className="text-[10px] font-medium text-center">{t("hub.myLocation")}</span>
           </button>
         </div>
       </div>
@@ -391,18 +395,18 @@ export function EmployeeHubDashboardView() {
       {/* Recent Activity */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Activity className="w-4 h-4" /> Today's Activity
+          <Activity className="w-4 h-4" /> {t("hub.todayActivity")}
         </h3>
         {todayEntries.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-20" />
-            <p className="text-xs">No time entries recorded today</p>
-            <p className="text-[10px] mt-0.5 opacity-60">Clock in to start recording</p>
+            <p className="text-xs">{t("hub.noEntries")}</p>
+            <p className="text-[10px] mt-0.5 opacity-60">{t("hub.clockInToStart")}</p>
           </div>
         ) : (
           <div className="space-y-2">
             {todayEntries.map((entry) => (
-              <TimeEntryRow key={entry.id} entry={entry} />
+              <TimeEntryRow key={entry.id} entry={entry} t={t} />
             ))}
           </div>
         )}
@@ -421,23 +425,23 @@ export function EmployeeHubDashboardView() {
         <DialogContent className="max-w-md w-[calc(100vw-2rem)] rounded-3xl border-2 border-emerald-600/20">
           <DialogHeader>
             <DialogTitle className="text-base text-emerald-700 dark:text-emerald-500">
-              {dialogMode === "in" ? "Clock In — Stämpla in" : "Clock Out — Stämpla ut"}
+              {dialogMode === "in" ? t("hub.clockInTitle") : t("hub.clockOutTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Take a selfie and a photo of your work environment. Your GPS location is captured automatically.
+              {t("hub.photoInstructions")}
             </p>
 
             {/* Location status in dialog */}
             {locationFetching ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3 animate-pulse">
                 <Navigation className="w-4 h-4 animate-spin" />
-                <span>Acquiring GPS location…</span>
+                <span>{t("hub.acquiringGps")}</span>
               </div>
             ) : (
-              <LocationBadge location={capturedLocation} zones={worksiteZones} />
+              <LocationBadge location={capturedLocation} zones={worksiteZones} t={t} />
             )}
 
             {/* Camera preview */}
@@ -453,7 +457,7 @@ export function EmployeeHubDashboardView() {
                   </button>
                 </div>
                 <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                  {activeCamera === "selfie" ? "📸 Selfie" : "🏞️ Environment"}
+                  {activeCamera === "selfie" ? `📸 ${t("hub.selfie")}` : `🏞️ ${t("hub.environment")}`}
                 </div>
               </div>
             )}
@@ -474,7 +478,7 @@ export function EmployeeHubDashboardView() {
                 ) : (
                   <div className="text-center p-2">
                     <Camera className="w-8 h-8 mx-auto text-emerald-600/40 mb-1" />
-                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">Selfie</p>
+                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">{t("hub.selfie")}</p>
                   </div>
                 )}
               </button>
@@ -493,7 +497,7 @@ export function EmployeeHubDashboardView() {
                 ) : (
                   <div className="text-center p-2">
                     <Image className="w-8 h-8 mx-auto text-emerald-600/40 mb-1" />
-                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">Environment</p>
+                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">{t("hub.environment")}</p>
                   </div>
                 )}
               </button>
@@ -509,14 +513,14 @@ export function EmployeeHubDashboardView() {
                 setDialogOpen(false);
               }}
             >
-              Cancel
+              {t("hub.cancel")}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={!photos.selfie || !photos.environment}
               className={`h-12 sm:h-10 rounded-xl ${dialogMode === "in" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
             >
-              {dialogMode === "in" ? "Confirm Clock In" : "Confirm Clock Out"}
+              {dialogMode === "in" ? t("hub.confirmClockIn") : t("hub.confirmClockOut")}
             </Button>
           </DialogFooter>
         </DialogContent>
