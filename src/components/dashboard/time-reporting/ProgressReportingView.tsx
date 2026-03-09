@@ -308,7 +308,7 @@ export function ProgressReportingView() {
                           step={5}
                           className="flex-1"
                         />
-                        <span className="text-sm font-bold w-12 text-right">{progress.pct}%</span>
+                        <span className={`text-sm font-bold w-12 text-right ${getProgressColor(progress.pct)}`}>{progress.pct}%</span>
                       </div>
 
                       {/* Quick % buttons */}
