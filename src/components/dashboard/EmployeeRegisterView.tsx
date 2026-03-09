@@ -183,7 +183,28 @@ export function EmployeeRegisterView() {
     queryFn: async () => {
       const { data, error } = await supabase.from("employees").select("*").eq("org_id", orgId!).in("status", ["ACTIVE", "INACTIVE"]).order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) return [] as Employee[];
+
+      // Fetch latest contract form_data for each employee to determine SINK status
+      const employeeIds = data.map((e) => e.id);
+      const { data: contracts } = await supabase
+        .from("contracts")
+        .select("employee_id, form_data")
+        .in("employee_id", employeeIds)
+        .order("updated_at", { ascending: false });
+
+      // Build a map: employee_id -> sinkEnabled (from the latest contract)
+      const sinkMap = new Map<string, boolean>();
+      if (contracts) {
+        for (const c of contracts) {
+          if (!sinkMap.has(c.employee_id)) {
+            const fd = c.form_data as Record<string, any> | null;
+            sinkMap.set(c.employee_id, !!fd?.sinkEnabled);
+          }
+        }
+      }
+
+      return data.map((e) => ({ ...e, sink_tax: sinkMap.get(e.id) ?? false })) as Employee[];
     },
   });
 
