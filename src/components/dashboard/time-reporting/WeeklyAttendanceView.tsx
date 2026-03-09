@@ -351,7 +351,7 @@ export function WeeklyAttendanceView() {
                   )}
                   {!checked && <span className="text-xs text-muted-foreground w-16 text-center">—</span>}
                   {!isSubmitted && (
-                    <Popover>
+                    <Popover modal={true}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="ghost"
@@ -361,12 +361,13 @@ export function WeeklyAttendanceView() {
                           <MessageSquare className="w-4 h-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-60 p-2" side="left">
+                      <PopoverContent className="w-64 p-2" side="top" align="end">
                         <Input
                           value={entry?.note || ""}
                           onChange={(e) => updateNote(member.employeeId, dateStr, e.target.value)}
                           placeholder="Note (e.g. sick, half day)..."
-                          className="h-8 text-xs"
+                          className="h-9 text-sm"
+                          autoFocus
                         />
                       </PopoverContent>
                     </Popover>
