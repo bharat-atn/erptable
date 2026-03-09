@@ -146,8 +146,8 @@ export function ApprovalsView({ t: _t }: { t?: (key: string) => string }) {
                 onClick={() => batchApproveMutation.mutate(Array.from(selectedIds))}
                 disabled={batchApproveMutation.isPending}
               >
-                <CheckSquare className="w-4 h-4 mr-1.5" />
-                Approve {selectedIds.size} Report{selectedIds.size !== 1 ? "s" : ""}
+                 <CheckSquare className="w-4 h-4 mr-1.5" />
+                 {t("tr.approveN")} {selectedIds.size} {t("tr.report")}{selectedIds.size !== 1 ? "s" : ""}
               </Button>
             )}
           </div>
