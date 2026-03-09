@@ -50,39 +50,34 @@ export function EmployeeHubScheduleView() {
   const holidays = schedules.filter((s: any) => s.day_type === "Holiday").length;
 
   return (
-    <div className="space-y-5 px-1 pt-3 pb-8 max-w-lg mx-auto">
-      <h1 className="text-xl font-bold px-2">My Schedule — Mitt schema</h1>
+    <div className="space-y-5 px-2 pt-2 pb-24 max-w-lg mx-auto">
+      <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-3xl p-5 text-white shadow-xl mb-6">
+        <h1 className="text-2xl font-bold">My Schedule</h1>
+        <p className="text-sm text-white/80">Mitt schema</p>
+      </div>
 
       {/* Summary cards — 2x2 grid for mobile */}
-      <div className="grid grid-cols-2 gap-3 px-2">
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Calendar className="w-5 h-5 mx-auto text-primary mb-1" />
-            <p className="text-2xl font-bold">{schedules.length}</p>
-            <p className="text-[10px] text-muted-foreground">Total Days</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Clock className="w-5 h-5 mx-auto text-emerald-600 mb-1" />
-            <p className="text-2xl font-bold">{workdays}</p>
-            <p className="text-[10px] text-muted-foreground">Workdays</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Sun className="w-5 h-5 mx-auto text-amber-600 mb-1" />
-            <p className="text-2xl font-bold">{holidays}</p>
-            <p className="text-[10px] text-muted-foreground">Holidays</p>
-          </CardContent>
-        </Card>
-        <Card className="border-border/60">
-          <CardContent className="pt-4 pb-3 text-center">
-            <Clock className="w-5 h-5 mx-auto text-blue-600 mb-1" />
-            <p className="text-2xl font-bold">{totalHours.toFixed(0)}</p>
-            <p className="text-[10px] text-muted-foreground">Total Hours</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-4 text-center shadow-sm">
+          <Calendar className="w-6 h-6 mx-auto text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-emerald-600">{schedules.length}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Total Days</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-4 text-center shadow-sm">
+          <Clock className="w-6 h-6 mx-auto text-emerald-600 mb-2" />
+          <p className="text-2xl font-bold text-emerald-600">{workdays}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Workdays</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-amber-600/20 p-4 text-center shadow-sm">
+          <Sun className="w-6 h-6 mx-auto text-amber-600 mb-2" />
+          <p className="text-2xl font-bold text-amber-600">{holidays}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Holidays</p>
+        </div>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-blue-600/20 p-4 text-center shadow-sm">
+          <Clock className="w-6 h-6 mx-auto text-blue-600 mb-2" />
+          <p className="text-2xl font-bold text-blue-600">{totalHours.toFixed(0)}</p>
+          <p className="text-[10px] text-muted-foreground mt-1">Total Hours</p>
+        </div>
       </div>
 
       {/* Schedule — card list instead of table for mobile */}
