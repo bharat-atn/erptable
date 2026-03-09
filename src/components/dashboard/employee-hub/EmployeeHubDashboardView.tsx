@@ -345,7 +345,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
       {/* Today's schedule */}
       <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
         <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
-          <Clock className="w-4 h-4" /> Today's Schedule
+          <Clock className="w-4 h-4" /> {t("hub.todaySchedule")}
         </h3>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20">
