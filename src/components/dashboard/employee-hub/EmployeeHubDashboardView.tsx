@@ -267,7 +267,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
 
   const handleSubmit = async () => {
     if (!photos.selfie || !photos.environment) {
-      toast.error("Please capture both photos before submitting.");
+      toast.error(t("hub.capturePhotos"));
       return;
     }
 
