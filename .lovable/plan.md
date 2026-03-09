@@ -1,38 +1,59 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Diagnosis: Why the crash keeps coming back
 
-### Root Cause
+The white-screen crash is caused by **Radix UI Portal components** (`Select`, `Popover`, `SearchableCountrySelect`) in the bank section. When the user toggles between "listed bank" and "other bank" modes, multiple Radix components mount/unmount simultaneously, triggering a React DOM reconciliation error (`removeChild` on a node that no longer exists in the tree). Every previous fix attempted to patch timing or state flow, but the fundamental issue is **Radix Portals in a conditionally-rendered section**.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+The current codebase (preview) already has a simplified text-only bank input. But you want the hybrid UX back (list first, manual fallback). The plan below rebuilds this using **zero Radix components** in the bank section.
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+## Plan: Hybrid bank UX with zero Radix components
 
-**1. Replace generic message with specific missing-condition checklist**
+### Architecture
+```text
+Bank section (always rendered, never conditionally mounted):
+  1. Native <select> for bank country (SE/RO/TH/UA/MD/Other)
+  2. Native <select> for bank name (populated from FALLBACK_BANKS_BY_COUNTRY)
+     - Auto-fills BIC when a listed bank is selected
+     - Last option: "Other / Not in list" → switches to manual text input
+  3. OR plain <input> for manual bank name (when "Other" selected or country has no list)
+  4. Plain <input> for BIC code (always visible, always editable)
+  5. Plain <input> for bank account number (always visible)
+  
+  Reset: A small "Clear selection" link resets bank country + name to empty.
+  
+  No Radix Select. No Radix Popover. No SearchableCountrySelect.
+  No conditional mount/unmount of interactive components.
+```
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+### File: `src/components/onboarding/OnboardingWizard.tsx`
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+1. **Add local state** for bank flow (inside the wizard, not as props):
+   - `bankCountryKey` — selected country key for bank (string, e.g. "Sweden")
+   - `isManualBank` — boolean, true when user picks "Other" from bank list or country has no predefined banks
 
-This tells the user exactly what's blocking them.
+2. **Replace the current bank section** (lines ~1097-1155) with:
+   - A native `<select>` for bank country with priority countries (Sweden, Romania, Thailand, Ukraine, Moldova) + "Other country"
+   - A native `<select>` for bank name, populated from `FALLBACK_BANKS_BY_COUNTRY[bankCountryKey]`, with a final "Other / Not in list" option
+   - When a listed bank is selected: auto-fill `bicCode` via `updateField`, set `bankName`
+   - When "Other" is selected or country has no list: show a plain `<input>` for `bankName`
+   - A small "Reset" text button to clear all bank selections
+   - Keep existing BIC and Account Number `<Input>` fields unchanged
 
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
+3. **Update `s4Missing` validation** to require `bankName` regardless of flow path.
 
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
+4. **Update AI fill handler** (`handleAiFill`): set `bankCountryKey` and `isManualBank` based on AI-generated data so the UI reflects the filled state without triggering portal mounts.
 
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
+5. **No changes to props/interfaces** — `OnboardingWizardProps` stays the same. All bank state is local to the wizard.
 
-**3. Add scroll-to-schedule link in the checklist**
+### Files NOT changed
+- `OnboardingPreview.tsx` — no prop changes needed
+- `SubmissionViewDialog.tsx` — no prop changes needed  
+- `OnboardingPortal.tsx` — no changes needed
+- `searchable-country-select.tsx` — not used in bank section anymore
 
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+### Why this will not crash
+- Native `<select>` elements have no Portal, no animation, no Presence component
+- No conditional mounting of interactive Radix components
+- All state transitions are simple string assignments with no cascading effects
+- The bank country select and bank name select are always in the DOM (just with different `<option>` sets)
 
