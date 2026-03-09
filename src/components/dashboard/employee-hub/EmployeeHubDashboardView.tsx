@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone } from "./useGeolocation";
 import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
 import { useWorksiteGeofence } from "./useWorksiteGeofence";
+import { CameraPermissionHelp } from "./CameraPermissionHelp";
 
 const DEFAULT_WORKSITE_RADIUS_METERS = 250;
 
