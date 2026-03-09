@@ -1250,24 +1250,22 @@ export function OnboardingWizard({
                 <SearchableCountrySelect
                   value={selectedBankCountry}
                   onValueChange={(val) => {
-                    // Clear local state first to prevent stale renders
                     setSelectedBankCountry(val);
                     setSelectedBankValue("");
                     setBicValue("");
                     setBankAccountValue("");
 
-                    // Then notify parent
-                    onBankSelect(val === "__other__" ? "other" : "");
+                    requestAnimationFrame(() => {
+                      onBankSelect(val === "__other__" ? "other" : "");
+                      updateField("bankName", "");
+                      updateField("otherBankName", "");
+                      updateField("bicCode", "");
+                      updateField("bankAccountNumber", "");
 
-                    // Clear form fields
-                    updateField("bankName", "");
-                    updateField("otherBankName", "");
-                    updateField("bicCode", "");
-                    updateField("bankAccountNumber", "");
-
-                    if (val !== "__other__") {
-                      updateField("bankCountryName", "");
-                    }
+                      if (val !== "__other__") {
+                        updateField("bankCountryName", "");
+                      }
+                    });
                   }}
                   placeholder="Choose country / Välj land"
                   hasError={validationAttempted && !selectedBankCountry}

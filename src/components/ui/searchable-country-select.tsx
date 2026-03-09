@@ -31,6 +31,15 @@ export function SearchableCountrySelect({
 }: SearchableCountrySelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const rafRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   const selectedCountry = countries.find((c) => c.name === value);
   const query = search.toLowerCase();
@@ -44,6 +53,20 @@ export function SearchableCountrySelect({
   const filteredExtra = extraItems?.filter((item) =>
     item.label.toLowerCase().includes(query)
   );
+
+  const handleSelect = React.useCallback((nextValue: string) => {
+    setOpen(false);
+    setSearch("");
+
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+    }
+
+    rafRef.current = requestAnimationFrame(() => {
+      onValueChange(nextValue);
+      rafRef.current = null;
+    });
+  }, [onValueChange]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -87,11 +110,8 @@ export function SearchableCountrySelect({
                     "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                     value === c.name && "bg-accent text-accent-foreground"
                   )}
-                  onClick={() => {
-                    onValueChange(c.name);
-                    setOpen(false);
-                    setSearch("");
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSelect(c.name)}
                 >
                   <Check className={cn("mr-2 h-4 w-4", value === c.name ? "opacity-100" : "opacity-0")} />
                   {c.flag} {c.name}
@@ -110,11 +130,8 @@ export function SearchableCountrySelect({
                 "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                 value === c.name && "bg-accent text-accent-foreground"
               )}
-              onClick={() => {
-                onValueChange(c.name);
-                setOpen(false);
-                setSearch("");
-              }}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleSelect(c.name)}
             >
               <Check className={cn("mr-2 h-4 w-4", value === c.name ? "opacity-100" : "opacity-0")} />
               {c.flag} {c.name}
@@ -131,11 +148,8 @@ export function SearchableCountrySelect({
                     "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
                     value === item.value && "bg-accent text-accent-foreground"
                   )}
-                  onClick={() => {
-                    onValueChange(item.value);
-                    setOpen(false);
-                    setSearch("");
-                  }}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleSelect(item.value)}
                 >
                   <Check className={cn("mr-2 h-4 w-4", value === item.value ? "opacity-100" : "opacity-0")} />
                   {item.label}
@@ -151,3 +165,4 @@ export function SearchableCountrySelect({
     </Popover>
   );
 }
+
