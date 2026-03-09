@@ -11,22 +11,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import {
-  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight, Clock, MessageSquare, Users
+  Calendar, CheckCircle2, Loader2, Save, Send, ChevronLeft, ChevronRight, Clock, MessageSquare, Users, Copy, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfWeek, addDays, getISOWeek } from "date-fns";
+import { format, startOfWeek, addDays, getISOWeek, subDays } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 function getWeekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });
 }
 
-function getWeekDays(weekStart: Date): Date[] {
-  return Array.from({ length: 5 }, (_, i) => addDays(weekStart, i));
+function getWeekDays(weekStart: Date, includeSaturday: boolean): Date[] {
+  return Array.from({ length: includeSaturday ? 6 : 5 }, (_, i) => addDays(weekStart, i));
 }
 
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const DAY_LABELS_5 = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const DAY_LABELS_6 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface AttendanceEntry {
   worked: boolean;
@@ -44,10 +46,12 @@ export function WeeklyAttendanceView() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [localAttendance, setLocalAttendance] = useState<Record<string, Record<string, AttendanceEntry>>>({});
   const [reportNotes, setReportNotes] = useState("");
+  const [includeSaturday, setIncludeSaturday] = useState(false);
 
   const weekNumber = getISOWeek(currentWeekStart);
   const year = currentWeekStart.getFullYear();
-  const weekDays = getWeekDays(currentWeekStart);
+  const weekDays = getWeekDays(currentWeekStart, includeSaturday);
+  const DAY_LABELS = includeSaturday ? DAY_LABELS_6 : DAY_LABELS_5;
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
