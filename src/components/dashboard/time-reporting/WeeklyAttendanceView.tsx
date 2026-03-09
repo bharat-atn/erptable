@@ -375,7 +375,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
                     className="h-5 w-5"
                   />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium">{DAY_LABELS[i]}</span>
+                    <span className="text-sm font-medium">{t(DAY_KEYS[i])}</span>
                     <span className="text-xs text-muted-foreground ml-1.5">{format(day, "d/M")}</span>
                   </div>
                   {checked && (
