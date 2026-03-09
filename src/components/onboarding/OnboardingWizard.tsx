@@ -6,13 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ChevronDown, Folder, AlertTriangle, CheckCircle2, Sparkles, Loader2, Info } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import ljunganLogo from "@/assets/ljungan-forestry-logo.png";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// Select import removed — bank name uses plain HTML <select> to avoid Portal crashes
 
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
