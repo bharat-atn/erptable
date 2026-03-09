@@ -1357,17 +1357,20 @@ export function OnboardingWizard({
                   onClick={() => {
                     if (isPreview) return;
                     const willCheck = !isOtherBank;
+                    // Clear local state first to prevent stale renders
+                    setSelectedBankValue("");
+                    setBicValue("");
+                    setBankAccountValue("");
+                    // Then notify parent
                     if (willCheck) {
                       onBankSelect("other");
                     } else {
                       onBankSelect("");
                     }
-                    setSelectedBankValue("");
+                    // Clear form fields
                     updateField("bankName", "");
                     updateField("otherBankName", "");
-                    setBicValue("");
                     updateField("bicCode", "");
-                    setBankAccountValue("");
                     updateField("bankAccountNumber", "");
                   }}
                 >
