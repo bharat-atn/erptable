@@ -169,7 +169,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
       }
     },
     onSuccess: () => {
-      toast.success("Progress saved");
+      toast.success(t("tr.progressSaved"));
       setHasUnsavedChanges(false);
       queryClient.invalidateQueries({ queryKey: ["progress-report"] });
       queryClient.invalidateQueries({ queryKey: ["weekly-report"] });
