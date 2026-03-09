@@ -400,8 +400,8 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
         {todayEntries.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <Clock className="w-8 h-8 mx-auto mb-2 opacity-20" />
-            <p className="text-xs">No time entries recorded today</p>
-            <p className="text-[10px] mt-0.5 opacity-60">Clock in to start recording</p>
+            <p className="text-xs">{t("hub.noEntries")}</p>
+            <p className="text-[10px] mt-0.5 opacity-60">{t("hub.clockInToStart")}</p>
           </div>
         ) : (
           <div className="space-y-2">
