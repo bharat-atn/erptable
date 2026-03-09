@@ -1,0 +1,1 @@
+ALTER TABLE public.invitations ADD COLUMN resent_at timestamptz DEFAULT NULL;

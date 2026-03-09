@@ -1432,6 +1432,7 @@ export type Database = {
           id: string
           language: string
           org_id: string
+          resent_at: string | null
           status: Database["public"]["Enums"]["invitation_status"]
           token: string
           type: Database["public"]["Enums"]["invitation_type"]
@@ -1443,6 +1444,7 @@ export type Database = {
           id?: string
           language?: string
           org_id: string
+          resent_at?: string | null
           status?: Database["public"]["Enums"]["invitation_status"]
           token?: string
           type: Database["public"]["Enums"]["invitation_type"]
@@ -1454,6 +1456,7 @@ export type Database = {
           id?: string
           language?: string
           org_id?: string
+          resent_at?: string | null
           status?: Database["public"]["Enums"]["invitation_status"]
           token?: string
           type?: Database["public"]["Enums"]["invitation_type"]

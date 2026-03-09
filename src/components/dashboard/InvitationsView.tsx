@@ -58,6 +58,7 @@ type InvitationRow = {
   status: string;
   created_at: string;
   expires_at: string;
+  resent_at: string | null;
   employee_id: string | null;
   employees: { email: string; first_name: string | null; last_name: string | null } | null;
 };
@@ -163,7 +164,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       newExpiry.setDate(newExpiry.getDate() + 7);
       const { error } = await supabase
         .from("invitations")
-        .update({ status: "SENT", expires_at: newExpiry.toISOString() })
+        .update({ status: "SENT", expires_at: newExpiry.toISOString(), resent_at: new Date().toISOString() } as any)
         .eq("id", invitation.id);
       if (error) throw error;
 
@@ -246,7 +247,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       newExpiry.setDate(newExpiry.getDate() + 7);
       const { error } = await supabase
         .from("invitations")
-        .update({ status: "SENT", expires_at: newExpiry.toISOString() })
+        .update({ status: "SENT", expires_at: newExpiry.toISOString(), resent_at: new Date().toISOString() } as any)
         .in("id", ids);
       if (error) throw error;
     },
@@ -294,6 +295,12 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       render: (inv) => <Badge variant={statusVariants[inv.status as InvitationStatus]}>{statusLabels[inv.status as InvitationStatus]}</Badge>,
     },
     { key: "created_at", header: "Sent Date", accessor: (inv) => inv.created_at, render: (inv) => <span className="text-sm text-muted-foreground">{format(new Date(inv.created_at), "yyyy-MM-dd")}</span> },
+    {
+      key: "resent_at", header: "Resent", accessor: (inv) => inv.resent_at || "",
+      render: (inv) => inv.resent_at
+        ? <Badge variant="sent" className="text-xs">{format(new Date(inv.resent_at), "yyyy-MM-dd")}</Badge>
+        : <span className="text-xs text-muted-foreground">—</span>,
+    },
     { key: "expires_at", header: "Expires", accessor: (inv) => inv.expires_at, render: (inv) => <span className="text-sm text-muted-foreground">{format(new Date(inv.expires_at), "yyyy-MM-dd")}</span> },
   ];
 
