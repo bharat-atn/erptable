@@ -26,7 +26,7 @@ export function CompGroupView() {
   const [search, setSearch] = useState("");
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [locked, setLocked] = useState(false);
-  const [showClassCount, setShowClassCount] = useState(7);
+  const [showClassCount, setShowClassCount] = useState(13);
   const [typeFilter, setTypeFilter] = useState("__all__");
   const [clientForAll, setClientForAll] = useState("__none__");
 

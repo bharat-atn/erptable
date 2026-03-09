@@ -58,6 +58,9 @@ export const SEED_PER_GROUP = [
     typeFull: "Clearing Type 1 (Hourly Salary)",
     client: "Standard Inc.",
     classes: [
+      { sla: "101", s1: 110, s2: 120, s3: 130, s4: 140, s5: 155, gross: 130, net: 0 },
+      { sla: "102", s1: 115, s2: 125, s3: 135, s4: 145, s5: 160, gross: 135, net: 0 },
+      { sla: "103", s1: 120, s2: 130, s3: 140, s4: 150, s5: 165, gross: 140, net: 0 },
       { sla: "104", s1: 125, s2: 135, s3: 145, s4: 155, s5: 170, gross: 145, net: 0 },
       { sla: "105", s1: 130, s2: 140, s3: 150, s4: 160, s5: 175, gross: 150, net: 0 },
       { sla: "106", s1: 135, s2: 145, s3: 155, s4: 165, s5: 180, gross: 155, net: 0 },
@@ -65,6 +68,9 @@ export const SEED_PER_GROUP = [
       { sla: "108", s1: 145, s2: 155, s3: 165, s4: 175, s5: 190, gross: 165, net: 0 },
       { sla: "109", s1: 150, s2: 160, s3: 170, s4: 180, s5: 195, gross: 170, net: 0 },
       { sla: "110", s1: 155, s2: 165, s3: 175, s4: 185, s5: 200, gross: 175, net: 0 },
+      { sla: "111", s1: 160, s2: 170, s3: 180, s4: 190, s5: 205, gross: 180, net: 0 },
+      { sla: "112", s1: 165, s2: 175, s3: 185, s4: 195, s5: 210, gross: 185, net: 0 },
+      { sla: "113", s1: 170, s2: 180, s3: 190, s4: 200, s5: 215, gross: 190, net: 0 },
     ],
   },
   {
@@ -72,6 +78,9 @@ export const SEED_PER_GROUP = [
     typeFull: "Planting Type 1 (Hourly Salary)",
     client: "Standard Inc.",
     classes: [
+      { sla: "101", s1: 154, s2: 164, s3: 174, s4: 184, s5: 194, gross: 400, net: 0 },
+      { sla: "102", s1: 155, s2: 165, s3: 175, s4: 185, s5: 195, gross: 405, net: 0 },
+      { sla: "103", s1: 156, s2: 166, s3: 176, s4: 186, s5: 196, gross: 410, net: 0 },
       { sla: "104", s1: 157, s2: 167, s3: 177, s4: 187, s5: 197, gross: 420, net: 0 },
       { sla: "105", s1: 158, s2: 168, s3: 178, s4: 188, s5: 198, gross: 430, net: 0 },
       { sla: "106", s1: 159, s2: 169, s3: 179, s4: 189, s5: 199, gross: 440, net: 0 },
@@ -79,6 +88,9 @@ export const SEED_PER_GROUP = [
       { sla: "108", s1: 161, s2: 171, s3: 181, s4: 191, s5: 201, gross: 460, net: 0 },
       { sla: "109", s1: 162, s2: 172, s3: 182, s4: 192, s5: 202, gross: 470, net: 0 },
       { sla: "110", s1: 163, s2: 173, s3: 183, s4: 193, s5: 203, gross: 480, net: 0 },
+      { sla: "111", s1: 164, s2: 174, s3: 184, s4: 194, s5: 204, gross: 490, net: 0 },
+      { sla: "112", s1: 165, s2: 175, s3: 185, s4: 195, s5: 205, gross: 500, net: 0 },
+      { sla: "113", s1: 166, s2: 176, s3: 186, s4: 196, s5: 206, gross: 510, net: 0 },
     ],
   },
   {
@@ -86,6 +98,9 @@ export const SEED_PER_GROUP = [
     typeFull: "Clearing Type 1 (Piece Work)",
     client: "Standard Inc.",
     classes: [
+      { sla: "101", s1: 1.20, s2: 1.30, s3: 1.40, s4: 1.50, s5: 1.60, gross: 2900, net: 1000 },
+      { sla: "102", s1: 1.15, s2: 1.25, s3: 1.35, s4: 1.45, s5: 1.55, gross: 3000, net: 1050 },
+      { sla: "103", s1: 1.10, s2: 1.20, s3: 1.30, s4: 1.40, s5: 1.50, gross: 3100, net: 1100 },
       { sla: "104", s1: 1.05, s2: 1.15, s3: 1.25, s4: 1.35, s5: 1.45, gross: 3200, net: 1145 },
       { sla: "105", s1: 1.00, s2: 1.10, s3: 1.20, s4: 1.30, s5: 1.40, gross: 3300, net: 1200 },
       { sla: "106", s1: 0.95, s2: 1.05, s3: 1.15, s4: 1.25, s5: 1.35, gross: 3400, net: 1270 },
@@ -93,6 +108,9 @@ export const SEED_PER_GROUP = [
       { sla: "108", s1: 0.85, s2: 0.95, s3: 1.05, s4: 1.15, s5: 1.25, gross: 3725, net: 1415 },
       { sla: "109", s1: 0.80, s2: 0.90, s3: 1.00, s4: 1.10, s5: 1.20, gross: 3950, net: 1500 },
       { sla: "110", s1: 0.75, s2: 0.85, s3: 0.95, s4: 1.05, s5: 1.15, gross: 4175, net: 1650 },
+      { sla: "111", s1: 0.70, s2: 0.80, s3: 0.90, s4: 1.00, s5: 1.10, gross: 4400, net: 1750 },
+      { sla: "112", s1: 0.65, s2: 0.75, s3: 0.85, s4: 0.95, s5: 1.05, gross: 4625, net: 1850 },
+      { sla: "113", s1: 0.60, s2: 0.70, s3: 0.80, s4: 0.90, s5: 1.00, gross: 4850, net: 1950 },
     ],
   },
   {
@@ -100,6 +118,9 @@ export const SEED_PER_GROUP = [
     typeFull: "Planting Type 1 (Piece Work)",
     client: "Standard Inc.",
     classes: [
+      { sla: "101", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "102", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "103", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
       { sla: "104", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
       { sla: "105", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
       { sla: "106", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
@@ -107,6 +128,9 @@ export const SEED_PER_GROUP = [
       { sla: "108", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
       { sla: "109", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
       { sla: "110", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "111", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "112", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
+      { sla: "113", s1: 0, s2: 0, s3: 0, s4: 0, s5: 0, gross: 0, net: 0 },
     ],
   },
 ];
