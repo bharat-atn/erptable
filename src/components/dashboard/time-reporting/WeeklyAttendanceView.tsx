@@ -699,7 +699,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
             disabled={saveMutation.isPending}
           >
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Send className="w-4 h-4 mr-1.5" />}
-            Submit Report
+            {t("tr.submitReport")}
           </Button>
         </div>
       )}
