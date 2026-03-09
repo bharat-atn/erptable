@@ -409,7 +409,7 @@ export function ProgressReportingView({ t: _t }: { t?: (key: string) => string }
                 onClick={() => saveMutation.mutate(false)}
                 disabled={saveMutation.isPending || !hasUnsavedChanges}
               >
-                <Save className="w-4 h-4 mr-1.5" /> Save Progress
+                <Save className="w-4 h-4 mr-1.5" /> {t("tr.saveProgress")}
               </Button>
               {hasUnsavedChanges && (
                 <span className="text-xs text-amber-600">Unsaved</span>
