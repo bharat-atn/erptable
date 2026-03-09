@@ -438,7 +438,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
             {locationFetching ? (
               <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3 animate-pulse">
                 <Navigation className="w-4 h-4 animate-spin" />
-                <span>Acquiring GPS location…</span>
+                <span>{t("hub.acquiringGps")}</span>
               </div>
             ) : (
               <LocationBadge location={capturedLocation} zones={worksiteZones} />
