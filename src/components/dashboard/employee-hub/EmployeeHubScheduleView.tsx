@@ -82,15 +82,13 @@ export function EmployeeHubScheduleView() {
 
       {/* Schedule — card list instead of table for mobile */}
       {schedules.length === 0 ? (
-        <Card className="border-border/60 mx-2">
-          <CardContent className="pt-6 pb-6 text-center">
-            <Calendar className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No schedule available yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Your work schedule will appear here once your contract is set up</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white dark:bg-card rounded-2xl border-2 border-emerald-600/20 p-8 text-center shadow-sm">
+          <Calendar className="w-12 h-12 text-emerald-600/20 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-medium">No schedule available yet</p>
+          <p className="text-xs text-muted-foreground mt-2">Your work schedule will appear here once your contract is set up</p>
+        </div>
       ) : (
-        <div className="space-y-1.5 px-2">
+        <div className="space-y-2">
           {schedules.map((s: any) => {
             const d = new Date(s.schedule_date + "T00:00:00");
             const dayName = d.toLocaleDateString("sv-SE", { weekday: "short" });
@@ -100,27 +98,27 @@ export function EmployeeHubScheduleView() {
               <div
                 key={s.id}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg bg-card border border-border/40 border-l-[3px]",
+                  "flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border-2 border-l-[6px] shadow-sm",
                   colorClass
                 )}
               >
-                <div className="min-w-[52px] text-center">
-                  <p className="text-xs font-bold uppercase">{dayName}</p>
-                  <p className="text-[10px] text-muted-foreground">{dateLabel}</p>
+                <div className="min-w-[60px] text-center">
+                  <p className="text-sm font-bold uppercase text-emerald-700 dark:text-emerald-500">{dayName}</p>
+                  <p className="text-xs text-muted-foreground">{dateLabel}</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{s.day_type}</Badge>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-emerald-600/30">{s.day_type}</Badge>
                     {(s.holiday_name_sv || s.holiday_name_en) && (
-                      <span className="text-[10px] text-amber-600 truncate">{s.holiday_name_sv || s.holiday_name_en}</span>
+                      <span className="text-[10px] text-amber-600 font-medium truncate">{s.holiday_name_sv || s.holiday_name_en}</span>
                     )}
                   </div>
                   {s.start_time && s.end_time && (
-                    <p className="text-xs text-muted-foreground mt-0.5 font-mono">{s.start_time} – {s.end_time}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{s.start_time} – {s.end_time}</p>
                   )}
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold">{Number(s.scheduled_hours) || "—"}</p>
+                <div className="text-right shrink-0 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl px-3 py-2">
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-500">{Number(s.scheduled_hours) || "—"}</p>
                   <p className="text-[9px] text-muted-foreground">hrs</p>
                 </div>
               </div>

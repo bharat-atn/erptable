@@ -183,11 +183,11 @@ export function EmployeeHubDashboardView() {
         </div>
       </div>
 
-      {/* Photo Capture Dialog — full screen on mobile */}
+      {/* Photo Capture Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) { stopCamera(); setDialogOpen(false); } }}>
-        <DialogContent className="max-w-md sm:max-w-md w-[calc(100vw-2rem)] rounded-2xl">
+        <DialogContent className="max-w-md w-[calc(100vw-2rem)] rounded-3xl border-2 border-emerald-600/20">
           <DialogHeader>
-            <DialogTitle className="text-base">
+            <DialogTitle className="text-base text-emerald-700 dark:text-emerald-500">
               {dialogMode === "in" ? "Clock In — Stämpla in" : "Clock Out — Stämpla ut"}
             </DialogTitle>
           </DialogHeader>
@@ -199,36 +199,36 @@ export function EmployeeHubDashboardView() {
 
             {/* Camera preview */}
             {activeCamera && (
-              <div className="relative rounded-xl overflow-hidden bg-black aspect-[4/3]">
+              <div className="relative rounded-2xl overflow-hidden bg-black aspect-[4/3] shadow-lg">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                  <Button onClick={capturePhoto} className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-xl active:scale-95 transition-transform">
-                    <Camera className="w-7 h-7 text-black" />
-                  </Button>
+                  <button onClick={capturePhoto} className="rounded-full w-16 h-16 bg-white hover:bg-white/90 shadow-2xl active:scale-95 transition-transform flex items-center justify-center">
+                    <Camera className="w-7 h-7 text-emerald-600" />
+                  </button>
                 </div>
-                <Badge className="absolute top-3 left-3 bg-black/60 text-white border-0">
+                <div className="absolute top-3 left-3 bg-emerald-600 text-white px-3 py-1 rounded-full text-xs font-medium">
                   {activeCamera === "selfie" ? "📸 Selfie" : "🏞️ Environment"}
-                </Badge>
+                </div>
               </div>
             )}
 
-            {/* Photo slots — large touch targets */}
+            {/* Photo slots */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => !photos.selfie && startCamera("selfie")}
-                className="relative aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 active:border-primary transition-colors overflow-hidden flex items-center justify-center bg-muted/30 min-h-[120px]"
+                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[120px]"
               >
                 {photos.selfie ? (
                   <>
                     <img src={photos.selfie} alt="Selfie" className="w-full h-full object-cover" />
-                    <Badge className="absolute top-2 right-2 bg-emerald-600 text-white border-0 text-[10px]">
-                      <CheckCircle2 className="w-3 h-3 mr-0.5" /> Done
-                    </Badge>
+                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
                   </>
                 ) : (
                   <div className="text-center p-3">
-                    <Camera className="w-10 h-10 mx-auto text-muted-foreground/40 mb-1.5" />
-                    <p className="text-xs font-medium text-muted-foreground">Selfie</p>
+                    <Camera className="w-10 h-10 mx-auto text-emerald-600/40 mb-2" />
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-500">Selfie</p>
                     <p className="text-[10px] text-muted-foreground">Tap to capture</p>
                   </div>
                 )}
@@ -236,19 +236,19 @@ export function EmployeeHubDashboardView() {
 
               <button
                 onClick={() => !photos.environment && startCamera("environment")}
-                className="relative aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 active:border-primary transition-colors overflow-hidden flex items-center justify-center bg-muted/30 min-h-[120px]"
+                className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[120px]"
               >
                 {photos.environment ? (
                   <>
                     <img src={photos.environment} alt="Environment" className="w-full h-full object-cover" />
-                    <Badge className="absolute top-2 right-2 bg-emerald-600 text-white border-0 text-[10px]">
-                      <CheckCircle2 className="w-3 h-3 mr-0.5" /> Done
-                    </Badge>
+                    <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-7 h-7 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
                   </>
                 ) : (
                   <div className="text-center p-3">
-                    <Image className="w-10 h-10 mx-auto text-muted-foreground/40 mb-1.5" />
-                    <p className="text-xs font-medium text-muted-foreground">Environment</p>
+                    <Image className="w-10 h-10 mx-auto text-emerald-600/40 mb-2" />
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-500">Environment</p>
                     <p className="text-[10px] text-muted-foreground">Tap to capture</p>
                   </div>
                 )}
@@ -256,18 +256,18 @@ export function EmployeeHubDashboardView() {
             </div>
 
             {/* Location info */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
-              <MapPin className="w-4 h-4 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 border border-emerald-600/20">
+              <MapPin className="w-4 h-4 shrink-0 text-emerald-600" />
               <span>Location will be recorded automatically</span>
             </div>
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" className="h-12 sm:h-10" onClick={() => { stopCamera(); setDialogOpen(false); }}>Cancel</Button>
+            <Button variant="outline" className="h-12 sm:h-10 rounded-xl" onClick={() => { stopCamera(); setDialogOpen(false); }}>Cancel</Button>
             <Button
               onClick={handleSubmit}
               disabled={!photos.selfie || !photos.environment}
-              className={`h-12 sm:h-10 ${dialogMode === "in" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
+              className={`h-12 sm:h-10 rounded-xl ${dialogMode === "in" ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
             >
               {dialogMode === "in" ? "Confirm Clock In" : "Confirm Clock Out"}
             </Button>

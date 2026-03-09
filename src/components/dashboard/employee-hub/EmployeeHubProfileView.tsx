@@ -124,11 +124,11 @@ export function EmployeeHubProfileView() {
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof User; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 min-h-[44px]">
-      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+    <div className="flex items-center gap-3 min-h-[44px] bg-emerald-50 dark:bg-emerald-950/10 rounded-xl p-3">
+      <Icon className="w-4 h-4 text-emerald-600 shrink-0" />
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-        <p className="text-sm font-medium truncate">{value}</p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{label}</p>
+        <p className="text-sm font-semibold truncate">{value}</p>
       </div>
     </div>
   );
