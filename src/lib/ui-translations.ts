@@ -1,4 +1,4 @@
-export type UiLang = "en" | "sv" | "ro";
+export type UiLang = "en" | "sv" | "ro" | "uk" | "th";
 
 const translations: Record<string, Record<UiLang, string>> = {
   // Sidebar group labels
