@@ -63,6 +63,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useUiLanguage } from "@/hooks/useUiLanguage";
 
 import { type AppDefinition } from "./AppLauncher";
 
@@ -80,6 +81,7 @@ const TABLET_THRESHOLD = 1100;
 
 export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole }: DashboardProps) {
   const isMobile = useIsMobile();
+  const { t } = useUiLanguage();
   const getDefaultView = (id?: string | null) => id === "user-management" ? "user-management" : "dashboard";
   const [activeView, setActiveView] = useState(getDefaultView(appId));
 
@@ -118,15 +120,15 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
     // Time & Status Reporting views
     if (appId === "time-reporting") {
       switch (activeView) {
-        case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveView} />;
-        case "weekly-attendance": return <WeeklyAttendanceView />;
-        case "progress-reporting": return <ProgressReportingView />;
-        case "approvals": return <ApprovalsView />;
+        case "dashboard": return <TimeReportingDashboardView onNavigate={setActiveView} t={t} />;
+        case "weekly-attendance": return <WeeklyAttendanceView t={t} />;
+        case "progress-reporting": return <ProgressReportingView t={t} />;
+        case "approvals": return <ApprovalsView t={t} />;
         case "reports": return <TimeReportsView />;
-        case "process-guide": return <TimeReportingProcessGuideView />;
+        case "process-guide": return <TimeReportingProcessGuideView t={t} />;
         case "audit-log": return <AuditLogView />;
         case "settings": return <SettingsView />;
-        default: return <TimeReportingDashboardView onNavigate={setActiveView} />;
+        default: return <TimeReportingDashboardView onNavigate={setActiveView} t={t} />;
       }
     }
 
