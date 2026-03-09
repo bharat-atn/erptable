@@ -15,11 +15,10 @@ import {
 
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+// Plain collapse wrapper — avoids Radix Presence/Portal DOM conflicts
+function SimpleCollapsible({ open, children }: { open: boolean; children: React.ReactNode }) {
+  return <div>{children}</div>;
+}
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
