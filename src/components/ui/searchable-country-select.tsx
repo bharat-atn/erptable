@@ -51,7 +51,7 @@ export function SearchableCountrySelect({
     setOpen(false);
     setSearch("");
   }, [onValueChange]);
-
+        <div className="flex items-center border-b px-3">
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
       <PopoverPrimitive.Trigger asChild>
