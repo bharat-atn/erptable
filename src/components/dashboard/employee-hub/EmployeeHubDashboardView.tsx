@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Camera,
@@ -22,6 +22,8 @@ import { useGeolocation, isInsideGeofence, type GeoLocation, type GeofenceZone }
 import { useTimeEntries, type TimeEntry } from "./useTimeEntries";
 import { useWorksiteGeofence } from "./useWorksiteGeofence";
 import { CameraPermissionHelp } from "./CameraPermissionHelp";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/contexts/OrgContext";
 
 const DEFAULT_WORKSITE_RADIUS_METERS = 250;
 
@@ -128,7 +130,25 @@ function TimeEntryRow({ entry }: { entry: TimeEntry }) {
 
 export function EmployeeHubDashboardView() {
   const { requestLocation } = useGeolocation();
-  const { todayEntries, addEntry, isClockedIn, todayWorkedMs } = useTimeEntries();
+  const { orgId } = useOrg();
+
+  // Resolve employee_id for the current user (simple lookup)
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !orgId) return;
+      const { data } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("org_id", orgId)
+        .eq("email", user.email)
+        .maybeSingle();
+      if (data) setEmployeeId(data.id);
+    })();
+  }, [orgId]);
+
+  const { todayEntries, addEntry, isClockedIn, todayWorkedMs } = useTimeEntries(employeeId, orgId);
   const { zone: worksiteZone, zones: worksiteZones, calibrateFromLocation } = useWorksiteGeofence(
     DEFAULT_WORKSITE_RADIUS_METERS
   );
@@ -241,7 +261,7 @@ export function EmployeeHubDashboardView() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!photos.selfie || !photos.environment) {
       toast.error("Please capture both photos before submitting.");
       return;
@@ -250,7 +270,7 @@ export function EmployeeHubDashboardView() {
     const insideGeofence =
       capturedLocation && worksiteZone ? isInsideGeofence(capturedLocation, worksiteZone) : null;
 
-    addEntry({
+    await addEntry({
       type: dialogMode === "in" ? "clock_in" : "clock_out",
       timestamp: new Date(),
       location: capturedLocation,
