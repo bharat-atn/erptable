@@ -16,8 +16,8 @@ const NAV_ITEMS = [
 
 export function EmployeeHubBottomNav({ activeTab, onTabChange }: EmployeeHubBottomNavProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border/40 safe-area-inset-bottom z-50">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
+    <div className="bg-background border-t border-border/40 shrink-0 z-10">
+      <div className="flex items-center justify-around h-16 px-2">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

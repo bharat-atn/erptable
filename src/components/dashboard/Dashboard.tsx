@@ -48,12 +48,7 @@ import { HolidayView } from "./payroll/HolidayView";
 import { AttestationView } from "./payroll/AttestationView";
 import { PayrollReportsView } from "./payroll/PayrollReportsView";
 import { SalaryEventsView } from "./payroll/SalaryEventsView";
-import { EmployeeHubDashboardView } from "./employee-hub/EmployeeHubDashboardView";
-import { EmployeeHubProfileView } from "./employee-hub/EmployeeHubProfileView";
-import { EmployeeHubContractView } from "./employee-hub/EmployeeHubContractView";
-import { EmployeeHubScheduleView } from "./employee-hub/EmployeeHubScheduleView";
-import { EmployeeHubPayslipsView } from "./employee-hub/EmployeeHubPayslipsView";
-import { EmployeeHubLeaveView } from "./employee-hub/EmployeeHubLeaveView";
+import { EmployeeHubApp } from "./employee-hub/EmployeeHubApp";
 import { TimeReportingDashboardView } from "./time-reporting/TimeReportingDashboardView";
 import { WeeklyAttendanceView } from "./time-reporting/WeeklyAttendanceView";
 import { ProgressReportingView } from "./time-reporting/ProgressReportingView";
@@ -111,17 +106,9 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
   };
 
   const renderView = () => {
-    // Employee Hub views
+    // Employee Hub — standalone mobile app, rendered outside normal shell
     if (appId === "employee-hub") {
-      switch (activeView) {
-        case "dashboard": return <EmployeeHubDashboardView />;
-        case "my-profile": return <EmployeeHubProfileView />;
-        case "my-contracts": return <EmployeeHubContractView />;
-        case "my-schedule": return <EmployeeHubScheduleView />;
-        case "my-payslips": return <EmployeeHubPayslipsView />;
-        case "leave-requests": return <EmployeeHubLeaveView />;
-        default: return <EmployeeHubDashboardView />;
-      }
+      return null; // handled by top-level early return below
     }
 
     // Time & Status Reporting views
@@ -216,6 +203,11 @@ export function Dashboard({ onBackToLauncher, appId, apps, onSwitchApp, userRole
 
   if (showPreview) {
     return <OnboardingPreview onClose={() => setShowPreview(false)} />;
+  }
+
+  // Employee Hub renders as a standalone mobile app UI
+  if (appId === "employee-hub") {
+    return <EmployeeHubApp onBackToLauncher={onBackToLauncher} />;
   }
 
   const isConstrained = screenSize.width !== null;
