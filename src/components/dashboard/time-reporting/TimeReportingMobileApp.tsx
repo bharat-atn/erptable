@@ -24,6 +24,7 @@ export function TimeReportingMobileApp({ onBackToLauncher }: TimeReportingMobile
       case "progress-reporting": return <ProgressReportingView t={t} />;
       case "approvals": return <ApprovalsView t={t} />;
       case "guide": return <TimeReportingProcessGuideView t={t} />;
+      case "profile": return <TimeReportingProfileView t={t} lang={lang} onLanguageChange={setLang} />;
       default: return <TimeReportingDashboardView onNavigate={setActiveTab} t={t} />;
     }
   };

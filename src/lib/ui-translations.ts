@@ -397,6 +397,8 @@ const translations: Record<string, Partial<Record<UiLang, string>>> = {
   "tr.nav.progress": { en: "Progress", sv: "Framsteg", ro: "Progres", uk: "Прогрес", th: "ความคืบหน้า" },
   "tr.nav.approvals": { en: "Approvals", sv: "Godkänn", ro: "Aprobări", uk: "Затвердження", th: "การอนุมัติ" },
   "tr.nav.guide": { en: "Guide", sv: "Guide", ro: "Ghid", uk: "Посібник", th: "คู่มือ" },
+  "tr.nav.profile": { en: "Profile", sv: "Profil", ro: "Profil", uk: "Профіль", th: "โปรไฟล์" },
+  "tr.profileSub": { en: "Your account and settings", sv: "Ditt konto och inställningar", ro: "Contul și setările tale", uk: "Ваш обліковий запис і налаштування", th: "บัญชีและการตั้งค่าของคุณ" },
 
   // Weekly Attendance View
   "tr.weeklyAttendanceTitle": { en: "Weekly Attendance", sv: "Veckovis närvaro", ro: "Prezență săptămânală", uk: "Тижнева присутність", th: "การเข้าร่วมรายสัปดาห์" },
