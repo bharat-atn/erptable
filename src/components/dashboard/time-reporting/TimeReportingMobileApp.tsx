@@ -5,6 +5,7 @@ import { WeeklyAttendanceView } from "./WeeklyAttendanceView";
 import { ProgressReportingView } from "./ProgressReportingView";
 import { ApprovalsView } from "./ApprovalsView";
 import { TimeReportingProcessGuideView } from "./TimeReportingProcessGuideView";
+import { TimeReportingProfileView } from "./TimeReportingProfileView";
 import { TimeReportingBottomNav } from "./TimeReportingBottomNav";
 import { useUiLanguage } from "@/hooks/useUiLanguage";
 
