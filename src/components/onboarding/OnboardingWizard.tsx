@@ -15,11 +15,13 @@ import {
 
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchablePhonePrefixSelect } from "@/components/ui/searchable-phone-prefix-select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+// Plain collapse wrappers — avoids Radix Presence/Portal DOM conflicts that cause removeChild crashes
+function Collapsible({ open, onOpenChange, children }: { open: boolean; onOpenChange: (v: boolean) => void; children: React.ReactNode }) {
+  return <div data-state={open ? "open" : "closed"}>{children}</div>;
+}
+function CollapsibleContent({ children, className, forceMount }: { children: React.ReactNode; className?: string; forceMount?: true }) {
+  return <div className={className}>{children}</div>;
+}
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -949,7 +951,7 @@ export function OnboardingWizard({
               missingFields={s1Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="First Name" sv="Förnamn" />
@@ -1020,7 +1022,7 @@ export function OnboardingWizard({
               missingFields={s2Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               <div className="space-y-1.5">
                 <FieldLabel en="Date of Birth" sv="Födelsedatum" />
                 <Input
@@ -1182,7 +1184,7 @@ export function OnboardingWizard({
               missingFields={s3Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="space-y-1.5">
                   <FieldLabel en="Emergency Contact First Name" sv="Förnamn" />
@@ -1243,7 +1245,7 @@ export function OnboardingWizard({
               missingFields={s4Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-4">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-4 data-[state=closed]:hidden">
               {/* Country selector */}
               <div className="space-y-1.5">
                 <FieldLabel en="Select Country" sv="Välj land" />
@@ -1254,18 +1256,14 @@ export function OnboardingWizard({
                     setSelectedBankValue("");
                     setBicValue("");
                     setBankAccountValue("");
-
-                    requestAnimationFrame(() => {
-                      onBankSelect(val === "__other__" ? "other" : "");
-                      updateField("bankName", "");
-                      updateField("otherBankName", "");
-                      updateField("bicCode", "");
-                      updateField("bankAccountNumber", "");
-
-                      if (val !== "__other__") {
-                        updateField("bankCountryName", "");
-                      }
-                    });
+                    onBankSelect(val === "__other__" ? "other" : "");
+                    updateField("bankName", "");
+                    updateField("otherBankName", "");
+                    updateField("bicCode", "");
+                    updateField("bankAccountNumber", "");
+                    if (val !== "__other__") {
+                      updateField("bankCountryName", "");
+                    }
                   }}
                   placeholder="Choose country / Välj land"
                   hasError={validationAttempted && !selectedBankCountry}
@@ -1457,7 +1455,7 @@ export function OnboardingWizard({
               missingFields={s5Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-6">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-6 data-[state=closed]:hidden">
               {/* ID / Passport upload (required) */}
               <div className="space-y-3">
                 <FieldLabel en="Please attach your valid EU ID or Passport" sv="Bifoga ditt giltiga EU-ID eller pass" />
