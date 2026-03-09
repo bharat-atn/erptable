@@ -164,7 +164,7 @@ export function InvitationsView({ onShowPreview }: InvitationsViewProps) {
       newExpiry.setDate(newExpiry.getDate() + 7);
       const { error } = await supabase
         .from("invitations")
-        .update({ status: "SENT", expires_at: newExpiry.toISOString() })
+        .update({ status: "SENT", expires_at: newExpiry.toISOString(), resent_at: new Date().toISOString() } as any)
         .eq("id", invitation.id);
       if (error) throw error;
 
