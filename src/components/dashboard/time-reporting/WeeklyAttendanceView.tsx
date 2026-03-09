@@ -202,7 +202,7 @@ export function WeeklyAttendanceView({ t: _t }: { t?: (key: string) => string })
       .maybeSingle();
 
     if (!prevReport?.attendance_entries || (prevReport.attendance_entries as any[]).length === 0) {
-      toast.error("No attendance data found for previous week");
+      toast.error(t("tr.noPrevWeekData"));
       return;
     }
 
