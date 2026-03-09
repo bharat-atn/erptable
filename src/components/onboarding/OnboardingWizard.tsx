@@ -265,9 +265,6 @@ interface OnboardingWizardProps {
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting?: boolean;
   isPreview?: boolean;
-  selectedBank: string;
-  isOtherBank: boolean;
-  onBankSelect: (bank: string) => void;
   uploadedFile: File | null;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   workPermitFile?: File | null;
