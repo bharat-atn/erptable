@@ -375,7 +375,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
           </button>
           <button className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 dark:hover:bg-emerald-950/30 transition-colors active:scale-95">
             <FileText className="w-5 h-5 text-emerald-600" />
-            <span className="text-[10px] font-medium text-center">Contracts</span>
+            <span className="text-[10px] font-medium text-center">{t("hub.nav.contract")}</span>
           </button>
           <button
             onClick={async () => {
