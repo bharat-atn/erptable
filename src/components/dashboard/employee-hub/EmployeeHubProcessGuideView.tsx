@@ -220,6 +220,40 @@ export function EmployeeHubProcessGuideView() {
         </div>
       </div>
 
+      {/* Future Enhancements */}
+      <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+        <h3 className="font-bold text-sm mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-500">
+          <Zap className="w-4 h-4" /> Planned Enhancements
+        </h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Features that may be added to improve your experience:
+        </p>
+        <div className="space-y-2">
+          {[
+            { icon: "🔔", title: "Push Notifications", desc: "Reminders to clock in/out and schedule alerts" },
+            { icon: "📊", title: "Weekly Summary", desc: "Dashboard showing hours worked, earnings preview" },
+            { icon: "📍", title: "Multiple Work Sites", desc: "Switch between different project locations" },
+            { icon: "🌐", title: "Offline Mode", desc: "Clock in/out without internet, sync when connected" },
+            { icon: "🗓️", title: "Shift Swapping", desc: "Request shift changes with colleagues" },
+            { icon: "📝", title: "Leave Requests", desc: "Submit vacation and sick leave directly in-app" },
+            { icon: "💬", title: "Team Chat", desc: "Communicate with your team and supervisor" },
+            { icon: "📈", title: "Productivity Stats", desc: "View your performance metrics and achievements" },
+            { icon: "🎯", title: "Task Assignments", desc: "Receive and complete daily work tasks" },
+            { icon: "🪪", title: "Digital ID Badge", desc: "Show your employee credentials on screen" },
+            { icon: "💰", title: "Expense Reporting", desc: "Submit travel and work expenses for reimbursement" },
+            { icon: "📱", title: "Biometric Login", desc: "Face ID or fingerprint for faster access" },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-2.5 p-2 rounded-lg bg-muted/30 border border-border/20">
+              <span className="text-base shrink-0">{item.icon}</span>
+              <div>
+                <p className="text-xs font-semibold">{item.title}</p>
+                <p className="text-[10px] text-muted-foreground">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Need help? */}
       <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl border border-emerald-600/20 p-4 text-center">
         <Bell className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
