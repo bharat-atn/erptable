@@ -29,7 +29,7 @@ export function EmployeeHubApp({ onBackToLauncher }: EmployeeHubAppProps) {
       case "profile": return <EmployeeHubProfileView t={t} lang={lang} onLanguageChange={setLang} />;
       case "guide": return <EmployeeHubProcessGuideView />;
       case "my-time": return <EmployeeHubTimeView />;
-      default: return <EmployeeHubDashboardView />;
+      default: return <EmployeeHubDashboardView t={t} />;
     }
   };
 
