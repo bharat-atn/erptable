@@ -441,7 +441,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                 <span>{t("hub.acquiringGps")}</span>
               </div>
             ) : (
-              <LocationBadge location={capturedLocation} zones={worksiteZones} />
+              <LocationBadge location={capturedLocation} zones={worksiteZones} t={t} />
             )}
 
             {/* Camera preview */}
