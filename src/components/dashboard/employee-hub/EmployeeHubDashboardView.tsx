@@ -38,7 +38,7 @@ function formatElapsed(ms: number): string {
   return `${h}h ${m}m`;
 }
 
-function LocationBadge({ location, zones }: { location: GeoLocation | null; zones: GeofenceZone[] }) {
+function LocationBadge({ location, zones, t }: { location: GeoLocation | null; zones: GeofenceZone[]; t?: (key: string) => string }) {
   if (!location) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-xl p-3">
