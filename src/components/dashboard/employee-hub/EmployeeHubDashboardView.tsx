@@ -478,7 +478,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                 ) : (
                   <div className="text-center p-2">
                     <Camera className="w-8 h-8 mx-auto text-emerald-600/40 mb-1" />
-                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">Selfie</p>
+                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-500">{t("hub.selfie")}</p>
                   </div>
                 )}
               </button>
