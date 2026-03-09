@@ -1453,7 +1453,7 @@ export function OnboardingWizard({
               missingFields={s5Missing}
               showValidation={validationAttempted}
             />
-            <CollapsibleContent className="pt-5 pb-2 px-1 space-y-6">
+            <CollapsibleContent forceMount className="pt-5 pb-2 px-1 space-y-6 data-[state=closed]:hidden">
               {/* ID / Passport upload (required) */}
               <div className="space-y-3">
                 <FieldLabel en="Please attach your valid EU ID or Passport" sv="Bifoga ditt giltiga EU-ID eller pass" />
