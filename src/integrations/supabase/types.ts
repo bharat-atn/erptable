@@ -2190,6 +2190,76 @@ export type Database = {
           },
         ]
       }
+      time_clock_entries: {
+        Row: {
+          created_at: string
+          employee_id: string
+          entry_type: string
+          environment_photo_url: string | null
+          id: string
+          inside_geofence: boolean | null
+          latitude: number | null
+          longitude: number | null
+          notes: string | null
+          org_id: string
+          project_id: string | null
+          recorded_at: string
+          selfie_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          entry_type: string
+          environment_photo_url?: string | null
+          id?: string
+          inside_geofence?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          org_id: string
+          project_id?: string | null
+          recorded_at?: string
+          selfie_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          entry_type?: string
+          environment_photo_url?: string | null
+          id?: string
+          inside_geofence?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
+          notes?: string | null
+          org_id?: string
+          project_id?: string | null
+          recorded_at?: string
+          selfie_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clock_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "forestry_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_app_access: {
         Row: {
           app_id: string
