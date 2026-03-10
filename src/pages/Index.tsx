@@ -41,36 +41,42 @@ const Index = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
+      setSession((prevSession) => {
+        // Only treat as a genuine new login when there was NO previous session
+        // This prevents SIGNED_IN from page loads / token refreshes creating phantom LOGINs
+        const isGenuineLogin = event === "SIGNED_IN" && session?.user && !prevSession;
 
-      if (event === "SIGNED_OUT") {
-        // Clear audit dedupe key only on explicit sign-out
-        const prevId = sessionStorage.getItem("audit_last_user_id");
-        if (prevId) {
-          sessionStorage.removeItem(`audit_login_logged_${prevId}`);
-          sessionStorage.removeItem("audit_last_user_id");
+        if (event === "SIGNED_OUT") {
+          // Clear audit dedupe key only on explicit sign-out
+          const prevId = sessionStorage.getItem("audit_last_user_id");
+          if (prevId) {
+            sessionStorage.removeItem(`audit_login_logged_${prevId}`);
+            sessionStorage.removeItem("audit_last_user_id");
+          }
+          setActiveApp(null);
+          setPendingChecked(false);
+          setProfileChecked(false);
+          setAnnouncementChecked(false);
+          sessionStorage.removeItem("profile_dialog_shown");
+          sessionStorage.removeItem("announcement_dismissed");
+          setSignedInFlag(false);
         }
-        setActiveApp(null);
-        setPendingChecked(false);
-        setProfileChecked(false);
-        setAnnouncementChecked(false);
-        sessionStorage.removeItem("profile_dialog_shown");
-        sessionStorage.removeItem("announcement_dismissed");
-        setSignedInFlag(false);
-      }
 
-      if (event === "SIGNED_IN" && session?.user) {
-        sessionStorage.setItem("audit_last_user_id", session.user.id);
-        setPendingChecked(false);
-        setProfileChecked(false);
-        setSignedInFlag(true);
-        // Update last_sign_in_at (fire-and-forget is OK for this)
-        supabase
-          .from("profiles")
-          .update({ last_sign_in_at: new Date().toISOString() })
-          .eq("user_id", session.user.id)
-          .then(({ error }) => { if (error) console.error("last_sign_in_at update failed:", error.message); });
-      }
+        if (isGenuineLogin && session?.user) {
+          sessionStorage.setItem("audit_last_user_id", session.user.id);
+          setPendingChecked(false);
+          setProfileChecked(false);
+          setSignedInFlag(true);
+          // Update last_sign_in_at (fire-and-forget)
+          supabase
+            .from("profiles")
+            .update({ last_sign_in_at: new Date().toISOString() })
+            .eq("user_id", session.user.id)
+            .then(({ error }) => { if (error) console.error("last_sign_in_at update failed:", error.message); });
+        }
+
+        return session;
+      });
     });
 
     return () => subscription.unsubscribe();
