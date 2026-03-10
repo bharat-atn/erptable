@@ -1,38 +1,23 @@
 
 
-## Plan: Fix Missing Signature Canvas on Contract Signing Page
+## Problem
 
-### Root Cause
+The contract form (Sections 2.1 and 2.2) uses a hardcoded `COUNTRIES` array with only 11 countries (line 100-103 of `ContractDetailsStep.tsx`). When an employee submits onboarding data with a country like "India", the contract form's dropdown cannot display or select it.
 
-The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
+The onboarding wizard correctly uses `SearchableCountrySelect` which pulls from the full `countries` list in `src/lib/countries.ts` (250+ countries).
 
-### Fix (single file: `src/pages/ContractSigning.tsx`)
+## Plan
 
-**1. Replace generic message with specific missing-condition checklist**
+**Replace all three country `<Select>` dropdowns** in `ContractDetailsStep.tsx` (Country, Country of Birth, Citizenship) with the existing `SearchableCountrySelect` component.
 
-Instead of:
-> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
+### Changes
 
-Show a checklist of conditions with check/cross icons:
-- ✓/✗ Review Code of Conduct
-- ✓/✗ Confirm contract terms
-- ✓/✗ Confirm Code of Conduct
-- ✓/✗ Review Schedule (only shown if schedule data exists)
-- ✓/✗ Enter signing place
+1. **`src/components/dashboard/ContractDetailsStep.tsx`**
+   - Import `SearchableCountrySelect` from `@/components/ui/searchable-country-select`
+   - Remove the hardcoded `COUNTRIES` array (lines 100-103)
+   - Replace the `<Select>` for **Country** (lines 1435-1446) with `<SearchableCountrySelect value={country} onValueChange={setCountry} />`
+   - Replace the `<Select>` for **Country of Birth** (lines 1498-1509) with `<SearchableCountrySelect value={countryOfBirth} onValueChange={setCountryOfBirth} />`
+   - Replace the `<Select>` for **Citizenship** (lines 1513-1524) with `<SearchableCountrySelect value={citizenship} onValueChange={setCitizenship} />`
 
-This tells the user exactly what's blocking them.
-
-**2. Auto-review schedule when user scrolls to bottom of schedule table**
-
-Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
-
-Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
-
-**3. Add scroll-to-schedule link in the checklist**
-
-If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
-
-### Estimated changes
-
-~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
+This reuses the same searchable component with priority countries (Romania, Thailand, Ukraine, Sweden) at the top, followed by all other countries -- exactly matching the invitation/onboarding form behavior.
 
