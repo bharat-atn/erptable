@@ -97,10 +97,7 @@ interface ContractDetailsStepProps {
   onGoToStep?: (step: number) => void;
 }
 
-const COUNTRIES = [
-  "Sweden", "Romania", "Poland", "Ukraine", "Lithuania", "Latvia",
-  "Estonia", "Germany", "Spain", "France", "Thailand",
-];
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 
 // JOB_TYPES now fetched dynamically from the positions table
 
@@ -1432,18 +1429,7 @@ export function ContractDetailsStep({
                 </div>
                 <div className="space-y-1.5">
                   {renderLabel("Country", "Land")}
-                  <Select value={country} onValueChange={setCountry} required>
-                    <SelectTrigger className="h-11 text-sm font-medium">
-                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableCountrySelect value={country} onValueChange={setCountry} placeholder={bl("Select country...", "Välj land...")} />
                 </div>
               </div>
             </div>
@@ -1495,33 +1481,11 @@ export function ContractDetailsStep({
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Country of Birth?", "Födelseland?")}
-                <Select value={countryOfBirth} onValueChange={setCountryOfBirth} required>
-                  <SelectTrigger className="h-11 text-sm font-medium">
-                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCountrySelect value={countryOfBirth} onValueChange={setCountryOfBirth} placeholder={bl("Select country...", "Välj land...")} />
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Citizenship?", "Medborgarskap?")}
-                <Select value={citizenship} onValueChange={setCitizenship} required>
-                  <SelectTrigger className="h-11 text-sm font-medium">
-                    <SelectValue placeholder={bl("Select country...", "Välj land...")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCountrySelect value={citizenship} onValueChange={setCitizenship} placeholder={bl("Select country...", "Välj land...")} />
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Mobile Phone Number", "Mobilnummer")}
