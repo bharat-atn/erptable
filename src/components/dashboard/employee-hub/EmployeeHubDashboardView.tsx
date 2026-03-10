@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Camera,
@@ -15,6 +15,7 @@ import {
   ShieldAlert,
   Wifi,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
@@ -128,6 +129,30 @@ function TimeEntryRow({ entry, t }: { entry: TimeEntry; t: (key: string) => stri
   );
 }
 
+/**
+ * Attempt getUserMedia with simple constraints first, then fallback to bare {video:true}.
+ * This avoids OverconstrainedError on iOS devices with non-standard aspect ratios.
+ */
+async function acquireCamera(facingMode: "user" | "environment"): Promise<MediaStream> {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Camera API not available. Make sure you're using HTTPS.");
+  }
+
+  // First attempt — simple facingMode, no resolution constraints
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode },
+    });
+  } catch (err) {
+    const e = err instanceof Error ? err : new Error("Unknown");
+    // If overconstrained or not found (e.g. no front camera), try bare video
+    if (e.name === "OverconstrainedError" || e.name === "NotFoundError") {
+      return await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+    throw err;
+  }
+}
+
 interface EmployeeHubDashboardViewProps {
   t: (key: string) => string;
 }
@@ -136,7 +161,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
   const { requestLocation } = useGeolocation();
   const { orgId } = useOrg();
 
-  // Resolve employee_id for the current user (simple lookup)
+  // Resolve employee_id for the current user
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
@@ -183,47 +208,48 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
     day: "numeric",
   });
 
+  /** Attach a MediaStream to the video element, retrying via rAF if not mounted yet */
+  const attachStreamToVideo = useCallback((s: MediaStream) => {
+    const attach = () => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = s;
+        videoRef.current.play().catch(() => {});
+      } else {
+        requestAnimationFrame(attach);
+      }
+    };
+    requestAnimationFrame(attach);
+  }, []);
+
+  /** Start camera for a given mode — must be called from a user-gesture context */
   const startCamera = useCallback(async (mode: "selfie" | "environment") => {
     setLastCameraMode(mode);
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        toast.error("Camera is not available. Make sure you're using HTTPS.", { duration: 5000 });
-        return;
-      }
-
-      // CRITICAL: getUserMedia must be the FIRST await in the click handler chain.
-      // No awaits before this call — Safari requires direct user-gesture context.
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: mode === "selfie" ? "user" : "environment", width: { ideal: 640 }, height: { ideal: 480 } },
-      });
+      // CRITICAL: getUserMedia is the FIRST await — preserves iOS Safari user-gesture context
+      const s = await acquireCamera(mode === "selfie" ? "user" : "environment");
       setStream(s);
       setActiveCamera(mode);
-      // Assign srcObject immediately — no setTimeout.
-      // The video element may not be rendered yet (state just changed), so
-      // we use a rAF + microtask to catch the very first paint.
-      const attachStream = () => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = s;
-          videoRef.current.play().catch(() => {});
-        } else {
-          // Element not mounted yet — retry on next frame
-          requestAnimationFrame(attachStream);
-        }
-      };
-      requestAnimationFrame(attachStream);
+      attachStreamToVideo(s);
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
       if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
+        // Show device-specific help
         setCameraHelpOpen(true);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          toast.error("Camera blocked. On iPhone: Settings → Safari → Camera → Allow.", { duration: 7000 });
+        } else {
+          toast.error("Camera permission denied. Check your browser settings to allow camera access.", { duration: 6000 });
+        }
       } else if (error.name === "NotFoundError") {
         toast.error("No camera found on this device.", { duration: 5000 });
-      } else if (error.name === "NotReadableError" || error.name === "AbortError" || error.name === "OverconstrainedError") {
-        toast.error("Camera is in use by another app or constraints not supported. Try again.", { duration: 6000 });
+      } else if (error.name === "NotReadableError" || error.name === "AbortError") {
+        toast.error("Camera is in use by another app. Close other apps and try again.", { duration: 6000 });
       } else {
         toast.error(`Camera error: ${error.message}`, { duration: 5000 });
       }
     }
-  }, []);
+  }, [attachStreamToVideo]);
 
   const stopCamera = useCallback(() => {
     stream?.getTracks().forEach((t) => t.stop());
@@ -242,27 +268,66 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
     stopCamera();
   }, [activeCamera, stopCamera]);
 
+  /**
+   * CHANGE 1: Start camera IMMEDIATELY on button tap (single gesture).
+   * getUserMedia is the FIRST await — before dialog open or GPS fetch.
+   * This preserves the user-gesture context required by iOS Safari.
+   */
   const handleOpenDialog = async (mode: "in" | "out") => {
     setDialogMode(mode);
     setPhotos({ selfie: null, environment: null });
     setCapturedLocation(null);
-    setDialogOpen(true);
 
-    // Auto-fetch location when dialog opens
-    setLocationFetching(true);
+    // CRITICAL: getUserMedia MUST be the first await in this click handler.
+    // iOS Safari requires a direct user-gesture context for camera access.
+    let cameraStream: MediaStream | null = null;
     try {
-      const loc = await requestLocation();
-      setCapturedLocation(loc);
-
-      // Auto-calibrate the worksite zone on first use (single-site setup)
-      if (!worksiteZone) {
-        calibrateFromLocation(loc, "Work site");
+      cameraStream = await acquireCamera("user");
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Unknown");
+      if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
+        setCameraHelpOpen(true);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        toast.error(
+          isIOS
+            ? "Camera blocked. On iPhone: Settings → Safari → Camera → Allow."
+            : "Camera permission denied. Check browser settings.",
+          { duration: 7000 }
+        );
+      } else if (error.name === "NotFoundError") {
+        toast.error("No camera found on this device.", { duration: 5000 });
+      } else {
+        toast.error(`Camera error: ${error.message}`, { duration: 5000 });
       }
-    } catch {
-      // Error handled by hook
-    } finally {
-      setLocationFetching(false);
+      // Still open dialog without camera — user can retry via photo slots
     }
+
+    // Now open dialog and set camera state
+    setDialogOpen(true);
+    if (cameraStream) {
+      setStream(cameraStream);
+      setActiveCamera("selfie");
+      setLastCameraMode("selfie");
+      attachStreamToVideo(cameraStream);
+    }
+
+    // Fetch location in parallel (non-blocking)
+    setLocationFetching(true);
+    requestLocation()
+      .then((loc) => {
+        setCapturedLocation(loc);
+        if (!worksiteZone) {
+          calibrateFromLocation(loc, "Work site");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLocationFetching(false));
+  };
+
+  /** Retake a photo — clears the existing one and starts camera for that slot */
+  const handleRetake = (slot: "selfie" | "environment") => {
+    setPhotos((prev) => ({ ...prev, [slot]: null }));
+    startCamera(slot);
   };
 
   const handleSubmit = async () => {
@@ -462,10 +527,10 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
               </div>
             )}
 
-            {/* Photo slots */}
+            {/* Photo slots with retake capability */}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => !photos.selfie && startCamera("selfie")}
+                onClick={() => photos.selfie ? undefined : startCamera("selfie")}
                 className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[100px]"
               >
                 {photos.selfie ? (
@@ -474,6 +539,13 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                     <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRetake("selfie"); }}
+                      className="absolute bottom-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80 active:scale-95 transition-all"
+                      title="Retake"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
                   </>
                 ) : (
                   <div className="text-center p-2">
@@ -484,7 +556,7 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
               </button>
 
               <button
-                onClick={() => !photos.environment && startCamera("environment")}
+                onClick={() => photos.environment ? undefined : startCamera("environment")}
                 className="relative aspect-square rounded-2xl border-2 border-dashed border-emerald-600/30 hover:border-emerald-600/60 active:border-emerald-600 transition-colors overflow-hidden flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/10 min-h-[100px]"
               >
                 {photos.environment ? (
@@ -493,6 +565,13 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
                     <div className="absolute top-2 right-2 bg-emerald-600 text-white rounded-full w-6 h-6 flex items-center justify-center">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRetake("environment"); }}
+                      className="absolute bottom-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80 active:scale-95 transition-all"
+                      title="Retake"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
                   </>
                 ) : (
                   <div className="text-center p-2">

@@ -1,41 +1,38 @@
 
 
-## Diagnosis
+## Plan: Fix Missing Signature Canvas on Contract Signing Page
 
-The clock-in/clock-out camera failure on iPhone stems from two issues in `EmployeeHubDashboardView.tsx`:
+### Root Cause
 
-1. **Two-tap problem on iOS Safari**: The user taps "Clock In" (opens dialog + fetches GPS), then must tap a photo slot to start the camera. On iOS Safari, the second tap inside a Radix Dialog can lose the "user gesture" context required by `getUserMedia`, especially when the dialog just animated in.
+The `canSign` condition requires `scheduleReviewed` to be true when schedule data exists, but the generic fallback message doesn't indicate which specific condition is unmet. On mobile, the "Mark as reviewed" button in the Schedule Appendix section is easy to miss.
 
-2. **Overconstrained camera**: The `getUserMedia` call specifies `width: { ideal: 640 }, height: { ideal: 480 }` which can throw `OverconstrainedError` on some iOS devices with non-standard aspect ratios. When this fails, the fallback error message is generic.
+### Fix (single file: `src/pages/ContractSigning.tsx`)
 
-## Plan
+**1. Replace generic message with specific missing-condition checklist**
 
-### File: `src/components/dashboard/employee-hub/EmployeeHubDashboardView.tsx`
+Instead of:
+> "Please review the Code of Conduct, confirm both checkboxes, and enter the signing place to enable signing."
 
-**Change 1 — Start camera immediately on dialog open (single gesture)**
+Show a checklist of conditions with check/cross icons:
+- ✓/✗ Review Code of Conduct
+- ✓/✗ Confirm contract terms
+- ✓/✗ Confirm Code of Conduct
+- ✓/✗ Review Schedule (only shown if schedule data exists)
+- ✓/✗ Enter signing place
 
-Instead of opening the dialog first and waiting for the user to tap a photo slot, start the camera as the very first `await` inside `handleOpenDialog` — directly in the button click handler chain. This preserves the user-gesture context that iOS Safari requires.
+This tells the user exactly what's blocking them.
 
-```text
-Current flow:  Tap Clock In → open dialog + fetch GPS → (user taps slot) → getUserMedia
-New flow:      Tap Clock In → getUserMedia (selfie) → open dialog + fetch GPS in parallel
-```
+**2. Auto-review schedule when user scrolls to bottom of schedule table**
 
-- Move `getUserMedia` to be the FIRST await in `handleOpenDialog`, before any location fetch or state updates
-- Open the dialog after the stream is acquired
-- Fetch location in parallel (non-blocking)
+Add an `IntersectionObserver` on the schedule section's "Mark as reviewed" button area. When it becomes visible, auto-set `scheduleReviewed = true` after a short delay (e.g., 2 seconds). This mirrors the CoC pattern where the iframe `onLoad` auto-sets `cocReviewed`.
 
-**Change 2 — Simplify camera constraints with fallback**
+Alternatively (simpler): keep the manual button but make it more prominent — use a primary-colored button with larger text, and add a pulsing indicator if the schedule section hasn't been reviewed yet while other conditions are met.
 
-Remove `width`/`height` ideals from the initial `getUserMedia` call. If the first attempt fails with `OverconstrainedError`, retry with bare `{ video: true }` as a last resort.
+**3. Add scroll-to-schedule link in the checklist**
 
-**Change 3 — Add retake capability**
+If the schedule isn't reviewed, the checklist item becomes a clickable link that scrolls up to the Schedule Appendix section, using a `ref` and `scrollIntoView`.
 
-Currently, once a photo is captured, the slot becomes non-clickable (`!photos.selfie && startCamera`). Add a small "retake" button on captured photos so users can redo a bad shot without closing the dialog.
+### Estimated changes
 
-**Change 4 — Better error messages**
-
-Show device-specific guidance in toast messages (e.g., "On iPhone, go to Settings → Safari → Camera → Allow") instead of generic errors. Link to the existing `CameraPermissionHelp` dialog automatically on `NotAllowedError`.
-
-### No database or schema changes needed.
+~30 lines modified in the signing area section (lines 607-613) to render the condition checklist, plus ~10 lines to add a ref on the schedule card and a scroll handler.
 
