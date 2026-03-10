@@ -41,14 +41,15 @@ const Index = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession((prev) => {
-        // Clear audit dedupe key when signing out so next login is recorded
-        if (!session && prev?.user?.id) {
-          sessionStorage.removeItem(`audit_login_logged_${prev.user.id}`);
+      setSession(session);
+
+      if (event === "SIGNED_OUT") {
+        // Clear audit dedupe key only on explicit sign-out
+        const prevId = sessionStorage.getItem("audit_last_user_id");
+        if (prevId) {
+          sessionStorage.removeItem(`audit_login_logged_${prevId}`);
+          sessionStorage.removeItem("audit_last_user_id");
         }
-        return session;
-      });
-      if (!session) {
         setActiveApp(null);
         setPendingChecked(false);
         setProfileChecked(false);
@@ -59,6 +60,7 @@ const Index = () => {
       }
 
       if (event === "SIGNED_IN" && session?.user) {
+        sessionStorage.setItem("audit_last_user_id", session.user.id);
         setPendingChecked(false);
         setProfileChecked(false);
         setSignedInFlag(true);
