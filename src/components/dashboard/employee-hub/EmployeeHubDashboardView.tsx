@@ -276,28 +276,15 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
     stopCamera();
   }, [activeCamera, stopCamera]);
 
-  /**
-   * CHANGE 1: Start camera IMMEDIATELY on button tap (single gesture).
-   * getUserMedia is the FIRST await — before dialog open or GPS fetch.
-   * This preserves the user-gesture context required by iOS Safari.
-   */
   const handleOpenDialog = async (mode: "in" | "out") => {
-    setDialogMode(mode);
-    setPhotos({ selfie: null, environment: null });
-    setCapturedLocation(null);
-
-    // CRITICAL: getUserMedia MUST be the first await in this click handler.
-    // iOS Safari requires a direct user-gesture context for camera access.
+    // CRITICAL: getUserMedia MUST be the absolute FIRST thing in this click handler.
+    // NO setState calls before this — they can break the user-gesture chain on iOS Safari.
     let cameraStream: MediaStream | null = null;
     try {
       cameraStream = await acquireCamera("user");
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown");
-      if (error.name === "NotAvailableInPreview") {
-        toast.error("Camera is not available in the preview. Open the published app URL on your phone.", { duration: 8000 });
-      } else if (error.name === "InsecureContext") {
-        toast.error("Camera requires HTTPS. Please access this app via a secure URL.", { duration: 7000 });
-      } else if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
+      if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
         setCameraHelpOpen(true);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         toast.error(
@@ -309,13 +296,17 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
       } else if (error.name === "NotFoundError") {
         toast.error("No camera found on this device.", { duration: 5000 });
       } else {
-        toast.error(`Camera error: ${error.message}`, { duration: 5000 });
+        toast.error(`Camera error: ${error.message}`, { duration: 6000 });
       }
       // Still open dialog without camera — user can retry via photo slots
     }
 
-    // Now open dialog and set camera state
+    // State updates AFTER getUserMedia to preserve gesture context
+    setDialogMode(mode);
+    setPhotos({ selfie: null, environment: null });
+    setCapturedLocation(null);
     setDialogOpen(true);
+
     if (cameraStream) {
       setStream(cameraStream);
       setActiveCamera("selfie");
