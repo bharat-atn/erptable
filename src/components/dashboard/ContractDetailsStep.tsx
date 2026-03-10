@@ -1429,18 +1429,7 @@ export function ContractDetailsStep({
                 </div>
                 <div className="space-y-1.5">
                   {renderLabel("Country", "Land")}
-                  <Select value={country} onValueChange={setCountry} required>
-                    <SelectTrigger className="h-11 text-sm font-medium">
-                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableCountrySelect value={country} onValueChange={setCountry} placeholder={bl("Select country...", "Välj land...")} />
                 </div>
               </div>
             </div>
