@@ -134,8 +134,23 @@ function TimeEntryRow({ entry, t }: { entry: TimeEntry; t: (key: string) => stri
  * This avoids OverconstrainedError on iOS devices with non-standard aspect ratios.
  */
 async function acquireCamera(facingMode: "user" | "environment"): Promise<MediaStream> {
+  // navigator.mediaDevices is undefined in non-secure contexts (HTTP) or sandboxed iframes
   if (!navigator.mediaDevices?.getUserMedia) {
-    throw new Error("Camera API not available. Make sure you're using HTTPS.");
+    // Check if we're inside an iframe (e.g. Lovable preview)
+    const inIframe = window.self !== window.top;
+    if (inIframe) {
+      throw Object.assign(
+        new Error("Camera is not available inside the preview iframe. Please open the published app URL on your phone to use the camera."),
+        { name: "NotAvailableInPreview" }
+      );
+    }
+    if (location.protocol !== "https:") {
+      throw Object.assign(
+        new Error("Camera requires a secure connection (HTTPS). Please access this app via HTTPS."),
+        { name: "InsecureContext" }
+      );
+    }
+    throw new Error("Camera API is not supported on this device/browser.");
   }
 
   // First attempt — simple facingMode, no resolution constraints
@@ -285,7 +300,11 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
       cameraStream = await acquireCamera("user");
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown");
-      if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
+      if (error.name === "NotAvailableInPreview") {
+        toast.error("Camera is not available in the preview. Open the published app URL on your phone.", { duration: 8000 });
+      } else if (error.name === "InsecureContext") {
+        toast.error("Camera requires HTTPS. Please access this app via a secure URL.", { duration: 7000 });
+      } else if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
         setCameraHelpOpen(true);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         toast.error(
