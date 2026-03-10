@@ -134,35 +134,28 @@ function TimeEntryRow({ entry, t }: { entry: TimeEntry; t: (key: string) => stri
  * This avoids OverconstrainedError on iOS devices with non-standard aspect ratios.
  */
 async function acquireCamera(facingMode: "user" | "environment"): Promise<MediaStream> {
-  // navigator.mediaDevices is undefined in non-secure contexts (HTTP) or sandboxed iframes
-  if (!navigator.mediaDevices?.getUserMedia) {
-    // Check if we're inside an iframe (e.g. Lovable preview)
-    const inIframe = window.self !== window.top;
-    if (inIframe) {
-      throw Object.assign(
-        new Error("Camera is not available inside the preview iframe. Please open the published app URL on your phone to use the camera."),
-        { name: "NotAvailableInPreview" }
-      );
-    }
-    if (location.protocol !== "https:") {
-      throw Object.assign(
-        new Error("Camera requires a secure connection (HTTPS). Please access this app via HTTPS."),
-        { name: "InsecureContext" }
-      );
-    }
-    throw new Error("Camera API is not supported on this device/browser.");
+  // On some mobile browsers, mediaDevices may exist but getUserMedia may not
+  const gum =
+    navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices) ??
+    // Legacy fallback for older mobile browsers
+    (navigator as any).getUserMedia?.bind(navigator) ??
+    (navigator as any).webkitGetUserMedia?.bind(navigator);
+
+  if (!gum) {
+    throw Object.assign(
+      new Error("Camera is not supported on this browser. Try using Safari (iPhone) or Chrome (Android)."),
+      { name: "NoCameraSupport" }
+    );
   }
 
   // First attempt — simple facingMode, no resolution constraints
   try {
-    return await navigator.mediaDevices.getUserMedia({
-      video: { facingMode },
-    });
+    return await gum({ video: { facingMode } });
   } catch (err) {
     const e = err instanceof Error ? err : new Error("Unknown");
     // If overconstrained or not found (e.g. no front camera), try bare video
     if (e.name === "OverconstrainedError" || e.name === "NotFoundError") {
-      return await navigator.mediaDevices.getUserMedia({ video: true });
+      return await gum({ video: true });
     }
     throw err;
   }
