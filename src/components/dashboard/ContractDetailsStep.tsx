@@ -97,10 +97,7 @@ interface ContractDetailsStepProps {
   onGoToStep?: (step: number) => void;
 }
 
-const COUNTRIES = [
-  "Sweden", "Romania", "Poland", "Ukraine", "Lithuania", "Latvia",
-  "Estonia", "Germany", "Spain", "France", "Thailand",
-];
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 
 // JOB_TYPES now fetched dynamically from the positions table
 
