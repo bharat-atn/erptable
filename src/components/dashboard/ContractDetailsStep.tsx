@@ -1481,18 +1481,7 @@ export function ContractDetailsStep({
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Country of Birth?", "Födelseland?")}
-                <Select value={countryOfBirth} onValueChange={setCountryOfBirth} required>
-                  <SelectTrigger className="h-11 text-sm font-medium">
-                     <SelectValue placeholder={bl("Select country...", "Välj land...")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableCountrySelect value={countryOfBirth} onValueChange={setCountryOfBirth} placeholder={bl("Select country...", "Välj land...")} />
               </div>
               <div className="space-y-1.5">
                 {renderLabel("Citizenship?", "Medborgarskap?")}
