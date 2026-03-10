@@ -300,7 +300,11 @@ export function EmployeeHubDashboardView({ t }: EmployeeHubDashboardViewProps) {
       cameraStream = await acquireCamera("user");
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown");
-      if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
+      if (error.name === "NotAvailableInPreview") {
+        toast.error("Camera is not available in the preview. Open the published app URL on your phone.", { duration: 8000 });
+      } else if (error.name === "InsecureContext") {
+        toast.error("Camera requires HTTPS. Please access this app via a secure URL.", { duration: 7000 });
+      } else if (error.name === "NotAllowedError" || error.name === "NotPermittedError") {
         setCameraHelpOpen(true);
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         toast.error(
