@@ -1,17 +1,22 @@
-// Database configuration for Supabase
+// Supabase configuration for development and production
 
-const devConfig = {
-    url: 'https://your-dev-url.supabase.co',
-    key: 'your-development-key',
-    database: 'your-development-database'
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Export different configurations based on environment types
+export const getSupabaseConfig = () => {
+    if (process.env.NODE_ENV === 'development') {
+        return {
+            url: process.env.DEV_SUPABASE_URL,
+            key: process.env.DEV_SUPABASE_ANON_KEY,
+        };
+    }
+    return {
+        url: process.env.PROD_SUPABASE_URL,
+        key: process.env.PROD_SUPABASE_ANON_KEY,
+    };
 };
-
-const prodConfig = {
-    url: 'https://your-prod-url.supabase.co',
-    key: 'your-production-key',
-    database: 'your-production-database'
-};
-
-const config = process.env.NODE_ENV === 'production' ? prodConfig : devConfig;
-
-export default config;
